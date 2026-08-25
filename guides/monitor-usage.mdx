@@ -1,0 +1,153 @@
+---
+title: "Monitor usage"
+description: "Read what your workspace has been spending on Overview, find one request in Activity, and reconcile a statement line with the request that caused it."
+status: partial
+gates: ["5.11", "5.12", "5.13", "5.14", "5.15"]
+---
+
+import FeatureStatus from '/snippets/feature-status.mdx';
+import RequestIdNote from '/snippets/request-id-note.mdx';
+
+Two screens answer two different questions. **Overview** answers "what has this
+workspace been doing". **Activity** answers "what happened to this request".
+
+<FeatureStatus>
+  Epic 5's screens are at review. The figures, the filters and the field set below are
+  the shipped behaviour; the layout may still change before this page is published.
+</FeatureStatus>
+
+## Overview: the shape of your spending
+
+Overview reads one window at a time. The ranges are 24 hours, 7 days, 30 days, 90
+days and 1 year, and it shows:
+
+- **Totals for the window**: requests, how many were served, how many were not, token
+  counts including reasoning and cache reads and writes, and the cost summed from the
+  per request charges.
+- **The same window immediately before it**, so a total can be read as a change
+  rather than as a number on its own.
+- **A series** bucketed by hour on the 24 hour window and by day on the longer ones.
+  A bucket with no requests carries a zero rather than being missing, so a gap in the
+  chart never has to be interpreted.
+- **Breakdowns** by model, by provider, by key and by member.
+- **Your balance**, read from the one component allowed to compute it, beside the
+  summed cost rather than derived from it.
+
+Two figures are worth knowing how to read.
+
+**Freshness.** The screen shows when the newest request inside the window started, as
+well as when the figures were read. The second tells you when we looked; only the
+first tells you how current the figures are.
+
+**Windows longer than the retention window.** Usage records are kept for 90 days, so
+a 1 year window shows what is still kept rather than a full year. Your statement is
+the record that goes back further, because ledger movements are never purged.
+
+<Note>
+  Breakdowns by key and by member are scoped to what you may see. An owner or admin
+  sees every line. Everybody else sees the keys they are accountable for or named on,
+  plus their own row. Totals, buckets, models and providers are whole for every
+  member.
+</Note>
+
+## Activity: one row per request
+
+Activity lists requests newest first, fifty to a page, with the request id linking to
+the single request lookup. Each row carries when it ran, which door it came through
+(`api` or `playground`), the model, which provider answered, the outcome, the token
+counts, the cost in minor units and how long it took.
+
+Paging is stable: rows are ordered by time with the request id as the tiebreak, so a
+row cannot swap sides of a page boundary between two reads and appear twice or not at
+all.
+
+### Filters
+
+The filter panel narrows by model, by outcome and by date range, and the controls
+compose: all of them narrow the same list. It is a plain form, so a filtered view is
+an address you can bookmark or send to a colleague.
+
+The model list offered by the panel is the models this workspace has actually called,
+not a catalogue.
+
+### Three ways to see no rows
+
+They mean different things and the screen says which:
+
+1. **Nothing has ever run here.** The workspace is new.
+2. **The filter matched nothing.** Rows exist and this narrowing excluded them. The
+   table keeps its shape and offers a control to clear the filter.
+3. **The range reaches past what we keep.** It was never going to answer, so the
+   screen names the retention window instead of inviting a narrower filter.
+
+### Reading a row
+
+**`unknown` is not zero.** On the outcomes where a charge exists and final token
+counts never arrived, the count reads `unknown`. A real charge printed beside two
+zeros is the reading that files a billing bug, so a count nobody measured is never
+rendered as a measurement.
+
+**A refusal shows a cost of zero.** That is the point: turned away, charged nothing.
+
+**No prompt, no reply.** Neither is stored anywhere, so neither is on the row and
+neither can be recovered later. The single request view says so in as many words.
+
+## Look up one request
+
+Every response carries `x-uniblock-request-id`, and every error envelope carries the
+same value as `request_id`. Paste it into the request id field in Activity, or open
+the row from the list, to get the single request view: the same fields as the row,
+plus the note that nothing else about the request was ever stored.
+
+One answer covers both ways to miss: a request id from another workspace and a
+request id that never existed both simply find nothing. That is by construction
+rather than by policy, so the lookup cannot be used to learn whether an id exists
+somewhere else.
+
+A request that has passed the 90 day retention window is answered by naming the
+window rather than by an empty row. The money movement for that request is still on
+your statement.
+
+## Reconcile a statement line with a request
+
+A `usage` line on your statement carries our request id as its cause. That is the
+join:
+
+<Steps>
+  <Step title="Take the request id from the statement line">
+    Every charge line names one.
+  </Step>
+  <Step title="Look it up in Activity">
+    The single request view shows the model, the outcome, the token counts and the
+    cost for that exact request.
+  </Step>
+  <Step title="Compare the figures">
+    The charge on the usage record and the amount on the ledger line are the same
+    money, matched by request id with no tolerance for a difference. If they do not
+    agree, that is a defect on our side rather than something for you to reconcile.
+    Quote the request id.
+  </Step>
+</Steps>
+
+Two cases where a line carries more than the amount:
+
+- **A charge with an explanation.** Some lines carry a sentence saying the counts
+  were not confirmed, that the provider reported none, or that the hold had already
+  expired when the charge settled.
+- **A served request with no cost figure.** Where token counts never reached us, the
+  request is settled against its hold and the usage row cannot yet say for how much.
+  The totals name how many such requests fall in the window, so the cost totals read
+  as incomplete rather than as complete. Your statement carries the real movement.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Usage and metering" href="/concepts/usage-and-metering">
+    The full field set, the outcome vocabulary and the retention rules.
+  </Card>
+  <Card title="Credits and billing" href="/concepts/credits-and-billing">
+    Statement lines, purchase annotations and the running ledger total.
+  </Card>
+</CardGroup>
+
+<RequestIdNote />

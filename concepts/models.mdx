@@ -1,0 +1,120 @@
+---
+title: "Models"
+description: "How model ids are shaped, how to discover which models are callable right now, and the vocabulary a model's rate is expressed in."
+status: partial
+gates: ["8.1", "8.2", "8.3", "8.4", "8.5", "8.6", "8.7", "8.8"]
+---
+
+You name a model in the `model` field of a request, exactly as you would when
+calling OpenAI directly. The difference is that the name says which family
+serves it, so one key and one endpoint reach models from more than one place.
+
+## Model ids
+
+A model id is written as a family and a model, separated by a slash:
+
+```json
+{ "model": "openai/gpt-4o-mini" }
+```
+
+Ask for the ids rather than constructing them by hand. The set of callable
+models is a live fact, it changes without a release on our side, and an id you
+assembled from a provider's own naming may not be an id we serve.
+
+This site publishes no list of models and no list of families. Any list written
+here would be wrong the first time the set changed, and a stale list of what you
+can call is worse than no list.
+
+## Discovering what you can call
+
+**Over the API.** `GET /v1/models` answers with an OpenAI-shaped list, so a
+client that already lists OpenAI models works unchanged:
+
+```bash
+curl https://ai.uniblock.dev/v1/models \
+  -H "Authorization: Bearer ub_live_XXXXXXXXXXXX"
+```
+
+Each entry carries an `id`, which is the value to put in `model`. Treat the `id`
+as the contract and treat anything else in an entry as not yet promised: the
+endpoint does not answer with prices, context windows or capabilities today, and
+the richer catalog described below is not built.
+
+**In the dashboard.** The playground offers the models you can send to as a
+list, so you can pick one rather than having to know an id first. See
+[Playground](/guides/playground).
+
+## A model is offered only when it is live
+
+A model appears to you only when we hold working credentials for it and it has
+been enabled on our side. The rule behind that is a promise rather than an
+implementation detail: you must never be offered a model that would fail on
+call.
+
+The other half of the same rule is what happens when you name a model anyway. A
+request for a model that is not live, or that your workspace may not use, is
+refused with an error that names the reason rather than failing vaguely. See
+[Errors](/concepts/errors).
+
+## What a request takes from your balance
+
+A served request deducts the provider's rate at face value. There is no markup
+on a request. The platform fee is added when you buy credit, not when you spend
+it. See [Credits and billing](/concepts/credits-and-billing).
+
+So the price of a model is the provider's price, and the number you should
+compare between us and calling a provider directly is the fee on the purchase,
+not the cost of the call.
+
+## How a model's rate is expressed
+
+A model does not have one price. It has a price per kind of token, and a kind of
+request can reprice the same tokens.
+
+The kinds of token are `input`, `cache_read`, `cache_write`, `output` and
+`reasoning`. They partition a request, so no token is priced twice and none is
+missed:
+
+```text
+prompt     = input + cache_read + cache_write
+completion = output + reasoning
+```
+
+`input` means the prompt tokens that were neither read from a cache nor written
+to one. This is worth reading twice if you are used to a provider's
+`prompt_tokens`, which usually includes the cached ones.
+
+Each of those earns a separate price because providers price them separately.
+Reading from a cache is commonly discounted. Writing to one is priced above
+plain input by some providers and does not exist at all on others. Reasoning
+tokens are produced in volume by some model lines and are reported inside the
+completion count by some providers.
+
+On top of the token kind, a rate can carry a tier: a condition under which a
+different price applies to the same tokens, which is how providers express
+things like batch or priority handling. The default tier is the one with no
+conditions.
+
+**A charge explains itself by naming the rates that were in force.** Rates are
+grouped into a revision, and changing any rate mints a new revision rather than
+editing the old one. A charge points at the revision that applied when it was
+made, so a request from last Tuesday is explained against last Tuesday's prices
+and a later price change cannot rewrite it.
+
+<Note>
+The rate vocabulary above is how the product expresses a model's price. The
+screens that show you a model's price, a context window and its capabilities are
+not built yet, and neither is the priced catalog `GET /v1/models` will eventually
+answer from. Until they are, the price of a request is the provider's rate and
+the way to see what a request cost is your usage record, not a price page here.
+</Note>
+
+## What is not here
+
+**A public, signed-out model catalog.** Being able to compare models on price
+without an account is a product commitment and it is not built. Until it is,
+discovery needs a key and `GET /v1/models`, or a session and the playground.
+
+**A provider list.** Which providers we hold accounts with is not published. What
+we publish is which model ids you can call, which is the part that changes what
+your code does.

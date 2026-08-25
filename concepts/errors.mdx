@@ -1,0 +1,104 @@
+---
+title: "Errors and refusals"
+description: "One error body for the whole API, a closed set of types, and a request id on every response, so a failure tells you what to do next."
+status: write-now
+gates: []
+---
+
+import ErrorEnvelope from '/snippets/error-envelope.mdx';
+import RequestIdNote from '/snippets/request-id-note.mdx';
+
+Two different things can go wrong with a request, and this API keeps them apart.
+
+A **refusal** is us working correctly and saying no. Your credit will not cover
+the call, your key is sending faster than its limit, somebody paused the account.
+Nothing is broken, nothing is charged, and there is something specific to do about
+it.
+
+An **error** is a fault: ours, or a request we cannot serve as sent. There is
+still something to do about it, and the body says what.
+
+Both arrive in the same shape, so your client needs one code path for them and
+tells them apart on a field rather than on a status alone.
+
+## One body
+
+<ErrorEnvelope />
+
+The same body comes back from every failing route on the API. It is the shape an
+OpenAI-compatible client already parses, which is the point: your existing error
+handling keeps working after you change the base URL.
+
+## Read the fields, not the message
+
+`type` is a closed set. `code` is stable. `message` is prose written for a person
+to read, and we reword it when a clearer sentence exists.
+
+So branch on `type` and `code`. A client matching on message text breaks the day
+somebody improves a sentence, and that is a bad way to find out.
+
+```python
+detail = (error.body or {}).get("error", {})
+
+if detail.get("code") == "insufficient_credit":
+    ...
+```
+
+The full table of statuses, types, and codes is in the
+[API error reference](/api-reference/errors).
+
+## The five things that go wrong
+
+Grouped by what you would do about them rather than by status.
+
+**Your request cannot be served as sent.** A missing parameter, or a request too
+large to serve in one call. `type` is `invalid_request_error` and `param` names
+the field when we know it. Fix the request; retrying it unchanged will fail
+identically.
+
+**Your key is not accepted.** Missing, wrong shape, or not one we will serve.
+`401`, and one sentence for every kind of key we will not accept, which is
+deliberate: see [Authentication](/api-reference/authentication). Do not retry a
+`401`; change the key.
+
+**Your account cannot pay for it.** `402` with `insufficient_credit` before the
+request starts, or the stream ending with `balance_exhausted` if credit runs out
+part way. Buy credit. Nothing is charged for the refusal, and a request cut off
+part way is charged for what it produced and no more.
+
+**A limit refused it.** `429`, with `rate_limit_exceeded` for your key's request
+rate (which carries `Retry-After`) or `spend_rate_exceeded` for the account's
+spend rate cap. Back off for the first. For the second, sending `max_tokens`
+lowers what each request reserves; see
+[Rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+
+**Ours.** `500`, `503`, or `504`. A `503` names its condition in `code`, and the
+codes differ in whether waiting helps: `balance_unavailable`,
+`model_not_priceable`, and `model_pricing_unreadable` clear on their own, while
+`paused_by_owner` means a person paused the account and only a person can unpause
+it. Retrying that one on a timer will spend your backoff budget on a state no
+amount of waiting changes.
+
+## What an error never contains
+
+Our error bodies carry the fields listed above and nothing else. No stack trace,
+no hostname, no internal identifier, no detail about the shape of our own system.
+That is not reticence for its own sake: none of it is anything you could act on,
+and all of it is a normal way for an error string to hand an attacker a map.
+
+What you get instead is the request id, and a support conversation that starts
+from it rather than from a description of what the screen said.
+
+<RequestIdNote />
+
+## Retrying
+
+- `401`, `402`, `400`: do not retry unchanged. Change the key, the credit, or the
+  request.
+- `429` with `rate_limit_exceeded`: retry after `Retry-After` seconds.
+- `429` with `spend_rate_exceeded`: retry, and consider sending `max_tokens` so
+  each request reserves less.
+- `503` with `paused_by_owner`: do not retry on a timer.
+- Other `503`, and `500`: retry with backoff. If it persists, quote a request id.
+- `504`: the request ran past the 540 second limit. Retrying the same work
+  unchanged will most likely hit the same limit, so split it or stream it.

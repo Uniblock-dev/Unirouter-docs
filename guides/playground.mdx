@@ -1,0 +1,148 @@
+---
+title: "Playground"
+description: "Run a real request from the dashboard. Every run sends as one of your workspace keys, spends real credit, and stores nothing."
+status: partial
+gates: ["8.10", "8.13", "8.14", "8.16", "8.17", "8.18", "8.19", "8.20", "8.21", "8.23"]
+---
+
+The playground is a chat screen in the dashboard that sends a real request to a
+real model. It is not a simulator and not a sandbox.
+
+<Warning>
+A playground run spends real credit from this workspace's balance, at the same
+rate an API call to the same model would. There is no free tier on this screen.
+</Warning>
+
+## Every run sends as one of your keys
+
+Before you can send anything you pick a key. The screen labels the control
+`Send as key` and explains what it is for:
+
+> The key this request is testing. Its tokens and its charge land on this key's
+> line, which is what makes a playground run and an API call read the same in
+> your usage.
+
+The key is attribution, not authentication. The playground is authenticated by
+your dashboard session; the key you pick decides which key's line the spend lands
+on. You never paste a key secret into the playground, and you could not: only a
+hash of it exists, so there is nothing to paste back.
+
+**No key means no playground.** A workspace with no keys cannot use this screen,
+and the screen says so and points at Keys rather than leaving the composer
+looking broken:
+
+> Every playground request sends as one of this workspace's API keys, so its
+> usage lands on that key's line. Create a key and this composer unlocks.
+
+Sending without naming a key is refused with:
+
+> Every playground request sends as one of this workspace's API keys, so its
+> spend lands on that key's line. Pick a key, or create one on the Keys screen if
+> this workspace has none yet.
+
+### Which keys you can send as
+
+Exactly the keys your key list shows you, and no others. An owner or admin can
+send as any key in the workspace; everybody else can send as the keys they are
+accountable for or named on. A reserved key that has not been viewed yet is not
+offered, because it is not a key yet.
+
+A key that does not exist and a key you are not allowed to see are refused with
+the same message:
+
+> That is not a key you can send as in this workspace. Pick one from your own key
+> list.
+
+One message rather than two, because two would tell you which hidden keys exist,
+which is the thing a member limit is for. See
+[Who can see which keys](/guides/create-an-api-key#who-can-see-which-keys).
+
+## What a run does to your balance
+
+A playground run is admitted, held against your balance, and settled the same way
+an API request is. The same code path serves both doors, so the request that
+leaves us is the same request either way.
+
+That means:
+
+- It reserves an estimated maximum before the model is called, and a run you
+  cannot pay for is refused before it reaches a provider.
+- It settles at the provider's rate at face value, with no markup, exactly like
+  an API call.
+- It writes a usage record on that key's line, alongside the member who was at
+  the keyboard. Those are two different facts: the key says whose line the spend
+  lands on, the member says who sent it.
+
+So a model you tested in the playground and then called through the API tell one
+story about the same spend rather than two.
+
+## Nothing is stored
+
+The prompt and the reply are not stored, here or on our side. The screen states
+it rather than letting you find out:
+
+> The playground keeps no history, because we never store prompts. Leaving this
+> screen loses what is on it.
+
+There is no history, no saved session, and no shareable link to a run. If you
+want to keep a prompt, keep it on your side. See
+[Data and privacy](/concepts/data-and-privacy).
+
+The metadata is kept, like any request: the model, the token counts, the cost,
+the latency and the outcome. That is what makes the run visible in your usage
+figures without the content being anywhere.
+
+## The metrics line
+
+Each reply carries one quiet line of figures under it, with each figure labelled:
+time to first token, total time, tokens per second, tokens in, tokens out.
+
+A figure that was not measured reads `unknown` rather than `0`, because a
+measured zero and a missing measurement are different facts and only one of them
+is something you can act on.
+
+Two absences worth knowing about:
+
+- **Time to first token reads `unknown`.** The playground does not stream yet, so
+  the reply arrives in one piece and there is no first-token moment to measure. A
+  streamed API request does carry that timing.
+- **No cost appears on this line.** The charge is computed in one place and shown
+  in your usage figures, not worked out by this screen. To see what a run cost,
+  read it in your usage. See [Monitor usage](/guides/monitor-usage).
+
+## Refusals you may hit
+
+**Requests are paused.** If the owner has paused the workspace, requests are
+refused, playground runs included. Reading the pause state is open to every
+member; changing it is the owner's. See
+[Spend controls](/guides/spend-controls).
+
+**The workspace is suspended.** A suspended workspace cannot send at all:
+
+> This account is suspended, so it cannot send requests. Contact support.
+
+**No credit.** A run that the balance cannot cover is refused before the model is
+called. Nothing is charged for a request we refuse. See
+[Credits and billing](/concepts/credits-and-billing).
+
+## What is not built yet
+
+The playground works and it spends real money, and much of what the finished
+screen will do is still open work:
+
+- **No streaming.** The reply arrives complete.
+- **No cost preview before you send**, and no cost figure after.
+- **No per-run generation settings** beyond choosing the model and the key.
+- **No warning that a run is about to exceed your balance** other than the
+  refusal itself.
+
+The whole conversation is sent again on every turn, which is how a stateless
+completions API remembers anything. A long conversation therefore costs more per
+turn than a short one, because the prompt grows.
+
+## What we did not verify
+
+The behaviour on this page comes from the shipped screen and the route behind it,
+including the key requirement and the refusal wording. It was not exercised
+against a deployed environment for this documentation, and the playground stories
+that would accept this screen are still open.

@@ -1,0 +1,161 @@
+---
+title: "Usage and metering"
+description: "What Uniblock records for every request, what it never records, when the figures appear, and how long they are kept."
+status: partial
+gates: ["5.3", "5.4", "5.11", "5.12", "5.13", "5.14"]
+---
+
+import FeatureStatus from '/snippets/feature-status.mdx';
+import RequestIdNote from '/snippets/request-id-note.mdx';
+
+Every request that reaches Uniblock produces one usage record. That record is what
+the Overview and Activity screens read, what your totals are summed from, and what a
+charge on your statement is explained by.
+
+It holds metadata about the request. It never holds your prompt or the model's reply.
+
+## What one record holds
+
+These are the fields a usage record shows you, as the Activity list and the
+single request lookup return them:
+
+| Field | What it is |
+|---|---|
+| `requestId` | Our id for the request. This is the value to quote to us. |
+| `occurredAt` | When the request started, ISO 8601. |
+| `source` | Which door it came through: `api` or `playground`. |
+| `modelSlug` | The model that was called, as `family/model`. |
+| `providerSlug` | Which provider answered, or null where none did. |
+| `outcome` | What became of the request. The values are a closed set, listed below. |
+| `promptTokens` | Input tokens counted, or null where no count arrived. |
+| `completionTokens` | Output tokens counted, or null where no count arrived. |
+| `totalTokens` | The sum of the two, or null. |
+| `streamed` | Whether the reply was streamed. |
+| `costMinor` | What this request charged, in integer minor units. Null means it was never priced. |
+| `latencyMs` | The total time you waited, in milliseconds. |
+
+Two things about that list are worth stating plainly.
+
+**Null is never zero.** A token count that never reached us is null, and the screens
+render it as `unknown` rather than as `0`. A real charge sitting beside two zeros is
+the reading that files a billing bug, so a count that was never measured never
+renders as a measurement.
+
+**The list is a fence, not a sample.** Figures about our own performance and our own
+supply are not in it and will not appear later by accident. Every customer facing
+usage endpoint is checked against the same list, so what you can see is decided in
+one place rather than by whichever endpoint you happen to call.
+
+## The outcome vocabulary
+
+`outcome` answers "what became of this request". The set is closed, and it grows only
+when a feature ships that needs a new value. These are the values you may see today:
+
+| Outcome | Meaning |
+|---|---|
+| `served` | The model answered and you were charged for it. |
+| `refused_zero_balance` | Refused at admission: not enough available credit. Charged nothing. |
+| `refused_rate_capped` | Refused by your spend rate cap. Charged nothing. |
+| `refused_paused_by_owner` | Refused because the workspace owner has paused requests. Charged nothing. |
+| `refused_model_not_live` | The model named could not be served. Charged nothing. |
+| `refused_not_permitted` | The caller was not allowed to make this request. Charged nothing. |
+| `refused_invalid_request` | The request could not be served as sent. Charged nothing. |
+| `refused_platform_unavailable` | We could not serve it and no provider was attempted. Charged nothing. |
+| `provider_failed` | A provider answered with a failure. |
+| `provider_rate_limited` | A provider refused us for rate. |
+| `terminated_zero_balance` | A stream was cut off when the credit ran out. |
+| `terminated_deadline` | The request hit our request deadline and was ended. |
+| `stream_incomplete` | The stream ended without the counts that close it. |
+| `usage_metadata_missing` | No usage figures arrived with the reply. |
+| `usage_metadata_unreadable` | Usage figures arrived and could not be read. |
+| `usage_not_reported_by_provider` | The provider served the request and reported no counts. |
+| `rebuilt_from_ledger` | The record was reconstructed from the money movement it caused. |
+
+The last five are the outcomes where a charge exists and final counts never did. On
+those rows the token figures read `unknown`, and the charge is what was settled
+against the hold rather than what was counted.
+
+## What is never recorded
+
+We do not store your prompt and we do not store the model's reply. Not for API
+requests, not for playground runs, not for a request that failed. The single request
+lookup carries the sentence that says so, in these words:
+
+> No prompt and no response body was stored for this request; the figures here are
+> everything that exists (we never store prompts).
+
+That is the whole reason the playground has no history and no share link: there is
+nothing stored to show you. See
+[Data and privacy](/concepts/data-and-privacy) for the full data stance.
+
+## When figures appear
+
+Your usage figures are available within 60 seconds of a request completing. Most of
+that budget covers a request whose settlement had to retry; an ordinary request
+appears faster than that. Sixty seconds is the promise, not the typical case.
+
+Summaries carry the time of the newest request inside the window as well as the time
+we read them, because "when we looked" is never the question. The question is how
+current the figures are, and a total summed from a request that started nine minutes
+ago is stale in a way the read time cannot express.
+
+## Usage and money agree
+
+Usage figures and your balance are the same money, read two ways. Charges on your
+usage records and the `usage` movements on your statement are matched against each
+other by request id, with no tolerance for a difference, and we are told when they
+disagree rather than waiting for you to find it.
+
+One caveat is stated on the screens rather than hidden. A served request whose token
+counts never reached us is settled against its hold, and the row cannot yet say for
+how much. The totals name **how many** such requests fall in the window, so the cost
+totals read as incomplete rather than as complete-and-low. Your statement carries the
+real movements meanwhile.
+
+<FeatureStatus>
+  Epic 5's usage screens and endpoints are at review. The field set, the outcome
+  vocabulary and the retention window above are the shipped behaviour; the shape of
+  the summary responses may still gain fields before this page is published.
+</FeatureStatus>
+
+## What you can see of other people's requests
+
+Totals, the day and hour buckets, and the breakdowns by model and by provider are
+facts about the workspace, and every member of the workspace sees them whole.
+
+Breakdowns **by key** and **by member** are scoped: an owner or admin sees every
+line, and everybody else sees only the keys they are accountable for or named on,
+plus their own row. What the workspace did is workspace knowledge. Who did it is not.
+
+An API key is a bearer credential, so a per member figure is accountability rather
+than proof of presence: whoever holds a key spends as the member that key is
+accountable to.
+
+## How long records are kept
+
+> Usage records are kept for 90 days. The guaranteed minimum is 62 days, which is two
+> full billing months.
+
+Ninety days is the window in force and it is a configured value, read by the purge
+job that enforces it and by the screens that print it, so what you read cannot drift
+from what is enforced. Sixty two days is the floor beneath it: support has to be able
+to quote a request from two full billing months back.
+
+When a record passes the window it is deleted. **The money survives**: the ledger
+movement for that request is never purged, so a balance older than its usage records
+can still be explained line by line. A lookup for a request that has aged out names
+the retention window rather than answering as though the request never existed, and a
+date filter that reaches past the window says so rather than returning an empty list.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Monitor usage" href="/guides/monitor-usage">
+    Reading Overview and Activity, filtering, and looking up one request.
+  </Card>
+  <Card title="Credits and billing" href="/concepts/credits-and-billing">
+    How charges reach your balance and your statement.
+  </Card>
+</CardGroup>
+
+<RequestIdNote />

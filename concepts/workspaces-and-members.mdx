@@ -1,0 +1,181 @@
+---
+title: "Workspaces and members"
+description: "A workspace holds your keys, usage, playground and billing. Roles decide who may do what, and the owner alone touches money."
+status: partial
+gates: ["9.4", "9.5", "9.11", "9.12", "9.16", "9.17", "9.18", "9.19", "9.20", "9.24"]
+---
+
+A workspace is the thing you sign in to and the thing you invite people into. It
+is named, it holds members, it holds API keys, it holds the usage records of
+every request those keys made, it has a playground, and it has its own billing:
+one balance, one card, one statement.
+
+Everything that spends is attached to a workspace. A key belongs to a workspace
+rather than to the person who created it, and a request made with that key
+spends that workspace's credit.
+
+## Roles
+
+Every member of a workspace holds exactly one role, from a closed set: owner,
+admin, developer or viewer. A role is a set of permissions rather than a rank,
+so it is worth reading the table rather than assuming that each row contains the
+one below it.
+
+| What you can do | Owner | Admin | Developer | Viewer |
+|---|---|---|---|---|
+| See the workspace and act inside it | Yes | Yes | Yes | Yes |
+| See who is in it, and what each of them is | Yes | Yes | Yes | Yes |
+| See the keys you are accountable for or named on | Yes | Yes | Yes | Yes |
+| See every key in the workspace | Yes | Yes | No | No |
+| Create a key | Yes | Yes | Yes | No |
+| Revoke a key | Yes | Yes | Yes | No |
+| Limit a key to named members | Yes | Yes | No | No |
+| Invite somebody, and cancel a pending invitation | Yes | Yes | No | No |
+| Change what another member may do | Yes | Yes | No | No |
+| Remove a member | Yes | Yes | No | No |
+| Cancel a key reservation | Yes | Yes | No | No |
+| Transfer the workspace to somebody else | Yes | No | No | No |
+| Read the balance, the statement and whether requests are paused | Yes | Yes | Yes | Yes |
+| Buy credit, manage the card, pause or resume requests | Yes | No | No | No |
+
+A developer may create a key because a developer who cannot get a credential
+cannot use the product. A viewer holds the read permissions and their own key
+list, and creates nothing.
+
+Two rules sit above the table and cannot be worked around by editing a role:
+
+**Nobody can hand out authority they do not hold themselves.** An attempt is
+refused with: `You cannot give somebody permissions you do not have yourself.`
+
+**Only the owner makes or unmakes an admin.** An admin creating a second admin
+would confer no new permission, but it would confer persistence, and a stolen
+admin session must not be able to leave a permanent second administrator behind
+after the session is ended and the password is changed. The refusal reads:
+`Only the workspace owner can make someone an admin.`
+
+## Exactly one owner
+
+A workspace has exactly one owner, always. That is a two-sided rule.
+
+Ownership is never granted. Trying to set somebody's role to owner, or to move
+the current owner out of the owner role, is refused with:
+`Ownership is transferred, never granted. Use the transfer control instead.`
+
+Ownership moves by transfer, which promotes the new owner and demotes the
+outgoing one in the same write. There is no moment in which the workspace has
+two owners or none. A removal or a demotion that would leave the workspace with
+no owner is refused, and the refusal names transfer as the way through.
+
+## The owner and money
+
+Money reads are the workspace's. Money writes are the owner's.
+
+Any member, whatever their role, may read the balance, read the statement, and
+see whether the owner has paused requests. Those three facts govern whether a
+member's own requests will be served, and a member who cannot see the balance
+discovers it by having a request refused.
+
+Buying credit, managing the card, and pausing or resuming requests are the
+owner's alone. Every billing control answers a non-owner with one sentence:
+
+> Only the workspace owner can manage its billing: the card and the buying of
+> credit are the owner's own. Members may read the balance and the statement of
+> the workspace they are in.
+
+Pause has its own sentence, because the fact it refuses is not billing:
+
+> Only the workspace owner can pause or resume its requests.
+
+Both are HTTP 403. The refusal names what your role does not cover rather than
+pretending the control is not there, because the screen offered it and an
+unexplained absence leaves you with nothing to act on.
+
+One consequence is worth stating plainly: because billing belongs to a
+workspace, one card cannot fund two workspaces. Each workspace is bought for
+separately.
+
+## Invitations
+
+An owner or an admin invites somebody by email address.
+
+- The invitation is bound to that address. The link works for that address and
+  no other.
+- It is valid for seven days.
+- It can offer admin, developer or viewer. It can never offer owner, because
+  ownership moves only by transfer.
+- Only the owner can offer admin, by the persistence rule above.
+- It confers nothing until it is accepted, and the inviter's authority is
+  re-checked at redemption. An invitation is a credential minted by somebody who
+  may since have lost the right to mint one.
+- It may carry a key reservation, so a person arrives with a key waiting for
+  them. The reservation occupies one of the workspace's five key slots from the
+  moment it is made. See [Create an API key](/guides/create-an-api-key).
+- A workspace may hold up to ten pending invitations at once.
+
+Cancelling a pending invitation takes back exactly what sending it gave out, so
+it takes the same permission as sending: owner or admin. Cancelling an
+invitation also cancels any reservation it carried.
+
+An invitation link that matches nothing and one that was issued to a different
+address answer identically. Anything else would let anybody holding a session
+find out that an invitation exists, and for whom.
+
+## Keys and who can see them
+
+A key belongs to the workspace. It also carries one accountable member, so spend
+can be attributed to somebody.
+
+A key may be limited to named members of its workspace. That limit decides who
+can see the key exists and who can manage it. The owner and admins always see
+every key. Everybody else sees the keys they are accountable for or named on,
+and nobody outside the list learns that such a key exists.
+
+The limit is visibility and management, and nothing else. On the request path a
+key is a bearer credential: whoever holds the secret can call the API with it.
+So the limit is not per-person enforcement, and it deliberately promises no
+per-person usage split. Requests made with a shared key cannot be attributed to
+the individual who sent them, because what reached us was the key.
+
+The one place a member limit does more than scope a screen is the playground,
+where sending as a key is treated as managing it. See
+[Playground](/guides/playground).
+
+## Removing somebody never silently revokes a key
+
+Removal is blocked until every live key the departing member is accountable for
+carries an explicit choice: revoke it now, or keep it and name a new accountable
+member. There is no default, because the safest-looking default is still a
+choice nobody made.
+
+Exactly three things revoke a key, and the list is closed:
+
+1. Somebody explicitly revoked it.
+2. It was replaced, which mints a new key and ends the old one in the same
+   motion.
+3. Somebody was removed from the workspace and the person removing them chose
+   revoke for that key.
+
+A role change never revokes a key. Neither does letting a key reservation lapse,
+because a reservation is not yet a key.
+
+Uniblock staff can also revoke a customer key from our side. That is recorded
+against a named member of staff rather than against you, and it does not make a
+fourth way for a workspace to end its own key.
+
+## What this page does not cover yet
+
+**A second workspace.** The flows for opening another workspace and for
+switching between them have not been accepted, so they are not documented here.
+We do not describe a flow from a route alone.
+
+**A monthly spend limit per workspace.** The permission split and the refusal
+wording for a workspace-level monthly limit are not settled, so no figure or
+sentence for it appears on this site.
+
+**The screens themselves.** The members roster, the role editor, the transfer
+control and the removal flow are described here from the rules the service
+enforces. The stories that accept those screens are still open, and the flows in
+[Invite and manage members](/guides/invite-and-manage-members) have not been
+walked end to end against a deployed environment. Where a screen and this page
+disagree, the screen is what you are using and the disagreement is a bug worth
+reporting.

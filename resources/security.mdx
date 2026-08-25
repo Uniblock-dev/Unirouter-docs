@@ -1,0 +1,107 @@
+---
+title: "Security"
+description: "The security promises Uniblock makes about your keys, your prompts, provider credentials, and who can act on your money."
+status: write-now
+gates: []
+---
+
+This page lists what we promise and what we do not. Each promise below is
+something the product enforces, not a statement of intent.
+
+## Your API keys
+
+**We store a one-way hash of your key, never the key.** A key is shown to you
+once, at creation. What we keep is a hash of it, plus the non-secret prefix and
+last four characters so you can tell your keys apart.
+
+Two consequences follow, and the second matters as much as the first:
+
+- A leak of our database yields no usable keys. There is nothing in it that can
+  be sent as a bearer token.
+- We cannot show you your key again, and nobody at Uniblock can either. There is
+  no support path, no console screen and no internal tool that reads a key back,
+  because the value that would let one exist was never written down.
+
+An unknown key, a revoked key and a malformed key are all refused. See
+[Authentication](/get-started/authentication) for what your client receives.
+
+## Provider credentials
+
+**You never hold a provider credential, and we never expose ours.** When you call
+a model, we substitute our own credential for the provider that serves it. You do
+not see it, you do not receive it, and nothing in a response lets you work it
+out.
+
+The practical benefit is the one you would want: a provider credential problem on
+our side is ours to fix, and fixing it does not require you to change anything.
+
+## Your prompts and replies
+
+**We do not store the content of a request.** We record metadata about it: the
+model, the provider, the token counts, the cost, the latency and the outcome. The
+prompt and the response body are not stored, and that includes playground runs.
+See [Data and privacy](/concepts/data-and-privacy).
+
+## Invitations
+
+An invitation link is stored only as a hash of its token, and an invitation is
+found by that hash. A database dump yields nothing that can be presented as a
+valid link.
+
+An invitation works only for the email address it was sent to, expires after
+seven days, and re-checks the inviter's authority at the moment it is accepted. A
+link that matches nothing and a link that belongs to another address answer
+identically, so holding a session tells you nothing about who has been invited.
+
+## Who can act on your money
+
+Permissions are enforced on our side, on every request, against your role read at
+that moment. A screen that hides a control is not the enforcement; the refusal is.
+
+The workspace owner alone can buy credit, manage the card, and pause or resume
+requests. Every other member can read the balance and the statement and can do
+nothing to them. Ownership moves only by an explicit transfer, which demotes the
+outgoing owner in the same action, so a workspace never has two owners and never
+has none.
+
+Only the owner can make somebody an admin. An admin cannot create a second admin,
+because a stolen admin session must not be able to leave a permanent
+administrator behind after the session is ended and the password is changed.
+
+See [Workspaces and members](/concepts/workspaces-and-members) for the full
+permission table.
+
+## Your money figures come from one place
+
+One component computes a balance, and one record explains a charge. Your balance,
+your statement and your usage figures are derived from the same accounting rather
+than kept in step by a job that reconciles two copies, so they cannot drift apart
+and tell you two different things.
+
+A charge names the model rates that were in force when it was made, and those
+rates are immutable once used. A later price change cannot alter what an old
+request cost.
+
+## What we do not claim
+
+Stated plainly, because a security page that lists only good news is not useful:
+
+- **No compliance certification.** No audit, certification or framework claim is
+  made anywhere on this site, because none has been obtained.
+- **No availability or latency promise.** There is no service level agreement and
+  no published uptime or latency figure. Any number you may have seen elsewhere is
+  a target of ours, not a commitment to you.
+- **No revocation timing promise.** We do not publish how quickly a revoked key
+  stops working everywhere, because it has not been measured on a deployed
+  environment.
+- **Nothing about provider-side handling.** What a provider does with a request we
+  forwarded to it is governed by that provider.
+- **No security contact yet.** This site does not yet name a channel for reporting
+  a security problem. When one is published it will be on this page.
+
+## Reporting something
+
+If a request behaved in a way you cannot explain, the request id is the useful
+thing to have. It is on every response, successes and errors alike, and it is
+what lets a specific request be found. Quote it rather than describing the
+symptom.

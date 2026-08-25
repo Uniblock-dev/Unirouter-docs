@@ -1,0 +1,154 @@
+---
+title: "Create an API key"
+description: "Mint a key in the dashboard, copy it once, and know who else can see it. Covers the five-slot limit, member limits, and reserved keys."
+status: partial
+gates: ["3.9", "3.10", "3.11", "3.13", "9.22", "9.23"]
+---
+
+An API key is what authenticates your calls to `https://ai.uniblock.dev`. Keys
+are created in the dashboard, at [Keys](https://app.uniblock.dev), and never
+through the API.
+
+**Who can do this:** owner, admin or developer. A viewer cannot, and is refused
+with `Your role in this workspace cannot create API keys.` See
+[Workspaces and members](/concepts/workspaces-and-members).
+
+## Create one
+
+<Steps>
+<Step title="Open Keys in the dashboard">
+Sign in and go to Keys. The screen lists the keys you are allowed to see, which
+is not always every key in the workspace. See
+[Who can see which keys](#who-can-see-which-keys).
+</Step>
+<Step title="Name it">
+Give the key a name that says where it will be used, such as `production-api` or
+`ci`. The name is the only thing you will have to recognise it by later, because
+the secret is not shown again.
+</Step>
+<Step title="Create it, and copy it now">
+The key is shown once, in full, on this screen and nowhere else:
+
+```text
+ub_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+```
+
+The screen says what that means:
+
+> We keep only a hash, so we cannot show it to you again or recover it for you.
+
+Put it straight into the place it belongs, such as your secret manager or your
+deployment's environment. Copying it into a note to paste later is the handling
+the once-only showing exists to discourage.
+</Step>
+<Step title="Use it">
+Send it as a bearer token:
+
+```bash
+curl https://ai.uniblock.dev/v1/chat/completions \
+  -H "Authorization: Bearer ub_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"openai/gpt-4o-mini","messages":[{"role":"user","content":"Hello"}]}'
+```
+
+See [Authentication](/get-started/authentication) for the key format and the
+prefix that says which environment a key belongs to.
+</Step>
+</Steps>
+
+## A key belongs to the workspace
+
+It does not belong to you. A key spends the workspace's credit, its usage appears
+in the workspace's figures, and it survives your leaving unless somebody chooses
+to revoke it on the way out.
+
+Each key also carries one accountable member, so its spend has a name attached
+to it. Being accountable for a key is not a permission: it says who answers for
+what the key does, not who is allowed to use it.
+
+## Five live keys per workspace
+
+A workspace holds up to five live keys. Asking for a sixth is refused with:
+
+> This workspace already holds 5 live keys, which is the maximum. Revoke one to
+> free a slot.
+
+Five rather than one is deliberate: with a single key the same secret ends up on
+a laptop, in CI, and in production, and the only remedy for a leak is an outage.
+With several, you can create the replacement, move traffic, and end the old key
+with nothing down in between.
+
+A key reservation attached to an invitation occupies one of the five slots from
+the moment it is made, even though the key does not exist yet. See
+[Keys that arrive with an invitation](#keys-that-arrive-with-an-invitation).
+
+## Who can see which keys
+
+Every key list carries the same sentence, whoever is reading it and whatever the
+workspace holds:
+
+> Key lists are scoped to what each member may see. An owner or admin sees every
+> key in the workspace; everybody else sees the keys they are accountable for or
+> named on.
+
+The note never changes, and that is the point. A note that appeared only when
+there was a hidden key would announce the hidden key.
+
+When creating a key, an owner or an admin can limit it to named members. That
+limit decides who can see the key exists and who can manage it, and nobody
+outside the list learns that it exists at all. A developer or viewer attempting
+to set a limit is refused with:
+
+> Only an owner or an admin can limit a key to particular members.
+
+The limit does not change what the key can do. On the request path a key is a
+bearer credential, so anybody holding the secret can call the API with it. The
+limit is about screens and management, and it promises no per-person usage split.
+
+## Keys that arrive with an invitation
+
+An invitation can carry a key reservation, so somebody joining a workspace
+arrives with a key waiting for them.
+
+- The reservation takes one of the workspace's five slots as soon as it is made,
+  so the workspace cannot promise a key it has no room for.
+- The key does not exist until the invitee views it for the first time after
+  accepting. Viewing it creates it, once.
+- It is shown once, with the same sentence as any other new key. If two tabs
+  press the button together, exactly one key is created and the other tab is told
+  the key was already shown, along with the prefix and last four so you can tell
+  which key was created. There is no second showing.
+- A reservation lapses and frees its slot if the invitation is never accepted, or
+  if seven days pass after acceptance without it being viewed.
+- An owner or admin can cancel a reservation before anybody has looked at it,
+  which frees the slot.
+
+A lapse or a cancellation is not a revocation, because the key never existed.
+
+## Ending a key
+
+Exactly three things revoke a key, and the list is closed: an explicit revoke, a
+replacement, and a removal in which somebody chose revoke for that key. A role
+change never revokes a key. Uniblock staff can also revoke a key from our side,
+recorded against a named member of staff.
+
+<Warning>
+There is no self-service revoke or replace control yet. The permission exists
+and the closed list above is what will ever end a key, but the screen that lets
+you press revoke has not shipped, so this guide does not describe one. The one
+place a revoke choice is offered today is
+[removing a member](/guides/invite-and-manage-members), where every key that
+person is accountable for needs a choice of revoke or keep. Until the control
+ships, treat a leaked key as something you cannot end yourself.
+</Warning>
+
+We do not publish how quickly a revocation takes effect everywhere. There is a
+target for it, and until it is measured on a deployed environment there is no
+figure here worth relying on.
+
+## What we did not verify
+
+The screens described on this page are built and the rules above are what the
+service enforces, but the create, copy-once and reserved-key flows have not been
+walked end to end against a deployed environment for this documentation. If a
+screen contradicts this page, trust the screen and tell us.

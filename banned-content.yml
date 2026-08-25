@@ -1,0 +1,242 @@
+# The must-not-publish register, from DOCS_PLAN.md section 13.
+#
+# Every entry carries a reason, so the list explains itself to whoever trips
+# over it and so an entry that stops being true can be removed on evidence
+# rather than on a guess.
+#
+# This file is data. scripts/lint-banned-content.mjs reads it and scans every
+# MDX file plus the published OpenAPI artifact. It does not scan itself, the
+# scripts, or this repository's contributor documentation, because those have
+# to be able to name the thing they forbid.
+#
+# Each rule bans a MECHANISM or an UNPROVEN CLAIM, never a fact a customer is
+# entitled to. Where a customer-facing promise and an internal mechanism share
+# vocabulary, the pattern is narrowed to the mechanism rather than the promise:
+# a page must be able to say "you never hold a provider credential" without
+# fighting the linter to do it.
+#
+# `pattern` is a JavaScript regular expression, matched case-insensitively
+# unless `caseSensitive: true`. `id` is stable and is what an inline exemption
+# comment names.
+
+version: 1
+
+# Files the linter reads. Everything else is ignored.
+include:
+  - "**/*.mdx"
+  - "api-reference/openapi.public.json"
+
+exclude:
+  - "node_modules/**"
+  - "DOCS_PLAN.md"
+  - "banned-content.yml"
+  - "claims.yml"
+  - "scripts/**"
+  - "README.md"
+  - "CONTRIBUTING.md"
+  - ".github/**"
+
+# An inline escape hatch, for the rare page that must quote a banned string to
+# tell a customer it does not apply to them. Put this on the line above:
+#
+#     {/* banned-content-allow: fork-provenance -- reason */}
+#
+# The reason is required. An allowance with no reason fails the lint.
+allowMarker: "banned-content-allow:"
+
+rules:
+  # 1. Fork provenance
+  - id: fork-provenance-portkey
+    pattern: "portkey"
+    reason: >-
+      The product's own build fails if the upstream name reappears in a
+      customer-facing surface. Docs hold the same line. A customer buys a
+      router, not a fork.
+
+  - id: fork-provenance-fork
+    pattern: "\\bthe fork\\b|\\bour fork\\b|\\bforked from\\b"
+    reason: >-
+      The gateway's ancestry is deliberately stripped from the product surface.
+      Naming it documents an internal service a customer cannot reach.
+
+  - id: fork-provenance-gateway-service
+    pattern: "services/gateway|the gateway service"
+    reason: >-
+      An internal service behind a service binding. A customer reaches
+      ai.uniblock.dev and nothing else.
+
+  # 2. Provider topology and procurement
+  - id: provider-count
+    pattern: "\\b78\\s+(providers?|adapters?|integrations?)|\\b\\d{2,}\\s+providers\\b"
+    reason: >-
+      How many provider accounts we hold is procurement, not documentation, and
+      the number moves. Docs point at GET /v1/models and the dashboard.
+
+  - id: routing-internals
+    pattern: "candidate list|attempt reason|committed capacity|discounted capacity|\\bstrain\\b|provider ordering"
+    reason: >-
+      Routing inputs are internal per FR-63, FR-64 and FR-65. Publishing them
+      tells a customer nothing they can act on and tells a competitor how we
+      buy.
+
+  - id: internal-request-headers
+    pattern: "x-uniblock-config|x-uniblock-last-used-option-index"
+    reason: >-
+      Internal mechanics. Neither is a header a customer may set or will
+      receive.
+
+  # 3. Provider credentials
+  - id: provider-credential-mechanism
+    pattern: "secrets store|key rotation|rotate(s|d)? (our|the provider) key|credential (vault|encryption|topology)|how we store (our )?provider"
+    reason: >-
+      FR-5, NFR-5 and AD-5. The customer promise ("you never hold or see a
+      provider credential, and we never expose ours") is fine to state and is
+      deliberately not matched here. The MECHANISM behind it is not: even
+      saying rotation exists is key topology.
+
+  # 4. Unit economics
+  - id: unit-economics
+    pattern: "absorbed cost|breakeven|break-even|gross margin|our margin|negotiated rate|per-customer rate"
+    reason: >-
+      How the 2.5% was chosen, what it covers, and what any account pays
+      instead are commercial internals.
+
+  - id: competitor-pricing
+    pattern: "openrouter|cheaper than|compared to openai's price|undercut"
+    reason: >-
+      Positioning is marketing's job on the marketing site. Documentation
+      states what this product does.
+
+  # 5. Staff surfaces
+  - id: staff-surfaces
+    pattern: "cloudflare access|/admin/|staff console|the console\\b|staff capability|suspension tooling"
+    reason: >-
+      The staff console is internal and access-gated. The customer-visible
+      refusal may be documented; the workflow behind it may not.
+
+  # 6. Signals
+  - id: signals-epic-12
+    pattern: "signals\\.uniblock\\.dev|billing-mail|provider balance polling"
+    reason: >-
+      Epic 12 is an internal system. It has no customer surface.
+
+  # 7. Internal architecture nouns
+  - id: internal-architecture
+    pattern: "durable object|\\bKV (namespace|prefix)\\b|\\bD1\\b|\\bR2\\b|service binding|wrangler|workers\\.dev|x-uniblock-internal-secret"
+    reason: >-
+      Internal topology. None of it is reachable, actionable, or stable from a
+      customer's side, and worker names and hostnames are a map of the system.
+
+  - id: internal-error-shape
+    pattern: "\\{\\s*\"?error\"?\\s*:\\s*\"[^\"]*\"\\s*\\}"
+    reason: >-
+      The internal {\"error\": \"message\"} shape. The public API answers in the
+      OpenAI envelope at every status; showing the other shape teaches a
+      customer to parse something they will never receive.
+
+  - id: internal-account-row
+    pattern: "the account row|internal account record"
+    reason: >-
+      FR-38. The account is never shown to a customer as distinct from the
+      workspace.
+
+  # 8. Security findings and unproven claims
+  - id: unproven-availability
+    pattern: "99\\.9|uptime guarantee|\\bSLA\\b"
+    reason: >-
+      NFR-2's figure is tagged as an assumption nobody asked for. It is not a
+      promise anybody has made.
+
+  - id: unproven-latency
+    pattern: "50\\s?ms|p95 latency|added latency of"
+    reason: >-
+      An internal figure from an unfinished measurement. Not a customer
+      promise.
+
+  - id: unproven-concurrency
+    pattern: "100 concurrent|concurrent streams"
+    reason: >-
+      Story 2.7's proof is owed. Until it lands there is no concurrency number
+      to publish.
+
+  - id: unproven-revocation-timing
+    pattern: "within (one|1) second|instant(ly|aneous) revocation|revoked immediately"
+    reason: >-
+      FR-12's story is backlog. Say nothing about revocation timing until
+      shipped behaviour has been measured.
+
+  - id: unproven-oauth
+    pattern: "sign in with (google|github|apple)|social sign-in|oauth sign-in"
+    reason: >-
+      No OAuth round trip has ever been completed in this product. Documenting
+      it would be inventing a feature.
+
+  - id: unproven-ip-limit
+    pattern: "3 accounts per|accounts per IP"
+    reason: >-
+      Story 3.6's figure is unreconciled with the shipped limiter. Publish
+      neither.
+
+  # 9. Unsettled strings and open legal questions
+  - id: refund-language
+    pattern: "refund|non-refundable|money back"
+    reason: >-
+      PRD section 11 OQ-5 is open with counsel. No refund sentence, in either
+      direction, until it is answered and recorded.
+
+  - id: hedged-legal-caveat
+    pattern: "subject to applicable law"
+    reason: >-
+      Explicitly banned by the PRD as a rendering of an open legal question. It
+      reads as a promise with an escape hatch and is neither.
+
+  - id: trial-credit
+    pattern: "trial credit|free credit|(?<!no )free tier|credit on (us|sign-?up)"
+    reason: >-
+      Story 4.17 is backlog. There is no trial credit to describe. Saying that
+      there is NO free tier is a true statement about the product today and is
+      deliberately not matched, which is why the pattern refuses the phrase
+      only when it is not negated.
+
+  - id: capture-epic-7
+    pattern: "request capture|opt in to storage|we store your (prompts|replies|requests)|turn on (prompt|request) storage"
+    reason: >-
+      Epic 7 is entirely backlog, and FR-28's disclosure text does not exist.
+      Documenting it would be inventing a product. Saying that nothing is
+      stored and that the playground therefore has no history is a shipped
+      fact and is deliberately not matched here.
+
+  # 10. Self-hosting, which is not an offering
+  - id: self-hosting
+    pattern: "on-premise|on-prem\\b|docker (image|compose|run)|helm chart|deploy your own|install the gateway|run (it|the gateway) yourself"
+    reason: >-
+      The product is hosted-only by evidence, not by omission. There is no
+      install path and no distribution surface. What is banned is an install
+      route, not the word: DOCS_PLAN.md section 10 asks pages to EXPLAIN the
+      absence, so "there is no self-hosted version" must be sayable and is
+      deliberately not matched.
+
+  # Voice, adopted from the source repository's own pre-commit rule.
+  - id: em-en-dash
+    pattern: "[\\u2013\\u2014]"
+    reason: >-
+      No em or en dashes in authored prose. The source repository forbids them
+      and the docs keep one voice with the product.
+    caseSensitive: true
+
+  # Never, from anywhere.
+  - id: secret-shaped
+    pattern: "ub_(live|stg|dev)_(?![A-Za-z0-9_-]*(?:XXXX|xxxx|PLACEHOLDER|EXAMPLE|YOUR))[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9]{20,}|(?:AKIA|ASIA)[A-Z0-9]{16}"
+    reason: >-
+      Something shaped like a real credential. A key in an example is a run of
+      obvious placeholder characters and nothing else, so that a reader cannot
+      mistake it for a working key and a scraper cannot harvest one. The
+      lookahead is what lets ub_live_XXXX... through while still catching 43
+      plausible characters.
+    caseSensitive: true
+
+  - id: non-production-host
+    pattern: "workers\\.dev|localhost:|127\\.0\\.0\\.1|staging-[a-z0-9-]+\\."
+    reason: >-
+      A non-production hostname in customer documentation points a reader at
+      something they cannot reach and shows them our internal topology.

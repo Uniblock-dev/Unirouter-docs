@@ -1,0 +1,38 @@
+Every request to the API carries your key in an `Authorization` header using the
+`Bearer` scheme. A missing header, a scheme other than `Bearer`, a key of the
+wrong shape, and a key we reject are all answered with `401`.
+
+<CodeGroup>
+
+```bash curl
+curl https://ai.uniblock.dev/v1/chat/completions \
+  -H "Authorization: Bearer $UNIBLOCK_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "openai/gpt-4o-mini",
+    "messages": [{"role": "user", "content": "Say hi in five words."}]
+  }'
+```
+
+```python Python
+import os
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://ai.uniblock.dev/v1",
+    api_key=os.environ["UNIBLOCK_API_KEY"],
+)
+```
+
+```typescript Node
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "https://ai.uniblock.dev/v1",
+  apiKey: process.env.UNIBLOCK_API_KEY,
+});
+```
+
+</CodeGroup>
+
+Keep the key out of your source. Read it from the environment, as above.

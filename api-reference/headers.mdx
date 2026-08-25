@@ -1,0 +1,90 @@
+---
+title: "Headers"
+description: "The request headers this API reads, the response headers it sets, and the token-count line that rides a streamed response."
+status: write-now
+gates: []
+---
+
+import UsageHeader from '/snippets/usage-header.mdx';
+import RequestIdNote from '/snippets/request-id-note.mdx';
+
+## Request headers
+
+| Header | Required | Notes |
+|---|---|---|
+| `Authorization` | Yes | `Bearer <key>`. Any other scheme is refused as if no key were sent. See [Authentication](/api-reference/authentication). |
+| `Content-Type` | On requests with a body | `application/json`. |
+| `Accept` | No | Streaming is chosen by `"stream": true` in the body, not by this header. |
+
+Two rules about everything else you send:
+
+- **`x-uniblock-*` request headers are reserved.** We remove every inbound header
+  in that namespace before doing anything with your request. Sending one has no
+  effect, and no header you send can change how a request is routed or served.
+- **Your headers do not reach the model provider.** The upstream request is built
+  from your body, and from nothing else you sent. If a parameter matters to a
+  provider, send it in the body, which is forwarded as you wrote it.
+
+## Response headers
+
+| Header | When | What it is |
+|---|---|---|
+| `content-type` | Always | `application/json`, or `text/event-stream` for a streamed response. |
+| `x-uniblock-request-id` | Always | The id of this request. Quote it to support. |
+| `x-request-id` | Always | The same value, on the header the official OpenAI SDKs surface on their error objects. |
+| `Retry-After` | On a `429` with code `rate_limit_exceeded` | Seconds to wait before retrying. Not sent on other refusals. |
+| `x-uniblock-provider` | On a served response | Which provider family answered. |
+| `x-uniblock-retry-attempt-count` | On a served response | How many attempts it took to get this answer. A reply that took longer than usual may have taken more than one. |
+| `x-uniblock-cache-status` | On a served response | Whether the answer came from cache rather than from the model. |
+| `x-uniblock-trace-id` | On a served response | A secondary diagnostic id. Support asks for `x-uniblock-request-id`. |
+
+The four diagnostic headers are set when there is something to say and are absent
+otherwise. Treat them as diagnostics: read them in logs, do not build behaviour
+on them, and expect the set to grow.
+
+Nothing else from upstream reaches you. In particular, **provider rate-limit
+headers are not forwarded**: the limits you are subject to are ours, so a
+provider's remaining-quota headers would describe a budget that is not yours and
+tell you nothing you can act on. Read our own limits from the `429` codes in
+[Errors](/api-reference/errors#rate-limits-and-spend-refusals) instead.
+
+<RequestIdNote />
+
+## Token counts
+
+A non-streamed response carries token counts where an OpenAI-compatible client
+already looks for them: the `usage` object in the response body, as the provider
+reported it.
+
+A streamed response cannot do that, because the body is a sequence of events and
+the counts are only final at the end. So a streamed response carries one extra
+line, immediately before its terminating `data: [DONE]`:
+
+```
+:x-uniblock-usage {"v":1,"reported":true,"prompt_tokens":12,"completion_tokens":8,"total_tokens":20}
+
+data: [DONE]
+```
+
+A line beginning with a colon is a comment that the server-sent events
+specification requires a parser to ignore, so this is invisible to your SDK and
+to any conforming client. It is there for anybody who wants the counts without
+waiting for them to appear in the dashboard.
+
+<UsageHeader />
+
+Where to read the counts, stated once so there is no doubt: on a streamed
+response, the comment line above. On a response that is not streamed, the `usage`
+object in the body, which is where an OpenAI-compatible client already looks.
+
+Two rules that make the difference between reading this correctly and quietly
+mis-reading it:
+
+- **Absent is not zero.** A count the provider did not report is omitted rather
+  than sent as `0`, because "we were not told" and "none were used" are different
+  facts and only one of them is free.
+- **`reported: false` means we have no counts**, not that the request was free. It
+  carries no token fields at all.
+
+Ignore fields you do not recognise. This object gains fields, and `v` moves only
+when a reader would have to behave differently.

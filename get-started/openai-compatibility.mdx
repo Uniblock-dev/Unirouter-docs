@@ -1,0 +1,169 @@
+---
+title: "OpenAI compatibility"
+description: "What OpenAI-compatible means here: the endpoints that exist today, the differences that are additive, and what a call to anything else returns."
+status: partial
+gates: ["2.3", "2.10", "2.11"]
+---
+
+import FeatureStatus from '/snippets/feature-status.mdx';
+import BaseUrl from '/snippets/base-url.mdx';
+
+"OpenAI-compatible" here means three specific things, and it is worth being
+exact about each of them rather than leaving you to find the edges by calling.
+
+1. The request and response bodies are OpenAI's, unchanged.
+2. Errors arrive in the OpenAI error envelope, so your existing error handling
+   parses them.
+3. What we add is additive: extra response headers and one SSE comment line,
+   both of which a compliant client ignores.
+
+<BaseUrl />
+
+## The endpoints that exist today
+
+<FeatureStatus
+  feature="text completions and embeddings"
+  detail="POST /v1/completions and POST /v1/embeddings are the rest of the intended launch surface and are not built. They return the unknown-URL 404 below today. They are not documented anywhere on this site until they serve real responses, because a page describing them would be describing a plan."
+/>
+
+| Endpoint | Method | Status |
+|---|---|---|
+| `/v1/chat/completions` | `POST` | Serves. Streaming and non-streaming. |
+| `/v1/models` | `GET` | Serves. |
+
+That table is the whole public surface. There is no other path under `/v1`, and
+a path that is not on this list does not exist rather than being undocumented.
+
+## What a call to anything else returns
+
+Every other path under `/v1` is answered by one catch-all, so an endpoint we do
+not serve is a documented refusal rather than a surprise. It is a 404 in the
+OpenAI envelope, with type `invalid_request_error` and code `unknown_url`:
+
+```bash
+curl https://ai.uniblock.dev/v1/embeddings \
+  -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{"model": "openai/gpt-4o-mini", "input": "hello"}'
+```
+
+```json 404
+{
+  "error": {
+    "message": "Unknown request URL: POST /v1/embeddings.",
+    "type": "invalid_request_error",
+    "param": null,
+    "code": "unknown_url",
+    "request_id": "00000000-0000-4000-8000-000000000000"
+  }
+}
+```
+
+The same answer covers a method we do not serve on a path we do, such as a `GET`
+on `/v1/chat/completions`, because the catch-all matches on the path and the
+method together.
+
+## Request parameters
+
+The chat completion body is forwarded as you sent it. We neither parse it nor
+rebuild it, and there is no request schema of ours in front of it, so a parameter
+your client already sends works without waiting for us to add it. A body the
+provider rejects comes back as the provider's own OpenAI-shaped error.
+
+Two consequences worth stating:
+
+- We add no parameters of our own to the body. There is nothing Uniblock-specific
+  to put in a request.
+- `max_tokens` is worth sending even though it is optional. It is what sizes the
+  amount we hold against your balance before the call, so a request without it is
+  held at a larger estimate and reaches your account spend rate cap sooner. See
+  [rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+
+## Model ids
+
+Models are named `family/model`, for example `openai/gpt-4o-mini`. The prefix
+says which family serves the model, so the same short name from two families is
+never ambiguous. A bare OpenAI-style name with no family is not a Uniblock model
+id. Ask [`GET /v1/models`](/concepts/models) for the ids you can call.
+
+## Request headers
+
+Send `Authorization` and `Content-Type`. Nothing else you send is forwarded: the
+request we make on your behalf is built from your request body and our own
+provider credential, with a fresh header set, so headers beyond those two are
+neither honoured nor passed to the provider.
+
+`x-uniblock-*` is our reserved namespace on both directions of the wire. Sending
+one has no effect for the same reason: it does not travel.
+
+## Response differences
+
+All three differences are additions to an otherwise unchanged OpenAI response.
+
+### The request id
+
+Every response, success or error, carries `x-uniblock-request-id`, and the same
+value on `x-request-id`, which is the header the OpenAI SDKs already read. On an
+error, the id also appears as `request_id` inside the `error` object. That fifth
+field inside `error` is the one shape difference from OpenAI's envelope, and it
+is inside `error` rather than beside it precisely so that an SDK reading the
+fields it knows ignores it safely.
+
+### Diagnostic headers
+
+A short allowlist of response headers describes how the request was served.
+These are the ones that ship today:
+
+| Header | What it says |
+|---|---|
+| `x-uniblock-provider` | Which provider family answered. |
+| `x-uniblock-retry-attempt-count` | How many attempts it took, so a slow success has a visible reason. |
+| `x-uniblock-cache-status` | Whether the reply came from cache rather than from the provider. |
+| `x-uniblock-trace-id` | A second internal id, distinct from your request id. |
+
+Nothing else the provider sets travels onward. That is deliberate rather than
+incidental, and it has one consequence you will notice: **provider rate limit
+headers are not forwarded.** If you currently read the remaining-requests and
+reset headers that a provider sets, those are absent here, because they describe
+a pool we hold rather than a limit that applies to you. Your own limits arrive as
+429 responses with codes you can branch on, documented in
+[rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+
+### The usage comment line on a stream
+
+A streamed reply carries one extra line immediately before `data: [DONE]`,
+starting with a colon:
+
+```text
+:x-uniblock-usage {"v":1,...}
+```
+
+The SSE specification requires a parser to ignore a line starting with a colon,
+so the OpenAI SDKs skip it and your own parser should too unless you want the
+counts. [Streaming](/concepts/streaming) documents its fields.
+
+A non-streamed reply carries no equivalent header today. The counts are read on
+our side and become your usage record, which is where to read them.
+
+## Errors
+
+Status codes and the closed set of `type` values are OpenAI's. Branch on `type`
+and `code`, never on the message text: the fields are the contract and the
+sentences are prose that may be reworded. Every shipped code and its status is in
+[errors](/concepts/errors).
+
+One difference in kind is worth naming. Some of our refusals are about money
+rather than about your request: not enough credit, or an account spend rate cap.
+Those reuse OpenAI's own `insufficient_quota` and `rate_limit_error` types, so the
+branch your client already has keeps working, and carry a Uniblock `code` that
+says which of them happened.
+
+## What we do not claim
+
+- We have not published a proof run of an unmodified official SDK against the
+  production hostname. The instructions on this site set only `base_url` and
+  `api_key`, which is the whole intended change, and we will say so as a tested
+  result rather than an expectation once that run exists.
+- We make no statement here about behaviour under concurrency, latency added by
+  the hop, or availability. No figure for any of those has been measured in a way
+  we are willing to publish.

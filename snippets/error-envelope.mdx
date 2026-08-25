@@ -1,0 +1,29 @@
+Every error on the API, at every status, is one JSON object with a single
+top-level `error` key. An OpenAI client parses it with the error handling it
+already has.
+
+```json Error envelope
+{
+  "error": {
+    "message": "Incorrect API key provided.",
+    "type": "authentication_error",
+    "param": null,
+    "code": "invalid_api_key",
+    "request_id": "REQUEST_ID"
+  }
+}
+```
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `message` | string | Prose for a person. It may be reworded, so do not branch on it. |
+| `type` | string | The category an SDK branches on. A closed set. |
+| `param` | string or null | The request field at fault, or `null`. Present and null rather than absent. |
+| `code` | string or null | The stable machine-readable reason. Branch on this. |
+| `request_id` | string | Our id for this request. Quote it when you contact support. |
+
+Branch on `type` and `code`. Both are stable. `message` is prose and may change.
+
+The `type` values are `invalid_request_error`, `authentication_error`,
+`permission_error`, `not_found_error`, `rate_limit_error`, `api_error`,
+`insufficient_quota`, and `server_error`.

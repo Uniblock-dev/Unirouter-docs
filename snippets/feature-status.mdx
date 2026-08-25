@@ -1,0 +1,14 @@
+export const FeatureStatus = ({ missing, instead }) => (
+  <Info>
+    <strong>Not available yet: {missing}.</strong>
+    {instead ? ` ${instead}` : null} This page documents what the product does
+    today. When that changes, this page changes with it.
+  </Info>
+);
+
+export const NotDocumented = ({ subject, reason }) => (
+  <Info>
+    <strong>{subject} is not documented here.</strong> {reason} We would rather
+    say nothing than describe something you cannot use.
+  </Info>
+);

@@ -1,0 +1,291 @@
+# The numeric claims registry (DOCS_PLAN.md section 13 and 16.4).
+#
+# Every number this site publishes in prose is listed here with the file it
+# comes from and its status. scripts/check-claims.mjs fails any digit-bearing
+# claim in MDX prose that is not registered, which is how "do not invent
+# numbers" stops being something a writer has to remember.
+#
+# It also makes the stale-number sweep mechanical: when a decision record
+# changes, grep this file for the source path and every page carrying that
+# number is one `used_by` list away.
+#
+# status:
+#   shipped   verified against a handler or a settled decision record. Publish.
+#   gated     true today but gated on a story. Publish only on the pages listed,
+#             and re-verify at the named gate.
+#   blocked   registered so the checker can name it, and NOT publishable. A page
+#             carrying a blocked claim fails the check with the reason.
+#
+# `value` is matched literally against the numeric tokens found in prose, so a
+# number written two ways needs both spellings listed.
+
+version: 1
+
+include:
+  - "**/*.mdx"
+
+exclude:
+  - "node_modules/**"
+
+# Numeric shapes that are structural rather than claims. A version in a path, a
+# heading anchor, a year in a date, an HTTP status: none of these is a promise
+# the product has to keep, and registering each one would bury the real claims.
+allow_patterns:
+  - pattern: "^/?v[0-9]+$"
+    reason: "An API version segment, e.g. v1."
+  - pattern: "^(1[0-9]{2}|[2-5][0-9]{2})$"
+    reason: "An HTTP status code. The status map is the contract, checked against handlers rather than against this registry."
+  - pattern: "^20[0-9]{2}-[0-9]{2}-[0-9]{2}$"
+    reason: "An ISO date."
+  - pattern: "^gpt-[0-9a-z.-]+$|^claude-[0-9a-z.-]+$|^o[0-9]$"
+    reason: "A model identifier, which comes from the catalog rather than from us."
+  - pattern: "^utf-8$|^base64url$|^sha-?256$"
+    reason: "The name of an encoding or algorithm."
+
+claims:
+  - id: fee-rate-percent
+    value: "2.5%"
+    means: "The platform fee added at credit purchase, at the launch rate."
+    source: "_bmad-output/product/decisions/the-platform-fee-is-taken-at-purchase.md; PRD FR-15, FR-18"
+    status: shipped
+    note: >-
+      Write it as "currently 2.5%". The rate is a staff-changeable row (FR-33)
+      and the checkout session fixes it at the moment checkout starts. Never
+      source fee copy from the whitepaper, which says the fee is on spend and
+      is wrong (DOCS_PLAN.md section 14 item 4).
+
+  - id: fee-worked-example-credit
+    value: "100"
+    means: "The credit granted in the worked fee example."
+    source: "_bmad-output/product/decisions/the-platform-fee-is-taken-at-purchase.md"
+    status: shipped
+    note: "Use the decision record's own numbers so docs and product explain money identically."
+
+  - id: fee-worked-example-charge
+    value: "102.50"
+    means: "What the card is charged to grant 100 credits at 2.5%."
+    source: "_bmad-output/product/decisions/the-platform-fee-is-taken-at-purchase.md"
+    status: shipped
+
+  - id: minimum-purchase
+    value: "$30"
+    means: "The smallest credit purchase, expressed in credit granted."
+    source: "_bmad-output/product/decisions/epic-4-open-questions-resolved-2026-08-18.md; PRD FR-14"
+    status: shipped
+
+  - id: keys-per-workspace
+    value: "five"
+    means: "How many API keys a workspace may hold at once, key reservations included."
+    source: "PRD FR-11, FR-13"
+    status: shipped
+
+  - id: keys-per-workspace-digit
+    value: "5"
+    means: "The same limit, written as a digit."
+    source: "PRD FR-11, FR-13"
+    status: shipped
+
+  - id: key-secret-length
+    value: "43"
+    means: "Base64url characters after the environment prefix in an API key."
+    source: "services/control-plane/src/keys/format.ts (SECRET_LENGTH)"
+    status: shipped
+    note: "Quoted inside the shipped malformed-key refusal, so it is customer-visible already."
+
+  - id: invitation-validity-days
+    value: "7"
+    means: "How long an invitation stays redeemable, and how long a key reservation is held."
+    source: "PRD FR-40"
+    status: shipped
+
+  - id: usage-freshness-seconds
+    value: "60"
+    means: "How soon a completed request appears in usage figures."
+    source: "PRD FR-22"
+    status: shipped
+
+  - id: spend-window-seconds
+    value: "60"
+    means: "The spend rate cap window, rolling."
+    source: "services/control-plane/src/money/balance.ts (SPEND_WINDOW_SECONDS)"
+    status: shipped
+
+  - id: spend-cap-default
+    value: "5000"
+    means: "The default account spend rate cap, in minor units of reserved estimated maximums per rolling 60 seconds."
+    source: "_bmad-output/product/decisions/epic-4-spend-rate-cap-2026-08-19.md; services/control-plane/src/money/balance.ts"
+    status: shipped
+    note: >-
+      It counts credit HELD, not credit spent. State the lever beside the
+      number: sending max_tokens holds less. Do not publish pool mechanics,
+      shard counts, or the reserve.
+
+  - id: request-deadline-seconds
+    value: "540"
+    means: "The request deadline. A request running past it is terminated with a 504."
+    source: "services/control-plane/src/money/deadline.ts (REQUEST_DEADLINE_SECONDS)"
+    status: shipped
+    note: "Quoted inside the shipped refusal message, so it is customer-visible already."
+
+  - id: error-type-count
+    value: "eight"
+    means: "How many values the error envelope's `type` field can take."
+    source: "services/control-plane/src/errors/openai.ts (ERROR_TYPES)"
+    status: shipped
+    note: >-
+      The source repository bans exact counts in prose because CI owns numbers.
+      This one is different in kind: it is a CLOSED set on a wire contract, and
+      a client that branches on it is entitled to know the set is closed. List
+      the eight values beside the count so the number is checkable rather than
+      trusted.
+
+  - id: usage-value-version
+    value: "1"
+    means: "The `v` field of the x-uniblock-usage value."
+    source: "services/gateway/src/uniblockUsage.ts (UNIBLOCK_USAGE_VERSION)"
+    status: shipped
+
+  - id: retention-configured-days
+    value: "90"
+    means: "The configured usage record retention window, as the Data screen prints it."
+    source: "_bmad-output/product/decisions/usage-record-retention-and-the-fr-22-split-2026-08-21.md"
+    status: gated
+    gate: epic-5
+    used_by:
+      - concepts/usage-and-metering
+      - concepts/data-and-privacy
+    note: >-
+      A configured value the product prints, not a promise anybody made
+      (DOCS_PLAN.md section 14 item 12). Phrase it as the product does: a
+      configured window over a stated floor. Verify against the shipped screen
+      before publishing.
+
+  - id: retention-floor-days
+    value: "62"
+    means: "The floor the configured retention window must stay above."
+    source: "_bmad-output/product/decisions/usage-record-retention-and-the-fr-22-split-2026-08-21.md"
+    status: gated
+    gate: epic-5
+    used_by:
+      - concepts/usage-and-metering
+      - concepts/data-and-privacy
+
+  - id: fee-basis-points
+    value: "250"
+    means: "The platform fee in basis points, which is how the product stores it."
+    source: "_bmad-output/product/decisions/the-platform-fee-is-taken-at-purchase.md"
+    status: gated
+    gate: owner-review
+    used_by: []
+    note: >-
+      Registered so the checker can name it. Basis points are the product's
+      internal unit; a customer reads a percentage. Prefer 2.5% in prose.
+
+  - id: spend-cap-minimum
+    value: "100"
+    means: "The smallest spend rate cap a customer may set, in minor units."
+    source: "services/control-plane/src/money/balance.ts (MIN_SPEND_CAP_MINOR)"
+    status: shipped
+    note: >-
+      A cap of zero is refused and the refusal says why: stopping requests
+      entirely is what the pause is for, and it has its own control.
+
+  - id: spend-cap-maximum
+    value: "100000"
+    means: "The largest spend rate cap, and the largest low-credit threshold. Both are the same figure in minor units."
+    source: "services/control-plane/src/money/balance.ts (MAX_SPEND_CAP_MINOR, MAX_LOW_CREDIT_THRESHOLD_MINOR)"
+    status: shipped
+
+  - id: low-credit-threshold-example-minor
+    value: "500"
+    means: "The worked example inside the shipped low-credit threshold refusal: 500 minor units."
+    source: "services/control-plane/src/money/balance.ts (the setLowCreditThreshold refusal)"
+    status: shipped
+
+  - id: low-credit-threshold-example-dollars
+    value: "5.00"
+    means: "The same worked example rendered at the presentation edge."
+    source: "services/control-plane/src/money/balance.ts (the setLowCreditThreshold refusal)"
+    status: shipped
+
+  - id: threshold-off-value
+    value: "0"
+    means: "The value that turns the low-credit email off, and the spend-cap value that is refused."
+    source: "services/control-plane/src/money/balance.ts (MIN_LOW_CREDIT_THRESHOLD_MINOR)"
+    status: shipped
+
+  # The Overview screen's window options, as the shipped screen offers them.
+  - id: usage-range-24h
+    value: "24"
+    means: "The 24 hour usage window on the Overview screen."
+    source: "apps/dashboard/src/app/(portal)/overview/page.tsx"
+    status: gated
+    gate: epic-5
+    used_by:
+      - guides/monitor-usage
+      - concepts/usage-and-metering
+
+  - id: usage-range-7d
+    value: "7"
+    means: "The 7 day usage window. Shares its value with the invitation validity window, which is why one entry answers for both."
+    source: "apps/dashboard/src/app/(portal)/overview/page.tsx; PRD FR-40"
+    status: shipped
+
+  - id: usage-range-30d
+    value: "30"
+    means: "The 30 day usage window, and the default the Overview screen opens on."
+    source: "apps/dashboard/src/app/(portal)/overview/page.tsx"
+    status: gated
+    gate: epic-5
+    used_by:
+      - guides/monitor-usage
+      - concepts/usage-and-metering
+
+  - id: usage-range-1y
+    value: "1"
+    means: "The 1 year usage window."
+    source: "apps/dashboard/src/app/(portal)/overview/page.tsx"
+    status: gated
+    gate: epic-5
+    used_by:
+      - guides/monitor-usage
+      - concepts/usage-and-metering
+    note: >-
+      A one year window over a retention floor well short of a year shows what
+      is kept, not a year of data. Say that beside the option or do not name it.
+
+  # Blocked claims. Registered so a page carrying one fails with a reason
+  # rather than with "unregistered number", which would read like an oversight.
+  - id: availability-target
+    value: "99.9%"
+    means: "NFR-2's availability figure."
+    source: "PRD NFR-2, tagged ASSUMPTION-3"
+    status: blocked
+    reason: >-
+      No customer has asked for this figure and nobody has promised it. There
+      is no status page in evidence. Publishing it would make an operational
+      commitment the product has not made.
+
+  - id: concurrent-streams
+    value: "100"
+    means: "The streaming concurrency figure from Story 2.7."
+    source: "sprint-status.yaml, Story 2.7 (backlog)"
+    status: blocked
+    reason: "The proof is owed. Until it lands there is no concurrency number to publish."
+
+  - id: accounts-per-ip
+    value: "3"
+    means: "Story 3.6's sign-up limit per IP per hour."
+    source: "sprint-status.yaml, Story 3.6"
+    status: blocked
+    reason: >-
+      Unreconciled with the shipped auth limiter (DOCS_PLAN.md section 14 item
+      6). Publish neither figure. The auth-surface limiter table is
+      operational anti-abuse detail and is not customer documentation.
+
+  - id: added-latency-p95
+    value: "50ms"
+    means: "NFR-1's added-latency target."
+    source: "PRD NFR-1"
+    status: blocked
+    reason: "An internal figure from an unfinished measurement. Not a customer promise."

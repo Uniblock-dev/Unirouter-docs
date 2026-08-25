@@ -1,0 +1,7 @@
+<Note>
+  Every response carries the same id on two headers: `x-uniblock-request-id`,
+  which is ours, and `x-request-id`, which is the one the official OpenAI SDKs
+  surface on their error objects. Every error envelope repeats it as
+  `request_id`. Quote it when you ask us about a request. Without it we are
+  guessing at which of your requests you mean.
+</Note>

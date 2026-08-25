@@ -1,0 +1,66 @@
+---
+title: "Uniblock Gateway"
+description: "An OpenAI-compatible LLM router. Change one base URL and one API key, keep your OpenAI SDK, and call models across providers on one prepaid balance."
+status: write-now
+gates: []
+---
+
+Uniblock Gateway is an OpenAI-compatible LLM router. You change one base URL and
+one API key, keep the OpenAI SDK you already use, and call models across
+providers on a single prepaid balance. We hold the provider accounts and meter
+the requests, so you never hold a provider credential.
+
+## The two lines that change
+
+Point your existing client at `https://ai.uniblock.dev` and give it a Uniblock
+key. Nothing else in your code moves.
+
+```python Python {2-3}
+client = OpenAI(
+    base_url="https://ai.uniblock.dev/v1",
+    api_key="ub_live_YOUR_KEY_HERE",
+)
+
+response = client.chat.completions.create(
+    model="openai/gpt-4o-mini",
+    messages=[{"role": "user", "content": "Say hi in five words."}],
+)
+```
+
+Model ids are `family/model`, so the model you name says which family serves it.
+
+## What it costs
+
+Credit is prepaid. A platform fee of 2.5% is added when you buy credit, and
+requests take the provider's rate at face value with no markup on top. Buying
+100 credits charges 102.50 and grants 100 credits, all 100 of which are
+spendable. The 2.5% rate is the current rate rather than a permanent one, and
+the rate that applies to a purchase is fixed when you start checkout.
+
+## Start here
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="play" href="/get-started/quickstart">
+    Get a key, set the base URL, and send your first chat completion.
+  </Card>
+  <Card title="OpenAI compatibility" icon="plug" href="/get-started/openai-compatibility">
+    Which endpoints exist today, what is additive, and what is refused.
+  </Card>
+  <Card title="Authentication" icon="key" href="/get-started/authentication">
+    Key format, the Bearer header, shown-once keys, and revocation.
+  </Card>
+  <Card title="API reference" icon="code" href="/api-reference/introduction">
+    The wire contract: endpoints, headers, and the error envelope.
+  </Card>
+</CardGroup>
+
+## What is not here
+
+There is no self-hosted or downloadable version of the gateway. The product is
+hosted: we hold the provider accounts, meter the requests, and sell prepaid
+credit, and none of that works from a copy running somewhere else.
+
+There is no static list of providers or models on this site, because that set is
+a live fact rather than a documentation fact. Ask
+[`GET /v1/models`](/api-reference/introduction) or read the model list in the
+[dashboard](https://app.uniblock.dev) instead of a page that would go stale.

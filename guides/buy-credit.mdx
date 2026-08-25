@@ -1,0 +1,156 @@
+---
+title: "Buy credit"
+description: "Buy prepaid credit from the Billing screen, read the total before you pay, and set the notice that warns you before it runs out."
+status: write-now
+gates: ["4.15", "4.20"]
+---
+
+import FeatureStatus from '/snippets/feature-status.mdx';
+import OwnerOnlyNote from '/snippets/owner-only-note.mdx';
+import RequestIdNote from '/snippets/request-id-note.mdx';
+
+Credit is bought from the Billing screen in the dashboard. You choose the credit you
+want, read the total before you commit, and pay on our payment provider's hosted
+page.
+
+## Before you start
+
+<OwnerOnlyNote />
+
+You need to be the **owner** of the workspace. Members can read the balance and the
+statement, and cannot buy. A member who calls a purchase route gets HTTP 403 carrying
+the sentence above, so nobody starts a purchase that was never going to complete.
+
+You also need the smallest purchase we accept, which is **30.00 of credit**. That is
+the credit you receive; our fee is added on top at the checkout.
+
+## Buy credit
+
+<Steps>
+  <Step title="Open Billing">
+    Sign in to the dashboard and open **Billing**. The Balance tab is the default and
+    is where the Add credit panel lives.
+  </Step>
+  <Step title="Choose the credit you want">
+    Pick one of the amounts offered, or type your own. The figure is the **credit you
+    receive**, not the amount charged.
+
+    An amount below the minimum is refused at the field: the refusal appears inline
+    and the continue control stays disabled, so you never learn the minimum by being
+    bounced back from a payment page.
+  </Step>
+  <Step title="Read the three lines">
+    The panel shows the same three lines whatever you type, and they move as you type:
+
+    | Line | Example at 100.00 |
+    |---|---|
+    | Credit you receive | 100.00 |
+    | Our fee, 2.5% | 2.50 |
+    | You pay | 102.50 |
+
+    The rate is read live from the dashboard rather than written into the screen, so
+    what you see is the rate your checkout session will use. Where a card is already
+    saved, it is named inside the same box, so the card, the total, the credit and
+    the rate are read together before you commit.
+  </Step>
+  <Step title="Continue to payment">
+    The control opens a checkout session with our payment provider and sends you to
+    their hosted page. Nothing has been charged at this point: a checkout session is
+    not a payment.
+
+    Press it once. Each attempt opens its own checkout session, and two sessions can
+    become two charges if both are paid.
+  </Step>
+  <Step title="Pay">
+    Enter the card on the hosted page. We never see the card number. If the card is
+    declined, the hosted page is where you are told and where you can try another.
+  </Step>
+  <Step title="Come back">
+    You are returned to the Balance tab, which says the purchase is **pending**. That
+    is honest rather than cautious: credit is granted when the signed confirmation
+    from the payment provider reaches us, which is usually seconds.
+
+    You do not have to stay on the page. Closing it changes nothing either way.
+  </Step>
+</Steps>
+
+## If something goes wrong
+
+**You left the payment page.** The screen says no card was charged and no credit was
+added, and you can start again. A saved card is untouched by this: nothing on any
+failure path in this product removes a saved card.
+
+**The purchase could not be started.** The amount you typed is preserved. Do not
+press Continue again straight away: each attempt opens its own checkout session, and
+a purchase that did start takes no money unless you finish paying for it. Quote the
+request id shown with the failure if you need us.
+
+**The credit has not arrived.** Reload the Balance tab. Credit lands only on the
+confirmed payment, so a purchase that has been paid arrives without any further
+action from you. If it has not arrived after a few minutes, quote the payment id from
+your statement.
+
+## Read the statement
+
+The Statement tab lists every movement, newest first, fifty lines to a page, with
+date filters. A purchase line carries the amount charged, the credit granted and the
+fee, as three sub-fields of the one line, which is what explains the gap between your
+card statement and your balance.
+
+The running total on each page is the sum of your movements up to that line. It is
+there so you can check our arithmetic. It is not your balance: your balance is on the
+Balance tab and accounts for credit currently held for requests in flight.
+
+<FeatureStatus>
+  The Statement screen is built and awaiting its final design approval. The endpoint
+  behind it, its page size and its purchase annotation are shipped.
+</FeatureStatus>
+
+## Set the low credit notice
+
+You can be emailed once when your available balance falls below a figure you choose.
+The setting is on the Limits tab in Settings, and it is the owner's to change.
+
+- The threshold is a whole number of minor units, from 0 to 100000. 500 means 5.00.
+- **0 turns the email off.** The screen says so in words rather than leaving you to
+  infer it from a number.
+- You are emailed **once** per crossing. No second email is sent until the balance
+  goes back above the figure and falls below it again.
+
+The email states the balance you hold and the threshold you set, says that requests
+are refused once credit runs out and that nothing is charged for a request we refuse,
+and points at the Billing screen. It contains no link with a token in it, so nothing
+about it is a credential and nothing about it expires.
+
+## Your saved card
+
+<FeatureStatus>
+  The saved card flow is built and at review. It has been exercised in test mode and
+  not yet against production, so treat this section as the intended behaviour and
+  check the screen.
+</FeatureStatus>
+
+Our payment provider keeps the card so that the next purchase does not ask for it
+again. We store no card number and no expiry: the brand and the last four digits are
+read from the provider each time the Details tab loads, so there is nothing on our
+side that can go stale.
+
+The Details tab is also where a saved card is removed. Removing it means the next
+purchase asks for a card again. It changes nothing about credit you have already
+bought and nothing about your balance.
+
+There is no automatic top up, and no disabled control promising one. The Details tab
+states that absence in words where the other billing facts live.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Credits and billing" href="/concepts/credits-and-billing">
+    The money model in full: the fee, holds, and what happens at zero.
+  </Card>
+  <Card title="Spend controls" href="/guides/spend-controls">
+    The spend rate cap and the pause, before you need them.
+  </Card>
+</CardGroup>
+
+<RequestIdNote />

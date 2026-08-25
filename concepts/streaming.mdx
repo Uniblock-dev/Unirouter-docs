@@ -1,0 +1,124 @@
+---
+title: "Streaming"
+description: "Set stream to true and read server-sent events in the format your OpenAI-compatible client already reads, plus one comment line carrying the token counts."
+status: partial
+gates: ["2.7"]
+---
+
+import UsageHeader from '/snippets/usage-header.mdx';
+import { FeatureStatus } from '/snippets/feature-status.mdx';
+
+Streaming works the way it works on the API this one is shaped after. Set
+`"stream": true` in the body, read the events, stop at `data: [DONE]`. If your
+client already streams from an OpenAI-compatible endpoint, it streams from this
+one without a change.
+
+## Asking for a stream
+
+```bash
+curl https://ai.uniblock.dev/v1/chat/completions \
+  -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
+  -H "Content-Type: application/json" \
+  -N \
+  -d '{
+    "model": "openai/gpt-4o-mini",
+    "messages": [{"role": "user", "content": "Say hi in five words."}],
+    "stream": true
+  }'
+```
+
+The response has `Content-Type: text/event-stream`. The body is relayed as it
+arrives: nothing is buffered on our side, so the first token reaches you as soon
+as the model produces it.
+
+## What the transcript looks like
+
+Annotated. Ids and content are illustrative; the framing is exact.
+
+```
+data: {"id":"chatcmpl-EXAMPLE","object":"chat.completion.chunk","model":"openai/gpt-4o-mini","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":null}]}
+
+data: {"id":"chatcmpl-EXAMPLE","object":"chat.completion.chunk","model":"openai/gpt-4o-mini","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":null}]}
+
+data: {"id":"chatcmpl-EXAMPLE","object":"chat.completion.chunk","model":"openai/gpt-4o-mini","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+:x-uniblock-usage {"v":1,"reported":true,"prompt_tokens":12,"completion_tokens":8,"total_tokens":20}
+
+data: [DONE]
+```
+
+Everything except the `:x-uniblock-usage` line is the standard format. That line
+is a comment: the server-sent events specification requires a parser to ignore
+any line beginning with a colon, so SDKs and browsers skip it and your streaming
+loop never sees it. It sits immediately before `data: [DONE]` and never after,
+because the counts are final only at that point and a client that stops reading
+at the terminator would otherwise miss it.
+
+<UsageHeader />
+
+Absent counts are omitted rather than sent as zero, and `"reported": false`
+carries no counts at all. The full field list is in
+[Headers](/api-reference/headers#token-counts).
+
+## Getting the counts in the stream itself
+
+The comment line above is ours. If you want token counts as part of the stream
+your SDK parses, ask for them the standard way:
+
+```json
+{
+  "model": "openai/gpt-4o-mini",
+  "messages": [{"role": "user", "content": "Say hi in five words."}],
+  "stream": true,
+  "stream_options": {"include_usage": true}
+}
+```
+
+You then get the usual final chunk with an empty `choices` array and a `usage`
+object, ahead of `data: [DONE]`. If you do not ask for it, you do not receive it,
+because the commonest streaming loop in every language reads
+`chunk.choices[0].delta` and throws on a chunk that has no choices.
+
+## When a stream ends early
+
+A streamed response has already sent its status and headers by the time anything
+can go wrong, so a failure cannot arrive as a status code. Instead the stream ends
+with one more `data:` line carrying the standard error body, and then closes.
+There is no `data: [DONE]` after it.
+
+```
+data: {"error":{"message":"Your credit ran out while this request was still running, so it was stopped rather than finished. You have been charged only for what was produced before that point. Add credit and send it again.","type":"insufficient_quota","param":null,"code":"balance_exhausted","request_id":"00000000-0000-4000-8000-000000000000"}}
+```
+
+Three codes can end a stream:
+
+| `code` | What happened | What to do |
+|---|---|---|
+| `balance_exhausted` | Credit ran out while the request was running. | Buy credit and send it again. You are charged for what was produced before the cut and nothing more. |
+| `balance_unavailable` | We could not check the balance while the request was running, so we stopped it rather than leave it unwatched. | Retry shortly. This is ours, and it does not mean you are out of credit. |
+| `request_deadline_exceeded` | The request ran past the 540 second limit. | Split the work into smaller calls. |
+
+`balance_exhausted` only ever appears mid-stream. A request refused before it
+started because the account cannot pay is a `402` with `insufficient_credit`, so
+"never started" and "cut off part way" are always distinguishable. Neither is
+charged as a whole request: a refusal costs nothing, and a cut stream costs what
+it produced.
+
+Handle a stream that stops without `data: [DONE]` and without an error line as an
+incomplete response. It means the connection ended, which is a truncated answer
+rather than a complete one, and we record it as a stream that did not finish
+rather than as a fault.
+
+## What streaming does not change
+
+- Money works the same way. Credit is held before the request goes out, and a
+  streamed request is metered and appears in your usage like any other.
+- Errors use the same body and the same codes as a non-streamed request. Only the
+  channel differs, and only because a status code cannot be recalled.
+- The bytes are the provider's. We add the one comment line and relay everything
+  else exactly as it arrived.
+
+<FeatureStatus
+  missing="a published limit for how many streams you can run at once"
+  instead="We have not measured one to a standard we would hold ourselves to, so this page prints no number to design against. Your key's request rate limit and your account's spend rate cap are the limits that do apply, and both are documented."
+/>

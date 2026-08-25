@@ -1,0 +1,187 @@
+---
+title: "Errors"
+description: "One error body for the whole API: a closed set of type values, a stable code, and the request id inside the body."
+status: write-now
+gates: []
+---
+
+import ErrorEnvelope from '/snippets/error-envelope.mdx';
+import RequestIdNote from '/snippets/request-id-note.mdx';
+
+Every response on this API with a status of 400 or above carries the same body:
+one top-level `error` object, in the shape an OpenAI-compatible client already
+parses. Your existing error handling keeps working, and the fields below are the
+contract.
+
+## The body
+
+<ErrorEnvelope />
+
+Three properties of this body are worth stating because clients depend on them:
+
+- `param` and `code` are always present. When there is nothing to say they are
+  `null` rather than omitted, so a missing field never has to be told apart from
+  a null one.
+- `request_id` is stamped on every error body, whatever produced the error. It is
+  the same value as the `x-uniblock-request-id` and `x-request-id` response
+  headers.
+- No other field appears inside `error`. Nothing about our internals travels in
+  an error body, and a body that would carry anything else is replaced before it
+  leaves us.
+
+Branch on `type` and `code`. Messages are prose written for a person, and we
+reword them; the fields are what we hold still.
+
+## `type`
+
+A closed set. A value outside it is not something this API can send, so a client
+may treat the set as exhaustive.
+
+| `type` | Meaning |
+|---|---|
+| `invalid_request_error` | The request as sent cannot be served. Fix the request. |
+| `authentication_error` | The key is missing, malformed, or one we will not accept. |
+| `permission_error` | Authenticated, but not allowed to do this. |
+| `not_found_error` | The thing addressed does not exist. |
+| `rate_limit_error` | A limit refused this request. Read `code` to learn which. |
+| `insufficient_quota` | The account cannot pay for this request. |
+| `api_error` | A fault on our side, or a state we cannot serve from. |
+| `server_error` | Ours rather than yours, and expected to clear. Retry. |
+
+`api_error` and `server_error` both mean "not your request". The split matters
+for retries: `api_error` with no `code` is an unhandled fault that will most
+likely fail the same way again, while `server_error` codes name a condition that
+clears.
+
+## Status and code
+
+Every code below is produced by a shipped handler. `code` is the field that
+separates causes sharing a status.
+
+| Status | `type` | `code` | Meaning |
+|---|---|---|---|
+| 400 | `invalid_request_error` | `null` | A required parameter is missing. `param` names it. |
+| 400 | `invalid_request_error` | `context_length_exceeded` | The request is too large to price or serve. `param` is `messages`. Send less in one call. |
+| 401 | `authentication_error` | `invalid_api_key` | No key, a non-Bearer scheme, a key of the wrong shape, or a key we will not accept. See [Authentication](/api-reference/authentication). |
+| 402 | `insufficient_quota` | `insufficient_credit` | The workspace cannot cover the estimated maximum cost of this request. The message names both figures. Buy credit. |
+| 404 | `invalid_request_error` | `unknown_url` | No such route on this API. The message names the method and path. |
+| 429 | `rate_limit_error` | `rate_limit_exceeded` | This key's request rate limit. Carries `Retry-After`. |
+| 429 | `rate_limit_error` | `spend_rate_exceeded` | The account's spend rate cap. Nothing to fix; requests are admitted again as the window rolls forward. |
+| 500 | `api_error` | `null` | An unhandled fault on our side. Quote the request id. |
+| 503 | `api_error` | `no_provider_configured` | We are not currently configured to serve this. Retry later. |
+| 503 | `server_error` | `paused_by_owner` | Somebody with access to this account has paused it. Retrying on a timer will not clear it; the pause has to be lifted. |
+| 503 | `server_error` | `balance_unavailable` | We could not read the account's balance, so the request was refused rather than served unmetered. Ours. Retry shortly. |
+| 503 | `server_error` | `model_not_priceable` | A model we list cannot be priced right now, so no credit could be held for the call. Ours. Retry shortly. |
+| 503 | `server_error` | `model_pricing_unreadable` | As above, from the other direction: the published rate for the model could not be read. Ours. Retry shortly. |
+| 504 | `server_error` | `request_deadline_exceeded` | The request ran past the 540 second limit and was terminated. Split the work, or stream the response. |
+
+A request that never reached a model is not charged for, and the credit held for
+it is returned. A request terminated part way through is charged for what was
+produced before it was cut and no more.
+
+### Rate limits and spend refusals
+
+Two codes share `429`, and they call for different behaviour:
+
+- `rate_limit_exceeded` is your key sending too many requests. The response
+  carries `Retry-After` in seconds. Back off and retry.
+- `spend_rate_exceeded` is the account's spend rate cap, which counts the
+  estimated maximum cost reserved in a rolling window rather than settled spend.
+  There is no `Retry-After`. Sending `max_tokens` on your requests lowers the
+  estimated maximum each one reserves. See
+  [Rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+
+`Retry-After` is present on `rate_limit_exceeded` and is not sent on other
+statuses. Do not infer a retry delay from its absence.
+
+## Errors during a streamed response
+
+Once a streamed response has started, its status and headers are already sent, so
+a failure cannot change them. Instead the stream ends with one more `data:` line
+carrying the same error body, and then closes. There is no `data: [DONE]` after
+it.
+
+```
+data: {"error":{"message":"Your credit ran out while this request was still running, so it was stopped rather than finished. You have been charged only for what was produced before that point. Add credit and send it again.","type":"insufficient_quota","param":null,"code":"balance_exhausted","request_id":"00000000-0000-4000-8000-000000000000"}}
+```
+
+Three codes can end a stream this way:
+
+| `code` | `type` | Meaning |
+|---|---|---|
+| `balance_exhausted` | `insufficient_quota` | Credit ran out while the request was running. You are charged for what was produced before the cut. |
+| `balance_unavailable` | `server_error` | We lost sight of the balance while the request was running and stopped it rather than leave it unwatched. Not a statement about your credit. |
+| `request_deadline_exceeded` | `server_error` | The 540 second limit landed mid-stream. |
+
+`balance_exhausted` is only ever a mid-stream code. A request refused before it
+started because the account cannot pay is `402` with `insufficient_credit`, so a
+client can always tell "never started" from "cut off part way".
+
+The `request_deadline_exceeded` line is the one error body on this API without a
+`request_id`: it is written after the response has left the point that stamps the
+id. Read the id from the `x-uniblock-request-id` response header instead.
+
+A non-streamed response that we terminate part way through does not receive an
+error body. There is nowhere to put one, so the connection errors instead. Treat a
+truncated non-streamed body as a failed request rather than a short answer.
+
+## Handling errors in code
+
+Catch on the fields, never on the message.
+
+<CodeGroup>
+
+```python Python
+from openai import APIStatusError
+
+try:
+    completion = client.chat.completions.create(
+        model="openai/gpt-4o-mini",
+        messages=[{"role": "user", "content": "Say hi in five words."}],
+    )
+except APIStatusError as error:
+    body = error.body or {}
+    detail = body.get("error", {})
+    code = detail.get("code")
+    request_id = detail.get("request_id") or error.request_id
+
+    if code == "insufficient_credit":
+        pass  # Buy credit, then retry.
+    elif code == "rate_limit_exceeded":
+        pass  # Read Retry-After from error.response.headers and back off.
+    elif code == "paused_by_owner":
+        pass  # Do not retry on a timer. The pause has to be lifted.
+    else:
+        raise
+```
+
+```typescript TypeScript
+import OpenAI from 'openai';
+
+try {
+  const completion = await client.chat.completions.create({
+    model: 'openai/gpt-4o-mini',
+    messages: [{ role: 'user', content: 'Say hi in five words.' }],
+  });
+} catch (error) {
+  if (!(error instanceof OpenAI.APIError)) throw error;
+
+  const detail = (error.error ?? {}) as { code?: string; request_id?: string };
+  const requestId = detail.request_id ?? error.requestID;
+
+  switch (detail.code) {
+    case 'insufficient_credit':
+      break; // Buy credit, then retry.
+    case 'rate_limit_exceeded':
+      break; // Read Retry-After from error.headers and back off.
+    case 'paused_by_owner':
+      break; // Do not retry on a timer. The pause has to be lifted.
+    default:
+      throw error;
+  }
+}
+```
+
+</CodeGroup>
+
+<RequestIdNote />

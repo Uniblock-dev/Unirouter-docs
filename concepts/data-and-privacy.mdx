@@ -1,0 +1,96 @@
+---
+title: "Data and privacy"
+description: "What Uniblock records about a request, what it does not record, how long records are kept, and what we cannot recover for you."
+status: write-now
+gates: ["5.7", "5.8"]
+---
+
+This is a factual description of what the product stores. It is not a privacy
+policy and it is not a legal document. Where a published privacy policy and this
+page eventually differ, the policy governs.
+
+## We record metadata about a request, not its content
+
+For every request, we record the facts we need to bill it, show it to you, and
+tell you what happened:
+
+- when it was made
+- which model was asked for
+- which provider served it
+- the token counts
+- what it cost
+- how long it took
+- the outcome, meaning whether it was served, refused, or failed
+
+We do not record the prompt and we do not record the response body. Not
+truncated, not hashed, not sampled. There is nowhere in the usage record for
+either of them to go.
+
+That means there are things we cannot do for you. We cannot show you what you
+sent last Tuesday, we cannot replay a request, and we cannot read a request back
+to check whether a reply was reasonable. What we can do is find the record of it
+by its request id and tell you the facts above.
+
+## The playground stores nothing either
+
+A playground run is a real request and it is recorded exactly like one made
+through the API: the same metadata, on the same key's line.
+
+The prompt and the reply are not stored, which is why the playground has no
+history and no shareable link. Reloading the screen loses the conversation. That
+absence is the data stance rather than a missing feature. See
+[Playground](/guides/playground).
+
+## How long records are kept
+
+Usage records are kept for a configured window. The window in force is ninety
+days, over a floor of sixty-two days.
+
+The floor is the part that was reasoned: support has to be able to quote a
+request from two full billing months back, and the longest such pair of calendar
+months is sixty-two days. The window in force is read from one place by the
+product, and the screen that shows it is the one to trust: if it prints a
+different figure than this page, the screen is the live value.
+
+**Money outlives the usage record.** The ledger entry that recorded a charge is
+a separate record from the usage record that described the request. When a usage
+record passes out of the retention window, the balance movement it caused stays
+on your statement. You do not lose the accounting for spend whose request detail
+has aged out.
+
+## Your key, and what we keep of it
+
+We keep a one-way hash of your API key, plus the non-secret parts: the prefix
+and the last four characters.
+
+So a key is shown to you once, at the moment it is created, and never again. The
+product says it in its own words:
+
+> We keep only a hash, so we cannot show it to you again or recover it for you.
+
+That is a limit on us as much as on you. Nobody at Uniblock can read your key
+back, put it on a screen, or paste it into a support reply, because the value
+that would let them do it was never stored. See
+[Create an API key](/guides/create-an-api-key).
+
+Invitation links are handled the same way: only a hash of the link's token is
+stored, and an invitation is found by that hash rather than by anything that
+appears in a URL.
+
+## What we do not claim here
+
+**Nothing about what a provider does with your request.** Once a request is
+served, the provider that served it has received your prompt. What that provider
+stores, for how long, and under which terms is theirs and not ours, and this
+page makes no claim about it. If provider-side data handling matters to your use
+case, read the terms of the families you call.
+
+**No compliance certifications.** No certification or audit claim appears
+anywhere on this site, because none has been made.
+
+**No setting that stores your bodies.** There is no option anywhere in the
+product that keeps a prompt or a reply, so there is none to look for and none
+described here.
+
+See also [Security](/resources/security) for the promises that are about
+protection rather than about storage.

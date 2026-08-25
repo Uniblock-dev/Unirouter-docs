@@ -1,0 +1,299 @@
+---
+title: "Quickstart"
+description: "Get a key, point your client at the Uniblock base URL, and send your first chat completion."
+status: partial
+gates: ["2.3", "2.10", "2.11"]
+---
+
+import FeatureStatus from '/snippets/feature-status.mdx';
+import BaseUrl from '/snippets/base-url.mdx';
+import AuthHeader from '/snippets/auth-header.mdx';
+import ErrorEnvelope from '/snippets/error-envelope.mdx';
+import RequestIdNote from '/snippets/request-id-note.mdx';
+
+<FeatureStatus
+  feature="the official-SDK compatibility proof"
+  detail="The instructions below use the official OpenAI Python and Node SDKs and set only their base URL and key. We have not yet published a proof run of an unmodified SDK against the production hostname, so read this page as instructions rather than as a certification."
+/>
+
+## Before you start
+
+You need three things, and the first request fails in a documented way if any of
+them is missing:
+
+<Steps>
+  <Step title="A verified account">
+    Sign up and verify your email address at [app.uniblock.dev](https://app.uniblock.dev).
+  </Step>
+  <Step title="A workspace with credit">
+    Credit is prepaid, so a workspace with a zero balance refuses requests
+    before they reach a provider. The workspace owner buys credit on the Billing
+    screen. See [buying credit](/guides/buy-credit).
+  </Step>
+  <Step title="An API key">
+    Mint one on the Keys screen. The key appears once and we keep only a hash,
+    so we cannot show it to you again or recover it for you. Copy it before you
+    leave the screen. See [authentication](/get-started/authentication).
+  </Step>
+</Steps>
+
+## Set the base URL
+
+<BaseUrl />
+
+Two forms of the same address, and which one you use depends on your client:
+
+| Where | Value |
+|---|---|
+| An OpenAI SDK `base_url` / `baseURL` | `https://ai.uniblock.dev/v1` |
+| A raw HTTP call | `https://ai.uniblock.dev/v1/chat/completions` |
+
+The SDKs append the endpoint path themselves, which is why their setting carries
+the `/v1` and nothing after it.
+
+## Send the request
+
+<AuthHeader />
+
+<CodeGroup>
+
+```bash curl
+curl https://ai.uniblock.dev/v1/chat/completions \
+  -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "openai/gpt-4o-mini",
+    "messages": [{"role": "user", "content": "Say hi in five words."}]
+  }'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://ai.uniblock.dev/v1",
+    api_key="ub_live_YOUR_KEY_HERE",
+)
+
+response = client.chat.completions.create(
+    model="openai/gpt-4o-mini",
+    messages=[{"role": "user", "content": "Say hi in five words."}],
+)
+
+print(response.choices[0].message.content)
+```
+
+```javascript Node
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "https://ai.uniblock.dev/v1",
+  apiKey: "ub_live_YOUR_KEY_HERE",
+});
+
+const response = await client.chat.completions.create({
+  model: "openai/gpt-4o-mini",
+  messages: [{ role: "user", content: "Say hi in five words." }],
+});
+
+console.log(response.choices[0].message.content);
+```
+
+</CodeGroup>
+
+The response body is the OpenAI chat completion shape. Your request body is
+forwarded as you sent it and is neither parsed nor rebuilt on the way through,
+so any parameter your client already sends keeps working.
+
+## Read the response headers
+
+Every response carries the id for that request, on two headers with the same
+value:
+
+| Header | What it carries |
+|---|---|
+| `x-uniblock-request-id` | Our name for the id. |
+| `x-request-id` | The same value on the header the OpenAI SDKs read and surface on their error objects, so your client holds it without being taught to. |
+
+<RequestIdNote />
+
+Token counts do not ride back on a header on a non-streamed reply today. They are
+read on our side and turn into your usage record, and they reach you on the wire
+only on a streamed reply, as the comment line described below. Your token counts
+for a non-streamed request are in [Activity](/guides/monitor-usage) rather than
+in a response header.
+
+## Stream the response
+
+Set `stream: true` and read the SSE stream exactly as you would from OpenAI.
+Before the final `data: [DONE]` line, we splice in one SSE comment line carrying
+the token counts. The SSE specification requires a parser to ignore comment
+lines, so an OpenAI SDK skips it without being taught about it.
+
+<CodeGroup>
+
+```bash curl
+curl https://ai.uniblock.dev/v1/chat/completions \
+  -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
+  -H "Content-Type: application/json" \
+  -N \
+  -d '{
+    "model": "openai/gpt-4o-mini",
+    "messages": [{"role": "user", "content": "Say hi in five words."}],
+    "stream": true
+  }'
+```
+
+```python Python
+stream = client.chat.completions.create(
+    model="openai/gpt-4o-mini",
+    messages=[{"role": "user", "content": "Say hi in five words."}],
+    stream=True,
+)
+
+for chunk in stream:
+    delta = chunk.choices[0].delta.content
+    if delta:
+        print(delta, end="")
+```
+
+```javascript Node
+const stream = await client.chat.completions.create({
+  model: "openai/gpt-4o-mini",
+  messages: [{ role: "user", content: "Say hi in five words." }],
+  stream: true,
+});
+
+for await (const chunk of stream) {
+  process.stdout.write(chunk.choices[0]?.delta?.content ?? "");
+}
+```
+
+</CodeGroup>
+
+The raw stream ends like this. The comment line is the one starting with a colon:
+
+```text Annotated SSE tail
+data: {"id":"...","object":"chat.completion.chunk","choices":[{"delta":{},"finish_reason":"stop","index":0}]}
+
+:x-uniblock-usage {"v":1,...}
+
+data: [DONE]
+```
+
+[Streaming](/concepts/streaming) covers the usage line's fields and what happens
+if a stream outlives the credit paying for it.
+
+## The two first-run failures
+
+Both arrive in the OpenAI error envelope, so your existing error handling parses
+them. Branch on `type` and `code` rather than on the message text: the fields are
+the contract and the sentences are prose.
+
+<ErrorEnvelope />
+
+### No key, or a key we do not recognise: 401
+
+Sending no `Authorization` header at all:
+
+```json 401
+{
+  "error": {
+    "message": "You did not provide an API key. Send it in an Authorization header using Bearer auth.",
+    "type": "authentication_error",
+    "param": null,
+    "code": "invalid_api_key",
+    "request_id": "00000000-0000-4000-8000-000000000000"
+  }
+}
+```
+
+Sending a string that is not shaped like a Uniblock key, which is the answer you
+get if you paste a key from another provider:
+
+```json 401
+{
+  "error": {
+    "message": "Incorrect API key format. A Uniblock key looks like ub_live_ followed by 43 characters. Check you have not pasted a key from another provider.",
+    "type": "authentication_error",
+    "param": null,
+    "code": "invalid_api_key",
+    "request_id": "00000000-0000-4000-8000-000000000000"
+  }
+}
+```
+
+Sending a correctly shaped key that we do not accept returns
+`"Incorrect API key provided."` in the same envelope. An unknown key and a
+revoked key get that one identical sentence on purpose, because confirming that
+a stolen key was once real helps whoever stole it and helps nobody else.
+
+### Not enough credit: 402
+
+A request is priced and held against your balance before it reaches a provider,
+so a workspace that cannot cover the hold is refused rather than served and
+billed. The `type` is `insufficient_quota`, which is the value an OpenAI client
+already has a branch for, and the `code` is `insufficient_credit`:
+
+```json 402
+{
+  "error": {
+    "message": "This account has 12 minor units available and the request needs 55 held.",
+    "type": "insufficient_quota",
+    "param": null,
+    "code": "insufficient_credit",
+    "request_id": "00000000-0000-4000-8000-000000000000"
+  }
+}
+```
+
+The way out is buying credit. Nothing is charged for a request we refuse.
+
+## Catch errors in your client
+
+The OpenAI SDKs raise their normal status errors, so the catch you already have
+works. Read `type` and `code` off the body:
+
+<CodeGroup>
+
+```python Python
+from openai import APIStatusError
+
+try:
+    response = client.chat.completions.create(
+        model="openai/gpt-4o-mini",
+        messages=[{"role": "user", "content": "Say hi in five words."}],
+    )
+except APIStatusError as error:
+    body = error.response.json()["error"]
+    print(error.status_code, body["type"], body["code"], body["request_id"])
+```
+
+```javascript Node
+import OpenAI from "openai";
+
+try {
+  await client.chat.completions.create({
+    model: "openai/gpt-4o-mini",
+    messages: [{ role: "user", content: "Say hi in five words." }],
+  });
+} catch (error) {
+  if (error instanceof OpenAI.APIError) {
+    const body = error.error;
+    console.log(error.status, body.type, body.code, body.request_id);
+  }
+}
+```
+
+</CodeGroup>
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="OpenAI compatibility" icon="plug" href="/get-started/openai-compatibility">
+    Which endpoints exist today, and what a call to one that does not returns.
+  </Card>
+  <Card title="Errors" icon="triangle-exclamation" href="/concepts/errors">
+    Every shipped code, its status, and what to do about it.
+  </Card>
+</CardGroup>

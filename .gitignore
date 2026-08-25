@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Mintlify CLI local state and build output
+.mintlify/
+.mint/
+dist/
+
+# The private control-plane OpenAPI spec, synced locally by
+# scripts/sync-source-spec.mjs from a source checkout.
+#
+# This file is NEVER committed. It documents four surfaces (/admin, /api/me,
+# /internal, /v1) and carries non-production hostnames, so checking it in would
+# publish the internal topology this repository exists to keep out of the docs.
+# The reviewed sync point is api-reference/source-spec.lock.json, which records
+# only the public /v1 inventory. See scripts/README.md.
+api-reference/.source-spec.json
+
+# Anything a writer pulls in from the source checkout while verifying a claim
+.source/
+*.local.json
+
+# Editor and OS noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Never commit any of these, from anywhere
+.env
+.env.*
+.dev.vars
+*.pem
+*.key

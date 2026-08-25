@@ -1,0 +1,96 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Uniblock",
+  "description": "OpenAI-compatible LLM router. One key, one endpoint, every model.",
+  "colors": {
+    "primary": "#0071B5",
+    "light": "#1FB6FF",
+    "dark": "#0071B5"
+  },
+  "fonts": {
+    "family": "Geist"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get started",
+            "pages": [
+              "index",
+              "get-started/quickstart",
+              "get-started/openai-compatibility",
+              "get-started/authentication"
+            ]
+          },
+          {
+            "group": "Core concepts",
+            "pages": [
+              "concepts/models",
+              "concepts/streaming",
+              "concepts/credits-and-billing",
+              "concepts/usage-and-metering",
+              "concepts/rate-limits-and-spend-controls",
+              "concepts/errors",
+              "concepts/workspaces-and-members",
+              "concepts/data-and-privacy"
+            ]
+          },
+          {
+            "group": "Dashboard guides",
+            "pages": [
+              "guides/create-an-api-key",
+              "guides/buy-credit",
+              "guides/monitor-usage",
+              "guides/invite-and-manage-members",
+              "guides/playground",
+              "guides/spend-controls"
+            ]
+          },
+          {
+            "group": "Resources",
+            "pages": ["resources/security", "resources/glossary"]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api-reference/introduction",
+              "api-reference/authentication",
+              "api-reference/errors",
+              "api-reference/headers"
+            ]
+          },
+          {
+            "group": "Endpoints",
+            "openapi": "api-reference/openapi.public.json"
+          }
+        ]
+      }
+    ]
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Dashboard",
+        "href": "https://app.uniblock.dev"
+      }
+    ]
+  },
+  "api": {
+    "openapi": "api-reference/openapi.public.json",
+    "playground": {
+      "display": "interactive"
+    }
+  },
+  "seo": {
+    "indexing": "navigable"
+  },
+  "redirects": []
+}

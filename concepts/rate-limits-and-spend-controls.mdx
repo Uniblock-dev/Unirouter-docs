@@ -1,0 +1,221 @@
+---
+title: "Rate limits and spend controls"
+description: "The limits that can refuse a request, what the spend rate cap counts, and the one lever that makes it bind less often."
+status: partial
+gates: ["4.18", "10.11"]
+---
+
+import FeatureStatus from '/snippets/feature-status.mdx';
+import OwnerOnlyNote from '/snippets/owner-only-note.mdx';
+import RequestIdNote from '/snippets/request-id-note.mdx';
+
+Two limits can refuse a request today, and they answer with different codes on
+purpose: you should be able to tell "too fast for this key" from "too much money
+attempted too quickly" without asking us.
+
+**Nothing is charged for a request we refuse**, whichever limit refused it.
+
+## The refusals, and what each one means
+
+| Status | `code` | What ran out | What to do |
+|---|---|---|---|
+| 429 | `rate_limit_exceeded` | This key's request rate. | Wait the number of seconds in `Retry-After`. |
+| 429 | `spend_rate_exceeded` | Your spend rate cap, which counts money reserved rather than money spent. | Wait up to 60 seconds, or send `max_tokens`. See below. |
+| 402 | `insufficient_credit` | Available credit at admission. | Buy credit. |
+| 503 | `paused_by_owner` | Nothing. The workspace owner has paused requests. | Lift the pause in Settings. |
+
+Every refusal arrives in the standard error envelope, and the `code` field is the one
+to branch on. Messages are prose and may be reworded; the fields are the contract.
+
+<FeatureStatus>
+  Two further 429 meanings are specified and not yet shipped: one for a provider pool
+  we are protecting, and one for a provider refusing us. They are deliberately absent
+  from the table above rather than described early. Until they ship, treat a 429
+  carrying neither code above as a condition to retry after a short pause, and quote
+  the request id if it persists.
+</FeatureStatus>
+
+## The per key request rate
+
+Each API key has a request rate, counted per minute. Over it, the request is refused
+with HTTP 429, code `rate_limit_exceeded`, and a `Retry-After` header carrying the
+number of seconds to wait:
+
+```json
+{
+  "error": {
+    "message": "Rate limit reached for this key. Try again in 12 seconds. Request id req_XXXXXXXXXXXX.",
+    "type": "rate_limit_error",
+    "param": null,
+    "code": "rate_limit_exceeded",
+    "request_id": "req_XXXXXXXXXXXX"
+  }
+}
+```
+
+This limit is counted per key, so splitting work across two keys splits the counter.
+The figure in force is shown on the Limits tab in Settings.
+
+## The spend rate cap
+
+The spend rate cap is the control that stops a key leaked into a public repository
+costing you your whole balance in the minute before you notice.
+
+**The default is 5000 minor units per rolling 60 seconds.** Over it, a request is
+refused with HTTP 429 and code `spend_rate_exceeded`:
+
+```json
+{
+  "error": {
+    "message": "This account has already reserved 5000 minor units in the last 60 seconds, which is at its ceiling of 5000. Requests are admitted again within 60 seconds of the earliest reservation counted, with nothing to do in the meantime.",
+    "type": "rate_limit_error",
+    "param": null,
+    "code": "spend_rate_exceeded",
+    "request_id": "req_XXXXXXXXXXXX"
+  }
+}
+```
+
+It clears itself. Sixty seconds after the earliest reservation counted, requests are
+admitted again, with nothing for you to do in the meantime and nothing to reset.
+
+### What it counts, which is not what you spent
+
+**The cap counts money reserved, and a reservation is an estimated maximum.**
+
+When a request is admitted we hold the most it could possibly cost. That figure comes
+from the request's own `max_tokens` where it names one, and from the model's published
+maximum output length where it does not. The request then settles for what it actually
+produced and the rest of the hold comes straight back.
+
+The window counts what was reserved, when it was reserved, and nothing is ever taken
+back out of it. A released hold, an expired hold and a settled hold all go on counting
+for their full 60 seconds. That is deliberate rather than convenient: a leaked key
+makes requests that finish, thousands a minute, holding almost nothing at any one
+instant, and a ceiling computed from live holds would be a limit on concurrency that
+such traffic never approaches.
+
+Two consequences you can see:
+
+- A minute of ordinary traffic that all completed successfully still counts against
+  the ceiling for a minute afterwards.
+- On an expensive model, requests that omit `max_tokens` hold the model's whole
+  published maximum output. The cap can therefore bind well below 50.00 a minute of
+  real spending, because the money it is counting is money you were never going to
+  spend.
+
+### The lever: send `max_tokens`
+
+The hold is the smaller of the `max_tokens` you asked for and the model's published
+maximum output length. A client that names a realistic ceiling gets several times
+more requests a minute out of the same cap **and is charged exactly what it was
+before**, because the charge has always been for what was actually produced.
+
+<CodeGroup>
+
+```bash cURL
+curl https://ai.uniblock.dev/v1/chat/completions \
+  -H "Authorization: Bearer ub_live_XXXXXXXX" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "openai/gpt-4o-mini",
+    "max_tokens": 400,
+    "messages": [{"role": "user", "content": "Say hello."}]
+  }'
+```
+
+```python Python
+completion = client.chat.completions.create(
+    model="openai/gpt-4o-mini",
+    max_tokens=400,
+    messages=[{"role": "user", "content": "Say hello."}],
+)
+```
+
+```typescript Node
+const completion = await client.chat.completions.create({
+  model: 'openai/gpt-4o-mini',
+  max_tokens: 400,
+  messages: [{ role: 'user', content: 'Say hello.' }],
+});
+```
+
+</CodeGroup>
+
+If you are running a batch job, a load test or an evaluation sweep, this is the first
+thing to change.
+
+### Out of credit and over the cap at the same time
+
+You are told about the money. An account that is both out of credit and over its
+ceiling gets the 402, because the cap clears itself in 60 seconds and telling someone
+with no credit to slow down is advice that cannot work.
+
+## Which limits are yours to raise
+
+The Limits tab in Settings lists your limits one unit at a time, and marks each one
+as yours or shared. The distinction is the rule, not a label:
+
+> This protects your own money. You may raise it yourself, up to the limit shown.
+
+applies to the spend rate cap, and
+
+> This protects a provider account we share across every customer. Raising it is a
+> decision we make, not one you can make yourself.
+
+applies to the request and token rates. Raising a shared rate trades away another
+customer's room, so it is a decision made by someone weighing the whole pool. There
+is no self service path for those figures, and there is no hidden one either.
+
+Two of the rows carry no figure yet, and the screen says why:
+
+> Not yet enforced. We are not checking your traffic against this figure yet.
+
+They are drawn because the units we meter you in are fixed now rather than later. A
+row with no figure means nobody is checking it, and it never means you have no room.
+
+### Setting your own spend rate cap
+
+The spend rate cap is a whole number of at least 100 minor units per rolling 60
+seconds. The screen shows the highest value you may set yourself; above that, ask us.
+Lowering your cap always works, including from a figure above the ceiling.
+
+Setting a cap of 0 is refused. Stopping requests entirely is what the pause is for,
+and it has its own control, its own state and its own sentence.
+
+<OwnerOnlyNote />
+
+Reading your limits is open to every member of the workspace. Changing the spend rate
+cap is the owner's.
+
+<FeatureStatus>
+  The Limits tab and the self service cap control are built and their story is not yet
+  marked done. Verify the screen before relying on this section.
+</FeatureStatus>
+
+## Pausing everything
+
+The pause refuses every request on the workspace's keys straight away, without
+revoking anything. Requests are refused with HTTP 503 and code `paused_by_owner`, and
+nothing is charged for them. Lifting it starts everything again with no keys to
+re-create.
+
+Requests that were already running when you paused are not cut off. Each finishes and
+is charged for what it really used.
+
+Any member may read whether requests are paused. Only the owner may press it or lift
+it. The full flow, including the numbers the screen states before you press, is in
+[Spend controls](/guides/spend-controls).
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Spend controls" href="/guides/spend-controls">
+    Setting the cap, the low credit notice, and the pause, step by step.
+  </Card>
+  <Card title="Credits and billing" href="/concepts/credits-and-billing">
+    Holds, available balance, and what happens at zero.
+  </Card>
+</CardGroup>
+
+<RequestIdNote />

@@ -1,0 +1,128 @@
+---
+title: "Authentication"
+description: "Send a workspace API key as a bearer token. Every route on the API requires one, and every refusal is a 401 in the standard error body."
+status: write-now
+gates: []
+---
+
+import AuthHeader from '/snippets/auth-header.mdx';
+import RequestIdNote from '/snippets/request-id-note.mdx';
+
+Authentication is one header. There is no other scheme, no query parameter, and
+no unauthenticated route on this API.
+
+<AuthHeader />
+
+## Key format
+
+A key is a non-secret prefix followed by 43 random characters from the URL-safe
+base64 alphabet (`A-Z`, `a-z`, `0-9`, `-`, `_`).
+
+| Prefix | Where the key works |
+|---|---|
+| `ub_live_` | Production |
+| `ub_stg_` | Staging |
+| `ub_dev_` | Development |
+
+The prefix is there so a key pasted somewhere public is recognisable as ours by
+secret scanners, and so the environment a key belongs to is never a guess. The
+prefix is not secret; everything after it is.
+
+Keys are created in the dashboard under Keys and shown once, at creation. We
+store a one-way hash, so we cannot show you a key again or recover one for you.
+If a key is lost, create a new one and revoke the old one.
+
+A key belongs to the workspace, not to the person who created it. It carries no
+personal identity, and the requests it makes are the workspace's requests.
+
+## What a 401 means
+
+Four situations produce a `401` with the type `authentication_error` and the code
+`invalid_api_key`. The `message` is the only thing that differs, and two of them
+share one message deliberately.
+
+```json No key sent
+{
+  "error": {
+    "message": "You did not provide an API key. Send it in an Authorization header using Bearer auth.",
+    "type": "authentication_error",
+    "param": null,
+    "code": "invalid_api_key",
+    "request_id": "00000000-0000-4000-8000-000000000000"
+  }
+}
+```
+
+A missing `Authorization` header and a header using any scheme other than Bearer
+both get this.
+
+```json Key of the wrong shape
+{
+  "error": {
+    "message": "Incorrect API key format. A Uniblock key looks like ub_live_ followed by 43 characters. Check you have not pasted a key from another provider.",
+    "type": "authentication_error",
+    "param": null,
+    "code": "invalid_api_key",
+    "request_id": "00000000-0000-4000-8000-000000000000"
+  }
+}
+```
+
+A key that cannot be one of ours is refused on its shape alone, before anything
+is looked up. This is the message you get after pasting a provider's key or a
+truncated one.
+
+```json Key we will not accept
+{
+  "error": {
+    "message": "Incorrect API key provided.",
+    "type": "authentication_error",
+    "param": null,
+    "code": "invalid_api_key",
+    "request_id": "00000000-0000-4000-8000-000000000000"
+  }
+}
+```
+
+A key that is correctly shaped but is not live gets this one sentence, whether it
+was never issued, has been revoked, or belongs to an account that can no longer
+make requests. That is deliberate: telling a caller which of those it was would
+confirm to whoever holds a stolen key that the key was once real. Only our own
+logs distinguish them, and the request id is how support finds the line.
+
+<RequestIdNote />
+
+## Rate limiting on the key
+
+Each key has a request rate limit. Exceeding it is a `429` with the type
+`rate_limit_error` and the code `rate_limit_exceeded`, carrying a `Retry-After`
+header in seconds:
+
+```json
+{
+  "error": {
+    "message": "Rate limit reached for this key. Try again in 12 seconds. Request id 00000000-0000-4000-8000-000000000000.",
+    "type": "rate_limit_error",
+    "param": null,
+    "code": "rate_limit_exceeded",
+    "request_id": "00000000-0000-4000-8000-000000000000"
+  }
+}
+```
+
+This is one of several refusals that share the `429` status. They are told apart
+by `code`, never by status alone. See
+[Errors](/api-reference/errors#rate-limits-and-spend-refusals).
+
+## Handling keys
+
+- Send the key from a server you control. A key in browser code is a key
+  published.
+- Store it as a secret, not in source control. The `ub_` prefixes exist partly so
+  scanners can catch the mistake, and catching it is not the same as preventing
+  it.
+- Rotate by creating the replacement first, moving traffic to it, then revoking
+  the old key. Revoking is done in the dashboard under Keys.
+- A key that stops working answers `401` with `Incorrect API key provided.`, so
+  treat that response as "this key is gone" rather than as a transient failure to
+  retry.

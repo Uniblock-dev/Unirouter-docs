@@ -1,0 +1,725 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Uniblock",
+    "version": "v1",
+    "description": "An OpenAI-compatible inference API. Point an OpenAI client at https://ai.uniblock.dev, give it a Uniblock API key, and call models across providers on one prepaid balance.\n\nEvery response, errors included, matches the shape an unmodified OpenAI SDK expects."
+  },
+  "servers": [
+    {
+      "url": "https://ai.uniblock.dev",
+      "description": "Production"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Chat",
+      "description": "Chat completions, streamed or not."
+    },
+    {
+      "name": "Models",
+      "description": "What you can call."
+    }
+  ],
+  "paths": {
+    "/v1/chat/completions": {
+      "post": {
+        "tags": [
+          "Chat"
+        ],
+        "summary": "Create a chat completion",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "model": {
+                    "type": "string",
+                    "example": "openai/gpt-4o-mini"
+                  },
+                  "messages": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "stream": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "model",
+                  "messages"
+                ],
+                "$ref": "#/components/schemas/ChatCompletionRequest"
+              },
+              "example": {
+                "model": "openai/gpt-4o-mini",
+                "messages": [
+                  {
+                    "role": "user",
+                    "content": "Say hi in five words."
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The completion. A response that is not streamed carries the provider's token counts in its own `usage` object. When `stream` is true the body is `text/event-stream` instead, and the counts arrive on a `:x-uniblock-usage` comment line immediately before `data: [DONE]`; the server-sent events specification requires parsers to ignore comment lines, so an SDK never sees it.",
+            "headers": {
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "x-request-id": {
+                "$ref": "#/components/headers/SdkRequestId"
+              },
+              "x-uniblock-provider": {
+                "$ref": "#/components/headers/Provider"
+              },
+              "x-uniblock-retry-attempt-count": {
+                "$ref": "#/components/headers/RetryAttemptCount"
+              },
+              "x-uniblock-cache-status": {
+                "$ref": "#/components/headers/CacheStatus"
+              },
+              "x-uniblock-trace-id": {
+                "$ref": "#/components/headers/TraceId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatCompletion"
+                },
+                "example": {
+                  "id": "chatcmpl-EXAMPLE",
+                  "object": "chat.completion",
+                  "created": 1756080000,
+                  "model": "openai/gpt-4o-mini",
+                  "choices": [
+                    {
+                      "index": 0,
+                      "message": {
+                        "role": "assistant",
+                        "content": "Hello, good to meet you."
+                      },
+                      "finish_reason": "stop"
+                    }
+                  ],
+                  "usage": {
+                    "prompt_tokens": 12,
+                    "completion_tokens": 8,
+                    "total_tokens": 20
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request cannot be served as sent. `code` is null for a missing parameter, with `param` naming it, and `context_length_exceeded` for a request too large to price or serve in one call.",
+            "headers": {
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "missing_model": {
+                    "summary": "No model named",
+                    "value": {
+                      "error": {
+                        "message": "You must provide a model parameter naming the model to call. It is read to work out what the request could cost before it is sent.",
+                        "type": "invalid_request_error",
+                        "param": "model",
+                        "code": null,
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "context_length_exceeded": {
+                    "summary": "Too large to serve in one call",
+                    "value": {
+                      "error": {
+                        "message": "This request is too large to price: it is estimated at 4000000 prompt tokens, which is beyond anything this platform can hold credit for. Send less in one call.",
+                        "type": "invalid_request_error",
+                        "param": "messages",
+                        "code": "context_length_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No key, a scheme other than Bearer, a key of the wrong shape, or a key we reject. An unknown key and a revoked key are answered with one identical message on purpose.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Incorrect API key provided.",
+                    "type": "authentication_error",
+                    "param": null,
+                    "code": "invalid_api_key",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "headers": {
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "402": {
+            "description": "The workspace does not have enough credit to hold this request. Nothing was charged.",
+            "headers": {
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This account has 54 minor units available and the request needs 55 held.",
+                    "type": "insufficient_quota",
+                    "param": null,
+                    "code": "insufficient_credit",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "A limit refused the request. `rate_limit_exceeded` is this key's own request rate and carries `Retry-After`. `spend_rate_exceeded` is the account spend rate cap, which counts the credit held for requests rather than the credit they settle at; send `max_tokens` to hold less.",
+            "headers": {
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "Retry-After": {
+                "description": "Seconds to wait. Present on `rate_limit_exceeded`.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "rate_limit_exceeded": {
+                    "summary": "This key's request rate",
+                    "value": {
+                      "error": {
+                        "message": "Rate limit reached for this key. Try again in 12 seconds. Request id REQUEST_ID.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "rate_limit_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "spend_rate_exceeded": {
+                    "summary": "The account spend rate cap",
+                    "value": {
+                      "error": {
+                        "message": "This account has already reserved 5000 minor units in the last 60 seconds, which is at its ceiling of 5000. Requests are admitted again within 60 seconds of the earliest reservation counted, with nothing to do in the meantime.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "spend_rate_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A fault on our side. The request id is the one thing worth keeping.",
+            "headers": {
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "The server had an error while processing your request. Sorry about that! Quote the request id if you contact support.",
+                    "type": "api_error",
+                    "param": null,
+                    "code": null,
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Ours rather than yours, and `code` names the condition. `paused_by_owner` clears only when somebody lifts the pause, so retrying on a timer will not help. `balance_unavailable` (we could not read the balance, so the request was refused rather than served unmetered), `model_not_priceable` and `model_pricing_unreadable` (a model we list could not be priced for this call) and `no_provider_configured` (we are not currently configured to serve this) all clear without you doing anything.",
+            "headers": {
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "paused_by_owner": {
+                    "summary": "Somebody pressed Pause",
+                    "value": {
+                      "error": {
+                        "message": "Every request on this account is paused, because somebody with access to it pressed Pause in the dashboard. Nothing was charged for this request and no credit was held for it. It is retryable, and it will be refused the same way until the pause is lifted, so retrying on a timer will not clear it. Requests start working again the moment the pause is lifted from the same control, with nothing else to do and nothing to re-create.",
+                        "type": "server_error",
+                        "param": null,
+                        "code": "paused_by_owner",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "balance_unavailable": {
+                    "summary": "We could not read the balance",
+                    "value": {
+                      "error": {
+                        "message": "Your credit balance could not be checked while this request was running, so it was stopped rather than left unwatched. This is a fault on our side rather than a problem with your account, and it does not mean you are out of credit. Try again shortly.",
+                        "type": "server_error",
+                        "param": null,
+                        "code": "balance_unavailable",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "The request ran past the request deadline and was terminated.",
+            "headers": {
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This request ran longer than the 540 second limit and was terminated. Reduce the amount of work in one call, or stream the response, and try again.",
+                    "type": "server_error",
+                    "param": null,
+                    "code": "request_deadline_exceeded",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Send an OpenAI chat completion request. Set `stream: true` for server-sent events.\n\nCredit is held when the request is admitted and settled against the provider's own token counts when it finishes. You are charged the provider's rate at face value. Nothing is added per request.",
+        "security": [
+          {
+            "customerApiKey": []
+          }
+        ],
+        "operationId": "createChatCompletion"
+      }
+    },
+    "/v1/models": {
+      "get": {
+        "tags": [
+          "Models"
+        ],
+        "summary": "List models",
+        "responses": {
+          "200": {
+            "description": "The models available to your key.",
+            "headers": {
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelList"
+                },
+                "example": {
+                  "object": "list",
+                  "data": [
+                    {
+                      "id": "openai/gpt-4o-mini",
+                      "object": "model",
+                      "created": 1756080000,
+                      "owned_by": "openai"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No key, a scheme other than Bearer, a key of the wrong shape, or a key we reject.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Incorrect API key format. A Uniblock key looks like ub_live_ followed by 43 characters. Check you have not pasted a key from another provider.",
+                    "type": "authentication_error",
+                    "param": null,
+                    "code": "invalid_api_key",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "headers": {
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "429": {
+            "description": "This key's own request rate limit. Every route on this API is subject to it.",
+            "headers": {
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "Retry-After": {
+                "description": "Seconds to wait.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Rate limit reached for this key. Try again in 12 seconds. Request id REQUEST_ID.",
+                    "type": "rate_limit_error",
+                    "param": null,
+                    "code": "rate_limit_exceeded",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A fault on our side. The request id is the one thing worth keeping.",
+            "headers": {
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "The server had an error while processing your request. Sorry about that! Quote the request id if you contact support.",
+                    "type": "api_error",
+                    "param": null,
+                    "code": null,
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "We are not currently configured to serve a model list. Retry later.",
+            "headers": {
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "No provider is configured, so there is nothing to serve this request.",
+                    "type": "api_error",
+                    "param": null,
+                    "code": "no_provider_configured",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "List the models you can call. The `id` of each entry is what you send as `model`.",
+        "security": [
+          {
+            "customerApiKey": []
+          }
+        ],
+        "operationId": "listModels"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "description": "The error envelope. One top-level `error` key, always, at every status.",
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": [
+              "message",
+              "type",
+              "param",
+              "code"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "message": {
+                "type": "string",
+                "description": "Prose for a person. It may be reworded, so do not branch on it."
+              },
+              "type": {
+                "type": "string",
+                "description": "The category an SDK branches on. A closed set.",
+                "enum": [
+                  "invalid_request_error",
+                  "authentication_error",
+                  "permission_error",
+                  "not_found_error",
+                  "rate_limit_error",
+                  "api_error",
+                  "insufficient_quota",
+                  "server_error"
+                ]
+              },
+              "param": {
+                "type": "string",
+                "nullable": true,
+                "description": "The request field at fault, or null. Present and null rather than absent."
+              },
+              "code": {
+                "type": "string",
+                "nullable": true,
+                "description": "The stable machine-readable reason. Branch on this."
+              },
+              "request_id": {
+                "type": "string",
+                "description": "Our id for this request, the same value as the x-uniblock-request-id header. Quote it when you contact support."
+              }
+            }
+          }
+        }
+      },
+      "ChatCompletionRequest": {
+        "type": "object",
+        "required": [
+          "model",
+          "messages"
+        ],
+        "additionalProperties": true,
+        "description": "An OpenAI chat completion request. Fields beyond the ones named here are forwarded to the provider unchanged rather than refused for being unfamiliar.",
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "A model id in `family/model` form. List what you can call with GET /v1/models.",
+            "example": "openai/gpt-4o-mini"
+          },
+          "messages": {
+            "type": "array",
+            "description": "The conversation so far, in OpenAI message form.",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "stream": {
+            "type": "boolean",
+            "description": "Return the reply as server-sent events instead of one JSON body.",
+            "default": false
+          },
+          "max_tokens": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The most output tokens you will accept. Sending it also lowers the credit held for the request while it runs, so it is the lever that keeps a request under your account spend rate cap. Omit it and the model's published maximum output is held instead."
+          },
+          "stream_options": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "OpenAI stream options. Set `include_usage` to receive OpenAI's own usage chunk in the stream. Uniblock's own counts arrive separately on the :x-uniblock-usage comment line either way.",
+            "properties": {
+              "include_usage": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "ChatCompletion": {
+        "type": "object",
+        "description": "An OpenAI chat completion, as the provider produced it.",
+        "additionalProperties": true,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "type": "string",
+            "example": "chat.completion"
+          },
+          "created": {
+            "type": "integer"
+          },
+          "model": {
+            "type": "string"
+          },
+          "choices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "usage": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "ModelList": {
+        "type": "object",
+        "description": "An OpenAI model list.",
+        "additionalProperties": true,
+        "properties": {
+          "object": {
+            "type": "string",
+            "example": "list"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Model"
+            }
+          }
+        }
+      },
+      "Model": {
+        "type": "object",
+        "description": "One model you may call.",
+        "additionalProperties": true,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The value to send as `model`.",
+            "example": "openai/gpt-4o-mini"
+          },
+          "object": {
+            "type": "string",
+            "example": "model"
+          },
+          "created": {
+            "type": "integer"
+          },
+          "owned_by": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "headers": {
+      "RequestId": {
+        "description": "Our id for this request. Quote it when you contact support. Present on every response, errors included.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "SdkRequestId": {
+        "description": "The same value as x-uniblock-request-id, on the header the official OpenAI SDKs surface on their error objects.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "Provider": {
+        "description": "Which provider answered.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "RetryAttemptCount": {
+        "description": "How many attempts were made before the response you received.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "CacheStatus": {
+        "description": "Whether the reply came from cache.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "TraceId": {
+        "description": "A trace id for this request.",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "securitySchemes": {
+      "customerApiKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "A workspace API key in an `Authorization: Bearer` header. A missing header, a scheme other than Bearer, a key of the wrong shape, and a key we reject are all 401."
+      }
+    }
+  },
+  "security": [
+    {
+      "customerApiKey": []
+    }
+  ]
+}

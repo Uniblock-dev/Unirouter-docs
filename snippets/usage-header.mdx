@@ -1,0 +1,39 @@
+A streamed response carries Uniblock's own token counts as a server-sent events
+comment line, written immediately before `data: [DONE]`:
+
+```text The usage line
+:x-uniblock-usage {"v":1,"reported":true,"prompt_tokens":12,"completion_tokens":8,"total_tokens":20}
+```
+
+A line beginning with a colon is a comment the server-sent events specification
+requires a parser to ignore, so your SDK does not see it and nothing in your
+streaming loop needs to change. Read it only if you want it.
+
+```json Counts not reported
+{"v":1,"reported":false}
+```
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `v` | integer | The version of this value. Read it before you read anything else. |
+| `reported` | boolean | Whether the provider stated counts. `false` carries no counts at all. |
+| `prompt_tokens` | integer | Input tokens. |
+| `completion_tokens` | integer | Output tokens. Absent on a family that cannot produce one. |
+| `total_tokens` | integer | The sum. |
+| `cache_read_input_tokens` | integer | Input tokens served from cache. Omitted when the provider did not report it. |
+| `cache_write_input_tokens` | integer | Input tokens written to cache. Omitted when the provider did not report it. |
+| `reasoning_tokens` | integer | Reasoning tokens, already counted inside `completion_tokens`. Omitted when the provider did not report it. |
+
+Fields are omitted rather than set to zero when a provider did not report them,
+so "the provider did not say" stays distinguishable from "nothing was used".
+`reported: true` with zeros means zero. An absent field means unknown.
+
+The counts are the provider's own. Nothing is re-counted or estimated.
+
+A stream that is cut off carries no usage line, because there are no final
+counts to report.
+
+On a response that is not streamed there is no separate counts line. The
+provider's own `usage` object inside the JSON body is what you read, exactly as
+you would from OpenAI. Either way, the figures we settle your balance against
+are the ones on your Activity screen.

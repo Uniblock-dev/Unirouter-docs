@@ -1,0 +1,212 @@
+---
+title: "Credits and billing"
+description: "How prepaid credit works: the fee is added when you buy credit, and a request deducts the provider's price with nothing added."
+status: write-now
+gates: []
+---
+
+import OwnerOnlyNote from '/snippets/owner-only-note.mdx';
+import RequestIdNote from '/snippets/request-id-note.mdx';
+
+Uniblock runs on prepaid credit. You buy credit, requests spend it, and there is no
+invoice at the end of the month. Two rules cover almost everything on this page:
+
+1. **Our fee is added when you buy credit.** It is not applied to a request.
+2. **A served request deducts what the provider's model costs, at face value.** We
+   add nothing to it.
+
+## Buying credit: what you choose and what you pay
+
+You choose the **credit you receive**. Our fee is added on top of that figure, and
+the total is what your card is charged. At the current rate of 2.5%:
+
+| Line | Amount |
+|---|---|
+| Credit you receive | 100.00 |
+| Our fee, 2.5% | 2.50 |
+| You pay | 102.50 |
+
+The balance then reads 100.00 and your card statement reads 102.50. That gap is the
+fee, and the purchase line on your statement carries both figures so it can be
+checked (see [Every movement is on your statement](#every-movement-is-on-your-statement)).
+
+The smallest purchase is 30.00 of credit. The minimum is stated in the credit you
+receive rather than in the amount charged, so the figure you type is the figure any
+refusal names back to you.
+
+<Note>
+  The rate is currently 2.5%, which is 250 basis points. It is a setting rather than
+  a constant, so the dashboard reads it live and this page states the rate in force
+  at the time of writing. The Billing screen is the authority for what your next
+  purchase costs.
+</Note>
+
+### The rate is fixed when checkout starts
+
+The rate in force at the moment your checkout session is created is recorded on that
+purchase, and the credit is granted against the recorded rate whatever the live rate
+says by the time the payment lands. You are charged exactly the total you were shown,
+with no exceptions. A rate that changes later cannot reach backwards and reprice a
+purchase you have already made.
+
+### Rounding happens once
+
+The credit you receive is exactly the figure you chose, so it is never rounded. The
+fee is computed at full precision and rounded half up to the nearest cent, once. The
+amount charged is the sum of the two, so it is never rounded either.
+
+### Credit lands when the payment is confirmed
+
+Credit is granted only when our payment provider's signed confirmation reaches us,
+and never on a browser redirect. Closing the tab at the payment page, losing your
+connection, or returning to the dashboard before the confirmation arrives changes
+nothing: a customer who waited and a customer who closed the browser end in the same
+state. Until the confirmation lands, the Billing screen says the purchase is pending
+and shows no new credit, because a screen that claimed the credit had arrived would
+be right most of the time, which is the worst kind of wrong for money.
+
+## What a request costs
+
+A served request is charged what its model costs at the provider's own rates, at face
+value. There is no per-request markup, no percentage on top, and no fee of any kind
+at request time.
+
+Charges are computed per usage type, because that is how models are priced: input
+tokens, cached input reads, cache writes, output tokens and reasoning tokens can each
+carry their own rate. The rates behind a charge are recorded with the charge, so a
+line can be explained by the rates that were in force when it was served rather than
+by whatever they are today.
+
+Money is held in integer minor units throughout: 100 minor units is 1.00, and the
+platform holds one currency, USD. Amounts are formatted for reading only at the
+screen or the email that shows them, so nothing is rounded a second time on the way
+to you.
+
+## The three figures on your balance
+
+The Billing screen shows three numbers, and the difference between them matters:
+
+| Figure | What it is |
+|---|---|
+| **Available** | What you can spend now. This is the figure a new request is admitted against. |
+| **Settled** | The sum of every movement on your ledger. |
+| **Held for requests in flight** | Credit reserved for requests that are still running. |
+
+Available is settled minus what is held. When a request is admitted we reserve the
+most it could possibly cost, and that reservation comes back the moment the request
+finishes, at which point you are charged for what it actually used. A request that
+omits `max_tokens` therefore holds more than it will spend, briefly, which is also
+the reason it can meet the spend rate cap sooner. See
+[Rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+
+Only one component computes what an account holds, and every screen and endpoint that
+shows your balance reads it from there. Your balance and your usage figures cannot
+disagree, because there is no second place for either to be worked out.
+
+## Running out of credit
+
+**Nothing is charged for a request we refuse.** That is true of every refusal on the
+platform, not only this one.
+
+When your available balance cannot cover a new request, the request is refused with
+HTTP 402 and code `insufficient_credit`. The message names both figures, so you can
+see what you hold and what the request needed:
+
+```json
+{
+  "error": {
+    "message": "This account has 54 minor units available and the request needs 55 held.",
+    "type": "insufficient_quota",
+    "param": null,
+    "code": "insufficient_credit",
+    "request_id": "req_XXXXXXXXXXXX"
+  }
+}
+```
+
+A request that is already streaming when the money runs out is **cut off** rather
+than allowed to finish. The stream ends with a `data:` line carrying the same error
+envelope, type `insufficient_quota` and code `balance_exhausted`, so an unmodified
+SDK reads the end of the stream the way it reads the 402 at admission. The hold goes
+back, and where no token counts reached us before the cutoff you are charged nothing
+for the request that was cut. The two codes are deliberately different: a stream cut
+short and a request that never started are different events, and you should be able
+to tell them apart without asking us.
+
+Buying credit clears both conditions immediately. There is nothing to wait for and
+nothing to reset.
+
+## Every movement is on your statement
+
+The Statement tab lists every movement of money on your ledger, newest first, fifty
+lines to a page. Each line carries when it happened, the signed amount in minor
+units, what kind of movement it was, and something you can quote to us: the payment
+id on a purchase, and the request id on a charge.
+
+A **purchase line** carries three sub-fields rather than a separate fee line: the
+amount charged, the credit granted, and the fee between them. That is what explains
+the gap between your card statement and your balance, inside the line that caused it.
+It is also what keeps the statement honest: the statement adds up to your settled
+balance exactly, and a fee line that never became balance would break that.
+
+Each page also carries a **running ledger total**, which is the sum of your movements
+up to and including that line. It is the arithmetic you would do yourself down the
+amount column, and its whole purpose is to let you check ours. It is not your balance
+and is never presented as one: your balance is the figure on the Balance tab, and it
+accounts for credit currently held for requests in flight.
+
+### When a line carries an explanation
+
+Some charges carry a short sentence saying what was unusual about them. There are
+three today, and they are quoted exactly as they appear:
+
+- `Estimated charge, token counts were not confirmed`
+- `The provider did not report token counts, so the estimate was charged`
+- `Charged after the hold for this request had expired`
+
+If a line you are looking at carries none of these, nothing unusual happened to it.
+
+## Who can do what
+
+<OwnerOnlyNote />
+
+Any member of a workspace may read the balance and the statement. Buying credit,
+managing the card, and setting the low credit notice are the owner's alone. A
+non-owner calling a billing route gets HTTP 403 with the sentence above, rather than
+a screen that lets them start something that will fail.
+
+Balance, the saved card and the low credit setting belong to the workspace's billing
+rather than to any one member, so every member of that workspace reads the same
+figures.
+
+## Two things this product does not do
+
+**There is no automatic top up, not even as a disabled control.** Charging a card
+while nobody is at the keyboard is the highest trust action this product could take,
+and we are not taking it yet. The Billing screen says so in words where the other
+billing facts live, rather than leaving you to discover it when your card is never
+charged.
+
+**We never see your card number.** Our payment provider holds it. When a card is
+saved, the brand and the last four digits are read from them at the moment the screen
+loads, so there is nothing on our side to go stale, and removing a saved card changes
+nothing about credit you have already bought.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Buy credit" href="/guides/buy-credit">
+    The purchase flow step by step, including what a non-owner sees.
+  </Card>
+  <Card title="Usage and metering" href="/concepts/usage-and-metering">
+    What is recorded per request, and how it reconciles with your balance.
+  </Card>
+  <Card title="Rate limits and spend controls" href="/concepts/rate-limits-and-spend-controls">
+    The spend rate cap, the per key request rate, and the pause.
+  </Card>
+  <Card title="Monitor usage" href="/guides/monitor-usage">
+    Reading Overview and Activity, and reconciling a statement line.
+  </Card>
+</CardGroup>
+
+<RequestIdNote />

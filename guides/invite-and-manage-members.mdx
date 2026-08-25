@@ -1,0 +1,162 @@
+---
+title: "Invite and manage members"
+description: "Invite somebody by email, change what a member may do, transfer the workspace, and remove somebody without silently killing a key."
+status: partial
+gates: ["9.12", "9.13", "9.14", "9.15", "9.16", "9.17", "9.18", "9.19", "9.24"]
+---
+
+Members are managed in the dashboard, at [Members](https://app.uniblock.dev).
+This page describes the rules each flow enforces. For the roles themselves and
+what each one may do, read
+[Workspaces and members](/concepts/workspaces-and-members).
+
+<Note>
+The member flows below are described from the rules the service enforces, not
+from a screen we walked. Several of them have not been accepted yet: the roster,
+the role editor, ownership transfer and the removal flow are all still open work.
+Where a screen and this page disagree, the screen is what you are using.
+</Note>
+
+## Invite somebody
+
+**Who can do this:** owner or admin.
+
+You need their email address and the role you want them to hold. An invitation
+can offer admin, developer or viewer:
+
+> An invitation can offer admin, developer or viewer.
+
+Owner is not on that list, because ownership moves only by transfer. Only the
+owner can offer admin: an admin inviting a second admin would confer no new
+permission but would confer persistence, and a stolen admin session must not
+leave a permanent administrator behind. That refusal reads
+`Only the workspace owner can make someone an admin.`
+
+You can also reserve a key for them, so they arrive with a credential waiting.
+The reservation takes one of the workspace's five key slots immediately. See
+[Create an API key](/guides/create-an-api-key#keys-that-arrive-with-an-invitation).
+
+A workspace may hold up to ten pending invitations at once.
+
+### What the invitee sees
+
+They get an emailed link. Clicking it lands on an invitation page that works
+whether or not they are signed in, and shows them which workspace they are being
+invited to and as what.
+
+- The link works only for the address it was sent to.
+- It is valid for seven days from when it was sent.
+- Accepting it requires signing in as that address. Because a session can only
+  exist for an address that has already been verified, accepting the invitation
+  is itself proof of the mailbox, and no separate verification step is asked for.
+- The inviter's authority is re-checked at the moment of acceptance. An
+  invitation sent by somebody who has since lost the right to send it does not
+  work.
+
+A link that matches nothing and a link that belongs to somebody else's address
+answer identically. That is deliberate: anything else would let anybody holding
+a session discover that an invitation exists, and for whom.
+
+### Cancel a pending invitation
+
+**Who can do this:** owner or admin, the same permission as sending one, because
+cancelling takes back exactly what sending gave out.
+
+Cancelling also cancels any key reservation the invitation carried, which frees
+the slot.
+
+## Change what a member may do
+
+**Who can do this:** owner or admin.
+
+Two rules apply on top of the permission:
+
+- **Never to or from owner.** `Ownership is transferred, never granted. Use the
+  transfer control instead.`
+- **Only the owner makes or unmakes an admin.** `Only the workspace owner can
+  make someone an admin.`
+- **Never above your own authority.** `You cannot give somebody permissions you
+  do not have yourself.`
+
+A role change never revokes a key. If you move somebody down to viewer, the keys
+they were accountable for keep working, and they keep answering for them until
+somebody changes that explicitly.
+
+Your own role is read at the moment you press the button, not when the screen
+loaded. If you were demoted in between, the change is refused.
+
+## Transfer the workspace
+
+**Who can do this:** the owner, and nobody else. It is the one thing an admin
+cannot do.
+
+The transfer promotes the new owner and demotes you in the same write, so the
+workspace never has two owners and never has none. You do not stay an owner
+alongside them, and there is no undo other than the new owner transferring it
+back.
+
+Because the owner is the only role that touches money, transferring the
+workspace hands over the card, the buying of credit, and the ability to pause
+requests. Read [the owner and money](/concepts/workspaces-and-members#the-owner-and-money)
+before you press it.
+
+## Remove somebody
+
+**Who can do this:** owner or admin.
+
+Removal is not a single button, because taking somebody out of a workspace has
+consequences for keys that are still serving traffic.
+
+<Steps>
+<Step title="Read what removal would cost">
+Before you decide, the product shows you what this person is accountable for:
+each live key, and what it has been doing recently. That evidence is behind the
+same permission as the removal itself, because nobody reads what a colleague's
+keys have been doing without the authority to remove them.
+</Step>
+<Step title="Choose revoke or keep, for every key">
+Removal is blocked until every live key that person is accountable for carries an
+explicit choice:
+
+- **Revoke** ends the key now. Anything still calling with it stops.
+- **Keep** leaves the key working and names a different member as accountable
+  for it. The new accountable member has to be somebody who could revoke it, so
+  that the person answering for a key can also act on it.
+
+There is no default on this screen, and an unrecognised choice refuses the whole
+request. A default here would be a decision about live credentials that nobody
+made.
+</Step>
+<Step title="Confirm">
+The removal happens completely or not at all. The membership is not deleted
+unless the key choices are applied in the same write, so there is no state in
+which somebody the screen says has gone is still holding a working key.
+</Step>
+</Steps>
+
+A kept key can also carry a rotate-by date, which is a reminder to replace it. It
+is a reminder and never a kill switch: a key that revoked itself on a date nobody
+was watching would move the outage rather than remove it.
+
+A removal that would leave the workspace with no owner is refused, and the
+refusal names transfer as the way through. Transfer first, then remove.
+
+## Refusals you may hit
+
+Where your role does not carry the action, the answer is HTTP 403 with:
+
+> Your role in this workspace does not allow that.
+
+You are told this rather than being shown nothing, because the screen offered
+the control and an unexplained absence leaves you with nothing to act on. A
+workspace you are not a member of answers as though it does not exist, which is
+a different case and deliberately indistinguishable from a workspace that
+really does not.
+
+## What is not covered here
+
+**A second workspace.** Opening another workspace and switching between them
+have not been accepted, so they are not documented.
+
+**Leaving a workspace yourself.** There is no documented self-removal flow. An
+owner or admin removes people.

@@ -1,0 +1,130 @@
+---
+title: "Glossary"
+description: "The words this site uses for Uniblock's own concepts, defined once and used the same way everywhere."
+status: write-now
+gates: []
+---
+
+These terms carry money and permissions, so they are defined once here and used
+identically on every other page.
+
+### API key
+
+A credential you use to call `https://ai.uniblock.dev`. It belongs to a workspace
+rather than to a person, and it is never a provider credential. Shown once at
+creation, stored only as a one-way hash, and identified afterwards by its name,
+its prefix and its last four characters. See
+[Create an API key](/guides/create-an-api-key).
+
+### Balance
+
+The credit a workspace has left right now.
+
+### Credit
+
+Prepaid spending power on a workspace, bought through checkout and reduced by
+usage at face value. Credit is bought above face value, because the platform fee
+is added at purchase. A purchase therefore has two figures: the amount charged to
+the card, and the credit granted. On this site, "credit" always means the second.
+
+### Invitation
+
+An emailed link that offers somebody a role in a workspace. Bound to one email
+address, valid for seven days, confers nothing until it is accepted, and may
+carry a key reservation. See
+[Invite and manage members](/guides/invite-and-manage-members).
+
+### Key reservation
+
+A promised key attached to an invitation. It occupies one of the workspace's five
+key slots from the moment it is made, and becomes a real key only when its holder
+views it for the first time after accepting. A reservation that lapses or is
+cancelled was never a key, so ending it is not a revocation.
+
+### Live model
+
+A model that is callable right now, because we hold working credentials for it
+and it has been enabled. Only live models are offered to you. See
+[Models](/concepts/models).
+
+### Member
+
+A person in a workspace, holding exactly one role there. A person may be a member
+of more than one workspace.
+
+### Model
+
+A single callable model, named by a model id.
+
+### Model id
+
+The value you put in the `model` field of a request, written as a family and a
+model separated by a slash, for example `openai/gpt-4o-mini`.
+
+### Owner
+
+The one member of a workspace who holds the money: the card, the buying of
+credit, and pausing requests. A workspace has exactly one owner, always.
+Ownership moves only by transfer, never by being granted, and the transfer
+demotes the outgoing owner in the same action. The owner is also the only member
+who can make somebody an admin.
+
+### Pause
+
+A workspace-level stop on serving requests, set by the owner. Any member may read
+whether requests are paused; only the owner may change it. Pausing revokes
+nothing.
+
+### Platform fee
+
+The percentage Uniblock adds to the credit you buy, charged at the moment of
+purchase and never taken when a request is served. Currently 2.5%. The rate that
+applies to a purchase is fixed when checkout starts. See
+[Credits and billing](/concepts/credits-and-billing).
+
+### Playground
+
+A dashboard screen that sends a real request to a real model, authenticated by
+your session and attributed to a key you choose. It spends real credit and stores
+no prompt or reply. See [Playground](/guides/playground).
+
+### Provider
+
+A company whose models we call. We hold the account and the credentials with each
+one, and you never do.
+
+### Request id
+
+The identifier attached to every response, successes and errors alike. It is the
+one thing worth quoting when asking us about a specific request, and it is how a
+single request is looked up in your usage.
+
+### Role
+
+What a member may do in one workspace: one of owner, admin, developer or viewer,
+and a member holds exactly one. A role is a set of permissions rather than a
+rank. See [Workspaces and members](/concepts/workspaces-and-members).
+
+### Spend rate cap
+
+A ceiling on how much a workspace may commit to in-flight requests over a rolling
+window. It is the one limit you may raise yourself. See
+[Spend controls](/guides/spend-controls).
+
+### Statement
+
+The line-by-line record of every change to a workspace's balance: what was
+bought, what was charged, and what each request took. Any member may read it;
+only the owner may act on money.
+
+### Usage record
+
+The record of one request: when it was made, which model, which provider served
+it, the token counts, the cost, the latency, and the outcome. Never the prompt
+and never the reply. See [Usage and metering](/concepts/usage-and-metering).
+
+### Workspace
+
+The unit you sign in to and invite people into. Named, and holding members, API
+keys, usage records, a playground, spend controls, and its own billing. Anything
+that spends belongs to a workspace.

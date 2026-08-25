@@ -1,0 +1,168 @@
+---
+title: "Spend controls"
+description: "Pause every request, set your own spend rate cap, and choose when we email you about a falling balance."
+status: partial
+gates: ["4.18", "4.19"]
+---
+
+import FeatureStatus from '/snippets/feature-status.mdx';
+import OwnerOnlyNote from '/snippets/owner-only-note.mdx';
+import RequestIdNote from '/snippets/request-id-note.mdx';
+
+Three controls decide how fast this workspace can spend, and when it stops. They live
+on the **Limits** and **Settings** screens in the dashboard.
+
+| Control | What it does | Who may read it | Who may change it |
+|---|---|---|---|
+| Pause | Refuses every request straight away, revoking nothing. | Any member | Owner |
+| Spend rate cap | Limits how much money may be reserved per rolling 60 seconds. | Any member | Owner |
+| Low credit notice | Emails you once when your available balance falls below a figure. | Any member | Owner |
+
+<OwnerOnlyNote />
+
+## Pause every request
+
+Pause is the control for a runaway client, a key you are not sure about, or a weekend
+you would rather not be surprised by. It refuses requests without revoking anything,
+so lifting it starts everything again with no keys to re-create.
+
+### Before you press it
+
+The screen states what it is about to do, in numbers, before anything happens:
+
+> Pausing refuses every request on all N live keys straight away, with nothing charged
+> for a refused request. Over the last 7 days this account made N requests, which is
+> the traffic that would have stopped. Nothing is deleted and no key is revoked, so
+> lifting the pause starts everything again with no keys to re-create.
+
+Both counts are your workspace's own, read at the moment the screen loads. The request
+count is the trailing seven days of what actually happened, not a forecast
+of what will stop. Nobody can count future requests, so the screen quotes the honest
+stand-in and says which it is.
+
+### While it is on
+
+Requests are refused with HTTP 503 and code `paused_by_owner`, and nothing is charged
+for them. The screen explains the state rather than only showing a toggle, because
+somebody who paused on Friday and is reading this on Monday has forgotten:
+
+> Every request on this account is refused while this is on, on all N live keys, and
+> nothing is charged for a refused request. Credit already held for requests that were
+> running when you paused is still theirs: each one finishes and is charged for what
+> it really used. Lift the pause here and requests start working again immediately,
+> with no keys to re-create.
+
+**Requests already in flight are not cut off.** Each finishes and is charged for what
+it really used.
+
+### Lifting it
+
+Press it again. The next request is admitted immediately: there is no cache to expire
+and no deploy involved. Your keys, your members and your credit are exactly as they
+were.
+
+<Note>
+  Pause is yours and only yours to lift. It is a different state from an account we
+  have suspended, which has its own answer and cannot be lifted from this screen.
+</Note>
+
+<FeatureStatus>
+  The pause control is built and at review. Its routes, its refusal code and the
+  sentences above are shipped.
+</FeatureStatus>
+
+## Set your spend rate cap
+
+The spend rate cap limits how much money may be **reserved** per rolling 60 seconds.
+The default is 5000 minor units. Over it, requests are refused with HTTP 429 and code
+`spend_rate_exceeded`, and they are admitted again within 60 seconds with nothing for
+you to do.
+
+Read [Rate limits and spend controls](/concepts/rate-limits-and-spend-controls) first
+if you have not: the cap counts estimated maximums rather than money spent, and
+sending `max_tokens` is the lever that makes it bind less often.
+
+<Steps>
+  <Step title="Open the Limits tab in Settings">
+    Each row names the unit it is enforced in and carries a sentence saying whether it
+    is yours to move.
+  </Step>
+  <Step title="Read the ceiling">
+    The spend rate cap field states the highest value you may set yourself. Where we
+    cannot state it at that moment, the hint says so and adds that lowering your cap
+    still works.
+  </Step>
+  <Step title="Enter a whole number of minor units">
+    At least 100. Submitting a figure above the stated ceiling is refused, naming both
+    your figure and the highest you may set, and nothing is written.
+  </Step>
+  <Step title="Save">
+    The new cap applies to the next request on this workspace. There is nothing to
+    deploy and nothing to expire.
+  </Step>
+</Steps>
+
+Two rules worth knowing:
+
+- **A cap of 0 is refused.** Stopping requests entirely is what the pause is for, and
+  it has its own control, its own state and its own sentence. A cap of zero would be a
+  second way to do it that no screen would explain.
+- **Lowering always works.** If your cap is above the self service ceiling, you can
+  still lower it to any figure at or above 100 minor units. You just cannot raise it
+  further until we raise the ceiling.
+
+### The rows you cannot raise
+
+The request rate and the token rates protect a provider account shared across every
+customer, and the screen says so rather than only enforcing it:
+
+> This protects a provider account we share across every customer. Raising it is a
+> decision we make, not one you can make yourself.
+
+There is no self service path for those figures. If you need more room, ask us.
+
+Two of the rows carry no figure yet:
+
+> Not yet enforced. We are not checking your traffic against this figure yet.
+
+They are drawn because the units we meter you in are fixed now rather than later. No
+figure means nobody is checking, not that you have no room.
+
+<FeatureStatus>
+  The Limits tab and the self service cap control are built and their story is not yet
+  marked done. Verify the screen before relying on this section.
+</FeatureStatus>
+
+## Choose when we warn you
+
+The low credit notice emails you once, at your verified address, when your available
+balance falls below a figure you choose.
+
+- A whole number of minor units, from 0 to 100000. 500 means 5.00.
+- **0 turns the email off**, and the screen says so in words.
+- One email per crossing. No second email is sent until the balance goes back above
+  the figure and falls below it again, and the screen says which of those three
+  states you are in.
+
+The email names the balance you hold and the threshold you set, says that requests
+are refused once credit runs out and that nothing is charged for a request we refuse,
+and points at Billing. It carries no link with a token in it.
+
+## What each refusal costs you
+
+Nothing. A paused request, a rate capped request and a request refused for want of
+credit are all charged nothing. That is why the pause is safe to press and the cap is
+safe to test.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Rate limits and spend controls" href="/concepts/rate-limits-and-spend-controls">
+    What the cap counts and how to make it bind less often.
+  </Card>
+  <Card title="Buy credit" href="/guides/buy-credit">
+    Topping up, and the statement that explains it.
+  </Card>
+</CardGroup>
+
+<RequestIdNote />

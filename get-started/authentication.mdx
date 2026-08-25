@@ -1,0 +1,206 @@
+---
+title: "Authentication"
+description: "API keys end to end: the Bearer header, the key format, shown-once keys, the five-slot ceiling, and how a key ends."
+status: partial
+gates: ["2.17", "3.11"]
+---
+
+import FeatureStatus from '/snippets/feature-status.mdx';
+import AuthHeader from '/snippets/auth-header.mdx';
+import ErrorEnvelope from '/snippets/error-envelope.mdx';
+import RequestIdNote from '/snippets/request-id-note.mdx';
+
+Every request to the public API is authenticated by one API key on one header.
+There is no other credential, no session, and no signature: a key opens the door
+and nothing else does.
+
+## The header
+
+<AuthHeader />
+
+<CodeGroup>
+
+```bash curl
+curl https://ai.uniblock.dev/v1/chat/completions \
+  -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{"model": "openai/gpt-4o-mini", "messages": [{"role": "user", "content": "Hello."}]}'
+```
+
+```python Python
+from openai import OpenAI
+
+# The SDK puts the key on the Authorization header for you.
+client = OpenAI(
+    base_url="https://ai.uniblock.dev/v1",
+    api_key="ub_live_YOUR_KEY_HERE",
+)
+```
+
+```javascript Node
+import OpenAI from "openai";
+
+// The SDK puts the key on the Authorization header for you.
+const client = new OpenAI({
+  baseURL: "https://ai.uniblock.dev/v1",
+  apiKey: "ub_live_YOUR_KEY_HERE",
+});
+```
+
+</CodeGroup>
+
+The scheme must be `Bearer`. A missing header and a header using another scheme
+get the same refusal, because from our side they are the same thing: no key
+arrived.
+
+## The key format
+
+A key is a non-secret prefix followed by 43 random characters from the base64url
+alphabet, which is `A-Z`, `a-z`, `0-9`, `-` and `_`.
+
+| Prefix | Environment |
+|---|---|
+| `ub_live_` | Production. This is the one you get from the dashboard. |
+| `ub_stg_` | Staging. |
+| `ub_dev_` | Development. |
+
+The prefix carries the environment for two reasons. Secret scanners can recognise
+a leaked Uniblock key in a public repository, and a key pasted into the wrong
+configuration says out loud which environment it belongs to rather than failing
+with a puzzle.
+
+The prefix and the last four characters are not secret and stay visible in the
+dashboard, which is how you tell two keys apart after the fact. The other 39
+characters are gone from our side the moment the key is shown.
+
+## Keys are shown once
+
+The dashboard says it plainly, and this page says the same thing: a key appears
+once and we keep only a hash, so we cannot show it to you again or recover it for
+you. Copy it into your secret store before you leave the screen.
+
+There is no recovery path, and that is a property of the design rather than a
+missing feature: what we store is a one-way hash, so a leak of our database
+yields no working key, and the same fact is what stops us reading yours back. If
+you lose a key, mint a new one. Ending the lost one is covered under
+[how a key ends](#how-a-key-ends) below, and today that is not yet something you
+can do for yourself.
+
+## Keys belong to the workspace
+
+A key is the workspace's, not the person's who minted it. Its spend lands on the
+workspace's balance and its requests land in the workspace's usage. That has a
+consequence worth knowing before you organise your team around it: removing the
+member who created a key does not, on its own, stop the key. Revoking is an
+explicit choice, made per key, at the moment of removal. See
+[workspaces and members](/concepts/workspaces-and-members).
+
+## Five live keys per workspace
+
+A workspace holds up to five live keys. An outstanding key reservation attached
+to an invitation occupies one of the five while it is outstanding, and frees it
+if the reservation is cancelled or lapses. When all five slots are held, minting
+refuses until a slot frees.
+
+Five is the ceiling on live keys, not on keys ever minted. A key that has been
+ended frees its slot.
+
+## How a key ends
+
+<FeatureStatus
+  feature="revoking and replacing a key yourself"
+  detail="Revoke and Replace are not on the Keys screen yet, and there is no route behind them, so a key you no longer want cannot be ended by you today. The one path that ends a key now is the per-key choice made when a member is removed from the workspace. Treat a key as live for as long as it exists, and plan around the five-slot ceiling until the other two paths ship."
+/>
+
+The set of things that may ever end a key is closed, which matters because it is
+also the set of things that can stop your traffic. There are three, and this is
+their status today:
+
+| Reason | What causes it | Available today |
+|---|---|---|
+| You revoke it | Somebody with access ends that key deliberately. | Not yet |
+| It was replaced | Minting a replacement ends the key it replaces in the same motion. | Not yet |
+| A member was removed and the person removing them chose to revoke that key | Removal asks about each key rather than deciding for you. | Yes |
+
+Two things that do not end a key, stated because their absence is worth knowing:
+a role change never revokes a key, and neither does a workspace pause. A pause
+stops requests while the keys stay live, so lifting it needs no new key.
+
+We do not publish a figure for how quickly ending a key takes effect everywhere.
+The mechanism that would make a global timing promise true is not built, and
+quoting a number we have not measured would be worse than saying nothing.
+
+## The 401 responses
+
+Refusals arrive in the OpenAI error envelope, so an OpenAI client parses them
+without changes.
+
+<ErrorEnvelope />
+
+All three carry `"type": "authentication_error"` and `"code": "invalid_api_key"`.
+Branch on those fields rather than on the message.
+
+| What happened | The message |
+|---|---|
+| No `Authorization` header, or a scheme other than `Bearer` | `You did not provide an API key. Send it in an Authorization header using Bearer auth.` |
+| A string that is not shaped like a Uniblock key | `Incorrect API key format. A Uniblock key looks like ub_live_ followed by 43 characters. Check you have not pasted a key from another provider.` |
+| A correctly shaped key we do not accept | `Incorrect API key provided.` |
+
+The second is separated from the third on purpose. A key of the wrong shape is a
+configuration mistake, usually a key from another provider or a truncated paste,
+and saying so saves you an afternoon while telling an attacker nothing they do
+not already know about their own string.
+
+The third covers both a key that never existed and a key that was revoked, with
+one identical sentence. That is deliberate: confirming that a stolen key was once
+real is worth a great deal to whoever stole it and nothing to anybody else. Only
+our own logs tell the two apart.
+
+```json 401
+{
+  "error": {
+    "message": "Incorrect API key provided.",
+    "type": "authentication_error",
+    "param": null,
+    "code": "invalid_api_key",
+    "request_id": "00000000-0000-4000-8000-000000000000"
+  }
+}
+```
+
+## Per-key rate limiting
+
+A key carries a request rate limit, checked as the key is authenticated. Over it,
+the response is 429 with type `rate_limit_error` and code `rate_limit_exceeded`,
+and it carries a `Retry-After` header in seconds. The message names the wait:
+
+```json 429
+{
+  "error": {
+    "message": "Rate limit reached for this key. Try again in 12 seconds. Request id 00000000-0000-4000-8000-000000000000.",
+    "type": "rate_limit_error",
+    "param": null,
+    "code": "rate_limit_exceeded",
+    "request_id": "00000000-0000-4000-8000-000000000000"
+  }
+}
+```
+
+This is the limit on your key's request rate, which is ours to set and which you
+cannot raise yourself. It is a different refusal from your account spend rate cap,
+which you can raise, and the codes are distinct so your client can tell them
+apart. See [rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+
+<RequestIdNote />
+
+## Handling keys well
+
+- Keep keys in a secret store or an environment variable, never in source
+  control. The `ub_live_` prefix exists partly so that scanners catch the mistake,
+  but catching it after the fact is not the same as avoiding it.
+- Use one key per deployment or per service rather than one shared key, within the
+  five-slot ceiling. Usage is attributed per key, so separate keys are what make a
+  spending question answerable, and ending one then costs you one deployment
+  rather than all of them.
+- We set no expiry on a key and publish no rotation requirement, so a key stays
+  live until something on the list above ends it.

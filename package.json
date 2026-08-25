@@ -1,0 +1,29 @@
+{
+  "name": "uniblock-docs",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The public documentation site for Uniblock Gateway, built on Mintlify.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "mint dev",
+    "sync": "node scripts/sync-source-spec.mjs",
+    "build:openapi": "node scripts/build-public-openapi.mjs",
+    "check:openapi": "node scripts/build-public-openapi.mjs --check",
+    "check:docs-json": "node scripts/check-docs-json.mjs",
+    "check:banned": "node scripts/lint-banned-content.mjs",
+    "check:claims": "node scripts/check-claims.mjs",
+    "check:gates": "node scripts/check-status-gates.mjs",
+    "check:links": "mint broken-links",
+    "check": "npm run check:openapi && npm run check:docs-json && npm run check:banned && npm run check:claims && npm run check:gates",
+    "ci": "npm run check:openapi && npm run check:docs-json && npm run check:banned && npm run check:claims && node scripts/check-status-gates.mjs --allow-missing-pages"
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "mint": "^4.2.823",
+    "yaml": "^2.8.1"
+  }
+}
