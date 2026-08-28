@@ -1,16 +1,15 @@
 ---
 title: "Spend controls"
 description: "Pause every request, set your own spend rate cap, and choose when we email you about a falling balance."
-status: partial
-gates: ["4.18", "4.19"]
+status: write-now
+gates: []
 ---
 
-import FeatureStatus from '/snippets/feature-status.mdx';
 import OwnerOnlyNote from '/snippets/owner-only-note.mdx';
 import RequestIdNote from '/snippets/request-id-note.mdx';
 
 Three controls decide how fast this workspace can spend, and when it stops. They live
-on the **Limits** and **Settings** screens in the dashboard.
+on the **Settings** screen in the dashboard, in its **Limits** section.
 
 | Control | What it does | Who may read it | Who may change it |
 |---|---|---|---|
@@ -66,11 +65,6 @@ were.
   have suspended, which has its own answer and cannot be lifted from this screen.
 </Note>
 
-<FeatureStatus>
-  The pause control is built and at review. Its routes, its refusal code and the
-  sentences above are shipped.
-</FeatureStatus>
-
 ## Set your spend rate cap
 
 The spend rate cap limits how much money may be **reserved** per rolling 60 seconds.
@@ -83,7 +77,7 @@ if you have not: the cap counts estimated maximums rather than money spent, and
 sending `max_tokens` is the lever that makes it bind less often.
 
 <Steps>
-  <Step title="Open the Limits tab in Settings">
+  <Step title="Open the Limits section in Settings">
     Each row names the unit it is enforced in and carries a sentence saying whether it
     is yours to move.
   </Step>
@@ -128,10 +122,9 @@ Two of the rows carry no figure yet:
 They are drawn because the units we meter you in are fixed now rather than later. No
 figure means nobody is checking, not that you have no room.
 
-<FeatureStatus>
-  The Limits tab and the self service cap control are built and their story is not yet
-  marked done. Verify the screen before relying on this section.
-</FeatureStatus>
+The Limits section and the self service cap control are shipped. Every row reads the
+same live data the platform enforces against, and changing your spend rate cap here
+takes effect exactly the way the steps above describe.
 
 ## Choose when we warn you
 

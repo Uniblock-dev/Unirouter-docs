@@ -1,24 +1,25 @@
 ---
 title: "Monitor usage"
-description: "Read what your workspace has been spending on Overview, find one request in Activity, and reconcile a statement line with the request that caused it."
+description: "Read what your workspace has been spending on Usage, find one request in Activity, and reconcile a statement line with the request that caused it."
 status: partial
-gates: ["5.11", "5.12", "5.13", "5.14", "5.15"]
+gates: ["5.11", "5.12"]
 ---
 
-import FeatureStatus from '/snippets/feature-status.mdx';
 import RequestIdNote from '/snippets/request-id-note.mdx';
 
-Two screens answer two different questions. **Overview** answers "what has this
+Two screens answer two different questions. **Usage** answers "what has this
 workspace been doing". **Activity** answers "what happened to this request".
 
-<FeatureStatus>
-  Epic 5's screens are at review. The figures, the filters and the field set below are
-  the shipped behaviour; the layout may still change before this page is published.
-</FeatureStatus>
+Usage is also where you land: it is the screen you see the moment you sign in,
+and the screen a workspace switch takes you back to.
 
-## Overview: the shape of your spending
+Both screens are shipped and live. Everything below, the figures, the filters and the
+fields on each row, is what these screens show today rather than what they are
+planned to show.
 
-Overview reads one window at a time. The ranges are 24 hours, 7 days, 30 days, 90
+## Usage: the shape of your spending
+
+Usage reads one window at a time. The ranges are 24 hours, 7 days, 30 days, 90
 days and 1 year, and it shows:
 
 - **Totals for the window**: requests, how many were served, how many were not, token
@@ -142,6 +143,10 @@ Two cases where a line carries more than the amount:
 ## Next
 
 <CardGroup cols={2}>
+  <Card title="View activity" href="/guides/view-activity">
+    A closer walkthrough of the Activity list: paging, filtering and looking up
+    one request.
+  </Card>
   <Card title="Usage and metering" href="/concepts/usage-and-metering">
     The full field set, the outcome vocabulary and the retention rules.
   </Card>

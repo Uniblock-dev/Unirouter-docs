@@ -2,7 +2,7 @@
 title: "Rate limits and spend controls"
 description: "The limits that can refuse a request, what the spend rate cap counts, and the one lever that makes it bind less often."
 status: partial
-gates: ["4.18", "10.11"]
+gates: ["10.11"]
 ---
 
 import FeatureStatus from '/snippets/feature-status.mdx';
@@ -54,7 +54,7 @@ number of seconds to wait:
 ```
 
 This limit is counted per key, so splitting work across two keys splits the counter.
-The figure in force is shown on the Limits tab in Settings.
+The figure in force is shown in the Limits section of Settings.
 
 ## The spend rate cap
 
@@ -153,8 +153,8 @@ with no credit to slow down is advice that cannot work.
 
 ## Which limits are yours to raise
 
-The Limits tab in Settings lists your limits one unit at a time, and marks each one
-as yours or shared. The distinction is the rule, not a label:
+The Limits section of Settings lists your limits one unit at a time, and marks each
+one as yours or shared. The distinction is the rule, not a label:
 
 > This protects your own money. You may raise it yourself, up to the limit shown.
 
@@ -188,10 +188,9 @@ and it has its own control, its own state and its own sentence.
 Reading your limits is open to every member of the workspace. Changing the spend rate
 cap is the owner's.
 
-<FeatureStatus>
-  The Limits tab and the self service cap control are built and their story is not yet
-  marked done. Verify the screen before relying on this section.
-</FeatureStatus>
+The Limits section and the self service cap control are shipped: the figures and the
+sentences behind them are the platform's own, read live rather than written into this
+page.
 
 ## Pausing everything
 

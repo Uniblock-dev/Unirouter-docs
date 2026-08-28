@@ -47,6 +47,12 @@ for (const claim of registry.claims ?? []) {
     report.fail('claims.yml', `two claims share the id "${claim.id}".`);
   }
   ids.add(claim.id);
+  if (!['shipped', 'gated', 'blocked'].includes(claim.status)) {
+    report.fail(
+      'claims.yml',
+      `claim "${claim.id}" carries status "${claim.status}", which is not one of shipped, gated or blocked.`
+    );
+  }
   const key = normalise(claim.value);
   if (!byValue.has(key)) byValue.set(key, []);
   byValue.get(key).push(claim);
@@ -172,4 +178,50 @@ function globToRegExp(globPattern) {
     out += '.+^${}()|[]\\?'.includes(c) ? `\\${c}` : c;
   }
   return new RegExp(`^${out}$`);
+}
+
+/**
+ * May this claim be published on this page?
+ *
+ * The three statuses are defined in claims.yml's own header and this is the
+ * only place that reads them:
+ *
+ *   shipped   verified against a handler or a settled decision record.
+ *             Publishable anywhere.
+ *   gated     true today but gated on a story. Publishable only on the pages
+ *             its `used_by` list names, and re-verified at `gate`.
+ *   blocked   registered so the checker can name it, and publishable nowhere.
+ *
+ * A status the registry does not define is refused rather than guessed at, and
+ * the registry loop above fails the run for it besides, so a typo cannot turn
+ * into a silent block on every page at once.
+ */
+function publishableOn(claim, pageId) {
+  if (claim.status === 'shipped') return true;
+  if (claim.status === 'gated') return (claim.used_by ?? []).includes(pageId);
+  return false;
+}
+
+/**
+ * Why every claim registered for this value is refused here.
+ *
+ * The message names each one, because a value that collides carries more than
+ * one claim and "this number is not allowed" would leave a writer guessing
+ * which of them they tripped.
+ */
+function whyRefused(token, claims, pageId) {
+  const reasons = claims.map((claim) => {
+    if (claim.status === 'blocked') {
+      return `${claim.id} is blocked: ${collapse(claim.reason) || 'claims.yml records no reason, which is itself a bug in the registry.'}`;
+    }
+    if (claim.status === 'gated') {
+      const pages = claim.used_by ?? [];
+      const where = pages.length > 0 ? pages.join(', ') : 'no page at all';
+      return `${claim.id} is gated on ${claim.gate ?? 'an unnamed gate'} and is published on ${where}, not here.`;
+    }
+    return `${claim.id} carries status "${claim.status}", which claims.yml does not define.`;
+  });
+
+  const plural = claims.length === 1 ? 'claim' : 'claims';
+  return `"${token}" matches ${claims.length} registered ${plural} in claims.yml and none of them may be published on ${pageId}. ${reasons.join(' ')}`;
 }

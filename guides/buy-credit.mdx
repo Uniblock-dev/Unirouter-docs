@@ -5,7 +5,6 @@ status: write-now
 gates: ["4.15", "4.20"]
 ---
 
-import FeatureStatus from '/snippets/feature-status.mdx';
 import OwnerOnlyNote from '/snippets/owner-only-note.mdx';
 import RequestIdNote from '/snippets/request-id-note.mdx';
 
@@ -101,10 +100,9 @@ The running total on each page is the sum of your movements up to that line. It 
 there so you can check our arithmetic. It is not your balance: your balance is on the
 Balance tab and accounts for credit currently held for requests in flight.
 
-<FeatureStatus>
-  The Statement screen is built and awaiting its final design approval. The endpoint
-  behind it, its page size and its purchase annotation are shipped.
-</FeatureStatus>
+The Statement tab is live today, one of the three tabs on the Billing screen
+alongside Balance and Details. What you see there is read from your ledger, not a
+preview of a screen still being designed.
 
 ## Set the low credit notice
 
@@ -124,11 +122,8 @@ about it is a credential and nothing about it expires.
 
 ## Your saved card
 
-<FeatureStatus>
-  The saved card flow is built and at review. It has been exercised in test mode and
-  not yet against production, so treat this section as the intended behaviour and
-  check the screen.
-</FeatureStatus>
+The saved card flow is live today. What the Details tab shows is the real card on
+file, and removing it there really removes it from our payment provider.
 
 Our payment provider keeps the card so that the next purchase does not ask for it
 again. We store no card number and no expiry: the brand and the last four digits are

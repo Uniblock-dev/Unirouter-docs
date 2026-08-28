@@ -2,14 +2,13 @@
 title: "Usage and metering"
 description: "What Uniblock records for every request, what it never records, when the figures appear, and how long they are kept."
 status: partial
-gates: ["5.3", "5.4", "5.11", "5.12", "5.13", "5.14"]
+gates: ["5.4", "5.11", "5.12"]
 ---
 
-import FeatureStatus from '/snippets/feature-status.mdx';
 import RequestIdNote from '/snippets/request-id-note.mdx';
 
 Every request that reaches Uniblock produces one usage record. That record is what
-the Overview and Activity screens read, what your totals are summed from, and what a
+the Usage and Activity screens read, what your totals are summed from, and what a
 charge on your statement is explained by.
 
 It holds metadata about the request. It never holds your prompt or the model's reply.
@@ -22,11 +21,12 @@ single request lookup return them:
 | Field | What it is |
 |---|---|
 | `requestId` | Our id for the request. This is the value to quote to us. |
-| `occurredAt` | When the request started, ISO 8601. |
+| `occurredAt` | When the request started, `ISO 8601`. |
 | `source` | Which door it came through: `api` or `playground`. |
 | `modelSlug` | The model that was called, as `family/model`. |
 | `providerSlug` | Which provider answered, or null where none did. |
 | `outcome` | What became of the request. The values are a closed set, listed below. |
+| `servedOnOwnKey` | Whether this request ran on a provider key your workspace brought, rather than one of ours. |
 | `promptTokens` | Input tokens counted, or null where no count arrived. |
 | `completionTokens` | Output tokens counted, or null where no count arrived. |
 | `totalTokens` | The sum of the two, or null. |
@@ -45,6 +45,13 @@ renders as a measurement.
 supply are not in it and will not appear later by accident. Every customer facing
 usage endpoint is checked against the same list, so what you can see is decided in
 one place rather than by whichever endpoint you happen to call.
+
+**Your own key is on the record too.** A request served on a provider key your
+workspace brought is metered exactly like any other: it gets a usage record, and
+whether it ran that way is on that record. How many of your requests ran on your
+own key is counted apart from the ones we served on ours, never folded into them.
+See [Bring your own key](/concepts/bring-your-own-key) for what changes, and what
+does not, when a request runs on a credential you brought.
 
 ## The outcome vocabulary
 
@@ -112,11 +119,9 @@ how much. The totals name **how many** such requests fall in the window, so the 
 totals read as incomplete rather than as complete-and-low. Your statement carries the
 real movements meanwhile.
 
-<FeatureStatus>
-  Epic 5's usage screens and endpoints are at review. The field set, the outcome
-  vocabulary and the retention window above are the shipped behaviour; the shape of
-  the summary responses may still gain fields before this page is published.
-</FeatureStatus>
+The Usage and Activity screens, and the endpoints behind them, are shipped. The field
+set, the outcome vocabulary and the retention window above are what a customer reads
+today, not a preview of what is coming.
 
 ## What you can see of other people's requests
 
@@ -151,7 +156,7 @@ date filter that reaches past the window says so rather than returning an empty 
 
 <CardGroup cols={2}>
   <Card title="Monitor usage" href="/guides/monitor-usage">
-    Reading Overview and Activity, filtering, and looking up one request.
+    Reading Usage and Activity, filtering, and looking up one request.
   </Card>
   <Card title="Credits and billing" href="/concepts/credits-and-billing">
     How charges reach your balance and your statement.
