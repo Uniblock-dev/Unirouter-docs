@@ -1,0 +1,128 @@
+---
+title: "Add a provider key"
+description: "Find the BYOK screen, add a key, and see why nothing is stored until the provider itself has accepted it."
+status: partial
+gates: ["14.1"]
+---
+
+Provider keys are managed in the dashboard, at [BYOK](https://app.uniblock.dev),
+directly under API keys in the workspace rail. This page walks that screen. For
+what bringing a key actually does, and what it does not do, read
+[Bring your own key](/concepts/bring-your-own-key) first.
+
+**Who can do this:** owner or admin. A developer or a viewer does not see a
+limited version of this screen; they see a refusal in place of it, worded
+`Your role in this workspace does not allow that.`, with a line telling them to
+ask an owner or an admin to bring, replace or remove a key on their behalf. See
+[Workspaces and members](/concepts/workspaces-and-members) for the full role
+table.
+
+## Add a key
+
+<Steps>
+<Step title="Open BYOK">
+The screen has one primary control, **Add key**, in its header. It is always
+there, whether or not this workspace holds any keys yet.
+</Step>
+<Step title="Pick the provider">
+Add key opens a picker of the providers you can bring a key for: everything
+Uniblock currently carries that this workspace has no key for already, each
+one showing how many credential fields it will ask for. A provider that
+authenticates with nothing, or one you already hold a key for, is not offered
+here.
+</Step>
+<Step title="Enter the credential">
+The form asks for exactly the fields that provider needs, shown under the
+provider's own name for each one so you can match it against what their
+dashboard calls it. Every field is masked as you type. You can give the key an
+optional label for your own reference; nothing else about it is configurable
+here.
+</Step>
+<Step title="Wait for the check">
+Submitting does not store anything yet. The screen says
+"Checking this key with `<provider>`" while a real, no-model call goes out to
+that provider using the value you just typed.
+</Step>
+<Step title="See it saved, or see it refused">
+A successful check saves the key immediately and the provider now shows as
+keyed. A failed check saves nothing: the form stays open with the provider's
+own words underneath it, so you can correct the value and try again.
+</Step>
+</Steps>
+
+## Nothing is saved until the provider accepts it
+
+This is the whole shape of adding or replacing a key, and it is worth stating
+plainly because it changes what you do when it fails. Uniblock does not store
+a credential and find out later whether it works. It makes a real call to the
+provider first, with nothing on the wire but that call, and only writes the
+key down once the provider has answered that it is good.
+
+A refusal is the provider's own answer, relayed back to you rather than
+reworded or generalised. Nothing about your workspace changes because of it:
+no key is stored, no existing key is touched, and no attempt is charged
+against your Uniblock credit. If a check keeps failing, the value you typed is
+what the provider is rejecting, not anything Uniblock did to it.
+
+Because each check is a live call to the provider, there is a limit on how
+many you can run: ten checks per hour, counted across your whole account
+rather than per workspace or per provider. Running past that pauses further
+checks for a while rather than storing anything; it does not affect a key you
+already hold.
+
+## One key per provider
+
+A workspace holds at most one key per provider. Trying to add a second one for
+a provider you already hold a key for is refused, telling you to replace the
+one you have instead of adding another.
+
+Replacing a key runs the same proof as adding one: the new value is checked
+against the provider before anything changes, and a refusal leaves the key you
+already had untouched. A successful replacement overwrites the whole
+credential at once. There is no partial update, and replacing does not change
+the key's label.
+
+## What you can see afterward
+
+Once a key is stored, the card for it shows:
+
+- The label you gave it, if you gave it one.
+- The last four characters of the credential, masked, so you can tell keys
+  apart without seeing the secret itself.
+- When it was stored, and when it was last changed.
+
+The secret itself is never shown again, on this screen or anywhere else. A key
+cannot be renamed after it is created: the only way to change what it holds is
+to replace the secret, and the only way to change its label is to remove it
+and add it again.
+
+## Removing a key
+
+Removing asks you to confirm first, and tells you plainly what happens next:
+requests to that provider move back onto Uniblock's own key, and normal
+billing on your Uniblock credit, immediately. It is a permanent removal with no
+history kept; there is nothing to restore afterward, only adding the key again
+from scratch.
+
+If Uniblock has stopped carrying a provider you still hold a key for, that
+provider's card still offers Remove even though it no longer offers Replace:
+you can always take a key out, even for a provider you can no longer bring a
+new one for.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Bring your own key" href="/concepts/bring-your-own-key">
+    What "free" precisely means, why your key is exclusive per provider, and
+    why it never adds a model to your catalog.
+  </Card>
+  <Card title="Workspaces and members" href="/concepts/workspaces-and-members">
+    The full table of what each role may do.
+  </Card>
+</CardGroup>
+
+## What we did not verify
+
+The rules above are what the service enforces. The screen itself has not been
+walked end to end against a deployed environment for this documentation.
+Where the screen and this page disagree, trust the screen and tell us.

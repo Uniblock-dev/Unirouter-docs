@@ -1,0 +1,96 @@
+---
+title: "Create a workspace"
+description: "Open a new workspace from the workspace control in the dashboard, name it, and land inside it immediately as its owner."
+status: partial
+gates: ["9.4", "9.5"]
+---
+
+Every screen in the dashboard names the workspace you are currently in, in a
+small control near the top of the page. Click it and it opens every workspace
+you belong to, oldest joined first, with **New workspace** waiting at the foot
+of that list. That is the only door to a workspace that does not exist yet.
+
+## Create one
+
+<Steps>
+<Step title="Open the workspace control">
+Click the name of the workspace you are in, wherever you are in the dashboard.
+It opens the workspaces you belong to.
+</Step>
+<Step title="Choose New workspace">
+It sits below the workspaces you already have. Choosing it swaps the list for a
+small form in place, and puts you straight into the name field.
+</Step>
+<Step title="Name it">
+The form has one field: **Name**. There is no second field, nothing to invite
+and nothing to configure. You can rename a workspace later; this step is only
+about opening it.
+</Step>
+<Step title="Create it">
+The button reads **Create workspace**, and **Creating** while the request is in
+flight. On success you do not have to do anything else: see
+[What happens next](#what-happens-next).
+</Step>
+</Steps>
+
+## The name
+
+A workspace name has to trim to somewhere between 1 and 40 characters. A name
+outside that is refused:
+
+> A workspace name is 1 to 40 characters.
+
+It also has to be different from every workspace you already belong to, ignoring
+case. This is checked against your own workspaces, not against every workspace on
+the platform, so two different customers can each open a workspace with the
+same name. A duplicate against one of yours is refused:
+
+> You are already in a workspace with that name.
+
+If either refusal happens, what you typed stays in the box. The fix is editing
+the name, not retyping it from scratch.
+
+## What happens next
+
+You become the new workspace's **owner**, in the same step that creates it. The
+form tells you this before you press the button:
+
+> A new workspace has its own balance starting at zero, its own keys and its own
+> members, and you will be its owner.
+
+There is no separate step to switch into it. You land inside the new workspace
+right away, on its Usage screen, with nothing to reload and no second click.
+
+**It starts from nothing.** Its balance is zero, and it shares no credit with a
+workspace you already had. Its member list holds only you, and it holds no keys
+until you or somebody else creates one. See
+[Create an API key](/guides/create-an-api-key) and
+[Invite and manage members](/guides/invite-and-manage-members).
+
+Being the owner is what lets you buy credit for it in the first place: only an
+owner can buy credit, manage the card, or pause requests. See
+[the owner and money](/concepts/workspaces-and-members#the-owner-and-money).
+
+## How many you can have
+
+There is no limit on how many workspaces you can create, own, or belong to.
+Each one is separate: its own name, its own members, its own keys, and its own
+balance.
+
+## What we did not verify
+
+The workspace control, the create form, and the immediate switch into the new
+workspace are what the product does today. This guide was not walked end to end
+against a deployed environment. If a screen disagrees with this page, trust the
+screen and tell us.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Workspaces and members" href="/concepts/workspaces-and-members">
+    Roles, invitations, and what belongs to a workspace rather than to you.
+  </Card>
+  <Card title="Invite and manage members" href="/guides/invite-and-manage-members">
+    Bring somebody into the workspace you just opened.
+  </Card>
+</CardGroup>

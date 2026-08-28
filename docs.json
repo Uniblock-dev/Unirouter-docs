@@ -29,6 +29,8 @@
             "group": "Core concepts",
             "pages": [
               "concepts/models",
+              "concepts/bring-your-own-key",
+              "concepts/routing-profiles",
               "concepts/streaming",
               "concepts/credits-and-billing",
               "concepts/usage-and-metering",
@@ -42,8 +44,11 @@
             "group": "Dashboard guides",
             "pages": [
               "guides/create-an-api-key",
+              "guides/add-a-provider-key",
               "guides/buy-credit",
               "guides/monitor-usage",
+              "guides/view-activity",
+              "guides/create-a-workspace",
               "guides/invite-and-manage-members",
               "guides/playground",
               "guides/spend-controls"
@@ -51,7 +56,10 @@
           },
           {
             "group": "Resources",
-            "pages": ["resources/security", "resources/glossary"]
+            "pages": [
+              "resources/security",
+              "resources/glossary"
+            ]
           }
         ]
       },

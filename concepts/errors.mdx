@@ -47,7 +47,7 @@ if detail.get("code") == "insufficient_credit":
 The full table of statuses, types, and codes is in the
 [API error reference](/api-reference/errors).
 
-## The five things that go wrong
+## The six things that go wrong
 
 Grouped by what you would do about them rather than by status.
 
@@ -71,6 +71,14 @@ rate (which carries `Retry-After`) or `spend_rate_exceeded` for the account's
 spend rate cap. Back off for the first. For the second, sending `max_tokens`
 lowers what each request reserves; see
 [Rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+
+**Your own provider key was refused.** Only if you bring your own key for a
+provider: every request to it then runs on that key alone, and if the provider
+refuses it, nothing falls back to ours. `code` is `provider_key_refused` either
+way. A `429` means the provider says that key is over its limit there, which
+clears on its own. Anything else from the provider comes back as `400`,
+because retrying the same request will not change the answer until the key is
+replaced on the Provider keys screen. Either way, nothing is charged.
 
 **Ours.** `500`, `503`, or `504`. A `503` names its condition in `code`, and the
 codes differ in whether waiting helps: `balance_unavailable`,
@@ -98,6 +106,8 @@ from it rather than from a description of what the screen said.
 - `429` with `rate_limit_exceeded`: retry after `Retry-After` seconds.
 - `429` with `spend_rate_exceeded`: retry, and consider sending `max_tokens` so
   each request reserves less.
+- `429` with `provider_key_refused`: retry with backoff. It carries no
+  `Retry-After`, but a provider's own limit clears on its own.
 - `503` with `paused_by_owner`: do not retry on a timer.
 - Other `503`, and `500`: retry with backoff. If it persists, quote a request id.
 - `504`: the request ran past the 540 second limit. Retrying the same work

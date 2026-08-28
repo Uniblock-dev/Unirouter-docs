@@ -1,0 +1,131 @@
+---
+title: "Routing profiles"
+description: "An ordered list of your own models, requested as profile/<identifier> in the model field, so a fallback order lives in one place."
+status: write-now
+gates: []
+---
+
+A routing profile is your own ordered list of models, saved once and requested
+as if it were a single model. Put its identifier in the `model` field and the
+order you set is the order that gets tried.
+
+## What a profile is
+
+- A **name**, which is for you. It is what you pick it out of a list by, and
+  you can change it whenever you like.
+- An **identifier**, which is what your code sends. See below for why it never
+  changes.
+- An **ordered list of models**: one primary, and up to four backups.
+
+A profile is created, renamed, and archived from your workspace's Profiles
+screen.
+
+## Requesting a profile
+
+Put `profile/` and the identifier in the `model` field, exactly where a model
+id would otherwise go:
+
+```bash
+curl https://ai.uniblock.dev/v1/chat/completions \
+  -H "Authorization: Bearer ub_live_XXXXXXXX" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "profile/customer-support",
+    "messages": [{"role": "user", "content": "Say hello."}]
+  }'
+```
+
+```python Python
+completion = client.chat.completions.create(
+    model="profile/customer-support",
+    messages=[{"role": "user", "content": "Say hello."}],
+)
+```
+
+Nothing else about the request changes. A profile is a value in the same
+field a model id occupies, not a different kind of call. See
+[Models](/concepts/models) for how a plain model id is shaped.
+
+## The identifier does not change
+
+A profile's name is yours to change at any time. Its identifier is not: once a
+profile is created, its identifier is fixed for the life of that profile.
+
+The reason is what each one is for. The name is how you find a profile in a
+list, and nothing downstream should care if you rename it as your own
+vocabulary changes. The identifier is what is already sitting in your code, in
+a CI config, in a teammate's script you will never read. If `profile/nightly-batch`
+could be pointed at a different identifier later, the same three words your
+code sends today could come to mean a different list of models tomorrow,
+with nothing in your code telling you it happened. Fixing the identifier is
+what keeps that from being possible: the name can move, so the meaning can be
+kept current; the identifier cannot, so the meaning can be trusted.
+
+Archiving a profile does not free its identifier, either. Once an identifier
+has been used in a workspace, a new profile cannot claim it again.
+
+## What the order means
+
+A profile's models are tried strictly in the order you set. A request goes to
+the first model in the list. Only when that attempt answers with a status
+that means the model itself failed to serve it, rather than a fault in the
+request, does the request move on to the next model in your order, and so on.
+Any other failure, such as a malformed request, comes back to you as is:
+trying the same bad request against a different model would not fix it.
+
+A model in your list that cannot be served at all right now is skipped rather
+than counted as a failed attempt, as long as at least one model in the list
+still can be. Only when every model you named is unreachable does the request
+come back as a refusal, covered next.
+
+## An archived or unknown identifier
+
+Requesting `profile/<identifier>` for a profile that has been archived, or one
+that never existed, is refused identically either way: HTTP 503, code
+`no_provider_configured`.
+
+```json
+{
+  "error": {
+    "message": "Nobody serves \"profile/customer-support\": this workspace has no routing profile with that slug, or it has been archived. Its Profiles screen lists the ones that exist.",
+    "type": "api_error",
+    "param": null,
+    "code": "no_provider_configured",
+    "request_id": "00000000-0000-4000-8000-000000000000"
+  }
+}
+```
+
+There is no separate error for "archived" versus "never created", and there is
+no way to restore an archived profile: only to create a new one, under a new
+identifier. See [Errors and refusals](/concepts/errors) for the envelope every
+failing route shares.
+
+## Limits
+
+| | |
+|---|---|
+| Models per profile | 1 to 5. One primary, up to four backups. Each must be a model you can currently call, and none may be named twice. |
+| Identifier | 1 to 40 characters: lowercase letters, digits, and dashes, and it cannot start or end with a dash. |
+| Name | 1 to 120 characters. |
+| Profiles per workspace | 20 live at a time. Archiving one frees a slot, not its identifier. |
+
+## Who can do what
+
+Creating a profile, renaming it, replacing its model list, or archiving it all
+take the same permission: only the workspace owner and admins may do them. Any
+member of the workspace, including a developer or a viewer, may see the
+profiles that exist and request them, the same as any key in the workspace
+already can. See [Workspaces and members](/concepts/workspaces-and-members) for
+the full role table.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Models" href="/concepts/models">
+    How a model id is shaped, and how to discover which ones you can call.
+  </Card>
+  <Card title="Errors and refusals" href="/concepts/errors">
+    The one error body the whole API uses, and how to read it.
+  </Card>
+</CardGroup>

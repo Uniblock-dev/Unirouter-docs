@@ -35,21 +35,33 @@ curl https://ai.uniblock.dev/v1/models \
   -H "Authorization: Bearer ub_live_XXXXXXXXXXXX"
 ```
 
-Each entry carries an `id`, which is the value to put in `model`. Treat the `id`
-as the contract and treat anything else in an entry as not yet promised: the
-endpoint does not answer with prices, context windows or capabilities today, and
-the richer catalog described below is not built.
+Each entry carries an `id`, which is the value to put in `model`. Each entry also
+carries its input rate and, where the model publishes a separate one, its output
+rate, along with its context window, its capabilities, the currency the price is
+in and the provider names behind it, in the vocabulary
+below. Calling `GET /v1/models/{id}` for one model returns everything the list
+entry does, plus a short description of it. That description comes from
+third-party model catalogues rather than from the model's own provider, which
+publishes none, and it only ever appears on the single model call, not the list.
 
-**In the dashboard.** The playground offers the models you can send to as a
-list, so you can pick one rather than having to know an id first. See
+**In the dashboard.** The Models screen shows the same catalog for browsing
+without writing a request, and the playground offers the models you can send to
+as a list, so you can pick one rather than having to know an id first. See
 [Playground](/guides/playground).
 
 ## A model is offered only when it is live
 
-A model appears to you only when we hold working credentials for it and it has
-been enabled on our side. The rule behind that is a promise rather than an
-implementation detail: you must never be offered a model that would fail on
-call.
+A model appears to you only when we hold a working credential of our own for it
+and it has been enabled on our side. The rule behind that is a promise rather
+than an implementation detail: you must never be offered a model that would
+fail on call.
+
+Bringing your own key for a provider does not change this list. Your key only
+changes which credential answers your calls to a provider we already serve; it
+cannot add a provider or a model that is not already here. A model that is not
+live stays not live no matter whose key you hold for it. See
+[Bring your own key](/concepts/bring-your-own-key) for what your own key does
+change.
 
 The other half of the same rule is what happens when you name a model anyway. A
 request for a model that is not live, or that your workspace may not use, is
@@ -102,18 +114,15 @@ made, so a request from last Tuesday is explained against last Tuesday's prices
 and a later price change cannot rewrite it.
 
 <Note>
-The rate vocabulary above is how the product expresses a model's price. The
-screens that show you a model's price, a context window and its capabilities are
-not built yet, and neither is the priced catalog `GET /v1/models` will eventually
-answer from. Until they are, the price of a request is the provider's rate and
-the way to see what a request cost is your usage record, not a price page here.
+The rate vocabulary above is how the product expresses a model's price, and it is
+also how `GET /v1/models` and the dashboard's Models screen answer: both name a
+model's input and output rates, its context window and its capabilities in this
+same vocabulary. A rate can still change on the provider's side before a screen
+next reads it, so the way to see what a past request actually cost is your usage
+record, not a price page.
 </Note>
 
 ## What is not here
-
-**A public, signed-out model catalog.** Being able to compare models on price
-without an account is a product commitment and it is not built. Until it is,
-discovery needs a key and `GET /v1/models`, or a session and the playground.
 
 **A provider list.** Which providers we hold accounts with is not published. What
 we publish is which model ids you can call, which is the part that changes what

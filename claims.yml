@@ -39,8 +39,14 @@ allow_patterns:
     reason: "An ISO date."
   - pattern: "^gpt-[0-9a-z.-]+$|^claude-[0-9a-z.-]+$|^o[0-9]$"
     reason: "A model identifier, which comes from the catalog rather than from us."
-  - pattern: "^utf-8$|^base64url$|^sha-?256$"
+  - pattern: "^utf-8$|^base64$|^base64url$|^sha-?256$"
     reason: "The name of an encoding or algorithm."
+  - pattern: "^/v[0-9]+/[a-z-]+$"
+    reason: >-
+      A full API path, e.g. /v1/embeddings. The path set is the contract and is
+      checked against the published OpenAPI artifact, not against this registry.
+      Matched here because a path segment carries a digit and would otherwise read
+      as an unregistered claim.
 
 claims:
   - id: fee-rate-percent
@@ -154,6 +160,8 @@ claims:
     used_by:
       - concepts/usage-and-metering
       - concepts/data-and-privacy
+      - guides/monitor-usage
+      - guides/view-activity
     note: >-
       A configured value the product prints, not a promise anybody made
       (DOCS_PLAN.md section 14 item 12). Phrase it as the product does: a
@@ -169,6 +177,7 @@ claims:
     used_by:
       - concepts/usage-and-metering
       - concepts/data-and-privacy
+      - guides/view-activity
 
   - id: fee-basis-points
     value: "250"
@@ -253,6 +262,80 @@ claims:
     note: >-
       A one year window over a retention floor well short of a year shows what
       is kept, not a year of data. Say that beside the option or do not name it.
+
+  # Decimal spellings. claims.yml matches a token literally, so a figure written
+  # both as a bare number and with cents needs both entries; these are the second
+  # spelling of figures already registered above.
+  - id: fee-worked-example-credit-decimal
+    value: "100.00"
+    means: "The credit granted in the worked fee example, written with cents."
+    source: "_bmad-output/product/decisions/the-platform-fee-is-taken-at-purchase.md"
+    status: shipped
+    note: "The same figure as fee-worked-example-credit, spelled the way the pages write money."
+
+  - id: fee-worked-example-fee-amount
+    value: "2.50"
+    means: "The fee added to a 100.00 credit purchase at the launch rate of 2.5%."
+    source: "_bmad-output/product/decisions/the-platform-fee-is-taken-at-purchase.md; PRD FR-15, FR-18"
+    status: shipped
+
+  - id: minimum-purchase-decimal
+    value: "30.00"
+    means: "The smallest credit purchase, written with cents."
+    source: "_bmad-output/product/decisions/epic-4-open-questions-resolved-2026-08-18.md; PRD FR-14"
+    status: shipped
+    note: "The same figure as minimum-purchase, which is registered as $30."
+
+  - id: minor-unit-dollar-example
+    value: "1.00"
+    means: "What 100 minor units is worth, in the worked example that explains the unit."
+    source: "services/control-plane/src/money/vocabulary.ts"
+    status: shipped
+
+  - id: spend-cap-default-decimal
+    value: "50.00"
+    means: "The default spend rate cap expressed in dollars rather than minor units."
+    source: "services/control-plane/src/money/spendCap.ts; the same figure as spend-cap-default, which is 5000 minor units"
+    status: shipped
+
+  - id: key-secret-hidden-chars
+    value: "39"
+    means: "How many of an API key's 43 secret characters stop being visible once the key is shown, the other four being the displayed suffix."
+    source: "services/control-plane/src/keys/format.ts (SECRET_LENGTH 43, less the four-character suffix the dashboard keeps)"
+    status: shipped
+
+  # Epic 14 and routing profiles, read off the constants in this pass.
+  - id: routing-identifier-max-length
+    value: "40"
+    means: "The longest a routing profile identifier may be, in characters."
+    source: "services/control-plane/src/routing/projection.ts:298 (MAX_ROUTE_IDENTIFIER); drizzle/0041_routing_profile.sql (routing_profile_identifier_length CHECK)"
+    status: shipped
+
+  - id: routing-profiles-max-live
+    value: "20"
+    means: "The most routing profiles a workspace may hold live at once. Archived profiles do not count."
+    source: "services/control-plane/src/routing/store.ts:200 (MAX_PROFILES_PER_WORKSPACE)"
+    status: shipped
+
+  - id: workspace-name-max-chars
+    value: "40"
+    means: "The longest a workspace name may be, in characters."
+    source: "services/control-plane/drizzle/0032_workspace_account_unlinked.sql (workspace_name_length CHECK, 1 to 40)"
+    status: shipped
+    note: "Collides honestly with routing-identifier-max-length, which is also 40 and a different fact."
+
+  - id: byok-key-tests-per-hour
+    value: "ten"
+    means: "How many live provider-key checks an account may run in a rolling hour when adding or replacing its own provider key."
+    source: "services/control-plane/src/providers/byokThrottle.ts:74 (BYOK_TESTS_PER_WINDOW)"
+    status: shipped
+    note: "The form itself prints the figure, so it is customer-visible already."
+
+  - id: byok-key-last-four-chars
+    value: "four"
+    means: "How many trailing characters of a stored provider credential are shown back, so keys can be told apart without exposing the secret."
+    source: "services/control-plane/src/providers/byok.ts (lastFourOf)"
+    status: shipped
 
   # Blocked claims. Registered so a page carrying one fails with a reason
   # rather than with "unregistered number", which would read like an oversight.

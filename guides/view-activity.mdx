@@ -1,0 +1,142 @@
+---
+title: "View activity"
+description: "Every request as a row: what happened, what it cost, how to open one request, and exactly what is kept about it."
+status: partial
+gates: ["5.11", "5.12"]
+---
+
+import RequestIdNote from '/snippets/request-id-note.mdx';
+
+Activity lists every request this workspace has made, newest first, one row per
+request. Everything below, the columns, the filters and the single request view, is
+what the shipped screen shows today.
+
+## The columns, in order
+
+| Column | What it shows |
+|---|---|
+| When | When the request started, in UTC. |
+| Door | `api` or `playground`. |
+| Model | The model that was asked for. |
+| Served by | The provider that answered, or **nothing** if none did. |
+| Outcome | The raw outcome slug: `served`, or the reason it was not. |
+| Tokens | The total token count, or **unknown** if none was ever reported. |
+| Charge | The cost in minor units, or **unpriced** if the request was never priced. |
+| Took | How long the request took, in milliseconds. |
+| Request id | The first eight characters, linking to the single request view. |
+
+## Reading a row
+
+**Outcome is the raw word, not a translation.** A row whose outcome is anything
+other than `served` is drawn in a distinct color to draw the eye. The word itself is
+whatever the platform recorded, never a friendlier rewrite of it.
+
+**`unknown` is not zero.** A token count that was never reported reads `unknown`; a
+count of zero is printed as `0`. Those are different facts: a provider that never
+told us how many tokens it used is not the same as a request that genuinely used
+none, and collapsing them would turn an outage into a page of free requests.
+
+**`unpriced` is not free.** A request with no charge figure reads `unpriced`; a
+charge of `0` is printed as money. Only a request that was actually priced at zero
+shows a zero.
+
+**A failed or refused request is an ordinary row.** It is not hidden, not grouped
+separately, and not given its own table. It carries the same nine columns as every
+other row, colored to stand out by its outcome, with its tokens and its charge
+following the same rules above: a refusal you were not charged for shows `unpriced`
+or a real `0` depending on what actually happened, never a blank.
+
+## Filter by model, outcome and date
+
+The filter panel offers four controls, and they compose: every one narrows the same
+list.
+
+| Filter | Options | Default |
+|---|---|---|
+| Model | Only the models this workspace has actually called. | Any model |
+| Outcome | Free text, matched against the outcome the platform recorded. | Empty (no default vocabulary is baked into the field) |
+| From | A calendar date. Inclusive, applied to when the request started, in UTC. | Empty |
+| To | A calendar date. Exclusive, applied to when the request started, in UTC. | Empty |
+
+There is no request id filter. One request id has one page, so the way to reach it
+is to click the truncated id in a row rather than to type it into a narrowing
+control. See [Look up one request](#look-up-one-request) below.
+
+## Fifty rows at a time
+
+There is no rows-per-page control. Page size is fixed at fifty and reported by the
+platform rather than accepted as something you set. Rows are ordered by time with
+the request id as a tiebreak, so a row cannot land on two pages, or on none, between
+one read and the next.
+
+## Three ways to see no rows
+
+They mean different things, and the screen says which:
+
+1. **Nothing has ever run here.** The workspace is new. The screen reads: "Send a
+   request from the playground, or with an API key, and it appears here with its
+   tokens, its outcome and what it charged. We never store the prompt or the
+   answer."
+2. **The filter matched nothing.** Rows exist; this narrowing excluded all of them.
+   The table keeps its shape and offers a control to clear the filter.
+3. **The range reaches further back than we keep.** It was never going to answer,
+   so the screen names the retention window instead of inviting a narrower filter.
+
+## How far back activity goes
+
+The window in force is 90 days, over a floor of 62 days: the least this platform
+will ever keep, and the longest pair of calendar months back to back. A range that
+reaches past that horizon is the third case above, "the range reaches further back
+than we keep," not an empty table.
+
+<Note>
+  Money outlives the row. When a request passes out of this window, the charge it
+  caused stays on your statement even though the row describing the request is
+  gone.
+</Note>
+
+## Look up one request
+
+Click the request id in any row to open the single request view. It repeats the
+same facts as the row it came from, in full:
+
+- the complete request id
+- When, Door, Model, Served by, Outcome
+- Streamed: **yes** or **no**
+- Prompt tokens, Completion tokens, Total tokens
+- Charge
+- Took
+
+Some requests carry an explanatory note beneath the figures, written by the
+platform rather than by the screen. Every lookup also shows when the figures were
+read, separately from when the request itself ran.
+
+A request id from another workspace and a request id that never existed answer
+identically: neither is found. That is deliberate. The lookup cannot be used to
+learn whether an id exists somewhere you cannot see.
+
+## What is never on the row
+
+The single request view says it in as many words: no prompt and no response body
+was ever stored for that request, so the fields above are everything that exists.
+Nothing is truncated, sampled or hashed instead; there is nowhere in the record for
+either one to go, so there is nothing more to look up no matter who asks.
+
+What is kept is exactly the metadata columns above: when a request ran, which door
+it came through, the model and provider, the token counts, the charge, how long it
+took, and the outcome. See [Data and privacy](/concepts/data-and-privacy) for the
+full statement, which this page does not repeat further.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Monitor usage" href="/guides/monitor-usage">
+    Read what the workspace has spent, and reconcile a statement line with the
+    request that caused it.
+  </Card>
+  <Card title="Data and privacy" href="/concepts/data-and-privacy">
+    What is recorded about a request, what is not, and how long it is kept.
+  </Card>
+</CardGroup>
+
+<RequestIdNote />

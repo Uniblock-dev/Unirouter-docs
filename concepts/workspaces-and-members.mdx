@@ -34,6 +34,7 @@ one below it.
 | Change what another member may do | Yes | Yes | No | No |
 | Remove a member | Yes | Yes | No | No |
 | Cancel a key reservation | Yes | Yes | No | No |
+| Add, replace or remove the workspace's own provider key | Yes | Yes | No | No |
 | Transfer the workspace to somebody else | Yes | No | No | No |
 | Read the balance, the statement and whether requests are paused | Yes | Yes | Yes | Yes |
 | Buy credit, manage the card, pause or resume requests | Yes | No | No | No |
@@ -162,20 +163,26 @@ Uniblock staff can also revoke a customer key from our side. That is recorded
 against a named member of staff rather than against you, and it does not make a
 fourth way for a workspace to end its own key.
 
-## What this page does not cover yet
+## Next
 
-**A second workspace.** The flows for opening another workspace and for
-switching between them have not been accepted, so they are not documented here.
-We do not describe a flow from a route alone.
+<CardGroup cols={2}>
+  <Card title="Create a workspace" href="/guides/create-a-workspace">
+    Open one from the workspace switcher, and see what you get on day one.
+  </Card>
+  <Card title="Invite and manage members" href="/guides/invite-and-manage-members">
+    Invite somebody, change a role, transfer ownership or remove somebody.
+  </Card>
+</CardGroup>
+
+## What this page does not cover yet
 
 **A monthly spend limit per workspace.** The permission split and the refusal
 wording for a workspace-level monthly limit are not settled, so no figure or
 sentence for it appears on this site.
 
-**The screens themselves.** The members roster, the role editor, the transfer
-control and the removal flow are described here from the rules the service
-enforces. The stories that accept those screens are still open, and the flows in
-[Invite and manage members](/guides/invite-and-manage-members) have not been
-walked end to end against a deployed environment. Where a screen and this page
-disagree, the screen is what you are using and the disagreement is a bug worth
-reporting.
+**A walkthrough against a deployed environment.** The Team screen carries the
+roster, the role editor, the transfer control and the removal flow described
+above, and every one of them is live. What is missing is not the screen but our
+own walkthrough of it: this page has not been checked end to end against a
+deployed environment. Where a screen and this page disagree, the screen is what
+you are using and the disagreement is a bug worth reporting.

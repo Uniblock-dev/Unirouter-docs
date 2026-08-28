@@ -62,11 +62,13 @@ separates causes sharing a status.
 |---|---|---|---|
 | 400 | `invalid_request_error` | `null` | A required parameter is missing. `param` names it. |
 | 400 | `invalid_request_error` | `context_length_exceeded` | The request is too large to price or serve. `param` is `messages`. Send less in one call. |
+| 400 | `invalid_request_error` | `provider_key_refused` | The request ran on your own key for that provider, and the provider rejected the key itself or refused this particular call under it. Replace the key on the Provider keys screen; retrying will not change the answer. |
 | 401 | `authentication_error` | `invalid_api_key` | No key, a non-Bearer scheme, a key of the wrong shape, or a key we will not accept. See [Authentication](/api-reference/authentication). |
 | 402 | `insufficient_quota` | `insufficient_credit` | The workspace cannot cover the estimated maximum cost of this request. The message names both figures. Buy credit. |
 | 404 | `invalid_request_error` | `unknown_url` | No such route on this API. The message names the method and path. |
 | 429 | `rate_limit_error` | `rate_limit_exceeded` | This key's request rate limit. Carries `Retry-After`. |
 | 429 | `rate_limit_error` | `spend_rate_exceeded` | The account's spend rate cap. Nothing to fix; requests are admitted again as the window rolls forward. |
+| 429 | `rate_limit_error` | `provider_key_refused` | The request ran on your own key for that provider, and the provider says that key is over its limit there. Nothing to fix on our side; it clears on its own. |
 | 500 | `api_error` | `null` | An unhandled fault on our side. Quote the request id. |
 | 503 | `api_error` | `no_provider_configured` | We are not currently configured to serve this. Retry later. |
 | 503 | `server_error` | `paused_by_owner` | Somebody with access to this account has paused it. Retrying on a timer will not clear it; the pause has to be lifted. |
@@ -93,6 +95,24 @@ Two codes share `429`, and they call for different behaviour:
 
 `Retry-After` is present on `rate_limit_exceeded` and is not sent on other
 statuses. Do not infer a retry delay from its absence.
+
+### Provider key refusals
+
+`provider_key_refused` only appears on a request that ran on your own key for
+that provider, never on a Uniblock-held key for it. While your workspace holds
+that key, every request to the provider runs on it alone, and nothing falls
+back to a different credential if the provider refuses it.
+
+The code is the same at both statuses; what differs is why the provider
+refused the request:
+
+- `429` is the provider saying that key is over its limit there. It clears on
+  its own, so back off and retry.
+- `400` is the provider rejecting the key itself, or refusing this particular
+  call under it. Retrying the same request will be refused identically until
+  the key is replaced on the Provider keys screen.
+
+Neither status carries `Retry-After`, and neither is charged.
 
 ## Errors during a streamed response
 

@@ -1,0 +1,102 @@
+---
+title: "Bring your own key"
+description: "Use your own provider credential so a provider bills you directly. What free really means, what it does not add, and who may set one."
+status: partial
+gates: ["14.1"]
+---
+
+Bringing your own key means giving Uniblock a credential you already hold for a
+provider we carry, so a request to that provider runs on your account there
+instead of ours. The provider bills you directly for it, the way it would if
+you called that provider yourself.
+
+## What "free" means, precisely
+
+A request served on your own key costs you nothing on your Uniblock balance.
+Nothing is charged and nothing is held against your credit for it, not even
+briefly.
+
+That is not the same as invisible. The request is still fully metered: it gets
+a usage record with real prompt and completion token counts, it appears in
+Usage and in Activity exactly like any other request, and it is counted apart
+from the requests we serve on our own keys rather than folded into them. Read
+"free" as **we charge you nothing for this one**, not as **this one leaves no
+trace**. See [Usage and metering](/concepts/usage-and-metering) for the full
+field set a request produces.
+
+The provider itself is not free. Running on your own key means the provider
+invoices your account for the tokens, which is the entire point of bringing
+one: the cost moves from your Uniblock balance to your account at the
+provider.
+
+## Your key, and only your key, for that provider
+
+Once your workspace holds a key for a provider, every direct request to that
+provider runs on it. We do not fall back to our own key for that provider,
+because that would mean charging you for a request you brought your own
+credential to cover.
+
+That cuts the other way when the key stops working. If the provider will not
+accept it, the request is refused rather than quietly served on our key and
+billed as usual. See [If the provider refuses your key](#if-the-provider-refuses-your-key)
+below.
+
+## It does not add anything to your catalog
+
+Bringing a key changes which credential answers your calls to a provider we
+already carry. It does not make a new provider or a new model callable.
+
+What you can call is still exactly what Uniblock carries. Your own key never
+adds to that list, and a model that is not already callable through us stays
+not callable no matter whose key you hold for it. See
+[Models](/concepts/models) for how the callable set is decided and discovered.
+
+## Which providers you can bring a key for
+
+Not every provider we carry takes a key from you. Only a provider whose
+authentication involves a credential at all can accept one, so a provider that
+needs nothing from you to reach has nothing here for a key to replace. The
+screen where you add a key offers exactly the providers this applies to, and
+only among the providers we currently carry.
+
+## If the provider refuses your key
+
+If the provider turns down your key on a live request, you get a plain
+refusal rather than a silent switch to our own key or a pass-through of
+whatever the provider sent back internally: the message names the provider,
+says nothing was charged, and tells you to fix the key. The message calls that place
+the Provider keys screen; the dashboard's own sidebar calls it BYOK, and they are the
+same screen. See
+[Add a provider key](/guides/add-a-provider-key) for how to replace it, and
+[Errors and refusals](/concepts/errors) for how a response like this is
+shaped.
+
+## Who can manage keys
+
+Managing provider keys, including seeing which ones a workspace already
+holds, takes the same authority as managing routing or inviting somebody:
+owner or admin. A developer or a viewer cannot see or change this workspace's
+provider keys. See [Workspaces and members](/concepts/workspaces-and-members)
+for the full role table.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Add a provider key" href="/guides/add-a-provider-key">
+    Finding the screen, adding a key, and what proving it before saving means.
+  </Card>
+  <Card title="Models" href="/concepts/models">
+    How the callable set is decided, and why your own key cannot extend it.
+  </Card>
+</CardGroup>
+
+## What this page does not cover yet
+
+**The routing-profile case.** A request that can try more than one model in one
+chain is out of scope here. This page describes a direct request to a single
+provider you hold your own key for.
+
+**A walkthrough against a deployed environment.** The rules above are what the
+service enforces. The screen itself has not been walked end to end against a
+deployed environment for this documentation. Where the screen and this page
+disagree, trust the screen and tell us.

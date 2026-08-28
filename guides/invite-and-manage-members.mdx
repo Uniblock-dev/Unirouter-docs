@@ -5,16 +5,19 @@ status: partial
 gates: ["9.12", "9.13", "9.14", "9.15", "9.16", "9.17", "9.18", "9.19", "9.24"]
 ---
 
-Members are managed in the dashboard, at [Members](https://app.uniblock.dev).
-This page describes the rules each flow enforces. For the roles themselves and
-what each one may do, read
+Members are managed in the dashboard, at [Team](https://app.uniblock.dev). This
+page describes the rules each flow enforces. For the roles themselves and what
+each one may do, read
 [Workspaces and members](/concepts/workspaces-and-members).
 
 <Note>
-The member flows below are described from the rules the service enforces, not
-from a screen we walked. Several of them have not been accepted yet: the roster,
-the role editor, ownership transfer and the removal flow are all still open work.
-Where a screen and this page disagree, the screen is what you are using.
+The Team screen shows this workspace's members and its pending invitations
+together, so you do not need a second screen to see who has not joined yet. If
+your role can invite people, that pending list is there for you to act on; if it
+cannot, that part of the screen is not shown. The flows below are the rules the
+service enforces behind invite, role change, transfer and removal. This page has
+not been walked end to end against a deployed environment. Where a screen and
+this page disagree, the screen is what you are using.
 </Note>
 
 ## Invite somebody
@@ -155,8 +158,16 @@ really does not.
 
 ## What is not covered here
 
-**A second workspace.** Opening another workspace and switching between them
-have not been accepted, so they are not documented.
-
 **Leaving a workspace yourself.** There is no documented self-removal flow. An
 owner or admin removes people.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Workspaces and members" href="/concepts/workspaces-and-members">
+    Roles, invitations, and what belongs to a workspace rather than to you.
+  </Card>
+  <Card title="Create a workspace" href="/guides/create-a-workspace">
+    Open a second workspace when one team is not enough.
+  </Card>
+</CardGroup>
