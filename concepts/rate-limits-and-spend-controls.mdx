@@ -9,9 +9,9 @@ import FeatureStatus from '/snippets/feature-status.mdx';
 import OwnerOnlyNote from '/snippets/owner-only-note.mdx';
 import RequestIdNote from '/snippets/request-id-note.mdx';
 
-Two limits can refuse a request today, and they answer with different codes on
+Several limits can refuse a request, and they answer with different codes on
 purpose: you should be able to tell "too fast for this key" from "too much money
-attempted too quickly" without asking us.
+attempted too quickly" from "this key is done" without asking us.
 
 **Nothing is charged for a request we refuse**, whichever limit refused it.
 
@@ -22,6 +22,8 @@ attempted too quickly" without asking us.
 | 429 | `rate_limit_exceeded` | This key's request rate. | Wait the number of seconds in `Retry-After`. |
 | 429 | `spend_rate_exceeded` | Your spend rate cap, which counts money reserved rather than money spent. | Wait up to 60 seconds, or send `max_tokens`. See below. |
 | 402 | `insufficient_credit` | Available credit at admission. | Buy credit. |
+| 402 | `key_limit_exceeded` | This key's own credit limit, for its current window. | Wait for the window to roll, raise the limit, or send on another key. |
+| 401 | `key_expired` | Nothing. The key's own expiry date has passed. | Create a new key. Expired keys are never renewed. |
 | 503 | `paused_by_owner` | Nothing. The workspace owner has paused requests. | Lift the pause in Settings. |
 
 Every refusal arrives in the standard error envelope, and the `code` field is the one
@@ -150,6 +152,42 @@ thing to change.
 You are told about the money. An account that is both out of credit and over its
 ceiling gets the 402, because the cap clears itself in 60 seconds and telling someone
 with no credit to slow down is advice that cannot work.
+
+## The limits that belong to one key
+
+The limits above this line belong to the workspace or to the account, so they stop
+every key at once. Two limits belong to a single key, and the difference is the point:
+the rest of the workspace goes on serving while one key is refused.
+
+**A key may carry its own expiry date.** A key presented after that date is refused
+with HTTP 401 and code `key_expired`, and the message names the instant it expired on,
+so a workspace holding several keys can tell which one ran out. It is checked before
+the per key request rate, so an expired key never consumes that allowance. Nothing
+renews a key: create a new one on the Keys screen and replace the old one wherever it
+is configured.
+
+The code is its own rather than `invalid_api_key` because the two are opposite advice.
+An invalid key means the string is not a key here, and the fix is to find the right
+one. An expired key means this was your key and the date you chose has passed.
+
+**A key may also carry its own credit limit.** A request that would take the key past
+it is refused with HTTP 402 and code `key_limit_exceeded`, before any credit is held,
+and the message names what that key has settled and holds inside its current window
+against what it may spend.
+
+That is a different refusal from `insufficient_credit`, which is the account having no
+money and stops every key on it. A key at its own limit leaves the other keys in the
+workspace serving from the same balance, and buying credit does not clear it. What
+clears it is the window rolling, where the limit resets on a cadence, or somebody
+raising or removing it on the Keys screen. A limit set never to reset does not clear
+by waiting.
+
+Requests served on your own provider key do not count against a key's credit limit and
+are never refused by it: the money it counts is money spent from your balance, and
+those requests spend none of it. See [Bring your own
+key](/concepts/bring-your-own-key).
+
+**Nothing is charged when either refuses**, and no credit is held.
 
 ## Which limits are yours to raise
 

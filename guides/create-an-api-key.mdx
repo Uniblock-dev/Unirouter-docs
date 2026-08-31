@@ -56,6 +56,33 @@ prefix that says which environment a key belongs to.
 </Step>
 </Steps>
 
+## Give a key an expiry and a spending limit
+
+Both are optional and both are set on the key itself, when you create it and
+afterwards from the key's own row. A key created without them never expires and
+spends against the workspace balance with no ceiling of its own.
+
+**Expiration** is a date. A key presented after it is refused with code
+`key_expired`, and the refusal names the instant it expired on. Nothing renews an
+expired key: the fix is a new key. The field also offers no expiration, which is
+what a key carries unless you choose otherwise.
+
+**Credit limit** is an amount this one key may spend, with a **Reset** cadence
+beside it: never, daily, weekly or monthly, on UTC calendar windows. A request
+that would take the key past the limit is refused with code
+`key_limit_exceeded`, before anything is held or charged, and the refusal names
+what the key has settled and holds inside its current window. Other keys in the
+workspace go on serving from the same balance.
+
+The cadence is unavailable until there is a limit for it to be about, because a
+reset means nothing without an amount. Emptying the amount puts the cadence back
+to never. A limit that never resets does not clear by waiting: raise it or remove
+it.
+
+These are per key limits and they sit beside the workspace level controls rather
+than replacing them. See [rate limits and spend
+controls](/concepts/rate-limits-and-spend-controls).
+
 ## A key belongs to the workspace
 
 It does not belong to you. A key spends the workspace's credit, its usage appears

@@ -112,15 +112,20 @@ ended frees its slot.
   detail="Revoke and Replace are not on the Keys screen yet, and there is no route behind them, so a key you no longer want cannot be ended by you today. The one path that ends a key now is the per-key choice made when a member is removed from the workspace. Treat a key as live for as long as it exists, and plan around the five-slot ceiling until the other two paths ship."
 />
 
-The set of things that may ever end a key is closed, which matters because it is
-also the set of things that can stop your traffic. There are three, and this is
-their status today:
+The set of things that may ever **end** a key, meaning the key stops existing and
+its slot frees, is closed. There are three, and this is their status today:
 
 | Reason | What causes it | Available today |
 |---|---|---|
 | You revoke it | Somebody with access ends that key deliberately. | Not yet |
 | It was replaced | Minting a replacement ends the key it replaces in the same motion. | Not yet |
 | A member was removed and the person removing them chose to revoke that key | Removal asks about each key rather than deciding for you. | Yes |
+
+Expiry is a fourth way a key **stops serving traffic**, but it does not end the
+key in the sense above: an expired key still exists and still holds its slot, it
+is simply refused with `code: key_expired`. Nothing renews it, so the only way
+to keep serving traffic is a new key, and the old one continues to occupy a slot
+until it is separately revoked or replaced.
 
 Two things that do not end a key, stated because their absence is worth knowing:
 a role change never revokes a key, and neither does a workspace pause. A pause
@@ -137,14 +142,18 @@ without changes.
 
 <ErrorEnvelope />
 
-All three carry `"type": "authentication_error"` and `"code": "invalid_api_key"`.
-Branch on those fields rather than on the message.
+All four carry `"type": "authentication_error"`. The first three share
+`"code": "invalid_api_key"`; the fourth carries its own code, `key_expired`,
+because the fix is different: an invalid key means the string is not a key
+here, while an expired key was valid and just needs replacing. Branch on
+`code` rather than on the message.
 
 | What happened | The message |
 |---|---|
 | No `Authorization` header, or a scheme other than `Bearer` | `You did not provide an API key. Send it in an Authorization header using Bearer auth.` |
 | A string that is not shaped like a Uniblock key | `Incorrect API key format. A Uniblock key looks like ub_live_ followed by 43 characters. Check you have not pasted a key from another provider.` |
 | A correctly shaped key we do not accept | `Incorrect API key provided.` |
+| A key past its own expiry date (`code: key_expired`) | Names the instant the key expired on. Checked before the per-key rate limiter, so an expired key never consumes that allowance. |
 
 The second is separated from the third on purpose. A key of the wrong shape is a
 configuration mistake, usually a key from another provider or a truncated paste,
@@ -202,5 +211,8 @@ apart. See [rate limits and spend controls](/concepts/rate-limits-and-spend-cont
   five-slot ceiling. Usage is attributed per key, so separate keys are what make a
   spending question answerable, and ending one then costs you one deployment
   rather than all of them.
-- We set no expiry on a key and publish no rotation requirement, so a key stays
-  live until something on the list above ends it.
+- We set no expiry on a key ourselves and publish no rotation requirement, so a
+  key stays live until something on the list above ends it. You may give a key an
+  expiry date of your own, and a key past it is refused with code `key_expired`.
+  See [rate limits and spend
+  controls](/concepts/rate-limits-and-spend-controls).

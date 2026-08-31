@@ -64,8 +64,12 @@ separates causes sharing a status.
 | 400 | `invalid_request_error` | `context_length_exceeded` | The request is too large to price or serve. `param` is `messages`. Send less in one call. |
 | 400 | `invalid_request_error` | `provider_key_refused` | The request ran on your own key for that provider, and the provider rejected the key itself or refused this particular call under it. Replace the key on the Provider keys screen; retrying will not change the answer. |
 | 401 | `authentication_error` | `invalid_api_key` | No key, a non-Bearer scheme, a key of the wrong shape, or a key we will not accept. See [Authentication](/api-reference/authentication). |
+| 401 | `authentication_error` | `key_expired` | The key is past its own expiry date. The message names the date it expired on. Checked before the per-key rate limiter, so an expired key never consumes that allowance. Expired keys are not renewed: create a new one. |
 | 402 | `insufficient_quota` | `insufficient_credit` | The workspace cannot cover the estimated maximum cost of this request. The message names both figures. Buy credit. |
+| 402 | `insufficient_quota` | `key_limit_exceeded` | The sending key reached its own credit limit. Refused before any credit is held; other keys in the workspace are unaffected. The message names what the key has settled and holds inside its current window. |
 | 404 | `invalid_request_error` | `unknown_url` | No such route on this API. The message names the method and path. |
+| 404 | `not_found_error` | `model_not_found` | No model of that id is in the live catalog. `param` is `model`. A model we hold but do not publish answers the same way as one we have never heard of. |
+| 405 | `invalid_request_error` | `method_not_allowed` | A method other than GET on a path that exists. Carries an `Allow` header. Answered before any key is looked at, so it costs nothing and reveals nothing. |
 | 429 | `rate_limit_error` | `rate_limit_exceeded` | This key's request rate limit. Carries `Retry-After`. |
 | 429 | `rate_limit_error` | `spend_rate_exceeded` | The account's spend rate cap. Nothing to fix; requests are admitted again as the window rolls forward. |
 | 429 | `rate_limit_error` | `provider_key_refused` | The request ran on your own key for that provider, and the provider says that key is over its limit there. Nothing to fix on our side; it clears on its own. |

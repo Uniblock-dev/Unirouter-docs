@@ -2,7 +2,7 @@
 title: "Models"
 description: "How model ids are shaped, how to discover which models are callable right now, and the vocabulary a model's rate is expressed in."
 status: partial
-gates: ["8.1", "8.2", "8.3", "8.4", "8.5", "8.6", "8.7", "8.8"]
+gates: ["8.6", "8.7", "8.8"]
 ---
 
 You name a model in the `model` field of a request, exactly as you would when
@@ -40,9 +40,16 @@ carries its input rate and, where the model publishes a separate one, its output
 rate, along with its context window, its capabilities, the currency the price is
 in and the provider names behind it, in the vocabulary
 below. Calling `GET /v1/models/{id}` for one model returns everything the list
-entry does, plus a short description of it. That description comes from
-third-party model catalogues rather than from the model's own provider, which
-publishes none, and it only ever appears on the single model call, not the list.
+entry does, plus the fields served only when you ask for one model by name: a
+short description of it, the request parameters it accepts with their bounds and
+defaults, and its deprecation and sunset dates with the model that replaces it
+where one is named. That description comes from third-party model catalogues
+rather than from the model's own provider, which publishes none, and it only
+ever appears on the single model call, not the list.
+
+A model id contains slashes and the whole of it is the identifier, so
+percent-encode it once or send it as it is. A double-encoded slash names no
+model and answers `404`.
 
 **In the dashboard.** The Models screen shows the same catalog for browsing
 without writing a request, and the playground offers the models you can send to

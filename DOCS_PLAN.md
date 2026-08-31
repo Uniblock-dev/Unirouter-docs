@@ -213,7 +213,7 @@ Format per page: **Path** (`.mdx`) · Status · Purpose · Source of truth · Re
 - Purpose: how models work: `family/model` ids, the live-model rule (FR-32: "a customer must never be offered a model that would fail on call"), discovery via `GET /v1/models` and the dashboard, per-usage-type pricing vocabulary (input, cached input reads, cache writes, output, reasoning; decision `a-model-rate-is-per-usage-type-and-tier-not-a-column.md`), price provenance (rates carry a source and date).
 - Source of truth: FR-6/FR-31/FR-32/FR-43; `customerModelList()` in `SRC/services/control-plane/src/models/store.ts`; the model-rate decisions.
 - Required examples: `GET /v1/models` request and a representative response entry.
-- Acceptance: **flags and works around the known drift**: `/v1/models` currently forwards the live sole-provider list rather than the curated catalog (Story 8.5 pending; `SRC/services/control-plane/src/index.ts` ~line 5311). The page documents the endpoint's contract shape only after re-verifying the response against a live call at publication time. No static price table, no provider roster, no margin-adjacent fields.
+- Acceptance: `GET /v1/models` and `GET /v1/models/{id}` answer from our own curated catalog projection, not a forwarded live provider list (Story 8.5 done, 2026-08-31 sync). The page documents the endpoint's contract shape only after re-verifying the response against a live call at publication time (§9 owed transcripts). No static price table, no provider roster, no margin-adjacent fields.
 
 **`concepts/routing-and-reliability.mdx`** · BLOCKED (Story 2.12 fallback, 2.13 served-by header; both backlog)
 - Purpose (when unblocked): what Uniblock does on a provider failure: fallback to an alternative provider for the same model on 5xx, 429/529, connection error, or 10s to first byte; at most limited attempts; **you are billed only for the attempt that produced the response** (FR-7); which provider answered is reported (`x-uniblock-served-by`); routing order is ours to manage and customers cannot pin targets (recorded answer: no; decision `routing-policy-lives-in-the-control-plane.md`).
@@ -330,7 +330,7 @@ All guides share: source of truth is the shipped screen in `SRC/apps/dashboard/s
 - Source: `uniblockUsage.ts` + test; `FORWARDED_DIAGNOSTIC_HEADERS` in `inference/core.ts`; AD-14/AD-16; decision `the-gateway-does-not-copy-rate-limit-headers.md`.
 - Acceptance: documents exactly the shipped allowlist (re-read `FORWARDED_DIAGNOSTIC_HEADERS` at publication); `x-uniblock-served-by` added only when Story 2.13 lands it (§14 item 1); `x-uniblock-last-used-option-index` and `x-uniblock-config` never appear (internal); explicitly states provider rate-limit headers are not forwarded; the `upstream` field is never documented (reserved, no producer, by decision).
 
-**Endpoint pages** · generated from the OpenAPI artifact (§8): `POST /v1/chat/completions` (WRITE-NOW), `GET /v1/models` (WRITE-NOW with the §14 item 2 caveat resolved), `POST /v1/completions` and `POST /v1/embeddings` (BLOCKED on Story 2.10).
+**Endpoint pages** · generated from the OpenAPI artifact (§8): `POST /v1/chat/completions` (WRITE-NOW), `GET /v1/models` and `GET /v1/models/{id}` (WRITE-NOW with the §14 item 2 caveat resolved), `POST /v1/completions` and `POST /v1/embeddings` (BLOCKED on Story 2.10), `POST /v1/responses` (BLOCKED on Story 2.22).
 
 ---
 
@@ -433,7 +433,7 @@ The editorial fence, enforced by the banned-content linter (§16). **Never publi
 Tracked here so writers meet them where the work is; each names its unblock condition.
 
 1. **`x-uniblock-served-by` inverted**: Story 2.13's shipped header is `x-uniblock-provider`; the required `x-uniblock-served-by` is not set (`sprint-status.yaml` note). Headers page documents what ships; the routing page waits. Unblock: 2.13 done.
-2. **`GET /v1/models` forwards the gateway's live list, not the curated catalog** (Story 8.5 pending). Endpoint page documents verified live behavior; re-verify at 8.5. Unblock: publication-day live call.
+2. **`GET /v1/models` answers from our own catalog** (Story 8.5 done, 2026-08-31 sync). The list and `GET /v1/models/{id}` both carry the `uniblock` block; the overlay and the models page were rewritten against `src/models/catalogResponses.ts`. What is still owed is a transcript: the published examples are transcribed from the response builders, not from a live call. Unblock: publication-day live call.
 3. **CONTEXT.md vs PRD on account/workspace direction**: PRD FR-38 (2026-08-19 rewrite) wins; glossary follows the PRD. Surface to source-repo owner as a CONTEXT.md staleness finding; do not resolve silently.
 4. **Whitepaper says "2.5% our fee, on spend"; the decision record says the fee is at purchase.** The decision (and FR-18's no-fee-at-request test) wins. Never source fee copy from the whitepaper.
 5. **Control-plane README "Not built yet" list is stale**; never mine it for capability claims.
@@ -442,7 +442,7 @@ Tracked here so writers meet them where the work is; each names its unblock cond
 8. **Fee disclosure to signed-out visitors (OQ-13)** and playground fee-line copy (OQ-19): owner decisions that shape the credits page's public framing. Until decided, the credits page states the fee mechanics plainly (they are FR-settled) without a signed-out pricing-table treatment.
 9. **Docs hostname and the dashboard's rail-foot docs link**: no docs domain exists in evidence. Owner must choose the hostname before launch; the plan uses relative links so no rewrite is needed.
 10. **Support channel** (§7.4): none in evidence; blocks `resources/support`.
-11. **Trial credit (4.17), capture (Epic 7), workloads (2.21), completions/embeddings (2.10), fallback (2.12), public catalog (8.1-8.8)**: unshipped; their pages/sections are BLOCKED per §7.
+11. **Trial credit (4.17), capture (Epic 7), workloads (2.21), completions/embeddings (2.10), fallback (2.12), the Responses API (2.22)**: unshipped; their pages/sections are BLOCKED per §7, and `/v1/completions`, `/v1/embeddings` and `/v1/responses` are classified `blocked` in the overlay with those gates. The public catalog is no longer on this list: 8.1 through 8.5 are done and the models page's gates are now 8.6 through 8.8.
 12. **Retention "90 days"**: a configured value the product prints, not a promise anybody made (CONTEXT.md). Docs phrase it as the product does: configured window over a stated floor.
 
 ---
@@ -519,7 +519,7 @@ Every public capability and route, traced to its page(s). "Route" means what a c
 | Members, roles, transfer, removal | Members screen; `/api/me/members/*` | concepts/workspaces-and-members; guides/invite-and-manage-members | PARTIAL (Epic 9) |
 | Invitations + key reservations | `/invitations/[token]`; `/api/me/invitations/*`, key reservation routes | guides/invite-and-manage-members | PARTIAL |
 | Playground | dashboard Playground; `/api/me/playground?key=` | guides/playground | PARTIAL |
-| Public model catalog (signed-out) | Epic 8 (unbuilt) | concepts/models notes discovery via API/dashboard | BLOCKED 8.1-8.8 |
+| Public model catalog (key-authenticated) | Epic 8 (8.1-8.5 done, 2026-08-31 sync) | concepts/models; api-reference (GET /v1/models, GET /v1/models/{id}) | PARTIAL (gates 8.6-8.8) |
 | Trial credit | Story 4.17 (unbuilt) | none (deliberate) | BLOCKED |
 | Capture / request history | Epic 7 (unbuilt) | none (deliberate) | BLOCKED |
 | Data/privacy stance | (product-wide) | concepts/data-and-privacy; resources/security | WRITE-NOW |

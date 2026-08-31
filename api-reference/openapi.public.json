@@ -24,6 +24,12 @@
   "paths": {
     "/v1/chat/completions": {
       "post": {
+        "servers": [
+          {
+            "url": "https://ai.uniblock.dev",
+            "description": "Production"
+          }
+        ],
         "tags": [
           "Chat"
         ],
@@ -36,6 +42,7 @@
                 "properties": {
                   "model": {
                     "type": "string",
+                    "description": "The model to call. A workspace routing-profile slug (profile/{identifier}) is also accepted: the platform then tries that profile's models in the customer's own order, and the usage record and the charge name whichever model actually served.",
                     "example": "openai/gpt-4o-mini"
                   },
                   "messages": {
@@ -69,7 +76,7 @@
         },
         "responses": {
           "200": {
-            "description": "The completion. A response that is not streamed carries the provider's token counts in its own `usage` object. When `stream` is true the body is `text/event-stream` instead, and the counts arrive on a `:x-uniblock-usage` comment line immediately before `data: [DONE]`; the server-sent events specification requires parsers to ignore comment lines, so an SDK never sees it.",
+            "description": "The completion. A response that is not streamed carries the provider's token counts in its own `usage` object. Its `model` field echoes the slug you asked for rather than the provider's internal name, except in three cases that are returned as the provider sent them: a streamed reply, whose frames are passed through unchanged; a request naming a routing profile, which names a chain rather than one model; and a successful body carrying no string `model` field at all.\n\nWhen `stream` is true the body is `text/event-stream` instead, and the counts arrive on a `:x-uniblock-usage` comment line immediately before `data: [DONE]`; the server-sent events specification requires parsers to ignore comment lines, so an SDK never sees it.",
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
@@ -120,7 +127,7 @@
             }
           },
           "400": {
-            "description": "The request cannot be served as sent. `code` is null for a missing parameter, with `param` naming it, and `context_length_exceeded` for a request too large to price or serve in one call.",
+            "description": "The request cannot be served as sent. `code` is null for a missing parameter, with `param` naming it, `context_length_exceeded` for a request too large to price or serve in one call, and `provider_key_refused` when the request ran on your own key for a provider that rejected it or refused this particular call under it.",
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
@@ -155,13 +162,25 @@
                         "request_id": "REQUEST_ID"
                       }
                     }
+                  },
+                  "provider_key_refused": {
+                    "summary": "Your own provider key was rejected",
+                    "value": {
+                      "error": {
+                        "message": "openai rejected your workspace's own openai key (401), so the credential itself was not accepted. Replace it on the Provider keys screen. While your workspace holds a key for openai, every request to openai runs on yours and none is sent on a Uniblock key, so no other credential was tried for it. Nothing was charged for this request. Remove the key on the Provider keys screen and these requests go back to running on Uniblock's key and being charged for.",
+                        "type": "invalid_request_error",
+                        "param": null,
+                        "code": "provider_key_refused",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
                   }
                 }
               }
             }
           },
           "401": {
-            "description": "No key, a scheme other than Bearer, a key of the wrong shape, or a key we reject. An unknown key and a revoked key are answered with one identical message on purpose.",
+            "description": "No key, a scheme other than Bearer, a key of the wrong shape, or a key we reject. An unknown key and a revoked key are answered with one identical message on purpose.\n\nA key past its own expiry date is refused here too, with code `key_expired` and a message naming the date. It is checked before the per-minute rate limiter, so an expired key never consumes that allowance. Expired keys are not renewed: create a new one.",
             "content": {
               "application/json": {
                 "schema": {
@@ -185,7 +204,7 @@
             }
           },
           "402": {
-            "description": "The workspace does not have enough credit to hold this request. Nothing was charged.",
+            "description": "The request will not be paid for, and nothing was charged. Code `insufficient_credit` is the workspace being out of credit, which stops every key on it. Code `key_limit_exceeded` is the sending key reaching its own credit limit, which leaves every other key in the workspace serving normally; it is refused before any credit is held, and the message names what that key has settled and holds inside its current window.",
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
@@ -196,20 +215,37 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 },
-                "example": {
-                  "error": {
-                    "message": "This account has 54 minor units available and the request needs 55 held.",
-                    "type": "insufficient_quota",
-                    "param": null,
-                    "code": "insufficient_credit",
-                    "request_id": "REQUEST_ID"
+                "examples": {
+                  "insufficient_credit": {
+                    "summary": "The workspace is out of credit",
+                    "value": {
+                      "error": {
+                        "message": "This account has 54 minor units available and the request needs 55 held.",
+                        "type": "insufficient_quota",
+                        "param": null,
+                        "code": "insufficient_credit",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "key_limit_exceeded": {
+                    "summary": "This key is at its own limit",
+                    "value": {
+                      "error": {
+                        "message": "This key may spend $20.00 in its current window and has $18.40 settled and $1.70 held against that, so a request needing $0.30 more is refused. Nothing was charged for it and no credit was held. The limit belongs to this key alone, so other keys in the workspace are unaffected. This limit resets monthly on UTC calendar windows, so requests are admitted again when the window rolls. It can also be raised or removed on the Keys screen.",
+                        "type": "insufficient_quota",
+                        "param": null,
+                        "code": "key_limit_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
                   }
                 }
               }
             }
           },
           "429": {
-            "description": "A limit refused the request. `rate_limit_exceeded` is this key's own request rate and carries `Retry-After`. `spend_rate_exceeded` is the account spend rate cap, which counts the credit held for requests rather than the credit they settle at; send `max_tokens` to hold less.",
+            "description": "A limit refused the request. `rate_limit_exceeded` is this key's own request rate and carries `Retry-After`. `spend_rate_exceeded` is the account spend rate cap, which counts the credit held for requests rather than the credit they settle at; send `max_tokens` to hold less. `provider_key_refused` is your own key for a provider being over its limit there; it clears on its own and carries no `Retry-After`.",
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
@@ -217,8 +253,10 @@
               "Retry-After": {
                 "description": "Seconds to wait. Present on `rate_limit_exceeded`.",
                 "schema": {
-                  "type": "string"
-                }
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "example": 17
               }
             },
             "content": {
@@ -247,6 +285,18 @@
                         "type": "rate_limit_error",
                         "param": null,
                         "code": "spend_rate_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "provider_key_refused": {
+                    "summary": "Your own provider key is over its limit",
+                    "value": {
+                      "error": {
+                        "message": "openai refused this request as over its limits, on your workspace's own openai key. This is your account's limit at openai rather than ours. While your workspace holds a key for openai, every request to openai runs on yours and none is sent on a Uniblock key, so no other credential was tried for it. Nothing was charged for this request. Remove the key on the Provider keys screen and these requests go back to running on Uniblock's key and being charged for.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "provider_key_refused",
                         "request_id": "REQUEST_ID"
                       }
                     }
@@ -281,11 +331,6 @@
           },
           "503": {
             "description": "Ours rather than yours, and `code` names the condition. `paused_by_owner` clears only when somebody lifts the pause, so retrying on a timer will not help. `balance_unavailable` (we could not read the balance, so the request was refused rather than served unmetered), `model_not_priceable` and `model_pricing_unreadable` (a model we list could not be priced for this call) and `no_provider_configured` (we are not currently configured to serve this) all clear without you doing anything.",
-            "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              }
-            },
             "content": {
               "application/json": {
                 "schema": {
@@ -317,6 +362,11 @@
                     }
                   }
                 }
+              }
+            },
+            "headers": {
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -356,18 +406,20 @@
     },
     "/v1/models": {
       "get": {
+        "servers": [
+          {
+            "url": "https://ai.uniblock.dev",
+            "description": "Production"
+          }
+        ],
         "tags": [
           "Models"
         ],
         "summary": "List models",
+        "description": "List the models you can call. The `id` of each entry is what you send as `model`.\n\nEach entry is the OpenAI model object with a `uniblock` block beside it, carrying what OpenAI's own object has no field for: who serves the model, what it can do, its context window, and the provider's list price.",
         "responses": {
           "200": {
             "description": "The models available to your key.",
-            "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              }
-            },
             "content": {
               "application/json": {
                 "schema": {
@@ -380,15 +432,43 @@
                       "id": "openai/gpt-4o-mini",
                       "object": "model",
                       "created": 1756080000,
-                      "owned_by": "openai"
+                      "owned_by": "openai",
+                      "uniblock": {
+                        "model_id": "openai/gpt-4o-mini",
+                        "display_name": "GPT-4o mini",
+                        "author": "openai",
+                        "context_window_tokens": 128000,
+                        "max_output_tokens": 16384,
+                        "input_rate_thousandths": 150,
+                        "output_rate_thousandths": 600,
+                        "currency_code": "USD",
+                        "endpoint_families": [
+                          "chat_completions"
+                        ],
+                        "provider_display_names": [
+                          "OpenAI"
+                        ],
+                        "capabilities": {
+                          "audio": "no",
+                          "json_mode": "yes",
+                          "streaming": "yes",
+                          "tools": "yes",
+                          "vision": "yes"
+                        }
+                      }
                     }
                   ]
                 }
               }
+            },
+            "headers": {
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "401": {
-            "description": "No key, a scheme other than Bearer, a key of the wrong shape, or a key we reject.",
+            "description": "No key, a scheme other than Bearer, a key of the wrong shape, a key we reject, or a key past its own expiry date, which carries code `key_expired` and names the date it expired on.",
             "content": {
               "application/json": {
                 "schema": {
@@ -411,17 +491,53 @@
               }
             }
           },
+          "405": {
+            "description": "A method other than GET on a path that exists. The route boundary answers this before any key is looked at, so it costs nothing and reveals nothing.",
+            "headers": {
+              "Allow": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "GET"
+                  ]
+                },
+                "description": "The methods this path accepts.",
+                "example": "GET"
+              },
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "POST is not supported for /v1/models in this release.",
+                    "type": "invalid_request_error",
+                    "param": null,
+                    "code": "method_not_allowed",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
           "429": {
             "description": "This key's own request rate limit. Every route on this API is subject to it.",
             "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "example": 17,
+                "description": "Seconds to wait."
+              },
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
-              },
-              "Retry-After": {
-                "description": "Seconds to wait.",
-                "schema": {
-                  "type": "string"
-                }
               }
             },
             "content": {
@@ -467,11 +583,6 @@
           },
           "503": {
             "description": "We are not currently configured to serve a model list. Retry later.",
-            "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              }
-            },
             "content": {
               "application/json": {
                 "schema": {
@@ -487,16 +598,277 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           }
         },
-        "description": "List the models you can call. The `id` of each entry is what you send as `model`.",
         "security": [
           {
             "customerApiKey": []
           }
         ],
         "operationId": "listModels"
+      }
+    },
+    "/v1/models/{id}": {
+      "get": {
+        "servers": [
+          {
+            "url": "https://ai.uniblock.dev",
+            "description": "Production"
+          }
+        ],
+        "tags": [
+          "Models"
+        ],
+        "summary": "Retrieve a model",
+        "description": "Everything the list carries for one model, plus the fields served only here: the model's own description, the request parameters it accepts, and its deprecation and sunset dates where it has them.\n\nA model id contains slashes and the whole of it is the identifier. Percent-encode it once, or send it unencoded; a double-encoded slash names no model and answers 404.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The model id, exactly as the list gives it.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "openai/gpt-4o-mini"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The model.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelDetail"
+                },
+                "example": {
+                  "id": "openai/gpt-4o-mini",
+                  "object": "model",
+                  "created": 1756080000,
+                  "owned_by": "openai",
+                  "uniblock": {
+                    "model_id": "openai/gpt-4o-mini",
+                    "display_name": "GPT-4o mini",
+                    "author": "openai",
+                    "context_window_tokens": 128000,
+                    "max_output_tokens": 16384,
+                    "input_rate_thousandths": 150,
+                    "output_rate_thousandths": 600,
+                    "currency_code": "USD",
+                    "endpoint_families": [
+                      "chat_completions"
+                    ],
+                    "provider_display_names": [
+                      "OpenAI"
+                    ],
+                    "capabilities": {
+                      "streaming": "yes",
+                      "tools": "yes",
+                      "json_mode": "yes",
+                      "vision": "yes",
+                      "audio": "no"
+                    },
+                    "parameters": [
+                      {
+                        "name": "temperature",
+                        "type": "number",
+                        "min_milli": 0,
+                        "max_milli": 2000,
+                        "default_milli": 1000,
+                        "enum_values": null,
+                        "sent_by_default": false,
+                        "note": "Higher values make the reply less predictable."
+                      }
+                    ],
+                    "deprecated_at": null,
+                    "sunset_at": null,
+                    "replacement_model_id": null,
+                    "description": "A small, fast model for everyday chat and extraction work."
+                  }
+                }
+              }
+            },
+            "headers": {
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "401": {
+            "description": "No key, a scheme other than Bearer, a key of the wrong shape, a key we reject, or a key past its own expiry date, which carries code `key_expired` and names the date it expired on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Incorrect API key provided.",
+                    "type": "authentication_error",
+                    "param": null,
+                    "code": "invalid_api_key",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "headers": {
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "404": {
+            "description": "No model of that id is in the live catalog. A model we hold but do not publish answers the same way as one we have never heard of, on purpose.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "The model \"openai/gpt-4o-mini\" was not found in the live catalog.",
+                    "type": "not_found_error",
+                    "param": "model",
+                    "code": "model_not_found",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "headers": {
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "405": {
+            "description": "A method other than GET on a path that exists. The route boundary answers this before any key is looked at, so it costs nothing and reveals nothing.",
+            "headers": {
+              "Allow": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "GET"
+                  ]
+                },
+                "description": "The methods this path accepts.",
+                "example": "GET"
+              },
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "POST is not supported for /v1/models/openai/gpt-4o-mini in this release.",
+                    "type": "invalid_request_error",
+                    "param": null,
+                    "code": "method_not_allowed",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "This key's own request rate limit. Every route on this API is subject to it.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "example": 17,
+                "description": "Seconds to wait."
+              },
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Rate limit reached for this key. Try again in 12 seconds. Request id REQUEST_ID.",
+                    "type": "rate_limit_error",
+                    "param": null,
+                    "code": "rate_limit_exceeded",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A fault on our side. The request id is the one thing worth keeping.",
+            "headers": {
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "The server had an error while processing your request. Sorry about that! Quote the request id if you contact support.",
+                    "type": "api_error",
+                    "param": null,
+                    "code": null,
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The catalog could not be served. Nothing is wrong with the request; retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "No provider is configured, so there is nothing to serve this request.",
+                    "type": "api_error",
+                    "param": null,
+                    "code": "no_provider_configured",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "headers": {
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customerApiKey": []
+          }
+        ],
+        "operationId": "retrieveModel"
       }
     }
   },
@@ -663,10 +1035,270 @@
             "example": "model"
           },
           "created": {
+            "type": "integer",
+            "description": "A unix timestamp in seconds. The release time where one is recorded and the record's own creation time otherwise, so it is not a release date for most of the list."
+          },
+          "owned_by": {
+            "type": "string"
+          },
+          "shutdown_date": {
+            "type": "integer",
+            "description": "When the model stops serving, in unix seconds. Absent when there is none, rather than null."
+          },
+          "uniblock": {
+            "$ref": "#/components/schemas/ModelExtension"
+          }
+        }
+      },
+      "CatalogCapabilities": {
+        "type": "object",
+        "description": "What the catalog records this model can do. Each answer is one of three words, and `unknown` is not `no`: it means nobody has established the answer.",
+        "additionalProperties": false,
+        "required": [
+          "audio",
+          "json_mode",
+          "streaming",
+          "tools",
+          "vision"
+        ],
+        "properties": {
+          "audio": {
+            "type": "string",
+            "enum": [
+              "no",
+              "unknown",
+              "yes"
+            ]
+          },
+          "json_mode": {
+            "type": "string",
+            "enum": [
+              "no",
+              "unknown",
+              "yes"
+            ]
+          },
+          "streaming": {
+            "type": "string",
+            "enum": [
+              "no",
+              "unknown",
+              "yes"
+            ]
+          },
+          "tools": {
+            "type": "string",
+            "enum": [
+              "no",
+              "unknown",
+              "yes"
+            ]
+          },
+          "vision": {
+            "type": "string",
+            "enum": [
+              "no",
+              "unknown",
+              "yes"
+            ]
+          }
+        }
+      },
+      "ModelExtension": {
+        "type": "object",
+        "description": "Our own facts about a model, under the `uniblock` key. Everything OpenAI's own model object defines stays at the top level; everything it does not define lives here.",
+        "additionalProperties": true,
+        "required": [
+          "model_id",
+          "display_name",
+          "author",
+          "input_rate_thousandths",
+          "endpoint_families",
+          "provider_display_names",
+          "capabilities"
+        ],
+        "properties": {
+          "model_id": {
+            "type": "string",
+            "description": "The same value as `id`, repeated inside the extension so a client reading only this block still has it."
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string",
+            "description": "Who made the model, which is not who serves it."
+          },
+          "context_window_tokens": {
+            "type": "integer",
+            "nullable": true
+          },
+          "max_output_tokens": {
+            "type": "integer",
+            "nullable": true
+          },
+          "input_rate_thousandths": {
+            "type": "integer",
+            "description": "The provider's own list price for prompt tokens, in thousandths of the currency unit per million tokens. Nothing this platform charges on top is folded in: the fee is taken when credit is bought, and a request then costs the provider's price."
+          },
+          "output_rate_thousandths": {
+            "type": "integer",
+            "description": "The same unit, for completion tokens. Absent when the model publishes no separate output rate."
+          },
+          "currency_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO 4217, or null where nobody recorded one."
+          },
+          "endpoint_families": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The request families this model answers."
+          },
+          "provider_display_names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Who can serve it. Which one answered a given request is on the response headers, not here."
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/CatalogCapabilities"
+          }
+        }
+      },
+      "ModelParameter": {
+        "type": "object",
+        "description": "One request parameter this model accepts. The three bounds are in thousandths of the parameter's own unit, so a temperature ceiling of 2 arrives as 2000 and a default of 0.7 as 700. Integers, because a bound that drifted in its last decimal place would be a contract about nothing.",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "type",
+          "min_milli",
+          "max_milli",
+          "default_milli",
+          "enum_values",
+          "sent_by_default",
+          "note"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "boolean",
+              "enum",
+              "integer",
+              "number",
+              "string"
+            ],
+            "description": "The control shape a client should render."
+          },
+          "min_milli": {
+            "type": "integer",
+            "nullable": true
+          },
+          "max_milli": {
+            "type": "integer",
+            "nullable": true
+          },
+          "default_milli": {
+            "type": "integer",
+            "nullable": true
+          },
+          "enum_values": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            }
+          },
+          "sent_by_default": {
+            "type": "boolean",
+            "description": "Whether a client sends this parameter unless it is told otherwise."
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ModelDetailExtension": {
+        "description": "Everything the list carries for a model, plus the five fields served only when one model is asked for by name.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ModelExtension"
+          },
+          {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+              "description",
+              "parameters",
+              "deprecated_at",
+              "sunset_at",
+              "replacement_model_id"
+            ],
+            "properties": {
+              "description": {
+                "type": "string",
+                "nullable": true,
+                "description": "Detail only. The list is scanned and the detail is read, so the prose a model carries is served where somebody asked for that one model."
+              },
+              "parameters": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ModelParameter"
+                }
+              },
+              "deprecated_at": {
+                "type": "integer",
+                "nullable": true,
+                "description": "Unix seconds."
+              },
+              "sunset_at": {
+                "type": "integer",
+                "nullable": true,
+                "description": "Unix seconds."
+              },
+              "replacement_model_id": {
+                "type": "string",
+                "nullable": true,
+                "description": "What to move to, where one is named."
+              }
+            }
+          }
+        ]
+      },
+      "ModelDetail": {
+        "type": "object",
+        "description": "One model, in the same envelope the list uses, with the detail-only fields under `uniblock`.",
+        "additionalProperties": true,
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "openai/gpt-4o-mini"
+          },
+          "object": {
+            "type": "string",
+            "example": "model"
+          },
+          "created": {
             "type": "integer"
           },
           "owned_by": {
             "type": "string"
+          },
+          "shutdown_date": {
+            "type": "integer",
+            "description": "Absent when the model has no announced end."
+          },
+          "uniblock": {
+            "$ref": "#/components/schemas/ModelDetailExtension"
           }
         }
       }
