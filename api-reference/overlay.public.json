@@ -1361,8 +1361,13 @@
     },
     "/v1/responses": {
       "classification": "blocked",
-      "gate": "2.22",
-      "reason": "Story 2.22 (the responses API answers and the money path knows it did) is at review, not done, and the tracker is the arbiter of shipped. Publish it when 2.22 is done."
+      "gate": "2.22 (met 2026-08-31); pending a writer pass",
+      "reason": "Story 2.22 (the responses API answers and the money path knows it did) moved to done in the tracker on 2026-08-31, so the gate this entry was written for is met. Nothing is published yet because publishing this operation is a writer pass, not a reclassification: it needs its request and response schemas transcribed from the handler the way the chat operation's were, its refusal examples written, and an api-reference page in the navigation. Recorded in the internal site's unresolved-findings.md. Publish it when that pass is done."
+    },
+    "/v1/messages": {
+      "classification": "blocked",
+      "gate": "no tracker entry",
+      "reason": "POST /v1/messages (the Anthropic Messages API) reached the source tree on 2026-08-31 and is the fifth served inference path there, but sprint-status.yaml carries no story for the messages family, and the tracker is the arbiter of shipped. Nothing is published until a tracked story says it ships. Recorded in the internal site's unresolved-findings.md."
     }
   },
   "tags": [
