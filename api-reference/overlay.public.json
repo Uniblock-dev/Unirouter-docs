@@ -721,6 +721,100 @@
               }
             }
           },
+          "403": {
+            "description": "This workspace is not permitted to call what the request named, and code is `model_not_permitted`. For a model the message names that model. For a routing profile the message names the slug and no member, and it is answered when the permitted set excludes every member that could otherwise have been served, including a profile that also holds a member we could not serve ourselves. The permitted set is unrestricted by default, so this is reachable only on a workspace somebody has restricted. No provider was called and retrying will not change the answer: a workspace owner has to widen the set.",
+            "headers": {
+              "x-uniblock-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "model_not_permitted": {
+                    "summary": "The model is outside this workspace's permitted set",
+                    "value": {
+                      "error": {
+                        "message": "This workspace is not permitted to use the model \"MODEL_ID\". Its access is limited to a named set of models; a workspace owner can say which.",
+                        "type": "permission_error",
+                        "param": null,
+                        "code": "model_not_permitted",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "model_not_permitted_profile": {
+                    "summary": "A routing profile has no permitted member left to try",
+                    "value": {
+                      "error": {
+                        "message": "Every model in \"PROFILE_SLUG\" that could be served is outside this workspace's permitted set, so the profile has nothing left to try. Its access is limited to a named set of models; a workspace owner can say which.",
+                        "type": "permission_error",
+                        "param": null,
+                        "code": "model_not_permitted",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The model cannot be served, and the two cases are told apart by `code`. `model_not_found` means the id is in no catalog at all, which is what a typo produces, so check the spelling or list what this key can call with `GET /v1/models`. `model_not_available` means the id is catalogued and is not being served right now, either on this endpoint or at all, so retrying later is worth more than changing the request. No provider was called either way.",
+            "headers": {
+              "x-uniblock-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "model_not_found": {
+                    "summary": "No model of that id exists",
+                    "value": {
+                      "error": {
+                        "message": "The model \"MODEL_ID\" does not exist. Check the spelling, or list the models this key can call with GET /v1/models.",
+                        "type": "not_found_error",
+                        "param": null,
+                        "code": "model_not_found",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "model_not_available": {
+                    "summary": "Known to us, and not being served right now",
+                    "value": {
+                      "error": {
+                        "message": "The model \"MODEL_ID\" is not currently available. It is known to this platform and is not being served right now, so retrying later is worth more than changing the request.",
+                        "type": "not_found_error",
+                        "param": null,
+                        "code": "model_not_available",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "model_not_available_endpoint": {
+                    "summary": "Live, and not offered on this endpoint",
+                    "value": {
+                      "error": {
+                        "message": "\"MODEL_ID\" is not offered on this endpoint: the catalog lists it for chat and not for embeddings.",
+                        "type": "not_found_error",
+                        "param": null,
+                        "code": "model_not_available",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "429": {
             "description": "A limit refused the request. `rate_limit_exceeded` is this key's own request rate and carries `Retry-After`. `spend_rate_exceeded` is the account spend rate cap, which counts the credit held for requests rather than the credit they settle at; send `max_tokens` to hold less. `provider_key_refused` is your own key for a provider being over its limit there; it clears on its own and carries no `Retry-After`.",
             "headers": {
