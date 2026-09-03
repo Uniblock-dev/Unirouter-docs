@@ -2,7 +2,7 @@
 title: "Rate limits and spend controls"
 description: "The limits that can refuse a request, what the spend rate cap counts, and the one lever that makes it bind less often."
 status: partial
-gates: ["10.11"]
+gates: ["10.11", "9.6", "9.26"]
 ---
 
 import FeatureStatus from '/snippets/feature-status.mdx';
@@ -23,6 +23,8 @@ attempted too quickly" from "this key is done" without asking us.
 | 429 | `spend_rate_exceeded` | Your spend rate cap, which counts money reserved rather than money spent. | Wait up to 60 seconds, or send `max_tokens`. See below. |
 | 402 | `insufficient_credit` | Available credit at admission. | Buy credit. |
 | 402 | `key_limit_exceeded` | This key's own credit limit, for its current window. | Wait for the window to roll, raise the limit, or send on another key. |
+| 402 | `member_limit_exceeded` | Your own monthly spend limit, for the current calendar month. | Ask the workspace owner to raise or clear it. Your colleagues are unaffected. |
+| 402 | `workspace_limit_exceeded` | The workspace's monthly spend limit, for the current calendar month. | Contact us: there is no self-service control for this figure yet. |
 | 401 | `key_expired` | Nothing. The key's own expiry date has passed. | Create a new key. Expired keys are never renewed. |
 | 503 | `paused_by_owner` | Nothing. The workspace owner has paused requests. | Lift the pause in Settings. |
 
