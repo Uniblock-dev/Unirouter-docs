@@ -2,7 +2,7 @@
 title: "Routing profiles"
 description: "An ordered list of your own models, requested as profile/<identifier> in the model field, so a fallback order lives in one place."
 status: write-now
-gates: []
+gates: [2.9]
 ---
 
 A routing profile is your own ordered list of models, saved once and requested
@@ -100,6 +100,35 @@ There is no separate error for "archived" versus "never created", and there is
 no way to restore an archived profile: only to create a new one, under a new
 identifier. See [Errors and refusals](/concepts/errors) for the envelope every
 failing route shares.
+
+## When no model in the profile can be served
+
+A profile whose every member is out is refused rather than served, and the code
+says which kind of "out" it was. Every one of these names the profile slug you
+sent and no member of it: the list behind the slug is your own document, and your
+Profiles screen shows it in order.
+
+| Status | `code` | Meaning |
+|---|---|---|
+| 403 | `model_not_permitted` | Of the members that could otherwise have been served, this workspace's permitted set names none. A workspace owner has to widen the set; retrying will not help. This is also the answer when the profile additionally holds a member we could not serve ourselves, because lifting the set is still what makes the request go through. |
+| 503 | `no_provider_configured` | None of the members can be served right now, or none of them could be routed at all. Ours to sort out where it is a routing gap. Retry with backoff. |
+| 503 | `model_permissions_unreadable` | The document saying which models this workspace may call could not be read, so no member could be admitted rather than the set being treated as unrestricted. Ours. Retry shortly. |
+
+```json
+{
+  "error": {
+    "message": "Every model in \"profile/customer-support\" that could be served is outside this workspace's permitted set, so the profile has nothing left to try. Its access is limited to a named set of models; a workspace owner can say which.",
+    "type": "permission_error",
+    "param": null,
+    "code": "model_not_permitted",
+    "request_id": "00000000-0000-4000-8000-000000000000"
+  }
+}
+```
+
+A member skipped along the way is not reported individually. The refusal is about
+the profile as a whole, and the request id is what a support conversation starts
+from.
 
 ## Limits
 

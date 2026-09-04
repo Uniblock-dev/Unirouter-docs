@@ -2,7 +2,7 @@
 title: "Errors and refusals"
 description: "One error body for the whole API, a closed set of types, and a request id on every response, so a failure tells you what to do next."
 status: write-now
-gates: []
+gates: [2.9]
 ---
 
 import ErrorEnvelope from '/snippets/error-envelope.mdx';
@@ -80,9 +80,12 @@ clears on its own. Anything else from the provider comes back as `400`,
 because retrying the same request will not change the answer until the key is
 replaced on the Provider keys screen. Either way, nothing is charged.
 
+**The model cannot be served.** Three answers, told apart so that each one says what to do next. A `404` with `model_not_found` means no model of that id exists, which is what a typo produces: check the spelling, or list what your key can call with `GET /v1/models`. A `404` with `model_not_available` means we do know the id and are not serving it right now, either at all or on the endpoint you called, so retrying later is worth more than changing the request. A `403` with `model_not_permitted` means the model is live and this workspace's permitted set does not name it; that set is unrestricted by default, so this reaches only a workspace somebody restricted, and a workspace owner has to widen it. Nothing is charged for any of the three, and no provider was called.
+
 **Ours.** `500`, `503`, or `504`. A `503` names its condition in `code`, and the
 codes differ in whether waiting helps: `balance_unavailable`,
-`model_not_priceable`, and `model_pricing_unreadable` clear on their own, while
+`model_not_priceable`, `model_pricing_unreadable`, and
+`model_permissions_unreadable` clear on their own, while
 `paused_by_owner` means a person paused the account and only a person can unpause
 it. Retrying that one on a timer will spend your backoff budget on a state no
 amount of waiting changes.
@@ -108,6 +111,11 @@ from it rather than from a description of what the screen said.
   each request reserves less.
 - `429` with `provider_key_refused`: retry with backoff. It carries no
   `Retry-After`, but a provider's own limit clears on its own.
+- `403` with `model_not_permitted`: do not retry. The permitted set has to be
+  widened by a workspace owner.
+- `404` with `model_not_found`: do not retry unchanged. Fix the model id.
+- `404` with `model_not_available`: retry later. The request is fine; we are not
+  serving that model at the moment.
 - `503` with `paused_by_owner`: do not retry on a timer.
 - Other `503`, and `500`: retry with backoff. If it persists, quote a request id.
 - `504`: the request ran past the 540 second limit. Retrying the same work

@@ -2,7 +2,7 @@
 title: "Errors"
 description: "One error body for the whole API: a closed set of type values, a stable code, and the request id inside the body."
 status: write-now
-gates: []
+gates: [2.9, 9.6, 9.26]
 ---
 
 import ErrorEnvelope from '/snippets/error-envelope.mdx';
@@ -67,8 +67,12 @@ separates causes sharing a status.
 | 401 | `authentication_error` | `key_expired` | The key is past its own expiry date. The message names the date it expired on. Checked before the per-key rate limiter, so an expired key never consumes that allowance. Expired keys are not renewed: create a new one. |
 | 402 | `insufficient_quota` | `insufficient_credit` | The workspace cannot cover the estimated maximum cost of this request. The message names both figures. Buy credit. |
 | 402 | `insufficient_quota` | `key_limit_exceeded` | The sending key reached its own credit limit. Refused before any credit is held; other keys in the workspace are unaffected. The message names what the key has settled and holds inside its current window. |
+| 402 | `insufficient_quota` | `member_limit_exceeded` | The person this request is attributed to has reached their own monthly spend limit. Refused before any credit is held and before any provider is attempted. It stops that one person, on every key their spend answers for and in the playground, while their colleagues go on serving from the same balance. The window is the calendar month, and only the workspace owner can raise or clear the figure. |
+| 402 | `insufficient_quota` | `workspace_limit_exceeded` | The workspace has reached its own monthly spend limit, which is the widest of these four ceilings. Refused before any credit is held and before any provider is attempted, and the usage record carries a charge of 0. It stops every member, on every key that carries the projected ceiling and in the playground unconditionally, so it is the code you get when a request is past both this ceiling and a member's. There is no self-service control for the figure yet: contact us to change it. |
+| 403 | `permission_error` | `model_not_permitted` | The model, or every servable member of the routing profile, is outside this workspace's permitted set. The set is unrestricted by default, so this reaches only a workspace somebody restricted. Nothing to retry: a workspace owner has to widen the set. |
 | 404 | `invalid_request_error` | `unknown_url` | No such route on this API. The message names the method and path. |
-| 404 | `not_found_error` | `model_not_found` | No model of that id is in the live catalog. `param` is `model`. A model we hold but do not publish answers the same way as one we have never heard of. |
+| 404 | `not_found_error` | `model_not_found` | No model of that id is in the live catalog, which is what a typo produces. Check the spelling, or list what this key can call with `GET /v1/models`. `param` is `model` on the model routes and `null` on an inference call. |
+| 404 | `not_found_error` | `model_not_available` | The id is catalogued and is not being served right now, either at all or on the endpoint you called. Retrying later is worth more than changing the request. Told apart from `model_not_found` so a withdrawn model does not read as a typo. |
 | 405 | `invalid_request_error` | `method_not_allowed` | A method other than GET on a path that exists. Carries an `Allow` header. Answered before any key is looked at, so it costs nothing and reveals nothing. |
 | 429 | `rate_limit_error` | `rate_limit_exceeded` | This key's request rate limit. Carries `Retry-After`. |
 | 429 | `rate_limit_error` | `spend_rate_exceeded` | The account's spend rate cap. Nothing to fix; requests are admitted again as the window rolls forward. |
@@ -79,6 +83,7 @@ separates causes sharing a status.
 | 503 | `server_error` | `balance_unavailable` | We could not read the account's balance, so the request was refused rather than served unmetered. Ours. Retry shortly. |
 | 503 | `server_error` | `model_not_priceable` | A model we list cannot be priced right now, so no credit could be held for the call. Ours. Retry shortly. |
 | 503 | `server_error` | `model_pricing_unreadable` | As above, from the other direction: the published rate for the model could not be read. Ours. Retry shortly. |
+| 503 | `server_error` | `model_permissions_unreadable` | The document saying which models this workspace may call could not be read, so the request was refused rather than admitted as if the set were unrestricted. Ours. Retry shortly. |
 | 504 | `server_error` | `request_deadline_exceeded` | The request ran past the 540 second limit and was terminated. Split the work, or stream the response. |
 
 A request that never reached a model is not charged for, and the credit held for
