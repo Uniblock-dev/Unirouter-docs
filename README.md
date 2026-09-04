@@ -1,3 +1,9 @@
+> # Deprecated
+>
+> This repository moved to **[Uniblock-dev/Unirouter-docs](https://github.com/Uniblock-dev/Unirouter-docs)** on 2026-09-04 and is archived and read-only.
+>
+> The full history came across with it, which matters here: the public sync point is recorded only in the subject line of each sync commit, as `... move the sync point to <sha>`. Open pull requests and new sync passes go to the new repository.
+
 # Unirouter docs (public)
 
 The customer-facing Mintlify site. It carries only what a customer can act on:
