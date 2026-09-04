@@ -457,6 +457,8 @@ Tracked here so writers meet them where the work is; each names its unblock cond
 
     **No page on this site describes any of the three.** They reach customers only as example values inside the generated artifact, so nothing was gated in this pass: `concepts/models.mdx` keeps `gates: ["8.6", "8.7", "8.8"]`, which are its own, and adding `18.47` to a page that makes no claim about the fields would gate a sentence nobody wrote. The gate is owed by the first page that describes them. Unblock for prose: 18.47 done. Recorded in the internal site's unresolved findings as `SF-37`.
 
+    **Rechecked on the 2026-09-04 pm pass (`bd6042f8..2aad9ff4`, seventy-seven commits): the public surface did not move at all.** `sync-source-spec` reports every one of the seven `/v1` operations hashing as it did at the last reviewed sync, so the lock was already correct and the artifact was already current; the sync point moves on the check rather than on a change. The control-plane spec did grow, from 166 operations to 169, but all three additions are `/admin` or `/api/me` and none of them is public. Story 18.25, the one that publishes the new catalog fields through the four doors and says so in the spec, moved from `backlog` to `review` in this range. That is movement toward this item's unblock and not the unblock itself, so nothing here is gated or ungated by it, and 18.47 is still `review`. Recorded in the internal site's unresolved findings as `SF-41`.
+
 ---
 
 ## 15. Redirects, SEO, accessibility
