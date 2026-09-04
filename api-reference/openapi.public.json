@@ -750,6 +750,8 @@
                     "model_id": "openai/gpt-4o-mini",
                     "display_name": "GPT-4o mini",
                     "author": "openai",
+                    "author_slug": "meta",
+                    "author_source": "recorded",
                     "context_window_tokens": 128000,
                     "max_output_tokens": 16384,
                     "input_rate_thousandths": 150,
@@ -760,6 +762,9 @@
                     ],
                     "provider_display_names": [
                       "OpenAI"
+                    ],
+                    "provider_families": [
+                      "groq"
                     ],
                     "capabilities": {
                       "streaming": "yes",
