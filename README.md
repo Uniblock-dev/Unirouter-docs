@@ -1,18 +1,54 @@
-# Gateway-LLM-Docs (deprecated)
+# Unirouter docs (public)
 
-> This repository moved to **[Uniblock-dev/Unirouter-docs](https://github.com/Uniblock-dev/Unirouter-docs)** on 2026-09-04. It is archived and read-only.
+The customer-facing Mintlify site. It carries only what a customer can act on:
+published `/v1` operations, error codes, money and limits, and the dashboard
+guides.
 
-The customer-facing Mintlify site lived here until 2026-09-04. Its full history
-came across to the new repository, which matters here: the public sync point is
-recorded only in the subject line of each sync commit, as
-`... move the sync point to <sha>`, so the record a sync pass reads is in that
-history rather than in any file.
+Migrated from `Uniblock-dev/Gateway-LLM-Docs` on 2026-09-04 with its history
+intact. That history is load-bearing: the public sync point is recorded only in
+the subject line of each sync commit, as `... move the sync point to <sha>`.
 
-Everything still applies, at the new address:
+## The contract
 
-- `DOCS_PLAN.md` is the planning authority, sections 7, 8, 13 and 14.
-- `npm run check` is the gate.
-- Findings that need an owner live in the internal docs repository's `docs-project/unresolved-findings.md`.
+`DOCS_PLAN.md` is the planning authority. Four sections do most of the work:
 
-New sync passes and pull requests go to the new repository. Nothing here is
-maintained.
+| Section | What it settles |
+|---|---|
+| 7 | The page catalog, and which pages are blocked |
+| 8 | The OpenAPI strategy: a derived public artifact, never a repo spec verbatim |
+| 13 | The must-not-publish register, enforced by the banned-content linter |
+| 14 | Known drift and the open questions that gate docs work |
+
+## Checks
+
+```
+npm run check
+```
+
+Runs, in order: the OpenAPI artifact build in `--check` mode, the `docs.json`
+validator, the banned-content linter, the claims registry check, and the status
+gate check. CI runs `npm run ci`, which is the same set with the status gate
+allowed to tolerate missing pages.
+
+## Syncing against the source tree
+
+The source repository is read-only from here. A sync pass runs:
+
+```
+node scripts/sync-source-spec.mjs --source <path to a Gateway-LLM checkout>
+```
+
+which reports how the public `/v1` surface moved against
+`api-reference/source-spec.lock.json`, and takes `--write-lock` once those
+differences have been reviewed. `npm run build:openapi` then rebuilds
+`api-reference/openapi.public.json` from the base spec plus
+`api-reference/overlay.public.json`.
+
+A new `/v1` path absent from the overlay fails the build by design: it forces a
+human decision, and `blocked` with a gate is a valid answer.
+
+## Findings
+
+This repository keeps no findings register of its own. A public-surface finding
+that needs an owner is recorded in the internal docs repository's
+`docs-project/unresolved-findings.md` and named in the pull request body here.

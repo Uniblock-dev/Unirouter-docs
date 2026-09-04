@@ -1,7 +1,7 @@
 # Uniblock Gateway — Public Documentation Site: Architecture and Implementation Plan
 
 Status: implementation-ready plan. Date: 2026-08-25.
-Scope: a public-facing product and developer documentation site for Uniblock Gateway, built on Mintlify, living in this repository (`Gateway-LLM-Docs`).
+Scope: a public-facing product and developer documentation site for Uniblock Gateway, built on Mintlify, living in this repository (`Unirouter-docs`).
 Source repository: `C:\Users\CoolHenry\Documents\VS\Gateway-LLM` (referred to below as `SRC/`).
 
 This is a plan for **customer-facing documentation**, not internal repository documentation. Every page below traces to evidence in the source repo. Handler code wins over stale prose; where they disagree, the disagreement is flagged in §14.
