@@ -2,7 +2,7 @@
 title: "Monitor usage"
 description: "Read what your workspace has been spending on Usage, find one request in Activity, and reconcile a statement line with the request that caused it."
 status: partial
-gates: ["5.11", "5.12"]
+gates: ["5.11", "5.12", "5.18"]
 ---
 
 import RequestIdNote from '/snippets/request-id-note.mdx';
@@ -56,7 +56,7 @@ the record that goes back further, because ledger movements are never purged.
 Activity lists requests newest first, fifty to a page, with the request id linking to
 the single request lookup. Each row carries when it ran, which door it came through
 (`api` or `playground`), the model, which provider answered, the outcome, the token
-counts, the cost in minor units and how long it took.
+counts, what it cost as dollars and how long it took.
 
 Paging is stable: rows are ordered by time with the request id as the tiebreak, so a
 row cannot swap sides of a page boundary between two reads and appear twice or not at

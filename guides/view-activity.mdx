@@ -2,7 +2,7 @@
 title: "View activity"
 description: "Every request as a row: what happened, what it cost, how to open one request, and exactly what is kept about it."
 status: partial
-gates: ["5.11", "5.12"]
+gates: ["5.11", "5.12", "5.18"]
 ---
 
 import RequestIdNote from '/snippets/request-id-note.mdx';
@@ -21,7 +21,7 @@ what the shipped screen shows today.
 | Served by | The provider that answered, or **nothing** if none did. |
 | Outcome | The raw outcome slug: `served`, or the reason it was not. |
 | Tokens | The total token count, or **unknown** if none was ever reported. |
-| Charge | The cost in minor units, or **unpriced** if the request was never priced. |
+| Charge | What the request cost, as dollars to as many places as the figure needs and never fewer than two, or **unpriced** if the request was never priced. |
 | Took | How long the request took, in milliseconds. |
 | Request id | The first eight characters, linking to the single request view. |
 
