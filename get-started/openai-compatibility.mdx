@@ -81,10 +81,15 @@ Two consequences worth stating:
 
 ## Model ids
 
-Models are named `family/model`, for example `openai/gpt-4o-mini`. The prefix
-says which family serves the model, so the same short name from two families is
-never ambiguous. A bare OpenAI-style name with no family is not a Uniblock model
-id. Ask [`GET /v1/models`](/concepts/models) for the ids you can call.
+Models are named `provider/model`, for example `openai/gpt-4o-mini`. The id is split once on the
+first slash: the part before it names the provider that will serve the request, and everything after
+it is that provider's own id for the model, slashes included and passed on unchanged. The same model
+carried by two providers is two ids, and you choose which one you send.
+
+A bare OpenAI-style name with no provider is not a Uniblock model id. It is refused with `400` and
+the code `model_id_not_pinned`, naming both accepted forms, rather than being routed to whichever
+provider we happen to carry it under. Ask [`GET /v1/models`](/concepts/models) for the ids you can
+call.
 
 ## Request headers
 

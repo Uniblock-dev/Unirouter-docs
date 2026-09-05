@@ -61,6 +61,7 @@ separates causes sharing a status.
 | Status | `type` | `code` | Meaning |
 |---|---|---|---|
 | 400 | `invalid_request_error` | `null` | A required parameter is missing. `param` names it. |
+| 400 | `invalid_request_error` | `model_id_not_pinned` | The `model` field is neither of the two forms this API accepts. It does not begin with a provider we serve, and it is not a `profile/` slug. `param` is `model`. This is a 400 and not a `model_not_found` 404 on purpose: nothing was looked up, because the string does not say which provider should serve it, and what is missing is a prefix rather than a correct spelling. |
 | 400 | `invalid_request_error` | `context_length_exceeded` | The request is too large to price or serve. `param` is `messages`. Send less in one call. |
 | 400 | `invalid_request_error` | `provider_key_refused` | The request ran on your own key for that provider, and the provider rejected the key itself or refused this particular call under it. Replace the key on the Provider keys screen; retrying will not change the answer. |
 | 401 | `authentication_error` | `invalid_api_key` | No key, a non-Bearer scheme, a key of the wrong shape, or a key we will not accept. See [Authentication](/api-reference/authentication). |

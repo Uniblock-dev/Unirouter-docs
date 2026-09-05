@@ -11,11 +11,29 @@ serves it, so one key and one endpoint reach models from more than one place.
 
 ## Model ids
 
-A model id is written as a family and a model, separated by a slash:
+A model id is written as a provider and that provider's own model id, separated by a slash:
 
 ```json
 { "model": "openai/gpt-4o-mini" }
 ```
+
+It is split once on the **first** slash. The part before it names the provider that serves the
+request. Everything after it is that provider's own id for the model, exactly as the provider spells
+it, slashes included, so an id can carry more than one slash and only the first one is a boundary.
+
+The provider half is the point: you choose the host, and we never substitute a different one behind
+your back. A model carried by two providers is two ids with two prices, and the one you send is the
+one that serves you.
+
+The `model` field accepts these two forms and nothing else:
+
+| Form | What it does |
+|---|---|
+| `provider/model` | That model, from that provider. If that provider cannot serve it, the request fails rather than moving to another host. |
+| `profile/{identifier}` | A [routing profile](/concepts/routing-profiles) you built: your own `provider/model` lines, tried in your order. |
+
+A bare id such as `gpt-4o-mini` is refused with `400` and the code `model_id_not_pinned`. The message
+names both forms and points you at `GET /v1/models`.
 
 Ask for the ids rather than constructing them by hand. The set of callable
 models is a live fact, it changes without a release on our side, and an id you
