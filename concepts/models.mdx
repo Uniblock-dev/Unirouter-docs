@@ -2,7 +2,7 @@
 title: "Models"
 description: "How model ids are shaped, how to discover which models are callable right now, and the vocabulary a model's rate is expressed in."
 status: partial
-gates: ["8.6", "8.7", "8.8"]
+gates: ["8.6", "8.7", "8.8", "18.58"]
 ---
 
 You name a model in the `model` field of a request, exactly as you would when
@@ -11,11 +11,37 @@ serves it, so one key and one endpoint reach models from more than one place.
 
 ## Model ids
 
-A model id is written as a family and a model, separated by a slash:
+A model id is written as a provider and that provider's own model id, separated by a slash:
 
 ```json
 { "model": "openai/gpt-4o-mini" }
 ```
+
+It is split once on the **first** slash. The part before it names the provider that serves the
+request. Everything after it is that provider's own id for the model, exactly as the provider spells
+it, slashes included, so an id can carry more than one slash and only the first one is a boundary.
+
+The half after the slash may also be a shorter name we hold for the model, such as
+`anthropic/opus`. A name we recognise is served, charged and answered as the pinned id that
+`GET /v1/models` lists, which is the id the reply carries, so the answer names the model you were
+actually served rather than the name you typed. A name we do not hold changes nothing: the request
+is refused exactly as it would have been, with the `404` that names the provider and the id it does
+not serve. A name with no provider in front of it, such as a bare `opus`, is refused the same way
+any unpinned id is.
+
+The provider half is the point: you choose the host, and we never substitute a different one behind
+your back. A model carried by two providers is two ids with two prices, and the one you send is the
+one that serves you.
+
+The `model` field accepts these two forms and nothing else:
+
+| Form | What it does |
+|---|---|
+| `provider/model` | That model, from that provider. If that provider cannot serve it, the request fails rather than moving to another host. The half after the slash is the provider's own id, or a shorter name we hold for it. |
+| `profile/{identifier}` | A [routing profile](/concepts/routing-profiles) you built: your own `provider/model` lines, tried in your order. |
+
+A bare id such as `gpt-4o-mini` is refused with `400` and the code `model_id_not_pinned`. The message
+names both forms and points you at `GET /v1/models`.
 
 Ask for the ids rather than constructing them by hand. The set of callable
 models is a live fact, it changes without a release on our side, and an id you

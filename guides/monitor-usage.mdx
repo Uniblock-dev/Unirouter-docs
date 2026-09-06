@@ -2,7 +2,7 @@
 title: "Monitor usage"
 description: "Read what your workspace has been spending on Usage, find one request in Activity, and reconcile a statement line with the request that caused it."
 status: partial
-gates: ["5.11", "5.12"]
+gates: ["5.11", "5.12", "5.18"]
 ---
 
 import RequestIdNote from '/snippets/request-id-note.mdx';
@@ -34,6 +34,15 @@ days and 1 year, and it shows:
 - **Your balance**, read from the one component allowed to compute it, beside the
   summed cost rather than derived from it.
 
+**How fast the credit is going.** Beside the totals, Usage says what the window works
+out to per day, roughly how many days of credit that pace leaves, and the date the
+balance would run out at it. All three are the platform's own arithmetic over the
+window you selected and the balance it already read, so changing the range changes the
+pace. A workspace spending very little reads "under a cent a day" rather than a true
+but useless zero, and a balance that would outlast ten years at the current pace says
+so instead of naming a date decades out. The panel is not drawn at all when there is
+nothing to project from: a window with no spend, or a balance already at zero.
+
 Two figures are worth knowing how to read.
 
 **Freshness.** The screen shows when the newest request inside the window started, as
@@ -53,10 +62,10 @@ the record that goes back further, because ledger movements are never purged.
 
 ## Activity: one row per request
 
-Activity lists requests newest first, fifty to a page, with the request id linking to
-the single request lookup. Each row carries when it ran, which door it came through
+Activity lists requests newest first, 25 to a page unless you choose 50 or 100, with
+the request id linking to the single request lookup. Each row carries when it ran, which door it came through
 (`api` or `playground`), the model, which provider answered, the outcome, the token
-counts, the cost in minor units and how long it took.
+counts, what it cost as dollars and how long it took.
 
 Paging is stable: rows are ordered by time with the request id as the tiebreak, so a
 row cannot swap sides of a page boundary between two reads and appear twice or not at
@@ -66,10 +75,15 @@ all.
 
 The filter panel narrows by model, by outcome and by date range, and the controls
 compose: all of them narrow the same list. It is a plain form, so a filtered view is
-an address you can bookmark or send to a colleague.
+an address you can bookmark or send to a colleague, and shortcuts for the last day,
+week and month write the date fields for you.
 
 The model list offered by the panel is the models this workspace has actually called,
-not a catalogue.
+not a catalogue, and a model that has been renamed appears once: choosing it still
+matches the rows recorded under the name it used to have.
+
+Outcome narrows to one of four choices rather than to a code: any outcome, served,
+provider error, refused.
 
 ### Three ways to see no rows
 

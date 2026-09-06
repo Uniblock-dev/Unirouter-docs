@@ -2,7 +2,7 @@
 title: "Credits and billing"
 description: "How prepaid credit works: the fee is added when you buy credit, and a request deducts the provider's price with nothing added."
 status: write-now
-gates: []
+gates: ["4.27"]
 ---
 
 import OwnerOnlyNote from '/snippets/owner-only-note.mdx';
@@ -76,10 +76,17 @@ carry their own rate. The rates behind a charge are recorded with the charge, so
 line can be explained by the rates that were in force when it was served rather than
 by whatever they are today.
 
-Money is held in integer minor units throughout: 100 minor units is 1.00, and the
-platform holds one currency, USD. Amounts are formatted for reading only at the
-screen or the email that shows them, so nothing is rounded a second time on the way
-to you.
+Money you are charged is held in integer **micro-dollars**, millionths of one dollar,
+and the platform holds one currency, USD. The unit is fine enough that a small request
+is not rounded away: a charge worth a fraction of a cent is stored as the exact figure
+it is rather than as nothing. Amounts are formatted for reading only at the screen, the
+email or the API response that shows them, so nothing is rounded a second time on the
+way to you.
+
+Figures **you** type stay in minor units, where 100 is 1.00: the spend rate cap, the
+low balance threshold and a key's credit limit are all whole numbers of minor units,
+and they are converted where they meet a charge. What Stripe charges your card stays
+in minor units too, because that is the unit your card was really charged in.
 
 ## The three figures on your balance
 
@@ -114,7 +121,7 @@ see what you hold and what the request needed:
 ```json
 {
   "error": {
-    "message": "This account has 54 minor units available and the request needs 55 held.",
+    "message": "This account has 540000 micro-dollars ($0.54) available and the request needs 550000 micro-dollars ($0.55) held.",
     "type": "insufficient_quota",
     "param": null,
     "code": "insufficient_credit",

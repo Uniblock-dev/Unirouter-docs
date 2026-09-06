@@ -113,6 +113,9 @@ from it rather than from a description of what the screen said.
   `Retry-After`, but a provider's own limit clears on its own.
 - `403` with `model_not_permitted`: do not retry. The permitted set has to be
   widened by a workspace owner.
+- `400` with `model_id_not_pinned`: do not retry unchanged. Add the provider
+  prefix, so `gpt-4o-mini` becomes `openai/gpt-4o-mini`, or send a
+  `profile/` slug.
 - `404` with `model_not_found`: do not retry unchanged. Fix the model id.
 - `404` with `model_not_available`: retry later. The request is fine; we are not
   serving that model at the moment.

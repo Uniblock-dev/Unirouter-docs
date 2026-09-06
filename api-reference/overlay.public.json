@@ -1458,6 +1458,11 @@
       "gate": "2.22 (met 2026-08-31); pending a writer pass",
       "reason": "Story 2.22 (the responses API answers and the money path knows it did) moved to done in the tracker on 2026-08-31, so the gate this entry was written for is met. Nothing is published yet because publishing this operation is a writer pass, not a reclassification: it needs its request and response schemas transcribed from the handler the way the chat operation's were, its refusal examples written, and an api-reference page in the navigation. Recorded in the internal site's unresolved-findings.md. Publish it when that pass is done."
     },
+    "/v1/usage/{id}": {
+      "classification": "blocked",
+      "gate": "no tracker entry",
+      "reason": "GET /v1/usage/{id} reached the source tree on 2026-09-05 (PR #536), letting a key read back one request's tokens and charge without a dashboard session. sprint-status.yaml carries no story for it: the usage stories that exist, 5.11 through 5.16, are the dashboard's reads, and the tracker is the arbiter of shipped. It is also a writer pass rather than a reclassification, needing its response schema transcribed from the handler and a page in the navigation. Nothing is published until a tracked story says it ships. Recorded in the internal site's unresolved-findings.md as SF-43."
+    },
     "/v1/messages": {
       "classification": "blocked",
       "gate": "no tracker entry",

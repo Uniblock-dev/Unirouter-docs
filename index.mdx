@@ -27,7 +27,8 @@ response = client.chat.completions.create(
 )
 ```
 
-Model ids are `family/model`, so the model you name says which family serves it.
+Model ids are `provider/model`, so the id you send says which provider serves it. A bare model
+name with no provider is refused rather than routed for you.
 
 ## What it costs
 
