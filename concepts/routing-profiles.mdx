@@ -2,7 +2,7 @@
 title: "Routing profiles"
 description: "An ordered list of your own models, requested as profile/<identifier> in the model field, so a fallback order lives in one place."
 status: write-now
-gates: [2.9]
+gates: [2.9, 13.8, 13.9]
 ---
 
 A routing profile is your own ordered list of models, saved once and requested
@@ -138,6 +138,40 @@ from.
 | Identifier | 1 to 40 characters: lowercase letters, digits, and dashes, and it cannot start or end with a dash. |
 | Name | 1 to 120 characters. |
 | Profiles per workspace | 20 live at a time. Archiving one frees a slot, not its identifier. |
+
+## The fixed id `unirouter/auto`
+
+`unirouter/auto` is one string you can put in a client's configuration and leave
+there. It names whichever of your routes you have made the default, so the route
+behind it changes on the Routing screen without touching the code that calls us.
+Once it resolves, everything after that is the ordinary route path: the same
+order, the same failover, and the same charge for the step that answered.
+
+Until you have a default route it still answers, from a list we publish for the
+**cost tier** your workspace is on. There are three, `low`, `balanced` and
+`high`, and a workspace that has never chosen is on `balanced`. The tier is a
+shortlist and not a ceiling: `low` is cheaper because the models on it are
+cheaper, and nothing about the tier limits what a request may spend. Setting a
+default route of your own takes the id off our lists entirely, and yours answers
+instead.
+
+Two things it will not do. It never quietly serves you from a dearer tier than
+the one you picked: if the tier you are on has no list, or nothing on it can be
+served at that moment, the request is refused with `404`
+`model_not_available` and the message names your tier and both ways out. And it
+never falls back to a tier or a route you did not choose, so a refusal here
+means the same thing every time.
+
+## Which key a route runs on
+
+A route can also say whose provider key its steps run on, which matters only if
+you have [brought your own key](/concepts/bring-your-own-key) for a provider we
+carry. The choice is per route and it has three values: follow your workspace's
+own rule, which is what every route does unless you say otherwise; run on your
+own key; or run on ours. It is the way to keep one route off your own provider
+quota while the rest of your traffic stays on it. A step that cannot honour the
+choice is skipped, with the reason recorded, rather than served on the other
+key.
 
 ## Who can do what
 

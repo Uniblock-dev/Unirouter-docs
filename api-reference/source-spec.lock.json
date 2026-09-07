@@ -5,10 +5,10 @@
     "GET /v1/models": "753b1d683a4f5229",
     "GET /v1/models/{id}": "b19b8fdaaada1691",
     "GET /v1/usage/{id}": "a5549328e31a47c6",
-    "POST /v1/chat/completions": "cddce75c061443e4",
-    "POST /v1/completions": "68ddb68bacbb6d29",
-    "POST /v1/embeddings": "df1a9c44f779d020",
-    "POST /v1/messages": "7880cafe5f356dba",
-    "POST /v1/responses": "938fdf325c751c29"
+    "POST /v1/chat/completions": "fd498873a8106769",
+    "POST /v1/completions": "306bd0825d572c84",
+    "POST /v1/embeddings": "2893b5d7b4616fe0",
+    "POST /v1/messages": "7bfe8eb29ea2d120",
+    "POST /v1/responses": "56c58b38dff8be7d"
   }
 }

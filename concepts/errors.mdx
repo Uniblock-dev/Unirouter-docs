@@ -2,7 +2,7 @@
 title: "Errors and refusals"
 description: "One error body for the whole API, a closed set of types, and a request id on every response, so a failure tells you what to do next."
 status: write-now
-gates: [2.9]
+gates: [2.9, 13.9, 15.8]
 ---
 
 import ErrorEnvelope from '/snippets/error-envelope.mdx';
@@ -80,7 +80,7 @@ clears on its own. Anything else from the provider comes back as `400`,
 because retrying the same request will not change the answer until the key is
 replaced on the Provider keys screen. Either way, nothing is charged.
 
-**The model cannot be served.** Three answers, told apart so that each one says what to do next. A `404` with `model_not_found` means no model of that id exists, which is what a typo produces: check the spelling, or list what your key can call with `GET /v1/models`. A `404` with `model_not_available` means we do know the id and are not serving it right now, either at all or on the endpoint you called, so retrying later is worth more than changing the request. A `403` with `model_not_permitted` means the model is live and this workspace's permitted set does not name it; that set is unrestricted by default, so this reaches only a workspace somebody restricted, and a workspace owner has to widen it. Nothing is charged for any of the three, and no provider was called.
+**The model cannot be served.** Three answers, told apart so that each one says what to do next. A `404` with `model_not_found` means no model of that id exists, which is what a typo produces: check the spelling, or list what your key can call with `GET /v1/models`. A `404` with `model_not_available` means we do know the id and are not serving it right now, either at all or on the endpoint you called. The status and the code stay the same whichever way that happened, so a client branching on either keeps working, and the message is what tells the three cases apart: a model the provider has **retired** says it is gone rather than unwell, and that neither retrying nor changing the request reaches it; a model the provider still serves that **we cannot reach** right now says that instead, and says plainly that nothing about your request is wrong; anything else says the model is known here, is not being served at the moment, and that retrying later is worth more than changing the request. None of the three names a replacement model unless the provider named one itself, because a guess at what you meant is worse in an error body than no guess at all. A `403` with `model_not_permitted` means the model is live and this workspace's permitted set does not name it; that set is unrestricted by default, so this reaches only a workspace somebody restricted, and a workspace owner has to widen it. Nothing is charged for any of the three, and no provider was called.
 
 **Ours.** `500`, `503`, or `504`. A `503` names its condition in `code`, and the
 codes differ in whether waiting helps: `balance_unavailable`,
@@ -117,8 +117,10 @@ from it rather than from a description of what the screen said.
   prefix, so `gpt-4o-mini` becomes `openai/gpt-4o-mini`, or send a
   `profile/` slug.
 - `404` with `model_not_found`: do not retry unchanged. Fix the model id.
-- `404` with `model_not_available`: retry later. The request is fine; we are not
-  serving that model at the moment.
+- `404` with `model_not_available`: read the message before you retry. If it
+  says the provider has retired the model, do not retry at all; pick another
+  model. If it says we cannot reach it, or says neither, retry later, because
+  the request itself is fine.
 - `503` with `paused_by_owner`: do not retry on a timer.
 - Other `503`, and `500`: retry with backoff. If it persists, quote a request id.
 - `504`: the request ran past the 540 second limit. Retrying the same work

@@ -2,7 +2,7 @@
 title: "Errors"
 description: "One error body for the whole API: a closed set of type values, a stable code, and the request id inside the body."
 status: write-now
-gates: [2.9, 9.6, 9.26]
+gates: [2.9, 9.6, 9.26, 13.9, 15.8]
 ---
 
 import ErrorEnvelope from '/snippets/error-envelope.mdx';
@@ -73,7 +73,8 @@ separates causes sharing a status.
 | 403 | `permission_error` | `model_not_permitted` | The model, or every servable member of the routing profile, is outside this workspace's permitted set. The set is unrestricted by default, so this reaches only a workspace somebody restricted. Nothing to retry: a workspace owner has to widen the set. |
 | 404 | `invalid_request_error` | `unknown_url` | No such route on this API. The message names the method and path. |
 | 404 | `not_found_error` | `model_not_found` | No model of that id is in the live catalog, which is what a typo produces. Check the spelling, or list what this key can call with `GET /v1/models`. `param` is `model` on the model routes and `null` on an inference call. |
-| 404 | `not_found_error` | `model_not_available` | The id is catalogued and is not being served right now, either at all or on the endpoint you called. Retrying later is worth more than changing the request. Told apart from `model_not_found` so a withdrawn model does not read as a typo. |
+| 404 | `not_found_error` | `model_not_available` | The id is catalogued and is not being served right now, either at all or on the endpoint you called. Told apart from `model_not_found` so a withdrawn model does not read as a typo. The status and the code are the same in every case; the **message** says which case it is, and whether waiting helps. A model the provider has retired says it is gone rather than unwell, that retrying will not bring it back, and that no change to the request reaches it. A model the provider still serves that we cannot reach right now says that instead, and says that nothing about your request is wrong. Anything else keeps the sentence this code has always carried: known here, not being served at the moment, and retrying later is worth more than changing the request. No message names a replacement model unless the provider named one itself. |
+| 404 | `invalid_request_error` | `model_not_available` | The same code from the other direction, on a request that sent `unirouter/auto`: `param` is `model`, and the message names your cost tier, because that is the fact that decides what you do next. Either the tier has no published list, or nothing in it can be served right now. Both ways out are named in the message: pick another cost tier, or create a route and make it the default. |
 | 405 | `invalid_request_error` | `method_not_allowed` | A method other than GET on a path that exists. Carries an `Allow` header. Answered before any key is looked at, so it costs nothing and reveals nothing. |
 | 429 | `rate_limit_error` | `rate_limit_exceeded` | This key's request rate limit. Carries `Retry-After`. |
 | 429 | `rate_limit_error` | `spend_rate_exceeded` | The account's spend rate cap. Nothing to fix; requests are admitted again as the window rolls forward. |
