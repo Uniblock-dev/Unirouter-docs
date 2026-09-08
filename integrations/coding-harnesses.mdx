@@ -30,10 +30,13 @@ page says which form that harness wants and where we checked.
 ## Pin the model id before anything else
 
 Every harness ships with a default model name, and every one of those defaults
-is a bare OpenAI-style name. This API does not accept one. A `model` field
-carries `provider/model`, where the part before the first slash names the
-provider that will serve the request, or a `profile/` slug naming one of your
-workspace's routing profiles.
+is a bare OpenAI-style name. This API does not accept one. The two forms every
+harness page here uses are `provider/model`, where the part before the first
+slash names the provider that will serve the request, and a `profile/` slug
+naming one of your workspace's routing profiles. They are the two the refusal
+below names, and not a closed list: [Models](/concepts/models) carries every
+accepted form of a `model` field and is the page to read before assuming one is
+invalid.
 
 So `gpt-4o` is refused, before anything is looked up, with `400` and the code
 `model_id_not_pinned`:

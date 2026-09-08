@@ -74,21 +74,22 @@ unset or pointed elsewhere.
 
 ## Two things that change which endpoint it calls
 
-Both of these send a request somewhere this API does not serve, and both answer
-`404` with `unknown_url` rather than something that reads like a configuration
-problem.
+Both of these send a request to an endpoint this site does not document. Neither
+failure reads like a configuration problem, and nothing on this site tells you
+what either request answers, which is the reason to keep both settings on their
+defaults.
 
 **The model name can route the request to the Responses API.** Continue's
 `openai` adapter inspects the model name and sends reasoning-era OpenAI names to
-`POST /v1/responses` instead of chat completions. That endpoint is not part of
-this API's published surface today. If a model works in one Continue role and
-`404`s in another, or a model works and a differently named one does not, this is
-the mechanism to suspect. We did not verify whether an id in our
+`POST /v1/responses` instead of chat completions. This site documents nothing
+about that endpoint. If a model works in one Continue role and misbehaves in
+another, or a model works and a differently named one does not, this is the
+mechanism to suspect. We did not verify whether an id in our
 `provider/model` shape trips that check, so treat it as a thing to test rather
 than as a thing that will happen.
 
 **Do not set `useLegacyCompletionsEndpoint`.** It sends autocomplete to
-`POST /v1/completions`, which this API does not serve either. Continue's default
+`POST /v1/completions`, which this site does not document either. Continue's default
 for autocomplete is chat completions, which is the behaviour you want; the flag
 exists for servers that only speak the legacy endpoint.
 

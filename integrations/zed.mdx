@@ -80,10 +80,12 @@ and not empty.
 ## Leave `chat_completions` alone
 
 Each declared model may carry a `capabilities` block, and one of its keys decides
-which endpoint Zed calls. `chat_completions` defaults to `true`, which is what
-this API serves. Setting it to `false` tells Zed to use the Responses endpoint
-instead, which is not part of this API's published surface, so every request from
-that model would answer `404` with `unknown_url`.
+which endpoint Zed calls. `chat_completions` defaults to `true`, which is the
+endpoint this site documents. Setting it to `false` tells Zed to use the
+Responses endpoint instead, which this site publishes nothing about: no schema,
+no examples, no refusal list. Leave the default in place, so that what a request
+does is something you can look up here rather than something you have to
+discover.
 
 The same block is where tool calling is settled, and it defaults in your favour:
 `tools` is `true` unless you turn it off. So a model whose catalog entry says

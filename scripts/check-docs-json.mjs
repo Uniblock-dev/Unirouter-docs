@@ -105,10 +105,13 @@ report.note(`${pages.length} page(s) in navigation, ${new Set(pages).size} uniqu
 
 // Reserved prefixes, so growth never forces a move (DOCS_PLAN.md section 15).
 //
-// `integrations/` was added when the coding-harness pages were written. Section
-// 15 reserves a prefix so that growth inside it never forces a redirect, and a
-// prefix added here is a deliberate decision that these paths are permanent,
-// which is exactly the human decision the failure below exists to force.
+// `integrations/` was added when the coding-harness pages were written, and
+// DOCS_PLAN.md section 15 was amended in the same change to reserve it, with the
+// pages catalogued in section 7.6. Section 15 reserves a prefix so that growth
+// inside it never forces a redirect, and a prefix added here is a deliberate
+// decision that these paths are permanent, which is exactly the human decision
+// the failure below exists to force. A prefix in this list and not in section 15
+// is the divergence this comment exists to prevent.
 const RESERVED = [
   'index',
   'get-started/',
