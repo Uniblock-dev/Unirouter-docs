@@ -2,7 +2,7 @@
 title: "Models"
 description: "How model ids are shaped, how to discover which models are callable right now, and the vocabulary a model's rate is expressed in."
 status: partial
-gates: ["8.6", "8.7", "8.8", "13.9", "18.58"]
+gates: ["8.6", "8.7", "8.8", "8.40", "13.9", "18.58", "18.87"]
 ---
 
 You name a model in the `model` field of a request, exactly as you would when
@@ -78,17 +78,34 @@ A model id contains slashes and the whole of it is the identifier, so
 percent-encode it once or send it as it is. A double-encoded slash names no
 model and answers `404`.
 
-**In the dashboard.** The Models screen shows the same catalog for browsing
-without writing a request, and the playground offers the models you can send to
+**In the dashboard.** The Models screen browses the same catalog without your
+having to write a request, and the playground offers the models you can send to
 as a list, so you can pick one rather than having to know an id first. See
 [Playground](/guides/playground).
 
+The screen and the API answer at different grains, and it is worth knowing which
+you are reading. `GET /v1/models` lists one entry per callable id, so a model
+served by two providers is two entries. The Models screen shows **one row per
+model** by default and folds those providers together: the price cells show the
+range across them, and opening the row gives a line per provider with its own
+callable id. That fold is a reading aid on the screen and nothing else. What you
+put in the `model` field is unchanged, and it is still a specific provider's id:
+there is no bare-model form, and the row you are looking at is not itself
+callable. Take the id from the provider line, or from `GET /v1/models`.
+
 ## A model is offered only when it is live
 
-A model appears to you only when we hold a working credential of our own for it
-and it has been enabled on our side. The rule behind that is a promise rather
-than an implementation detail: you must never be offered a model that would
-fail on call.
+A model appears to you only when we hold a working credential of our own for it,
+it has been enabled on our side, and it carries a price we have actually decided.
+The rule behind that is a promise rather than an implementation detail: you must
+never be offered a model that would fail on call, and you must never be shown a
+model whose cost we cannot tell you.
+
+The price half is the newer one. A model whose only price is a placeholder set
+when a provider first offered it is left out of `GET /v1/models`, left out of the
+Models screen, and answered as an unknown model if you ask for it by name. It is
+not shown with the price blank: a model you can pick and then be refused for is
+worse than a model you never saw.
 
 Bringing your own key for a provider does not change this list. Your key only
 changes which credential answers your calls to a provider we already serve; it
