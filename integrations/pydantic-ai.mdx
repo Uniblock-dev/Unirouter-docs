@@ -1,0 +1,148 @@
+---
+title: "Pydantic AI"
+description: "Point Pydantic AI at Uniblock: the base URL goes on the provider, and the model class you pick decides which API gets called."
+status: partial
+gates: ["2.3", "2.11"]
+---
+
+import FeatureStatus from '/snippets/feature-status.mdx';
+
+<FeatureStatus
+  feature="the official-SDK compatibility proof"
+  detail="This page configures classes from a library we do not maintain and changes nothing else. We have not published a proof run against the production hostname, so read this as instructions rather than as a certification."
+/>
+
+Pydantic AI splits the two settings across two objects: the model names what to
+call and the provider says where. Both choices matter here, and the model class
+carries the one that is easy to get wrong.
+
+## The configuration
+
+```python
+import os
+from pydantic_ai import Agent
+from pydantic_ai.models.openai import OpenAIChatModel
+from pydantic_ai.providers.openai import OpenAIProvider
+
+model = OpenAIChatModel(
+    "openai/gpt-4o-mini",
+    provider=OpenAIProvider(
+        base_url="https://ai.uniblock.dev/v1",
+        api_key=os.environ["UNIBLOCK_API_KEY"],
+    ),
+)
+
+agent = Agent(model)
+print(agent.run_sync("Say hi in five words.").output)
+```
+
+**`base_url` and `api_key` go on `OpenAIProvider`, not on the model.** This is
+the structural difference from every other page in this section, and it is the
+library's own recommended shape for an OpenAI-compatible endpoint. The
+environment fallbacks are `OPENAI_BASE_URL` and `OPENAI_API_KEY`, read by the
+provider. The `/v1` belongs in the value: the provider passes your base URL
+straight to the OpenAI SDK underneath, which appends the endpoint path and adds
+no `/v1` of its own.
+
+There is also an escape hatch, if you already build an OpenAI client elsewhere in
+your application and would rather configure it in one place:
+`OpenAIProvider(openai_client=my_async_client)`. It is mutually exclusive with
+`base_url` and `api_key`, and the provider asserts that rather than quietly
+preferring one.
+
+## Use OpenAIChatModel, and name it
+
+**Do not reach this API through the bare `openai:` model string.** Pydantic AI
+has two OpenAI model classes, and the short string form resolves to the one that
+calls OpenAI's Responses API:
+
+| What you write | What it calls |
+|---|---|
+| `OpenAIChatModel(...)` | `POST /v1/chat/completions` |
+| `"openai-chat:..."` | The same, through the string form |
+| `OpenAIResponsesModel(...)` | `POST /v1/responses` |
+| `"openai:..."` | The same. This is the default the bare prefix resolves to. |
+
+Chat completions is the surface this site documents, which is why the example
+above instantiates `OpenAIChatModel` directly rather than passing a model string
+to `Agent`. The library's own documentation agrees for OpenAI-compatible
+endpoints in general: its section on them says `OpenAIChatModel` is what backs
+every OpenAI-compatible provider, and every third-party example on that page uses
+it.
+
+## What else is specific to this framework
+
+**The model name is a plain string, so nothing is validated locally.** The type is
+a union of `str` with a literal list of OpenAI's own model names, and the bare
+`str` in that union means the literals are editor autocompletion rather than a
+gate. `OpenAIChatModel("openai/gpt-4o-mini")` is accepted as written and the id is
+checked where it should be, by us, at request time. This is the opposite of
+[LlamaIndex's](/integrations/llamaindex) behaviour and it is the friendlier one.
+
+**There is no default model.** An `Agent` is constructed with one, so nothing here
+can send a bare id you did not write.
+
+**Structured output and tool calling need no other endpoint.** Both run through
+the same chat completions call, so the feature set that makes this library worth
+using does not widen the API surface it needs. See
+[tool calling](/concepts/tool-calling) and
+[structured outputs](/concepts/structured-outputs) for what travels.
+
+**Nothing calls the catalog or embeddings.** No default agent run reaches
+`GET /v1/models` or an embeddings endpoint.
+
+## Where the request id is
+
+On the exception, in a generic header dictionary rather than a named property.
+`ModelHTTPError` is raised for a `4xx` or `5xx` from the provider and carries
+`status_code`, `body` and `headers`, with header keys lowercased:
+
+```python
+from pydantic_ai.exceptions import ModelHTTPError
+
+try:
+    agent.run_sync("Say hi in five words.")
+except ModelHTTPError as error:
+    print(error.status_code)
+    print(error.headers.get("x-request-id") if error.headers else None)
+    print(error.body)
+```
+
+`headers` is `None` when the provider supplied none, so the guard above is not
+decoration. Our error envelope arrives in `body`, so read `type` and `code` out
+of it rather than matching on the message text. Every shipped code is in
+[errors](/concepts/errors).
+
+`UnexpectedModelBehavior` is a different thing and is not an HTTP failure: it is
+raised when a reply is not the shape the library expected. A refusal from us
+arrives as `ModelHTTPError`.
+
+## What we did not verify
+
+**Checked, and where.** That `base_url` and `api_key` belong to
+`OpenAIProvider` and that `OPENAI_BASE_URL` and `OPENAI_API_KEY` are their
+fallbacks; that `openai_client` is an alternative to both and is asserted
+mutually exclusive; that `OpenAIChatModel` calls chat completions and
+`OpenAIResponsesModel` calls the Responses API, and that the bare `openai:`
+prefix resolves to the latter while `openai-chat:` resolves to the former; that
+the model name type is a union including bare `str`; that `ModelHTTPError`
+carries `status_code`, `body` and lowercased `headers`, with `headers` optional;
+that structured output and tool calling use the same chat completions call; that
+no default flow calls the catalog or embeddings. Read from the
+`pydantic/pydantic-ai` repository on its main branch, in
+`pydantic_ai_slim/pydantic_ai/models/openai.py`, `providers/openai.py`,
+`models/__init__.py` and `exceptions.py`, plus that repository's own
+`docs/models/openai.md`, which is the source of the published page.
+
+**Not checked.** That a call configured this way succeeds against our hostname.
+Nothing on this page has been executed, because the base URL this site prints is
+not yet a host that answers.
+
+**Not checked either.** Which library version renamed the model class. An earlier
+name for `OpenAIChatModel` is referred to by other projects' own migrations, and
+we did not find a changelog entry pinning the rename to a release, so this page
+uses the current name and tells you nothing about older ones.
+
+**And not checked.** What `POST /v1/responses` does against this API. The advice
+to pin `OpenAIChatModel` is because chat completions is the documented surface,
+not because we have observed what the other path returns.

@@ -1,0 +1,167 @@
+---
+title: "LangChain"
+description: "Point LangChain's ChatOpenAI at Uniblock in Python and in JavaScript, and why its default model is the thing that fails first."
+status: partial
+gates: ["2.3", "2.11"]
+---
+
+import FeatureStatus from '/snippets/feature-status.mdx';
+
+<FeatureStatus
+  feature="the official-SDK compatibility proof"
+  detail="This page configures a class from a library we do not maintain and changes nothing else. We have not published a proof run against the production hostname, so read this as instructions rather than as a certification."
+/>
+
+LangChain's `ChatOpenAI` wraps the official OpenAI SDK, so it inherits that
+SDK's base URL behaviour and adds a naming layer of its own. The two language
+versions do not spell the setting the same way, which is the first thing to get
+right, and the framework carries a default model, which is the second.
+
+## Python
+
+```python
+import os
+from langchain_openai import ChatOpenAI
+
+llm = ChatOpenAI(
+    model="openai/gpt-4o-mini",
+    base_url="https://ai.uniblock.dev/v1",
+    api_key=os.environ["UNIBLOCK_API_KEY"],
+)
+
+print(llm.invoke("Say hi in five words.").content)
+```
+
+`base_url` and `api_key` are the canonical constructor arguments. Both are
+pydantic aliases: the underlying fields are `openai_api_base` and
+`openai_api_key`, and passing either spelling works. The environment fallbacks
+are `OPENAI_API_BASE`, which LangChain reads itself, and `OPENAI_BASE_URL`, which
+the OpenAI SDK underneath reads when LangChain has not.
+
+## JavaScript
+
+```javascript
+import { ChatOpenAI } from "@langchain/openai";
+
+const llm = new ChatOpenAI({
+  model: "openai/gpt-4o-mini",
+  apiKey: process.env.UNIBLOCK_API_KEY,
+  configuration: {
+    baseURL: "https://ai.uniblock.dev/v1",
+  },
+});
+
+const response = await llm.invoke("Say hi in five words.");
+console.log(response.content);
+```
+
+**The base URL is nested and the key is not.** `apiKey` is a top-level option;
+`baseURL` lives inside `configuration`, which is passed through to the underlying
+OpenAI client. A top-level `baseURL` on this class is not an option and is
+ignored rather than rejected, which is why a JavaScript configuration that looks
+right can still reach OpenAI. If your calls are being answered by the wrong API,
+this is the line to look at.
+
+## The default model is the thing that bites
+
+**`ChatOpenAI` carries a default model, in both languages, and it is a bare
+OpenAI id.** The field defaults to `gpt-3.5-turbo`, so a `ChatOpenAI()`
+constructed without a `model` argument is not sending nothing: it is sending a
+name with no provider in front of it. Against this API that is refused with `400`
+and the code `model_id_not_pinned`.
+
+This is the most common way a LangChain application fails on its first request
+here, and it is worth stating why it is confusing: the failure names the model
+field, and the developer never wrote a model field. Every construction site needs
+the argument, including the ones in library code and templates you copied.
+
+See the [integrations overview](/integrations/overview) for the id forms, and
+[Models](/concepts/models) for finding the exact strings your key can call.
+
+## What else is specific to this framework
+
+**`/v1` belongs in the value.** LangChain passes your base URL straight to the
+OpenAI SDK, which appends `/chat/completions` and adds no `/v1` of its own. This
+is inherited behaviour rather than a LangChain rule, and it is the same in both
+languages.
+
+**Recent Python versions send `stream_options` even to a custom base URL.**
+`ChatOpenAI` has a `stream_usage` setting that asks for token counts inside the
+stream. Its own documentation records that the behaviour changed in
+`langchain-openai` `0.3.35`: it used to be switched off whenever a custom base
+URL or client was set, and it is now on for those too. Your request body is
+forwarded here as you sent it, so this reaches the provider rather than us, and
+what it does there is the provider's answer to give. If a provider rejects it,
+setting `stream_usage=False` is the lever.
+
+**Embeddings are a separate class and a separate problem.**
+`OpenAIEmbeddings` takes the same `base_url` alias and defaults to an OpenAI
+embedding model, and this API does not serve embeddings. Anything in a LangChain
+application that builds a vector store, a retriever, or a memory from embeddings
+needs an embedding provider that is not this one. Point `ChatOpenAI` here and
+leave that class where it was.
+
+**Nothing calls the catalog.** `ChatOpenAI` does not ask `GET /v1/models` to
+validate a model name, in either language.
+
+**The library warns you off itself for third-party endpoints.** The Python
+module's own documentation says `ChatOpenAI` targets the official OpenAI API
+specification only, and that non-standard response fields added by other
+providers are not extracted or preserved. That warning is about fields we do not
+add: what comes back from here is the OpenAI chat completion shape, and the extra
+things we do carry ride on response headers and an SSE comment line rather than
+inside the body. See
+[OpenAI compatibility](/get-started/openai-compatibility).
+
+## Where the request id is
+
+LangChain's Python package does not re-raise the OpenAI SDK's exceptions
+untouched, but it does keep them reachable. It defines subclasses that inherit
+from both the SDK exception and a LangChain error type, so
+`OpenAIAuthenticationError` is an `openai.AuthenticationError`, and it constructs
+them with the original `response` and `body`. An `except openai.APIError` you
+already have keeps catching, and the request id is where it was:
+
+```python
+import openai
+
+try:
+    llm.invoke("Say hi in five words.")
+except openai.APIStatusError as error:
+    body = error.response.json()["error"]
+    print(error.status_code, body["type"], body["code"], body["request_id"])
+```
+
+On the success path, Python's `ChatOpenAI` takes `include_response_headers=True`,
+which puts the response headers into `response_metadata["headers"]` on the
+message, so `x-uniblock-request-id` and `x-request-id` are readable there. That
+is off by default.
+
+## What we did not verify
+
+**Checked, and where.** That Python's canonical arguments are `base_url` and
+`api_key` and that they are aliases for `openai_api_base` and `openai_api_key`;
+that the environment fallbacks are `OPENAI_API_BASE` and `OPENAI_BASE_URL`; that
+the Python model field defaults to `gpt-3.5-turbo`; that JavaScript takes
+`baseURL` inside `configuration` and `apiKey` at the top level and carries the
+same default model; that `stream_usage` changed as described and in which
+release; that `OpenAIEmbeddings` takes the same alias and defaults to an OpenAI
+embedding model; that the wrapped exception classes inherit from the SDK's and
+preserve `response` and `body`; that neither class calls the catalog. Read from
+the `langchain-ai/langchain` repository's `libs/partners/openai` sources and the
+`langchain-ai/langchainjs` repository's `libs/providers/langchain-openai`
+sources, on their default branches.
+
+**Not checked.** That a call configured this way succeeds against our hostname.
+Nothing on this page has been executed, because the base URL this site prints is
+not yet a host that answers.
+
+**Not checked either.** Which LangChain flows reach `OpenAIEmbeddings` by
+default. That the class exists, takes the same setting, and points at an
+embedding model was read from its source; which vector store, memory or retriever
+defaults pull it in without being asked was not traced, so the paragraph above
+tells you the class is the problem rather than naming the flows that reach it.
+
+**And not checked.** What a provider does with the `stream_options` that recent
+Python versions send. We forward the body as sent, so this is a question about
+the provider rather than about us, and we have not run it to find out.

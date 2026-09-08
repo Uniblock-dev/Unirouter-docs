@@ -1,0 +1,119 @@
+---
+title: "Framework integrations"
+description: "Why every OpenAI-compatible framework works here, the one change that is not optional, and which page covers your framework."
+status: partial
+gates: ["2.3", "2.11"]
+---
+
+import FeatureStatus from '/snippets/feature-status.mdx';
+import BaseUrl from '/snippets/base-url.mdx';
+
+<FeatureStatus
+  feature="the official-SDK compatibility proof"
+  detail="Every page in this section changes a base URL and a key on a library we do not maintain, and nothing else. We have not published a proof run of any of them against the production hostname, so read these as instructions rather than as certifications. Each page ends with what was and was not checked."
+/>
+
+Every framework in this section works here for the same reason, and it is worth
+saying once rather than seven times: each of them already has an
+OpenAI-compatible provider, because each of them already talks to OpenAI. Point
+that provider at our base URL, give it a Uniblock key, and the framework does not
+need to know anything else has changed.
+
+<BaseUrl />
+
+## The one change that is not optional
+
+**Every model id names its provider.** `gpt-4o-mini` is not a model id here;
+`openai/gpt-4o-mini` is. A bare id is refused with `400` and the code
+`model_id_not_pinned`. The refusal names the forms it accepts and points you at
+`GET /v1/models` for the exact strings your key can call. It arrives as
+`invalid_request_error` with `param` set to `model`, in the ordinary error
+envelope, so your existing error handling parses it.
+
+This is the change that breaks an otherwise untouched application, and it breaks
+loudly rather than quietly. It matters more in a framework than in a bare SDK,
+for a reason worth knowing before you debug it: **some frameworks carry a default
+model of their own**, so a framework you never told which model to use is still
+sending one, and the name it sends is a bare OpenAI id. The page for your
+framework says whether yours does. [Models](/concepts/models) covers the id
+forms and [Migrate from OpenAI](/resources/migrate-from-openai) covers the rest
+of the move.
+
+## The surface a framework can reach
+
+The documented API is `POST /v1/chat/completions` plus the catalog reads,
+`GET /v1/models` and `GET /v1/models/{id}`. That is what these pages configure
+and it is the whole of what they claim.
+
+Two consequences reach frameworks specifically, and each page says which of them
+applies to it:
+
+- **A framework whose default path is not chat completions has to be pinned to
+  chat completions.** Two of the libraries here now reach for OpenAI's newer
+  Responses API when you do not say otherwise. Chat completions is the surface
+  this site documents, so these pages pin it explicitly rather than leaving the
+  choice to a library default that moved once and may move again.
+- **Embeddings have no home here.** A framework that reaches for embeddings to
+  build an index, a retriever, or a memory will not get them from this API, and
+  the failure arrives when that code path first runs rather than at
+  configuration time. Where a framework does this by default, its page says so
+  and says what to set instead.
+
+See [OpenAI compatibility](/get-started/openai-compatibility) for the endpoint
+table and the refusals.
+
+## What every one of these pages assumes
+
+- **The base URL carries `/v1` and nothing after it.** Every library here builds
+  its request path by appending `/chat/completions` to what you configure, so
+  `https://ai.uniblock.dev/v1` is the value and `https://ai.uniblock.dev` is not.
+  Getting this wrong produces a `404` rather than a helpful message.
+- **The key comes from the environment.** Every example reads it from a variable
+  rather than holding it in source. A Uniblock key spends real credit.
+- **Nothing Uniblock-specific goes in the request.** Only `Authorization` and
+  `Content-Type` are read, and `x-uniblock-*` is stripped inbound, so a
+  framework's custom-header option cannot change how a request is served.
+
+## The pages
+
+<CardGroup cols={2}>
+  <Card title="OpenAI SDK for Python" icon="python" href="/integrations/openai-sdk-python">
+    The reference case. Two constructor arguments.
+  </Card>
+  <Card title="OpenAI SDK for Node" icon="node-js" href="/integrations/openai-sdk-node">
+    The same two, plus the one browser setting to leave alone.
+  </Card>
+  <Card title="Vercel AI SDK" icon="triangle" href="/integrations/vercel-ai-sdk">
+    Which of its two OpenAI providers to use, and why the default call shape is the wrong one here.
+  </Card>
+  <Card title="LangChain" icon="link" href="/integrations/langchain">
+    Python and JavaScript. The default model is the thing that bites.
+  </Card>
+  <Card title="LlamaIndex" icon="layer-group" href="/integrations/llamaindex">
+    Why the plain OpenAI class rejects our ids before a request is sent.
+  </Card>
+  <Card title="Pydantic AI" icon="shield-check" href="/integrations/pydantic-ai">
+    The base URL goes on the provider, not the model.
+  </Card>
+</CardGroup>
+
+## What we did not verify
+
+**Checked, and how.** That each framework exposes a base-URL setting, what that
+setting is called, what type it takes, and which object it belongs to. Each page
+names the library documentation or source file the setting was read from, and the
+gotcha on each page was read the same way. These are facts about public
+libraries and you can check them where we did.
+
+**Not checked.** That a call configured this way succeeds against our hostname.
+No example in this section has been executed end to end, against production or
+anywhere else, and DOCS_PLAN's runnability rule is the reason each page says so
+rather than implying otherwise by staying silent. What is missing is not effort:
+the base URL this site prints is not yet a host that answers, so there is
+nothing these examples could have been run against. When that lands, these pages
+get a transcript and this callout changes.
+
+**Also not checked.** Library version behaviour over time. Every fact here was
+read from a current version of a library we do not control, and any of them can
+change it. Where a library has already changed one of these settings once, the
+page says which version the fact belongs to.

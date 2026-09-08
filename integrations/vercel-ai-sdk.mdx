@@ -1,0 +1,169 @@
+---
+title: "Vercel AI SDK"
+description: "Which of the AI SDK's two OpenAI providers to use with Uniblock, and why its default call shape is the wrong one for this API."
+status: partial
+gates: ["2.3", "2.11"]
+---
+
+import FeatureStatus from '/snippets/feature-status.mdx';
+
+<FeatureStatus
+  feature="the official-SDK compatibility proof"
+  detail="This page configures a provider from a library we do not maintain and changes nothing else. We have not published a proof run against the production hostname, so read this as instructions rather than as a certification. The version-sensitive part of this page is called out below."
+/>
+
+The AI SDK reaches an OpenAI-compatible API through a provider you construct
+with a base URL. It ships two providers that can do that, and which one you pick
+matters more here than it does with most endpoints, so this page starts there
+rather than with a code block.
+
+## Use the OpenAI-compatible provider
+
+```javascript
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { generateText } from "ai";
+
+const uniblock = createOpenAICompatible({
+  name: "uniblock",
+  baseURL: "https://ai.uniblock.dev/v1",
+  apiKey: process.env.UNIBLOCK_API_KEY,
+});
+
+const { text } = await generateText({
+  model: uniblock("openai/gpt-4o-mini"),
+  prompt: "Say hi in five words.",
+});
+```
+
+`@ai-sdk/openai-compatible` is the package the AI SDK's own documentation points
+at for providers that implement the OpenAI API, and it is the one to use here.
+It speaks chat completions, it takes `baseURL` as a plain option, and it has no
+opinions about OpenAI features this API does not carry. `name` is required by
+the package and is a label for your own traces rather than anything we read.
+
+**The `/v1` belongs in the value.** Neither AI SDK provider appends it. The
+package's own example writes the base URL with `/v1` on the end, and that is the
+shape to copy.
+
+## Why not the OpenAI provider
+
+`@ai-sdk/openai` also takes a `baseURL`, so it looks like the obvious choice, and
+it has one behaviour that makes it the harder one:
+
+**Calling the provider directly now reaches for OpenAI's Responses API.** In
+current versions, `openai("some-model")` builds a model that calls
+`POST /v1/responses` rather than `POST /v1/chat/completions`. Chat completions is
+the surface this site documents, so a provider that quietly picks a different one
+is a provider configured against a contract we do not publish.
+
+If you have a reason to stay on `@ai-sdk/openai`, name the call shape rather than
+letting the default choose:
+
+```javascript
+import { createOpenAI } from "@ai-sdk/openai";
+
+const openai = createOpenAI({
+  baseURL: "https://ai.uniblock.dev/v1",
+  apiKey: process.env.UNIBLOCK_API_KEY,
+});
+
+const model = openai.chat("openai/gpt-4o-mini");
+```
+
+`openai.chat(...)` is the chat-completions path and the AI SDK's own provider
+documentation says to use it when a custom base URL serves only that API. The
+bare `openai(...)` form is the one to avoid here.
+
+**This is the version-sensitive fact on this page.** The default changed: older
+major versions of the AI SDK called chat completions from the bare form and
+carried a `compatibility` option instead, which current versions do not document.
+That is a good reason to prefer `createOpenAICompatible`, whose behaviour does not
+depend on which default the OpenAI provider currently holds.
+
+## What is specific to this framework
+
+**A model is always named explicitly.** `generateText` and `streamText` take
+`model` as a required argument, so the AI SDK carries no default model of its own
+and cannot send a bare id you did not write. The pinned-id rule still applies to
+the id you pass.
+
+**`embed` and `embedMany` reach a path this API does not serve.** The OpenAI
+embedding model in these packages posts to `/embeddings` under whatever base URL
+you configured. Nothing in `generateText` or `streamText` touches it, so this
+costs you nothing until you add a retrieval or memory step, and then it fails at
+that step rather than at configuration. Keep embeddings on a provider that serves
+them and leave the language model here.
+
+**Nothing calls the catalog.** Neither provider asks `GET /v1/models` to validate
+a model name or discover one, so an id that is wrong is wrong at request time,
+where the refusal explains itself.
+
+**The streamed usage line is skipped for you.** The AI SDK parses server-sent
+events with `eventsource-parser`, which follows the specification and ignores a
+line beginning with a colon, so our usage comment line never reaches your stream.
+[Streaming](/concepts/streaming) documents what it carries.
+
+## Where the request id is
+
+Not on a named property. The AI SDK does not model a request id, so you read it
+off the response headers it exposes.
+
+On a failure, the error carries them:
+
+```javascript
+import { APICallError } from "ai";
+
+try {
+  await generateText({
+    model: uniblock("openai/gpt-4o-mini"),
+    prompt: "Say hi in five words.",
+  });
+} catch (error) {
+  if (APICallError.isInstance(error)) {
+    console.log(
+      error.statusCode,
+      error.responseHeaders?.["x-request-id"],
+      error.responseBody,
+    );
+  }
+}
+```
+
+`APICallError` carries `statusCode`, `responseHeaders`, `responseBody` and
+`isRetryable`. Both `statusCode` and `responseHeaders` are optional on the type,
+so a connection failure that never got a response has neither, and the `?.` above
+is not decoration. Our error envelope is in `responseBody` as sent, so parse
+`type` and `code` out of it rather than matching on the message.
+
+`x-uniblock-request-id` carries the same value if you would rather read ours.
+Quote either one when you ask us about a request.
+
+## What we did not verify
+
+**Checked, and where.** That `createOpenAICompatible` takes `baseURL` and
+`apiKey` and that `name` is required; that the AI SDK documentation names
+`@ai-sdk/openai-compatible` as the package for OpenAI-compatible providers; that
+the bare `@ai-sdk/openai` call builds a Responses API model and that
+`openai.chat(...)` is the documented way to pin chat completions; that the
+embedding model posts to `/embeddings`; that `model` is required on
+`generateText`; that `APICallError` exposes `statusCode`, `responseHeaders` and
+`responseBody`, both of the first two optional; that the SSE parsing dependency
+is `eventsource-parser`. Read from the AI SDK provider documentation at
+`ai-sdk.dev` and from the `vercel/ai` repository's own provider and embedding
+sources on its main branch.
+
+**Not checked.** That a call configured this way succeeds against our hostname.
+Nothing on this page has been executed, because the base URL this site prints is
+not yet a host that answers.
+
+**Not checked either.** What a successful `generateText` exposes of the response
+headers. The error path above was read off the error type; whether a successful
+result reaches the same headers was not confirmed from the library's own
+documentation, so this page does not tell you how to log a request id on a call
+that worked.
+
+**And not checked.** What `POST /v1/responses` does against this API. This site
+documents chat completions and the catalog reads, and the advice above is to pin
+chat completions for that reason rather than because we have observed what the
+other path returns. See
+[OpenAI compatibility](/get-started/openai-compatibility).
