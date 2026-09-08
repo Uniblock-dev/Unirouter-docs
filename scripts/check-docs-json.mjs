@@ -104,7 +104,18 @@ for (const page of pages) {
 report.note(`${pages.length} page(s) in navigation, ${new Set(pages).size} unique`);
 
 // Reserved prefixes, so growth never forces a move (DOCS_PLAN.md section 15).
-const RESERVED = ['index', 'get-started/', 'concepts/', 'guides/', 'resources/', 'api-reference/'];
+const RESERVED = [
+  'index',
+  'get-started/',
+  'concepts/',
+  'guides/',
+  'resources/',
+  'api-reference/',
+  // Added with the framework integration pages. One page per framework, so the
+  // prefix is what keeps a seventh from landing in resources/ and a move later
+  // from breaking a published path.
+  'integrations/',
+];
 for (const page of pages) {
   if (!RESERVED.some((prefix) => page === prefix || page.startsWith(prefix))) {
     report.fail(

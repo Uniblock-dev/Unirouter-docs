@@ -62,6 +62,18 @@
             ]
           },
           {
+            "group": "Integrations",
+            "pages": [
+              "integrations/overview",
+              "integrations/openai-sdk-python",
+              "integrations/openai-sdk-node",
+              "integrations/vercel-ai-sdk",
+              "integrations/langchain",
+              "integrations/llamaindex",
+              "integrations/pydantic-ai"
+            ]
+          },
+          {
             "group": "Resources",
             "pages": [
               "resources/migrate-from-openai",
