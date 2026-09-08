@@ -1,0 +1,107 @@
+---
+title: "OpenCode"
+description: "Add Uniblock as a custom provider in OpenCode: the config file, the provider package that decides the endpoint, and the models you list yourself."
+status: partial
+gates: ["2.3", "2.11"]
+---
+
+import { FeatureStatus } from '/snippets/feature-status.mdx';
+
+[OpenCode](https://opencode.ai) is a terminal coding agent configured by one JSON
+file. Adding this API is a provider block, and the one field that decides whether
+it works at all is the package name. Read [coding
+harnesses](/integrations/coding-harnesses) first.
+
+<FeatureStatus
+  missing="a proof run of OpenCode against the production hostname"
+  instead="The configuration below was read from opencode.ai's own config and providers documentation on 2026-09-08. No OpenCode session has been run against this API."
+/>
+
+## The configuration surface
+
+The file is `opencode.json`, either at your repository root or globally at
+`~/.config/opencode/opencode.json`, and the two are merged. Add a provider:
+
+```json opencode.json
+{
+  "provider": {
+    "uniblock": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Uniblock",
+      "options": {
+        "baseURL": "https://ai.uniblock.dev/v1",
+        "apiKey": "{env:UNIBLOCK_API_KEY}"
+      },
+      "models": {
+        "openai/gpt-4o-mini": {
+          "name": "GPT-4o mini via Uniblock"
+        }
+      }
+    }
+  }
+}
+```
+
+**OpenCode does not append `/v1`.** Its documentation says the `baseURL` should
+end at the version prefix the provider uses, so include it.
+
+## Pick the right package
+
+`npm` names the adapter, and the choice is not cosmetic.
+`@ai-sdk/openai-compatible` speaks chat completions, which is what this API
+serves. The other option you will see in OpenCode's documentation,
+`@ai-sdk/openai`, is the one to reach for when a provider uses the Responses
+endpoint, and that endpoint is not part of this API's published surface. Pick it
+here and every request answers `404` with `unknown_url` rather than anything that
+reads like a wrong package.
+
+## List the models yourself
+
+OpenCode does not ask a custom provider what it can serve. It has no discovery
+step for one, so the models it offers are the keys of your `models` object, and
+those keys are pinned ids. Adding a model means editing the file again.
+
+Each model may carry a `limit` object with `context` and `output`. Fill both in
+from [`GET /v1/models`](/concepts/models), which publishes the context window and
+the maximum output for every model.
+
+`limit.output` is worth setting rather than leaving out. A request that names no
+output ceiling holds the model's whole published maximum against your balance,
+which is what makes the spend rate cap bind during an agent session. We did not
+verify what OpenCode sends when the limit is absent, and the project carries
+reports of a default that exceeds some models' real maximum, so set it. See
+[rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+
+## The key, and the file that gets committed
+
+OpenCode's own documentation says the project-level config is safe to check into
+version control, which it is right up until somebody writes a key into it. Use
+the interpolation instead: `{env:VARIABLE_NAME}` reads the value from your
+environment, as in the block above, and resolves to an empty string when the
+variable is unset. There is a `{file:path}` form too if you would rather read it
+from a file outside the repository.
+
+```bash
+export UNIBLOCK_API_KEY=ub_live_YOUR_KEY_HERE
+```
+
+A provider block also accepts `options.headers` for extra request headers. You
+need none for this API, and `x-uniblock-*` is a reserved namespace that does not
+travel inbound, so a header of that shape has no effect. See [OpenAI
+compatibility](/get-started/openai-compatibility).
+
+## What we did not verify
+
+- That an OpenCode session against this API succeeds. Nothing was run.
+- Whether OpenCode has any feature that calls an embeddings endpoint. Its own
+  documentation names none, and the codebase-indexing add-ons we found are
+  third-party rather than part of the agent, but we did not audit the agent's
+  own tools to confirm it. If a feature fails against this API, [no embeddings
+  endpoint](/integrations/coding-harnesses) is the first thing to check.
+- What output ceiling OpenCode sends for a custom model with no `limit.output`.
+- Whether the model key in the `models` object is sent as the `model` field
+  byte for byte. It is what the documentation implies and what the shape
+  requires, and a mismatch would show as a `400` with `model_id_not_pinned` or a
+  `404` with `model_not_found`, neither of which costs anything.
+- Anything about prompt caching. Its documentation describes no caching setting
+  for a custom provider.

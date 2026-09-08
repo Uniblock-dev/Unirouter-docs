@@ -1,0 +1,272 @@
+---
+title: "Coding harnesses"
+description: "What is true of every coding agent you point at this API: pinned model ids, no embeddings, the spend rate cap, and one billed request per turn."
+status: partial
+gates: ["2.3", "2.10", "2.11"]
+---
+
+import { FeatureStatus } from '/snippets/feature-status.mdx';
+import BaseUrl from '/snippets/base-url.mdx';
+
+A coding harness is an agent that edits your code: an editor extension, or a CLI
+that runs in your repository. Most of them take a custom OpenAI-compatible base
+URL, and pointing one here is two settings and one edit you would not guess.
+
+This page carries the things that are true of every one of them. The per-harness
+pages carry only the settings and the surprises specific to that harness, which
+is why they are short.
+
+<FeatureStatus
+  missing="a proof run of any harness against the production hostname"
+  instead="The per-harness pages document each harness's configuration surface, checked against that harness's own documentation or source on the date each page names. What none of them reports is a session we ran end to end, because the hostname this site prints is not settled yet. Read these pages as instructions rather than as certifications."
+/>
+
+<BaseUrl />
+
+Whether the value you paste ends in `/v1` differs by harness, and getting it
+wrong produces a `404` rather than an error about configuration. Each harness
+page says which form that harness wants and where we checked.
+
+## Pin the model id before anything else
+
+Every harness ships with a default model name, and every one of those defaults
+is a bare OpenAI-style name. This API does not accept one. A `model` field
+carries `provider/model`, where the part before the first slash names the
+provider that will serve the request, or a `profile/` slug naming one of your
+workspace's routing profiles.
+
+So `gpt-4o` is refused, before anything is looked up, with `400` and the code
+`model_id_not_pinned`:
+
+```json 400
+{
+  "error": {
+    "message": "The model \"gpt-4o\" does not name its provider. A model field carries either \"provider/model\", where the part before the first slash is a provider this platform serves and the rest is that provider's own id for the model, for example \"anthropic/claude-opus-4-5\", or \"profile/{identifier}\", one of your workspace's routing profiles, for example \"profile/fast\". GET /v1/models lists the exact strings this key can call.",
+    "type": "invalid_request_error",
+    "param": "model",
+    "code": "model_id_not_pinned",
+    "request_id": "00000000-0000-4000-8000-000000000000"
+  }
+}
+```
+
+This is the first thing that will fail, and it fails on the first request. The
+fix is one edit per harness, and the edit is in a different place in each of
+them.
+
+Two things make it more than one edit. A harness that names several models names
+them separately: a main model, a smaller model for commit messages or titles, a
+model for applying edits. Each of those is its own setting and each needs its own
+pinned id. And a harness that offers a fixed dropdown of vendor model names
+rather than a free-text field cannot be pointed at an id of this shape at all;
+the per-harness pages say which kind each one is.
+
+## There are no embeddings here
+
+<FeatureStatus
+  missing="POST /v1/embeddings"
+  instead="It is answered by the same catch-all as any other path we do not serve, so a harness feature that calls it receives a 404 rather than an empty result."
+/>
+
+```json 404
+{
+  "error": {
+    "message": "Unknown request URL: POST /v1/embeddings.",
+    "type": "invalid_request_error",
+    "param": null,
+    "code": "unknown_url",
+    "request_id": "00000000-0000-4000-8000-000000000000"
+  }
+}
+```
+
+This is the most likely bad first experience, and it is worth knowing which
+features it is. Any harness feature that builds an index of your repository to
+search it by meaning rather than by text calls an embeddings endpoint. In
+practice that is:
+
+- Codebase indexing, and whatever the harness calls the question that searches
+  it. A feature you invoke as an at-mention of your codebase is usually this.
+- Retrieval over documentation the harness has ingested.
+- A long-term memory that recalls earlier sessions by similarity.
+- Reranking, on the harnesses that have it, which is usually not an
+  OpenAI-shaped endpoint at all and so will not work here either.
+
+What does work is every harness whose context comes from reading files, grepping
+them, walking the syntax tree, or asking a language server. That is most of what
+a modern coding agent does. Of the harnesses documented here, one is confirmed to
+build its repository map that way and to call no embeddings endpoint at all, one
+is confirmed to have an embeddings role you must point elsewhere, and for the
+other three we found no embeddings feature in their own documentation without
+auditing them for one. Each page says which of the three it is.
+
+If your harness configures its embedding model separately from its chat model,
+which several do, leave that setting pointed wherever it already points and
+change only the chat model. Pointing both here breaks the indexing half.
+
+## A harness spends faster than a chat client
+
+Credit is prepaid, and the limit a coding harness reaches first is the account
+spend rate cap rather than the balance. Understanding why takes one fact: **the
+cap counts money reserved, not money spent.**
+
+When a request is admitted we hold the most it could possibly cost. That figure
+comes from the request's own `max_tokens` where it names one, and from the
+model's published maximum output length where it does not. The window counts what
+was reserved and when, and nothing comes back out of it: a request that finished
+cheaply a moment ago goes on counting for its full 60 seconds.
+
+A coding harness is the traffic shape that hits this hardest. It fires several
+requests at once, on a model with a large published maximum output, often without
+naming `max_tokens` at all. Each of those holds that whole published maximum, so
+the cap can refuse the harness while your real spending is a small fraction of
+it. The refusal is `429` with the code `spend_rate_exceeded`, and it clears
+itself 60 seconds after the earliest reservation it counted.
+
+**The lever is `max_tokens`.** A harness that names a realistic output ceiling
+gets several times more requests a minute out of the same cap, and is charged
+exactly what it was before, because the charge has always been for what was
+actually produced. Where a harness exposes a maximum-output setting, set it.
+[Rate limits and spend controls](/concepts/rate-limits-and-spend-controls)
+covers the cap, its default, and which limits are yours to raise.
+
+### Running out part way through a session
+
+Two different things happen, and a harness will tell you about neither in a
+useful way.
+
+A request that starts when the workspace cannot cover its hold is refused with
+`402` and the code `insufficient_credit`. Nothing is charged.
+
+A stream already running when the credit underneath it runs out is cut. The
+terminating line carries `insufficient_quota` and the code `balance_exhausted`,
+and you are charged for what was produced before the cut and nothing more. There
+is no `data: [DONE]` after it. [Streaming](/concepts/streaming) documents that
+line and the two other codes that can end a stream.
+
+**An agent loop that retries on a `402` will not recover.** The condition is a
+balance, so nothing about waiting or backing off changes the answer, and a loop
+that treats every non-`200` as transient will spend its retry budget discovering
+that. If you can configure which statuses your harness retries, take `402` off
+the list. The way out is buying credit.
+
+## Every turn is its own billed request
+
+A coding harness is a tool-calling loop. It sends your request with a list of
+tools, the model replies asking for a tool call, the harness runs the tool
+locally and sends the whole conversation back with the result appended. That
+repeats until the model stops asking.
+
+Your request body is forwarded as you sent it, so the tool fields travel and the
+model's `tool_calls` come back unchanged. **Nothing is executed on our side.** We
+carry a request and a reply; whatever the model asked for is run by the harness
+on your machine, under whatever approvals you have configured there.
+
+The consequence to know before you see it: **each turn of that loop is a separate
+request, separately billed, and lands in Activity as its own row.** One
+instruction you gave a harness can be a dozen rows, each with its own model,
+tokens and charge, and each resending a conversation slightly longer than the
+last. That is what an agent session looks like in
+[Activity](/guides/view-activity), and it is not a metering fault.
+
+## Prompt caching is worth having here specifically
+
+A coding harness resends a large, stable prefix on every turn: the same system
+prompt, the same tool definitions, the same files. That is the exact shape
+caching pays off on, and it is the difference between a long agent session
+costing what it looks like it should and costing considerably more.
+
+Provider caching passes through, and reads from a cache and writes to one are
+priced as their own kinds of token rather than as plain input.
+[Models](/concepts/models) covers that rate vocabulary and where a charge's
+prices come from. There is nothing of ours to switch on, and whether your harness
+sends what a provider needs to cache is a question about the harness.
+
+## Keys, and where they must not go
+
+A harness config file frequently lives in the repository, and several of the
+files named on these pages are ones people commit. Read the key from the
+environment wherever the harness supports it, and check the specific file before
+you commit it: at least two of the harnesses documented here have a project-local
+config that is designed to be checked in.
+
+**Do not assume `OPENAI_API_KEY` and `OPENAI_BASE_URL` work.** Those are the
+names the official OpenAI SDKs read, and a harness is not an SDK. Not one of the
+five documented here takes its base URL from `OPENAI_BASE_URL`, and how each
+takes its key differs: two of the editor extensions read no shell environment at
+all and hold the key in their own settings, one CLI reads a similarly named but
+different variable, and the other two read a variable whose name you choose or
+interpolate one into their config file. Each page gives the form that harness
+actually uses, and none of these pages guesses.
+
+A key is shown once, we keep only a hash, and a workspace holds up to five at a
+time. [Authentication](/get-started/authentication) covers minting, revoking and
+replacing them. For a coding harness the practical advice that follows from
+shown-once is to mint a key for the harness rather than reusing one, so revoking
+it costs you nothing else.
+
+## Which models to point it at
+
+We do not recommend models, and the catalog moves. Ask for it:
+
+```bash
+curl https://ai.uniblock.dev/v1/models \
+  -H "Authorization: Bearer ub_live_XXXXXXXXXXXX"
+```
+
+Every entry carries a `capabilities` block, and for a coding harness the one that
+decides everything is `tools`. **A model whose `tools` does not read `yes` will
+behave badly in a harness**, and badly rather than cleanly: the harness sends its
+tool definitions, the model answers in prose instead of a tool call, and the
+agent loop either stalls or starts inventing file edits in the chat. That is a
+worse failure than a refusal because it looks like the model being unhelpful.
+
+Check `streaming` too, since most harnesses stream by default, and `vision` if
+you paste screenshots at it. [Models](/concepts/models) covers the catalog, the
+capability vocabulary, and why a model appears in it at all.
+
+## What we did not verify
+
+Keep these two halves apart, because they are different kinds of claim.
+
+**What we checked, and each per-harness page names its source and date.** That a
+harness has a custom base URL setting, what that setting is called, what it
+takes, whether the harness appends `/v1` itself, whether its model field accepts
+an arbitrary string, and which of its features call which endpoints. These are
+facts about a public tool and are checkable against that tool's own documentation
+or its source.
+
+**What we did not check, on any of these pages.** That a session against this API
+succeeds. No harness on these pages has been run end to end here, because the
+hostname every page prints is not the settled customer hostname yet. Nothing here
+is a report of a working session, and where a page tells you what a setting does
+it is describing the harness rather than certifying the result.
+
+Harness configuration also churns faster than documentation does. These pages
+prefer the mechanism over the menu path for that reason, and a setting that has
+moved since the date on the page is likelier than a setting that never existed.
+
+## The harnesses
+
+<CardGroup cols={2}>
+  <Card title="Cline" icon="robot" href="/integrations/cline">
+    VS Code. A Base URL field, a model list it fetches from us, and model
+    metadata you have to fill in yourself.
+  </Card>
+  <Card title="Continue" icon="code" href="/integrations/continue">
+    VS Code and JetBrains. Roles, one of which needs embeddings, and a model
+    name that can change which endpoint it calls.
+  </Card>
+  <Card title="Aider" icon="terminal" href="/integrations/aider">
+    A CLI. Three separately configured models, a repository map that needs no
+    embeddings, and a provider prefix that collides with our ids.
+  </Card>
+  <Card title="Zed" icon="bolt" href="/integrations/zed">
+    An editor. Models declared in settings, a capability block, and a key it
+    would rather you set in the environment.
+  </Card>
+  <Card title="OpenCode" icon="terminal" href="/integrations/opencode">
+    A CLI. One config file, a provider package you have to pick correctly, and
+    models you enumerate yourself.
+  </Card>
+</CardGroup>

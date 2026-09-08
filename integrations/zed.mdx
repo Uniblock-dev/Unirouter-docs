@@ -1,0 +1,121 @@
+---
+title: "Zed"
+description: "Configure Zed's openai_compatible provider against Uniblock: api_url, the models you declare yourself, and the capability that must stay on."
+status: partial
+gates: ["2.3", "2.11"]
+---
+
+import { FeatureStatus } from '/snippets/feature-status.mdx';
+
+[Zed](https://zed.dev) drives its Agent Panel from providers declared in
+`settings.json`. It discovers nothing, which makes it the most explicit of these
+harnesses to configure and the one where a wrong figure stays wrong quietly.
+Read [coding harnesses](/integrations/coding-harnesses) first.
+
+<FeatureStatus
+  missing="a proof run of Zed against the production hostname"
+  instead="The settings below were read from Zed's own API-access and agent-panel documentation on 2026-09-08. No Zed session has been run against this API."
+/>
+
+## The configuration surface
+
+The provider key is `openai_compatible`, and each provider under it is named by
+an id you choose. The base URL key is `api_url`:
+
+```json settings.json
+{
+  "language_models": {
+    "openai_compatible": {
+      "uniblock": {
+        "api_url": "https://ai.uniblock.dev/v1",
+        "available_models": [
+          {
+            "name": "openai/gpt-4o-mini",
+            "display_name": "GPT-4o mini via Uniblock",
+            "max_tokens": 128000
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+**Zed does not append `/v1`.** Its documentation's own example value carries the
+version segment, so include it.
+
+## Declare the models yourself
+
+Zed does not ask this API what it can call. There is no discovery step: the
+models the Agent Panel offers are exactly the entries in `available_models`, and
+`name` is the string sent as the `model` field, so a pinned id goes straight in.
+`display_name` is what you see in the picker, and `max_tokens` is the model's
+context window.
+
+Take both figures from [`GET /v1/models`](/concepts/models), which publishes the
+context window and the maximum output for every model. An entry also accepts
+`max_output_tokens`, and a wrong `max_tokens` is not corrected by anything on our
+side: it changes how much conversation Zed sends before it trims, which shows up
+as a request the provider refuses for length rather than as a settings error.
+
+Adding a model means editing this list again, which is the trade for a harness
+that never surprises you with a model you did not choose.
+
+## Put the key in the environment
+
+Zed's documentation asks you directly not to put API keys in `settings.json`,
+which is the right instruction for a file people share. Two places are
+supported: the provider settings panel in the application, which stores the key
+in your system keychain, and an environment variable whose name is derived from
+the provider id you chose, upper-cased with `_API_KEY` appended. For the id in
+the example above that is:
+
+```bash
+export UNIBLOCK_API_KEY=ub_live_YOUR_KEY_HERE
+```
+
+The environment variable takes precedence over the keychain entry when it is set
+and not empty.
+
+## Leave `chat_completions` alone
+
+Each declared model may carry a `capabilities` block, and one of its keys decides
+which endpoint Zed calls. `chat_completions` defaults to `true`, which is what
+this API serves. Setting it to `false` tells Zed to use the Responses endpoint
+instead, which is not part of this API's published surface, so every request from
+that model would answer `404` with `unknown_url`.
+
+The same block is where tool calling is settled, and it defaults in your favour:
+`tools` is `true` unless you turn it off. So a model whose catalog entry says
+`tools` is `yes` needs nothing added here, which is not true of every harness.
+`images` and `parallel_tool_calls` default to `false`, so turn those on
+deliberately for a model whose catalog entry supports them.
+
+## The maximum-output setting is worth finding
+
+A coding harness that sends no `max_tokens` holds the model's whole published
+maximum output against your balance on every request, which is what makes the
+spend rate cap bind early. Zed's model entry carries both a `max_output_tokens`
+key and a `max_tokens_parameter` capability, and we did not verify which of them
+results in a `max_tokens` on the wire. If the cap starts refusing requests during
+an agent session, that pair is the first place to look. See [rate limits and
+spend controls](/concepts/rate-limits-and-spend-controls).
+
+## What we did not verify
+
+- That a Zed session against this API succeeds. Nothing was run.
+- Which of `max_output_tokens` and `max_tokens_parameter` puts a `max_tokens` on
+  the request, or what Zed sends when neither is set.
+- Whether Zed has any feature that calls an embeddings endpoint. Its current
+  documentation names no embeddings model, no semantic index and no such setting,
+  and the Agent Panel's own description of searching a codebase names no
+  embedding step. An older experimental semantic search did use embeddings. We
+  found no statement that it was removed, so we report the absence rather than
+  asserting it.
+- Whether a project-local `.zed/settings.json` can carry `language_models` at
+  all. The documentation neither permits nor forbids it, so do not rely on it and
+  do not put a key there while it is untested.
+- Whether the `openai_compatible` provider key has always been called that. The
+  documentation for it has moved recently and we could not establish what, if
+  anything, it was renamed from, so an older settings file may use a different
+  key.

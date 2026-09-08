@@ -104,7 +104,20 @@ for (const page of pages) {
 report.note(`${pages.length} page(s) in navigation, ${new Set(pages).size} unique`);
 
 // Reserved prefixes, so growth never forces a move (DOCS_PLAN.md section 15).
-const RESERVED = ['index', 'get-started/', 'concepts/', 'guides/', 'resources/', 'api-reference/'];
+//
+// `integrations/` was added when the coding-harness pages were written. Section
+// 15 reserves a prefix so that growth inside it never forces a redirect, and a
+// prefix added here is a deliberate decision that these paths are permanent,
+// which is exactly the human decision the failure below exists to force.
+const RESERVED = [
+  'index',
+  'get-started/',
+  'concepts/',
+  'guides/',
+  'integrations/',
+  'resources/',
+  'api-reference/',
+];
 for (const page of pages) {
   if (!RESERVED.some((prefix) => page === prefix || page.startsWith(prefix))) {
     report.fail(

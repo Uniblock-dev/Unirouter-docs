@@ -55,6 +55,17 @@
             ]
           },
           {
+            "group": "Integrations",
+            "pages": [
+              "integrations/coding-harnesses",
+              "integrations/cline",
+              "integrations/continue",
+              "integrations/aider",
+              "integrations/zed",
+              "integrations/opencode"
+            ]
+          },
+          {
             "group": "Resources",
             "pages": [
               "resources/security",
