@@ -1,0 +1,185 @@
+---
+title: "FAQ"
+description: "Short answers to the questions this API gets asked most, each pointing at the page that answers it properly."
+status: partial
+gates: ["2.10", "2.11", "13.9"]
+---
+
+Every answer here is short on purpose and links to the page that carries the
+detail. Where the honest answer is "not yet" or "we do not publish that", it says
+so rather than being left out.
+
+## Getting started
+
+<AccordionGroup>
+
+<Accordion title="How much of my code has to change?">
+Two settings: the base URL and the key. Then one edit that is not optional, which
+is putting a provider in front of every model id. See
+[Migrate from OpenAI](/resources/migrate-from-openai).
+</Accordion>
+
+<Accordion title="Why was my model id refused?">
+A bare id such as `gpt-4o-mini` is not a Uniblock model id. Ids name the provider
+that serves them, so it is `openai/gpt-4o-mini`. A bare id is refused with `400`
+and the code `model_id_not_pinned` rather than being routed to whichever provider
+we happen to carry it under. See [Models](/concepts/models).
+</Accordion>
+
+<Accordion title="Which models can I call?">
+Ask `GET /v1/models`, or browse the Models screen in the dashboard. This site
+publishes no model list, because any list written here would be wrong the first
+time the catalog changed.
+</Accordion>
+
+<Accordion title="Which endpoints exist?">
+`POST /v1/chat/completions` and `GET /v1/models`, plus `GET /v1/models/{id}`.
+That is the whole public surface. Any other path under `/v1` answers `404` with
+the code `unknown_url`. See
+[OpenAI compatibility](/get-started/openai-compatibility).
+</Accordion>
+
+<Accordion title="Do the official OpenAI SDKs work?">
+The instructions on this site set only the base URL and the key, which is the
+whole intended change. We have not published a proof run of an unmodified SDK
+against the production hostname, so we describe that as instructions rather than
+as a certification.
+</Accordion>
+
+</AccordionGroup>
+
+## Features
+
+<AccordionGroup>
+
+<Accordion title="Does tool calling work?">
+Yes, as OpenAI defines it. `tools`, `tool_choice` and the `tool_calls` that come
+back all travel unchanged, streamed and not. Nothing is executed on our side. See
+[Tool calling](/concepts/tool-calling).
+</Accordion>
+
+<Accordion title="Does response_format work?">
+Yes, both forms, forwarded as written. Nothing here validates your schema or the
+reply against it. See [Structured outputs](/concepts/structured-outputs).
+</Accordion>
+
+<Accordion title="Can I send images?">
+Yes, in OpenAI's message-part shape, to a model that takes one. See
+[Image inputs](/concepts/image-inputs).
+</Accordion>
+
+<Accordion title="How do I know whether a model supports something?">
+Every catalog entry carries five capability words, each answering `yes`, `no` or
+`unknown`. Read `unknown` as "nobody has established this" rather than as "no".
+See [Model capabilities](/concepts/model-capabilities).
+</Accordion>
+
+<Accordion title="Does prompt caching work?">
+Provider prompt caching passes through unchanged, and the cached-token counts
+come back separately and are priced as their own kind. There is nothing of ours
+to enable. See [Prompt caching](/concepts/prompt-caching).
+</Accordion>
+
+<Accordion title="Can I set a fallback order across models?">
+Yes, with a routing profile: your own ordered list of `provider/model` lines,
+requested as `profile/{identifier}` in the `model` field. See
+[Routing profiles](/concepts/routing-profiles).
+</Accordion>
+
+<Accordion title="Can I pin which provider serves a request?">
+That is what a model id is. The part before the first slash names the provider,
+and we never substitute a different one behind your back. A model carried by two
+providers is two ids with two prices.
+</Accordion>
+
+<Accordion title="Is there an embeddings endpoint?">
+Not yet. It answers `unknown_url` today, and it is not documented anywhere on
+this site until it serves real responses.
+</Accordion>
+
+</AccordionGroup>
+
+## Money
+
+<AccordionGroup>
+
+<Accordion title="Is there a markup on requests?">
+No. A request deducts the provider's rate at face value. The platform fee is
+added when you buy credit, not when you spend it. See
+[Credits and billing](/concepts/credits-and-billing).
+</Accordion>
+
+<Accordion title="Why did my request return 402?">
+Your account cannot pay for it. Either the balance is empty, or a ceiling
+somebody set has been reached. The `code` says which. Nothing is charged for the
+refusal. See [Errors](/api-reference/errors).
+</Accordion>
+
+<Accordion title="What is the difference between the 429 codes?">
+`rate_limit_exceeded` is your key's request rate, and it carries `Retry-After`.
+`spend_rate_exceeded` is your account spend rate cap, and the lever for it is
+sending `max_tokens`. See
+[Rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+</Accordion>
+
+<Accordion title="Why does sending max_tokens help?">
+Credit is held against a ceiling while a request runs. With no `max_tokens` the
+ceiling is the model's published maximum output, so the request occupies more of
+your spend rate cap while it is in flight. The hold comes back in full at
+settlement either way. See [Request parameters](/api-reference/parameters).
+</Accordion>
+
+<Accordion title="Where do I see what a request actually cost?">
+On the Activity screen, one row per request. The usage record is the authority on
+what a request cost, not a rate in the catalog. See
+[View activity](/guides/view-activity).
+</Accordion>
+
+<Accordion title="Can I use my own provider key?">
+Yes, for a provider we already serve. Your key then answers every request to that
+provider and the provider bills you directly. It does not add models to your
+catalog. See [Bring your own key](/concepts/bring-your-own-key).
+</Accordion>
+
+</AccordionGroup>
+
+## Data and operations
+
+<AccordionGroup>
+
+<Accordion title="Do you store my prompts and replies?">
+No. What is recorded is metadata about a request: what was called, what it cost,
+how long it took, what happened. Never the content. See
+[Data and privacy](/concepts/data-and-privacy).
+</Accordion>
+
+<Accordion title="Can you show me my API key again?">
+No. We keep only a hash of it, so it cannot be shown again or recovered. Replace
+it. See [Authentication](/get-started/authentication).
+</Accordion>
+
+<Accordion title="Why are provider rate-limit headers missing?">
+They are not forwarded, because they describe a pool we hold rather than a limit
+that applies to you. Your own limits arrive as `429` codes you can branch on. See
+[Headers](/api-reference/headers).
+</Accordion>
+
+<Accordion title="What should I include when I ask about a request?">
+The request id. It is on every response on `x-uniblock-request-id` and on
+`x-request-id`, and inside every error body as `request_id`. Quote it rather than
+describing the symptom.
+</Accordion>
+
+<Accordion title="Do you publish an uptime or latency figure?">
+No. No figure for availability, for throughput, or for the latency the hop adds
+has been measured here in a way we are willing to publish, so this site claims
+none.
+</Accordion>
+
+<Accordion title="Is the API versioned?">
+There is no version to pin beyond the `/v1` in the path. The surface grows by
+addition, and the error envelope is the stable contract. See
+[API reference](/api-reference/introduction).
+</Accordion>
+
+</AccordionGroup>

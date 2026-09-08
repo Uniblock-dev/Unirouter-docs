@@ -20,12 +20,25 @@ its prefix and its last four characters. See
 
 The credit a workspace has left right now.
 
+### Capability
+
+One of five recorded answers about what a model can do, carried on every catalog
+entry: `streaming`, `tools`, `json_mode`, `vision` and `audio`. Each answers
+`yes`, `no` or `unknown`, and `unknown` means nobody has established the answer
+rather than that the answer is no. A capability describes a model; it does not
+gate a request. See [Model capabilities](/concepts/model-capabilities).
+
 ### Credit
 
 Prepaid spending power on a workspace, bought through checkout and reduced by
 usage at face value. Credit is bought above face value, because the platform fee
 is added at purchase. A purchase therefore has two figures: the amount charged to
 the card, and the credit granted. On this site, "credit" always means the second.
+
+### Deprecation
+
+The date a provider stopped recommending a model. The model still answers. It is
+not the same as a sunset. See [Model lifecycle](/concepts/model-lifecycle).
 
 ### Invitation
 
@@ -93,6 +106,13 @@ no prompt or reply. See [Playground](/guides/playground).
 A company whose models we call. We hold the account and the credentials with each
 one, and you never do.
 
+### Reasoning tokens
+
+Tokens a model generates while working out its answer, before the answer itself.
+They are counted inside the completion count rather than added to it, they are
+priced as their own kind, and they are reported separately where the provider
+reports them at all. See [Reasoning models](/concepts/reasoning).
+
 ### Request id
 
 The identifier attached to every response, successes and errors alike. It is the
@@ -116,6 +136,12 @@ window. It is the one limit you may raise yourself. See
 The line-by-line record of every change to a workspace's balance: what was
 bought, what was charged, and what each request took. Any member may read it;
 only the owner may act on money.
+
+### Sunset
+
+The date a model stops answering. After it, the model leaves the catalog and a
+request naming it is refused. Distinct from a deprecation, which is advice rather
+than a shutdown. See [Model lifecycle](/concepts/model-lifecycle).
 
 ### Usage record
 

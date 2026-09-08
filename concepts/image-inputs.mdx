@@ -1,0 +1,93 @@
+---
+title: "Image inputs"
+description: "Send an image in a message the way OpenAI defines it, find out which models take one, and know what an image does to what you are charged."
+status: partial
+gates: ["18.40"]
+---
+
+A message with an image is a message whose `content` is an array of parts rather
+than a string. That is OpenAI's shape, and it travels here unchanged, so a
+request your client already builds works.
+
+```json
+{
+  "model": "openai/gpt-4o-mini",
+  "messages": [{
+    "role": "user",
+    "content": [
+      {"type": "text", "text": "What is in this picture?"},
+      {"type": "image_url", "image_url": {"url": "https://example.com/photo.jpg"}}
+    ]
+  }]
+}
+```
+
+A data URI works in the same field, which is how you send an image you hold
+rather than one you can link to:
+
+```json
+{"type": "image_url", "image_url": {"url": "data:image/png;base64,iVBORw0KGgo..."}}
+```
+
+## Which models take one
+
+Every catalog entry carries a `vision` word in its `capabilities` block,
+answering `yes`, `no` or `unknown`. See
+[Model capabilities](/concepts/model-capabilities).
+
+Read `unknown` as "nobody has established this", not as "no". A `yes` is a
+recorded answer rather than a guess, which is why it is worth choosing on.
+
+## Nothing here checks the image
+
+The request path forwards your body and does not inspect it. Consequences, all of
+them the same consequence seen from different sides:
+
+- **An image sent to a text-only model is not refused here.** It reaches the
+  provider and the provider refuses it, in its own words and on its own status.
+- **Format, size and dimension limits are the provider's**, and so are the
+  errors about them. We publish no limits of our own on an image, because we
+  impose none.
+- **A URL you send is fetched by the provider, not by us.** Nothing on our side
+  downloads it, so a URL that is unreachable from the provider fails at the
+  provider even if it resolves for you. If that is a risk, send a data URI.
+- **We do not resize, re-encode, or strip metadata.** The bytes you put in the
+  body are the bytes that go on.
+
+## What an image costs
+
+Images are charged as prompt tokens, at the model's input rate, and the count is
+the provider's own. Different providers count an image differently, and the same
+picture can be a different number of tokens on two models. Nothing here
+re-counts or estimates: the figure you read back came from the provider. See
+[Usage and metering](/concepts/usage-and-metering).
+
+Two habits are worth having:
+
+**A data URI is prompt tokens and body bytes both.** Base64 makes a large image
+noticeably larger on the wire before it is a single token of anything.
+
+**An image stays in the conversation.** Every turn of a multi-turn chat resends
+the whole `messages` array, so an image in turn one is paid for again in turn
+five. Drop it from the history once the model has described it, if the
+description is what the rest of the conversation needs.
+
+## Audio, video, and generated images
+
+The catalog carries an `audio` word alongside `vision`, answering the same three
+ways, for models that take audio input.
+
+Beyond that, this site documents no other modality, and the reason is the same
+one that governs every page here: `POST /v1/chat/completions` and
+`GET /v1/models` are the whole public surface, so there is no image generation
+endpoint, no speech endpoint, and no video endpoint to describe. See
+[OpenAI compatibility](/get-started/openai-compatibility).
+
+Where a provider exposes a modality through the chat completions body itself,
+that body travels like any other, and the model's own capability words are what
+tell you whether it will be understood.
+
+## What we did not verify
+
+The bodies above are written from the shapes this API forwards rather than
+transcribed from a recorded run against the production hostname.

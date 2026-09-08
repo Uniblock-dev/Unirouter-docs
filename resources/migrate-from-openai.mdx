@@ -1,0 +1,159 @@
+---
+title: "Migrate from OpenAI"
+description: "A checklist for moving an application that already calls OpenAI: what changes, what does not, and the one change that is not optional."
+status: partial
+gates: ["2.3", "2.10", "2.11", "13.9"]
+---
+
+import BaseUrl from '/snippets/base-url.mdx';
+import FeatureStatus from '/snippets/feature-status.mdx';
+
+<FeatureStatus
+  feature="the official-SDK compatibility proof"
+  detail="This page changes two settings on an official OpenAI SDK and nothing else. We have not yet published a proof run of an unmodified SDK against the production hostname, so read this as instructions rather than as a certification."
+/>
+
+If your application already calls OpenAI, almost all of it survives the move.
+This page is the short list of what does not, so you find the edges by reading
+rather than by deploying.
+
+## The two settings
+
+<BaseUrl />
+
+Your client keeps its own name for these. Change the base URL and change the key,
+and leave the rest of your client configuration where it is.
+
+<CodeGroup>
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://ai.uniblock.dev/v1",   # was: unset, or the OpenAI default
+    api_key="ub_live_YOUR_KEY_HERE",         # was: your OpenAI key
+)
+```
+
+```javascript Node
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "https://ai.uniblock.dev/v1",  // was: unset, or the OpenAI default
+  apiKey: "ub_live_YOUR_KEY_HERE",        // was: your OpenAI key
+});
+```
+
+</CodeGroup>
+
+## The one change that is not optional
+
+**Every model id gains a provider in front of it.** `gpt-4o-mini` becomes
+`openai/gpt-4o-mini`. This is the change that breaks an otherwise untouched
+application, and it breaks loudly rather than quietly: a bare id is refused with
+`400` and the code `model_id_not_pinned`, naming the forms it will accept.
+
+That refusal is deliberate. A bare id would have to be resolved to some provider
+we happen to carry it under, and picking one for you is a decision about price
+and about who sees your prompt that we are not willing to make on your behalf.
+
+Find the ids you can call with `GET /v1/models`, or on the Models screen in the
+dashboard. Do not assemble them by hand from a provider's own naming. See
+[Models](/concepts/models).
+
+```bash
+curl https://ai.uniblock.dev/v1/models \
+  -H "Authorization: Bearer ub_live_YOUR_KEY_HERE"
+```
+
+## What carries over untouched
+
+| What | Why it survives |
+|---|---|
+| Your request bodies | Forwarded as you sent them. Nothing here parses or rebuilds them. |
+| Your response handling | The reply is the OpenAI chat completion shape. |
+| Your streaming loop | Server-sent events in the same format, ending in the same `data: [DONE]`. |
+| Your error handling | The same envelope, the same closed set of `type` values, the same statuses. |
+| `max_tokens`, `temperature`, `tools`, `response_format`, and the rest | Parameters travel in the body, which is what gets forwarded. |
+
+## What is different
+
+**Endpoints.** `POST /v1/chat/completions` and `GET /v1/models` are the whole
+public surface. A call to any other path under `/v1` is a `404` with code
+`unknown_url` rather than a surprise. If your application calls embeddings or
+the legacy completions endpoint, that call has no home here yet. See
+[OpenAI compatibility](/get-started/openai-compatibility).
+
+**Headers you send.** Only `Authorization` and `Content-Type` are read. Nothing
+else you send reaches the provider, because the upstream request is built from
+your body and our own credential with a fresh header set. Organisation and
+project headers, and anything in the `x-uniblock-*` namespace, do not travel.
+
+**Headers you receive.** Provider rate-limit headers are not forwarded, so if you
+currently read remaining-requests and reset headers to pace yourself, that input
+is gone. Your own limits arrive as `429` responses carrying codes you can branch
+on, and the per-key one carries `Retry-After`. See
+[Rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+
+**One extra line on a stream.** A streamed reply carries a
+`:x-uniblock-usage` comment line immediately before `data: [DONE]`. The
+server-sent events specification requires a parser to ignore a line starting
+with a colon, so a conforming client never sees it. See
+[Streaming](/concepts/streaming).
+
+**One extra field in an error.** The error object carries `request_id` alongside
+the fields OpenAI defines. It is inside `error` rather than beside it so that a
+client reading only the fields it knows ignores it safely.
+
+**Billing.** Credit is prepaid and the platform fee is added when you buy credit,
+not when you spend it, so a request deducts the provider's own rate with nothing
+on top. A zero balance refuses new requests with `402` and ends in-flight ones.
+See [Credits and billing](/concepts/credits-and-billing).
+
+**`max_tokens` is worth sending even where you left it out before.** It sizes
+what we hold against your balance while a request runs, so a request without it
+is held at the model's published maximum output and reaches your account spend
+rate cap sooner.
+
+## A checklist
+
+<Steps>
+  <Step title="Prefix every model id">
+    Search your code for model names and put the provider in front of each one.
+    This is the step that fails the first request if you skip it.
+  </Step>
+  <Step title="Point the client at the base URL and swap the key">
+    Two settings, both above. Keep the key in the environment rather than in
+    source.
+  </Step>
+  <Step title="Find any call to an endpoint that is not served here">
+    Embeddings and text completions return `unknown_url`. Decide what those call
+    sites do before you cut over rather than after.
+  </Step>
+  <Step title="Stop reading provider rate-limit headers">
+    If your pacing depends on them, move it onto `429` codes and `Retry-After`.
+  </Step>
+  <Step title="Send max_tokens">
+    Especially on any call path that currently omits it.
+  </Step>
+  <Step title="Log the request id">
+    `x-request-id` is the header the official SDKs already surface on their error
+    objects, so this is usually a one-line change. Without it, a support
+    conversation starts from a description rather than from a request.
+  </Step>
+  <Step title="Buy credit before you cut over">
+    A verified account with a zero balance refuses every request, which is a
+    confusing first result if you were not expecting it.
+  </Step>
+</Steps>
+
+## What this page does not cover
+
+**Moving from another router.** The differences that matter would be differences
+from that product's behaviour, and we do not document other people's products
+from the outside.
+
+**Anything about speed or availability.** No figure for latency added by the hop,
+for throughput, or for availability has been measured here in a way we are
+willing to publish, so this page makes no claim about how the move affects any of
+them.

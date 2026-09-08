@@ -1,0 +1,128 @@
+---
+title: "Prompt caching"
+description: "Provider prompt caching works through this API unchanged. How to ask for it, where the cached-token counts arrive, and how they are priced."
+status: partial
+gates: ["18.62"]
+---
+
+Several providers will cache part of a prompt so that resending it is cheaper
+than sending it the first time. That feature is the provider's, it is asked for
+in the request body, and the body travels here unchanged, so it works through
+this API the way it works when you call the provider directly.
+
+## How you ask for it
+
+The same way you would upstream. A provider whose caching is explicit takes a
+marker in the body, and that marker is an ordinary field which is forwarded as
+you wrote it. A provider whose caching is automatic applies it without being
+asked, and nothing here turns it off.
+
+There is no Uniblock control for caching, in the body or in a header. There is
+nothing to enable, nothing to configure, and no setting in the dashboard. What
+reaches the provider is your request, so what you would send upstream is what you
+send here.
+
+Which providers cache, on what terms, and with what minimum prompt size, is the
+provider's own behaviour and changes on the provider's own schedule. This site
+does not publish a per-provider table of it, for the same reason it publishes no
+model list: it would be wrong the first time somebody changed something, and a
+stale table about money is worse than no table.
+
+## Where the counts arrive
+
+Cached tokens are reported separately from ordinary input tokens, in three
+places.
+
+**In the reply body**, on a response that is not streamed, inside the provider's
+own `usage` object, in whatever spelling that provider uses.
+
+**On the stream**, as two fields on the `:x-uniblock-usage` comment line written
+immediately before `data: [DONE]`:
+
+```text
+:x-uniblock-usage {"v":1,"reported":true,"prompt_tokens":1200,"completion_tokens":80,"total_tokens":1280,"cache_read_input_tokens":1024,"cache_write_input_tokens":0}
+```
+
+| Field | What it counts |
+|---|---|
+| `cache_read_input_tokens` | Input tokens served from the provider's cache. |
+| `cache_write_input_tokens` | Input tokens written into it. |
+
+**On your usage record**, and so on the Activity screen, as the cache read and
+cache write figures for that request. See
+[Usage and metering](/concepts/usage-and-metering).
+
+### Absent is not zero
+
+Both fields are omitted rather than sent as `0` when the provider did not report
+them. A provider that does no cache accounting produces a usage line with neither
+field, which is a different fact from a request that used no cache, and the two
+stay distinguishable on purpose.
+
+So `cache_read_input_tokens` missing means "we were not told". A value of `0`
+means the provider told us, and the answer was none.
+
+Every count on that line is the provider's own. Nothing here is re-counted or
+estimated.
+
+## How cached tokens are priced
+
+A model does not have one price. It has a price per kind of token, and cache
+reads and cache writes are two of the five kinds:
+
+```text
+prompt = input + cache_read + cache_write
+```
+
+`input` means the prompt tokens that were neither read from a cache nor written
+to one, which is worth reading twice if you are used to a provider's
+`prompt_tokens` including the cached ones. Reading from a cache is commonly
+discounted. Writing to one is priced above plain input by some providers and does
+not exist at all on others. See
+[Models](/concepts/models) for the whole rate vocabulary.
+
+The rate that applied to a request is the one in force when the request was made,
+and a later price change cannot rewrite it. What a request actually cost is on
+your usage record, which is the authority. A price shown in the catalog describes
+what a model charges now.
+
+## The cache status header is not this
+
+A served response can carry `x-uniblock-cache-status`. It is a diagnostic about
+how the answer was produced on our side, it is not a report of provider prompt
+caching, and the two answer different questions. Do not read it to find out
+whether your prompt cache was hit: read the token counts above, which are the
+provider's own account of exactly that.
+
+As with every diagnostic header, read it in logs and do not build behaviour on
+it. See [Headers](/api-reference/headers).
+
+## Getting a cache hit at all
+
+The rules are the provider's, so this is general rather than specific, and the
+general shape holds across providers that cache:
+
+- **Put the stable part of your prompt first.** Caching works on a prefix. A
+  system prompt and a document that do not change belong before the part that
+  does.
+- **Do not reorder it between turns.** A prefix that differs by a timestamp, a
+  reordered tool list, or a regenerated id is a different prefix.
+- **Short prompts are usually not cached.** Providers set a minimum, and below it
+  nothing is cached however you arrange it.
+- **Caches expire.** A cache read on one turn does not promise one on the next.
+
+The way to know whether any of it worked is the counts, not the arrangement. Read
+`cache_read_input_tokens` on a second identical request and you have your answer.
+
+## What this platform does not do
+
+**We do not cache your prompts.** No prompt or reply is stored here, which is a
+data fact before it is a caching fact. See
+[Data and privacy](/concepts/data-and-privacy).
+
+**We do not create a provider cache on your behalf.** Nothing is inserted into
+your body to make caching happen. If your request carries no cache marker and the
+provider's caching is explicit rather than automatic, nothing is cached.
+
+**We make no promise about hit rates**, and no figure for one has been measured
+here in a way we are willing to publish.

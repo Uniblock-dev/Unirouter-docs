@@ -1,0 +1,112 @@
+---
+title: "Structured outputs"
+description: "Send response_format to get JSON back. Which models take it, what this platform checks, and what it deliberately does not."
+status: partial
+gates: ["18.40"]
+---
+
+`response_format` is an ordinary field in the request body, so asking a model for
+JSON works here the way it works when you call the provider directly. The two
+forms are the ones you already know: `{"type": "json_object"}` for "answer in
+JSON", and `{"type": "json_schema", ...}` for "answer in this shape".
+
+```json
+{
+  "model": "openai/gpt-4o-mini",
+  "messages": [{"role": "user", "content": "Two facts about Oslo."}],
+  "response_format": {
+    "type": "json_schema",
+    "json_schema": {
+      "name": "facts",
+      "strict": true,
+      "schema": {
+        "type": "object",
+        "properties": {
+          "facts": {"type": "array", "items": {"type": "string"}}
+        },
+        "required": ["facts"],
+        "additionalProperties": false
+      }
+    }
+  }
+}
+```
+
+## Which models take it
+
+Every catalog entry carries a `json_mode` word in its `capabilities` block,
+answering `yes`, `no` or `unknown`. See
+[Model capabilities](/concepts/model-capabilities).
+
+The word covers both forms together. It does not tell you whether a model that
+takes `json_object` also takes a `json_schema` with `strict` set, and that
+distinction is real on some model lines. Where it matters, the reliable test is a
+request, not the catalog.
+
+## What this platform checks
+
+Nothing, and the sentence is worth stating flatly rather than leaving you to
+infer it.
+
+- **Your schema is not validated here.** It is forwarded as written. A schema a
+  provider will not accept is refused by the provider, in the provider's own
+  words and on its own status.
+- **The reply is not validated against your schema either.** What arrives is what
+  the model produced. If it is not the shape you asked for, that is what you get.
+- **Nothing is repaired.** There is no retry on a malformed body, no second call
+  to fix the JSON, and no post-processing of the reply. A model that returns
+  prose where you asked for an object returns prose to you.
+
+So the guarantee behind a structured output is entirely the provider's. Where a
+provider offers a strict mode that constrains generation, using it is worth more
+than anything an intermediary could add afterwards, and it is available to you
+because the field travels.
+
+## Parse defensively anyway
+
+Whatever the provider guarantees, the content is a string in
+`choices[0].message.content` and your code has to parse it. Two failure modes are
+worth handling by name:
+
+**A truncated reply is not valid JSON.** A response cut short by `max_tokens`
+ends mid-object, and `finish_reason` says `length` rather than `stop`. Check it
+before you parse: a JSON parse error whose real cause is a token ceiling is a
+confusing thing to debug. It is also a real risk here specifically, because a
+request that names no ceiling is held against the model's published maximum
+output and a schema-shaped answer can be longer than you expect. See
+[Request parameters](/api-reference/parameters).
+
+**A refusal is not your schema.** A model that declines to answer answers in
+prose or in its own refusal field, not in the shape you asked for.
+
+```python
+choice = response.choices[0]
+
+if choice.finish_reason != "stop":
+    ...  # truncated or refused: do not parse
+
+data = json.loads(choice.message.content)
+```
+
+## Streaming a structured output
+
+`stream: true` and `response_format` compose the way they do upstream: the
+content arrives in fragments, and a fragment is not parseable JSON on its own.
+Accumulate the deltas and parse once at the end, unless you have a streaming
+parser that is built for partial documents.
+
+The stream itself is unchanged by any of this. See
+[Streaming](/concepts/streaming).
+
+## What it costs
+
+A `json_schema` is part of the body, so it is prompt tokens on every request that
+carries it. A large schema sent on every turn of a long conversation is paid for
+on every turn. The counts you read back are the provider's own and already
+include it.
+
+## What we did not verify
+
+The examples on this page are written from the shapes this API forwards rather
+than transcribed from a recorded run against the production hostname. The
+forwarding is the part this page documents; the shapes are OpenAI's.

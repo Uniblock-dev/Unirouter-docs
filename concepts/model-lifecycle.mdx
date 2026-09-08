@@ -1,0 +1,117 @@
+---
+title: "Model lifecycle"
+description: "Models are deprecated and then stop serving. The two dates mean different things, and the catalog carries both so a shutdown is never a surprise."
+status: partial
+gates: ["18.24"]
+---
+
+A model you can call today is a model somebody else is maintaining, and it will
+eventually stop. The catalog carries the dates for that rather than letting you
+find out from a failed request, and this page says what the dates mean and what
+to do with them.
+
+## Two dates, two meanings
+
+They are different facts and a model can carry either without the other.
+
+| Date | What it says |
+|---|---|
+| Deprecated | Prefer something else. The model still answers. |
+| Sunset | This stops answering. After it, the model is gone. |
+
+Deprecation is advice: the provider has stopped recommending the model, usually
+because a successor exists, and nothing about your request changes on that date.
+Sunset is a fact about serving.
+
+## Where they are
+
+**On every entry in `GET /v1/models`**, a sunset shows as `shutdown_date`, at the
+top level of the model object where OpenAI's own model shape defines it, in unix
+seconds. It is **absent rather than null** when there is none, so test for the
+key rather than for a value.
+
+```json
+{
+  "id": "openai/gpt-4o-mini",
+  "object": "model",
+  "created": 1756080000,
+  "owned_by": "openai",
+  "shutdown_date": 1790000000,
+  "uniblock": { }
+}
+```
+
+It is on the list, and not only on the detail, precisely so that a client can
+find every model it depends on that is ending without fetching each one.
+
+**On `GET /v1/models/{id}`**, three fields inside the `uniblock` block carry the
+whole picture:
+
+```json
+{
+  "deprecated_at": 1780000000,
+  "sunset_at": 1790000000,
+  "replacement_model_id": "openai/gpt-4o-mini-2"
+}
+```
+
+| Field | What it is |
+|---|---|
+| `deprecated_at` | Unix seconds, or null. When the model stopped being recommended. |
+| `sunset_at` | Unix seconds, or null. When it stops answering. |
+| `replacement_model_id` | The id to move to, or null. |
+
+**`replacement_model_id` is null more often than not, and that is deliberate.** A
+replacement is named only where the provider named one. Nothing here guesses at
+what you meant, because a wrong guess about which model to move to is worse than
+no guess: you act on it.
+
+## What happens when a model reaches its sunset
+
+It stops being offered. It leaves `GET /v1/models`, it leaves the Models screen,
+and a request that names it is refused rather than served.
+
+The refusal is a `404`, and the message is what tells you which kind of nothing
+you have hit. A model the provider has **retired** says it is gone rather than
+unwell, and says that retrying will not bring it back. That is the sentence to
+branch your operational response on: no amount of backoff reaches a model that
+has been switched off. See [Errors](/concepts/errors).
+
+The dates are the provider's, not ours, so a model can also stop earlier than its
+published sunset if the provider stops serving it. The catalog follows what is
+actually servable rather than what was announced, which is the same rule that
+governs everything in it: you are never offered a model that would fail on call.
+See [Models](/concepts/models).
+
+## Building for it
+
+**Read the catalog rather than pinning a list.** A model id hard-coded in your
+source is a deployment you will have to do at short notice one day. Ask
+`GET /v1/models` and treat the answer as current rather than permanent.
+
+**Check `shutdown_date` on the models you use, not on all of them.** One pass
+over the list, filtered to the ids your application sends, tells you what is
+ending and when.
+
+**Treat a deprecation as a scheduling problem and a sunset as a deadline.** They
+are usually months apart, and the gap is the whole point of publishing both.
+
+**Move deliberately rather than automatically.** `replacement_model_id`, where it
+is set, is what the provider says the successor is. It is not a promise that the
+successor behaves like its predecessor on your prompts, prices the same, or has
+the same capability words. Read
+[Model capabilities](/concepts/model-capabilities) for the model you are moving
+to, and test before you cut over.
+
+**A model id names a provider.** A model that ends at one provider may still be
+served by another, as a different id with its own price. See
+[Models](/concepts/models) for how ids are shaped.
+
+## What is not here
+
+**A schedule of upcoming shutdowns.** It would be a list, on a page, going stale.
+The dates are in the catalog, per model, and that is the copy that is current.
+
+**Any notice we send you.** Nothing on this site promises an email or a dashboard
+warning before a model ends, because no such notice exists in what has shipped.
+Read the dates.
