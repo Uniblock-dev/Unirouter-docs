@@ -250,6 +250,40 @@ claims:
       - guides/monitor-usage
       - concepts/usage-and-metering
 
+  - id: activity-page-size-default
+    value: "25"
+    means: "The rows-per-page the Activity list opens on, and the first of the three sizes it offers."
+    source: "apps/dashboard/src/features/activity/views/Pager.tsx"
+    status: gated
+    gate: epic-5
+    used_by:
+      - guides/monitor-usage
+      - guides/view-activity
+
+  - id: activity-page-size-fifty
+    value: "50"
+    means: "The middle rows-per-page the Activity list offers. It was the fixed page size before the control existed."
+    source: "apps/dashboard/src/features/activity/views/Pager.tsx"
+    status: gated
+    gate: epic-5
+    used_by:
+      - guides/monitor-usage
+      - guides/view-activity
+
+  - id: activity-page-size-hundred
+    value: "100"
+    means: "The largest rows-per-page the Activity list offers."
+    source: "apps/dashboard/src/features/activity/views/Pager.tsx"
+    status: gated
+    gate: epic-5
+    used_by:
+      - guides/monitor-usage
+      - guides/view-activity
+    note: >-
+      Registered for the record rather than because the checker asks for it: a
+      bare 100 already matches the HTTP status allow pattern above, so this entry
+      is what stops the page size being read as a status code by a later sweep.
+
   - id: usage-range-1y
     value: "1"
     means: "The 1 year usage window."

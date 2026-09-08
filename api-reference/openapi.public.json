@@ -42,7 +42,7 @@
                 "properties": {
                   "model": {
                     "type": "string",
-                    "description": "The model to call. A workspace routing-profile slug (profile/{identifier}) is also accepted: the platform then tries that profile's models in the customer's own order, and the usage record and the charge name whichever model actually served.",
+                    "description": "The model to call, in one of exactly two forms. A provider-pinned id, \"{provider}/{that provider's own id}\", is split once on the FIRST slash: the part before it names one of the provider accounts this platform serves, and everything after it is that provider's own id for the model, passed on verbatim, slashes included. A workspace routing-profile slug, \"profile/{identifier}\", is the other form: the platform then tries that profile's models in the customer's own order, and the usage record and the charge name whichever model actually served. A bare model id is refused with 400 and the code \"model_id_not_pinned\". GET /v1/models lists the exact strings this key can call, one per model and provider that serves it.",
                     "example": "openai/gpt-4o-mini"
                   },
                   "messages": {
@@ -50,6 +50,11 @@
                     "items": {
                       "type": "object"
                     }
+                  },
+                  "max_tokens": {
+                    "type": "integer",
+                    "description": "The most output tokens the reply may use. Optional, as it is on OpenAI. Left out, it is filled in for the providers whose own API refuses a request that does not carry one, and the figure used is the model's published max_output_tokens, which GET /v1/models/{model} reports and which is what credit is held for on a request naming no ceiling. Every other provider is sent the request unchanged. max_completion_tokens counts as this field being given.",
+                    "example": 256
                   },
                   "stream": {
                     "type": "boolean"
@@ -78,6 +83,13 @@
           "200": {
             "description": "The completion. A response that is not streamed carries the provider's token counts in its own `usage` object. Its `model` field echoes the slug you asked for rather than the provider's internal name, except in three cases that are returned as the provider sent them: a streamed reply, whose frames are passed through unchanged; a request naming a routing profile, which names a chain rather than one model; and a successful body carrying no string `model` field at all.\n\nWhen `stream` is true the body is `text/event-stream` instead, and the counts arrive on a `:x-uniblock-usage` comment line immediately before `data: [DONE]`; the server-sent events specification requires parsers to ignore comment lines, so an SDK never sees it.",
             "headers": {
+              "x-uniblock-served-by": {
+                "description": "The full id, \"{provider}/{model}\", of the model that actually answered: the pinned id when the request named one directly, or the routing-profile chain member that served when the request named a profile.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/gpt-4o-mini"
+                }
+              },
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
               },

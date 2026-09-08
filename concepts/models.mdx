@@ -2,7 +2,7 @@
 title: "Models"
 description: "How model ids are shaped, how to discover which models are callable right now, and the vocabulary a model's rate is expressed in."
 status: partial
-gates: ["8.6", "8.7", "8.8"]
+gates: ["8.6", "8.7", "8.8", "8.40", "13.9", "18.58", "18.87"]
 ---
 
 You name a model in the `model` field of a request, exactly as you would when
@@ -11,11 +11,38 @@ serves it, so one key and one endpoint reach models from more than one place.
 
 ## Model ids
 
-A model id is written as a family and a model, separated by a slash:
+A model id is written as a provider and that provider's own model id, separated by a slash:
 
 ```json
 { "model": "openai/gpt-4o-mini" }
 ```
+
+It is split once on the **first** slash. The part before it names the provider that serves the
+request. Everything after it is that provider's own id for the model, exactly as the provider spells
+it, slashes included, so an id can carry more than one slash and only the first one is a boundary.
+
+The half after the slash may also be a shorter name we hold for the model, such as
+`anthropic/opus`. A name we recognise is served, charged and answered as the pinned id that
+`GET /v1/models` lists, which is the id the reply carries, so the answer names the model you were
+actually served rather than the name you typed. A name we do not hold changes nothing: the request
+is refused exactly as it would have been, with the `404` that names the provider and the id it does
+not serve. A name with no provider in front of it, such as a bare `opus`, is refused the same way
+any unpinned id is.
+
+The provider half is the point: you choose the host, and we never substitute a different one behind
+your back. A model carried by two providers is two ids with two prices, and the one you send is the
+one that serves you.
+
+The `model` field accepts these three forms and nothing else:
+
+| Form | What it does |
+|---|---|
+| `provider/model` | That model, from that provider. If that provider cannot serve it, the request fails rather than moving to another host. The half after the slash is the provider's own id, or a shorter name we hold for it. |
+| `profile/{identifier}` | A [routing profile](/concepts/routing-profiles) you built: your own `provider/model` lines, tried in your order. |
+| `unirouter/auto` | A fixed id that means [whichever route you made your default](/concepts/routing-profiles), and a list we publish for your cost tier until you have one. |
+
+A bare id such as `gpt-4o-mini` is refused with `400` and the code `model_id_not_pinned`. The message
+names both forms and points you at `GET /v1/models`.
 
 Ask for the ids rather than constructing them by hand. The set of callable
 models is a live fact, it changes without a release on our side, and an id you
@@ -51,17 +78,34 @@ A model id contains slashes and the whole of it is the identifier, so
 percent-encode it once or send it as it is. A double-encoded slash names no
 model and answers `404`.
 
-**In the dashboard.** The Models screen shows the same catalog for browsing
-without writing a request, and the playground offers the models you can send to
+**In the dashboard.** The Models screen browses the same catalog without your
+having to write a request, and the playground offers the models you can send to
 as a list, so you can pick one rather than having to know an id first. See
 [Playground](/guides/playground).
 
+The screen and the API answer at different grains, and it is worth knowing which
+you are reading. `GET /v1/models` lists one entry per callable id, so a model
+served by two providers is two entries. The Models screen shows **one row per
+model** by default and folds those providers together: the price cells show the
+range across them, and opening the row gives a line per provider with its own
+callable id. That fold is a reading aid on the screen and nothing else. What you
+put in the `model` field is unchanged, and it is still a specific provider's id:
+there is no bare-model form, and the row you are looking at is not itself
+callable. Take the id from the provider line, or from `GET /v1/models`.
+
 ## A model is offered only when it is live
 
-A model appears to you only when we hold a working credential of our own for it
-and it has been enabled on our side. The rule behind that is a promise rather
-than an implementation detail: you must never be offered a model that would
-fail on call.
+A model appears to you only when we hold a working credential of our own for it,
+it has been enabled on our side, and it carries a price we have actually decided.
+The rule behind that is a promise rather than an implementation detail: you must
+never be offered a model that would fail on call, and you must never be shown a
+model whose cost we cannot tell you.
+
+The price half is the newer one. A model whose only price is a placeholder set
+when a provider first offered it is left out of `GET /v1/models`, left out of the
+Models screen, and answered as an unknown model if you ask for it by name. It is
+not shown with the price blank: a model you can pick and then be refused for is
+worse than a model you never saw.
 
 Bringing your own key for a provider does not change this list. Your key only
 changes which credential answers your calls to a provider we already serve; it

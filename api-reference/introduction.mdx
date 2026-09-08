@@ -52,8 +52,10 @@ you sent it: parameters are not rewritten, dropped, or validated against a
 schema of ours, so a parameter your client sends works as soon as the model
 behind it supports it.
 
-Model ids are `family/model`, for example `openai/gpt-4o-mini`. Call
-`GET /v1/models` for the ids you can use.
+Model ids are `provider/model`, for example `openai/gpt-4o-mini`. The part before the first slash
+names the provider that serves the request, and everything after it is that provider's own id for
+the model, passed on as you sent it. A bare id with no provider is refused with `400` and the code
+`model_id_not_pinned`. Call `GET /v1/models` for the exact strings you can use.
 
 ## Streaming
 

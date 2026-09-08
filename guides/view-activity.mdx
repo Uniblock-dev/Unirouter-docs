@@ -2,7 +2,7 @@
 title: "View activity"
 description: "Every request as a row: what happened, what it cost, how to open one request, and exactly what is kept about it."
 status: partial
-gates: ["5.11", "5.12"]
+gates: ["5.11", "5.12", "5.18"]
 ---
 
 import RequestIdNote from '/snippets/request-id-note.mdx';
@@ -19,17 +19,20 @@ what the shipped screen shows today.
 | Door | `api` or `playground`. |
 | Model | The model that was asked for. |
 | Served by | The provider that answered, or **nothing** if none did. |
-| Outcome | The raw outcome slug: `served`, or the reason it was not. |
+| Outcome | A plain word: **served**, **provider error**, **refused**, or **other** for anything newer than the list the screen knows. The exact code is kept on the single request view. |
 | Tokens | The total token count, or **unknown** if none was ever reported. |
-| Charge | The cost in minor units, or **unpriced** if the request was never priced. |
+| Charge | What the request cost, as dollars to as many places as the figure needs and never fewer than two, or **unpriced** if the request was never priced. |
 | Took | How long the request took, in milliseconds. |
 | Request id | The first eight characters, linking to the single request view. |
 
 ## Reading a row
 
-**Outcome is the raw word, not a translation.** A row whose outcome is anything
-other than `served` is drawn in a distinct color to draw the eye. The word itself is
-whatever the platform recorded, never a friendlier rewrite of it.
+**Outcome reads as a word, and the code is still there.** A row says **served**,
+**provider error** or **refused**, and a row that is not served is drawn in a distinct
+color to draw the eye. Those three cover the whole outcome vocabulary the platform
+records; a code newer than the list this screen knows reads **other** rather than
+disappearing or being filed under the wrong one. The exact code the platform recorded
+is on the single request view, which is where a support thread needs it.
 
 **`unknown` is not zero.** A token count that was never reported reads `unknown`; a
 count of zero is printed as `0`. Those are different facts: a provider that never
@@ -53,21 +56,35 @@ list.
 
 | Filter | Options | Default |
 |---|---|---|
-| Model | Only the models this workspace has actually called. | Any model |
-| Outcome | Free text, matched against the outcome the platform recorded. | Empty (no default vocabulary is baked into the field) |
+| Model | Only the models this workspace has actually called, each named the way the catalog names it today. | Any model |
+| Outcome | One of four choices: any outcome, served, provider error, refused. | Any outcome |
 | From | A calendar date. Inclusive, applied to when the request started, in UTC. | Empty |
 | To | A calendar date. Exclusive, applied to when the request started, in UTC. | Empty |
+
+Beside the date fields are shortcuts for the last day, the last week, the last month
+and all time. A shortcut writes the two date fields and applies at once.
+
+The narrowing lives in the address, so a filtered view survives a reload and a back
+button and can be pasted into a support thread. A value the screen cannot read is
+dropped and named rather than silently ignored, because a filter that quietly does
+nothing shows you more rows than you asked for and they read as rows inside the
+filter.
+
+**Choosing a model still finds rows written under an older name.** A model that has
+been renamed is one entry in the list, and choosing it matches the requests recorded
+under every spelling that folds into it. You do not have to know what the model used
+to be called.
 
 There is no request id filter. One request id has one page, so the way to reach it
 is to click the truncated id in a row rather than to type it into a narrowing
 control. See [Look up one request](#look-up-one-request) below.
 
-## Fifty rows at a time
+## How many rows to a page
 
-There is no rows-per-page control. Page size is fixed at fifty and reported by the
-platform rather than accepted as something you set. Rows are ordered by time with
-the request id as a tiebreak, so a row cannot land on two pages, or on none, between
-one read and the next.
+The rows-per-page control offers 25, 50 and 100, and opens on 25. Your browser
+remembers the choice, so it survives a reload on the same machine and does not follow
+you to another one. Rows are ordered by time with the request id as a tiebreak, so a
+row cannot land on two pages, or on none, between one read and the next.
 
 ## Three ways to see no rows
 
