@@ -78,9 +78,11 @@ The catalog carries an `audio` word alongside `vision`, answering the same three
 ways, for models that take audio input.
 
 Beyond that, this site documents no other modality, and the reason is the same
-one that governs every page here: `POST /v1/chat/completions` and
-`GET /v1/models` are the whole public surface, so there is no image generation
-endpoint, no speech endpoint, and no video endpoint to describe. See
+one that governs every page here. The operations this site documents are
+`POST /v1/chat/completions`, `GET /v1/models` and `GET /v1/models/{id}`, so
+there is no image generation endpoint, no speech endpoint, and no video endpoint
+described anywhere on it. Nothing here says what a path this site does not
+document answers. See
 [OpenAI compatibility](/get-started/openai-compatibility).
 
 Where a provider exposes a modality through the chat completions body itself,

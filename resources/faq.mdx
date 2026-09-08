@@ -2,7 +2,7 @@
 title: "FAQ"
 description: "Short answers to the questions this API gets asked most, each pointing at the page that answers it properly."
 status: partial
-gates: ["2.10", "2.11", "13.9"]
+gates: ["2.10", "2.11", "13.9", "18.13", "18.40", "18.62"]
 ---
 
 Every answer here is short on purpose and links to the page that carries the
@@ -32,11 +32,11 @@ publishes no model list, because any list written here would be wrong the first
 time the catalog changed.
 </Accordion>
 
-<Accordion title="Which endpoints exist?">
-`POST /v1/chat/completions` and `GET /v1/models`, plus `GET /v1/models/{id}`.
-That is the whole public surface. Any other path under `/v1` answers `404` with
-the code `unknown_url`. See
-[OpenAI compatibility](/get-started/openai-compatibility).
+<Accordion title="Which endpoints are documented?">
+`POST /v1/chat/completions`, `GET /v1/models` and `GET /v1/models/{id}`. Those
+are the operations this site documents and the API reference publishes. A path
+this site does not document is one we make no promise about, in either
+direction. See [OpenAI compatibility](/get-started/openai-compatibility).
 </Accordion>
 
 <Accordion title="Do the official OpenAI SDKs work?">
@@ -93,8 +93,9 @@ providers is two ids with two prices.
 </Accordion>
 
 <Accordion title="Is there an embeddings endpoint?">
-Not yet. It answers `unknown_url` today, and it is not documented anywhere on
-this site until it serves real responses.
+Nothing is documented here for one. Embeddings stay off this site until the
+tracker says they serve real responses, and until then we would rather say
+nothing than describe a call you cannot rely on.
 </Accordion>
 
 </AccordionGroup>
