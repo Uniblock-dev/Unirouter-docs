@@ -1,0 +1,189 @@
+---
+title: "Request parameters"
+description: "What this API reads out of a request body, the two fields it ever rewrites, and how to find the parameters a given model accepts."
+status: partial
+gates: ["13.9", "18.67"]
+---
+
+The body of a chat completion is OpenAI's, and it travels to the provider as you
+wrote it. This page says exactly which parts of it this platform looks at, which
+parts it changes, and what happens to everything else.
+
+## What is read
+
+Admission reads two things out of your body, both to work out what the request
+could cost before it is sent:
+
+| Field | Why it is read |
+|---|---|
+| `model` | To find the provider, the rate, and whether we can serve it at all. |
+| `max_tokens`, or `max_completion_tokens` | To size the credit held while the request runs. When both are present, the larger is used. |
+
+Neither read changes the field, and the two fields answer differently when the
+value cannot be made sense of.
+
+A ceiling this cannot read falls back to being treated as absent rather than
+being corrected, so credit is held at the model's published maximum output and
+the provider answers for its own body. `model` has no such fallback: it is the
+one field admission cannot proceed without, so a missing model and a model id in
+a shape this does not accept are both refused here, before any provider is
+called. Both refusals are in [The refusals that are ours](#the-refusals-that-are-ours)
+below, and both name a `param`, which is how you tell them from the provider's.
+
+## What is rewritten
+
+Two rewrites exist. Both are named here because a body that arrives different
+from the one you sent should never be something you discover from a provider's
+error message.
+
+**`model`, when you asked for a route rather than a model.** A request naming
+`profile/{identifier}` or `unirouter/auto` is a request for a list of models
+tried in order, so the body that reaches a provider carries the id of the model
+being tried on that attempt. See [Routing profiles](/concepts/routing-profiles).
+
+**`max_tokens`, when the provider's own API refuses a request without one.** Some
+providers require the field. If your body carries neither `max_tokens` nor
+`max_completion_tokens` and the provider is one of those, the field is added,
+and the value used is the model's published `max_output_tokens`, which is the
+figure credit was already being held against. Nothing else in the body is
+touched, and a body that already names a ceiling is sent unchanged. Every other
+provider is sent your body without the field, exactly as you wrote it.
+
+## What happens to everything else
+
+Nothing. There is no request schema of ours in front of the provider's, no
+allowlist of parameters, and no list of fields to strip. `temperature`,
+`top_p`, `stop`, `seed`, `logprobs`, `tools`, `tool_choice`, `response_format`,
+and any parameter a provider adds next month all reach the provider as sent.
+
+This cuts both ways, and the second half is the half worth planning for:
+
+- **A parameter is never refused here for being unfamiliar.** You do not wait for
+  us to add support for something your client already sends.
+- **A parameter is never validated here either.** If a model will not take the
+  parameter, or will not take the value, the answer you get is the provider's own
+  refusal relayed with its own status and its own sentence. We do not pre-empt it
+  with a refusal of our own, and we do not translate it.
+
+So a `400` on a chat completion has two possible authors. Ours name a `param` and
+come from the short list below. Everything else on that status came from the
+provider and reads like the provider.
+
+## The refusals that are ours
+
+Each of these is decided before any provider is called, and none of them charges
+you anything.
+
+**No model named.** The one field admission cannot do without.
+
+```json 400
+{
+  "error": {
+    "message": "You must provide a model parameter naming the model to call. It is read to work out what the request could cost before it is sent.",
+    "type": "invalid_request_error",
+    "param": "model",
+    "code": null,
+    "request_id": "REQUEST_ID"
+  }
+}
+```
+
+**A model field that is not a usable id.** Too long, or holding characters an id
+cannot hold. The message states the shape it will accept:
+
+```text
+The model "..." is not a usable model id. A model field is at most 128
+characters and may hold letters, digits and the characters . _ : / @ and -,
+in either the "provider/model" or the "profile/{identifier}" form.
+GET /v1/models lists the exact strings this key can call.
+```
+
+A well-formed id with no provider in front of it is a different refusal, `400`
+with the code `model_id_not_pinned`. See [Models](/concepts/models).
+
+**A prompt too large to hold credit against.** `400` with
+`context_length_exceeded` and `param` set to `messages`. This is a refusal about
+sizing the hold, and it happens before the model's own context window is ever
+consulted, so it is not the same thing as a provider telling you the prompt does
+not fit.
+
+**No ceiling can be worked out.** `503` with `model_not_priceable`, when your
+body names no output ceiling and the model publishes no maximum output either.
+The message says what to do, and it is worth reading rather than retrying:
+
+```text
+This request names no maximum number of output tokens and no maximum output
+length is published for "<model>", so the most it could cost cannot be worked
+out. Send max_tokens and the request is admitted, because the published figure
+is then not needed.
+```
+
+This is the one `model_not_priceable` that a retry does not fix. The others on
+that code clear on their own. See [Errors](/api-reference/errors).
+
+## `max_tokens` and what it holds
+
+The credit held while a request runs is sized from an output ceiling, and the
+ceiling is the smaller of two figures: the one you sent, and the model's own
+published `max_output_tokens`.
+
+| What you send | What is held against |
+|---|---|
+| `max_tokens` below the model's maximum | Your figure. |
+| `max_tokens` above the model's maximum | The model's maximum, because the model cannot exceed it. |
+| Neither field | The model's published maximum output. |
+
+The hold is returned in full at settlement and you are charged for what the
+request actually produced, so sending `max_tokens` never costs you the
+difference. What it changes is how much of your account spend rate cap one
+request occupies while it is in flight. See
+[Rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+
+## The parameters a given model takes
+
+`GET /v1/models/{id}` returns a `parameters` array for that model: the request
+controls it accepts, with their bounds and defaults. It is served only on the
+single-model call, never on the list, because a list is scanned and a detail is
+read.
+
+```json One entry
+{
+  "name": "temperature",
+  "type": "number",
+  "min_milli": 0,
+  "max_milli": 2000,
+  "default_milli": 1000,
+  "enum_values": null,
+  "sent_by_default": false,
+  "note": "Higher values make the reply less predictable."
+}
+```
+
+| Field | What it is |
+|---|---|
+| `name` | The parameter as it is spelled in a request body. |
+| `type` | The shape of the control: `boolean`, `enum`, `integer`, `number` or `string`. |
+| `min_milli`, `max_milli`, `default_milli` | The bound or default in thousandths of the parameter's own unit, or null where none is recorded. |
+| `enum_values` | The closed set of values, for an `enum`, and null otherwise. |
+| `sent_by_default` | Whether a client should send this parameter when nobody has touched it. |
+| `note` | A short sentence about the parameter, or null. |
+
+**The three bounds are in thousandths.** A temperature ceiling of two arrives as
+`2000`, and a default of nought point seven as `700`. They are integers on
+purpose: a bound that drifted in its last decimal place would be a contract about
+nothing. Divide by a thousand before you show one to a person.
+
+Two things this list is and is not. It is a description of a model, useful for
+building a form or validating input before you spend a request finding out. It is
+not a filter on the API: a parameter absent from the list is still forwarded if
+you send it, and the provider still answers for it.
+
+## What is not on this page
+
+**A canonical list of every parameter the API accepts.** There is no such list,
+because there is no allowlist. The parameters are OpenAI's, plus whatever a
+provider takes, and the model detail above is the closest thing to a per-model
+answer.
+
+**Headers.** Nothing about how a request is served can be set from a header. See
+[Headers](/api-reference/headers).

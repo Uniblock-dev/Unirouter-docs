@@ -1,8 +1,9 @@
-export const FeatureStatus = ({ missing, instead }) => (
+export const FeatureStatus = ({ missing, feature, instead, detail, children }) => (
   <Info>
-    <strong>Not available yet: {missing}.</strong>
-    {instead ? ` ${instead}` : null} This page documents what the product does
-    today. When that changes, this page changes with it.
+    <strong>Not available yet: {missing ?? feature}.</strong>
+    {instead ?? detail ? ` ${instead ?? detail}` : null} This page documents what
+    the product does today. When that changes, this page changes with it.
+    {children}
   </Info>
 );
 

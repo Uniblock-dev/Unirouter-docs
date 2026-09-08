@@ -1,0 +1,138 @@
+---
+title: "OpenAI SDK for Python"
+description: "Point the official openai Python package at Uniblock with two constructor arguments, and where the request id shows up when a call fails."
+status: partial
+gates: ["2.3", "2.11"]
+---
+
+import FeatureStatus from '/snippets/feature-status.mdx';
+import RequestIdNote from '/snippets/request-id-note.mdx';
+
+<FeatureStatus
+  feature="the official-SDK compatibility proof"
+  detail="This page sets two constructor arguments on the official openai package and changes nothing else. We have not published a proof run of an unmodified SDK against the production hostname, so read this as instructions rather than as a certification."
+/>
+
+This is the reference case for every other page in this section. The official
+`openai` package takes its base URL as a constructor argument, so pointing it
+here is configuration rather than adaptation, and the rest of your code does not
+change.
+
+## The configuration
+
+```python
+import os
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://ai.uniblock.dev/v1",
+    api_key=os.environ["UNIBLOCK_API_KEY"],
+)
+
+response = client.chat.completions.create(
+    model="openai/gpt-4o-mini",
+    messages=[{"role": "user", "content": "Say hi in five words."}],
+)
+
+print(response.choices[0].message.content)
+```
+
+`base_url` and `api_key` are the whole change. Both also read from the
+environment if you would rather not pass them: the SDK reads `OPENAI_BASE_URL`
+and `OPENAI_API_KEY` when the arguments are absent, which is how you point an
+application you cannot edit at this API.
+
+**The `/v1` belongs in the value.** The SDK's own default is the full path
+`https://api.openai.com/v1`, and it builds a request by appending
+`/chat/completions` to whatever you configure. It does not add `/v1` for you. A
+base URL without it produces a `404` rather than an error that explains itself.
+
+## What is specific to this SDK
+
+**There is no default model, so there is nothing to un-pin.** `model` is a
+required argument on `chat.completions.create`, which means this SDK cannot send
+a bare id you did not write. It is the only library in this section where the
+pinned-id rule of the
+[integrations overview](/integrations/overview) costs you nothing beyond
+prefixing the ids you already had.
+
+**Nothing happens at construction.** `OpenAI(...)` makes no network call and
+validates nothing against the server, so a wrong base URL surfaces on your first
+request rather than at startup. The SDK never asks `GET /v1/models` on its own
+either. It reaches an endpoint only when your code calls the method for it.
+
+**A resource we do not serve raises rather than hangs.** Calling
+`client.embeddings.create(...)` against this base URL reaches a path this API
+does not serve for you, and the SDK turns the `404` into `openai.NotFoundError`.
+That is worth knowing because it is the one shape of failure that looks like a
+configuration mistake and is not: the base URL is right and the endpoint is
+absent. See [OpenAI compatibility](/get-started/openai-compatibility). A `404` is
+not in the SDK's retry set, so it fails on the first attempt rather than after a
+backoff.
+
+**The streamed usage line is skipped for you.** A streamed reply carries one SSE
+comment line before `data: [DONE]`. This SDK's stream decoder discards a line
+beginning with a colon, so it never reaches your loop:
+
+```python
+if line.startswith(":"):
+    return None
+```
+
+That is the behaviour the SSE specification requires, and it is quoted here from
+the SDK's own decoder rather than assumed from the specification.
+[Streaming](/concepts/streaming) documents what the line carries if you do want
+to read it.
+
+## Where the request id is
+
+<RequestIdNote />
+
+This SDK surfaces it without being taught to, because we set it on
+`x-request-id`, which is the header the SDK already reads:
+
+| Where | How to read it |
+|---|---|
+| A successful response | `response._request_id` |
+| A failed request | `error.request_id` on `openai.APIStatusError` |
+| Any error envelope | `request_id` inside the `error` object |
+
+```python
+from openai import APIStatusError
+
+try:
+    response = client.chat.completions.create(
+        model="openai/gpt-4o-mini",
+        messages=[{"role": "user", "content": "Say hi in five words."}],
+    )
+except APIStatusError as error:
+    body = error.response.json()["error"]
+    print(error.status_code, body["type"], body["code"], error.request_id)
+```
+
+Branch on `type` and `code`, never on the message text. The fields are the
+contract and the sentences are prose. `APIStatusError` also has the subclasses
+you already catch, so an unpinned model id arrives as `BadRequestError` and a
+refusal for credit arrives with status `402`. Every shipped code is in
+[errors](/concepts/errors).
+
+## What we did not verify
+
+**Checked, and where.** That `base_url` is the constructor argument and that its
+type is a string or an `httpx.URL`; that `OPENAI_BASE_URL` and `OPENAI_API_KEY`
+are the environment variables; that the constructor makes no network call; that
+`request_id` is read from the `x-request-id` response header; that the stream
+decoder discards comment lines. All of it was read from the `openai-python`
+repository on its main branch, in `src/openai/_client.py`,
+`src/openai/_exceptions.py` and `src/openai/_streaming.py`, plus that
+repository's own README.
+
+**Not checked.** That a call configured this way succeeds against our hostname.
+Nothing on this page has been executed. The base URL this site prints is not yet
+a host that answers, so there was nothing to run it against, and we would rather
+say that than let a page's silence imply a test that did not happen.
+
+**Not checked either.** Which SDK version each of these facts first held in. They
+were read from the current main branch and this page pins no version. If you are
+on an old release and `base_url` behaves differently, the library's own changelog
+is the authority and this page is not.

@@ -1,0 +1,146 @@
+---
+title: "LlamaIndex"
+description: "Use LlamaIndex's OpenAILike class with Uniblock, why the plain OpenAI class refuses our model ids before sending, and what to do about embeddings."
+status: partial
+gates: ["2.3", "2.11"]
+---
+
+import FeatureStatus from '/snippets/feature-status.mdx';
+
+<FeatureStatus
+  feature="the official-SDK compatibility proof"
+  detail="This page configures classes from a library we do not maintain and changes nothing else. We have not published a proof run against the production hostname, so read this as instructions rather than as a certification."
+/>
+
+LlamaIndex has two OpenAI classes and the difference between them matters here
+more than anywhere else in this section, because the wrong one fails before a
+request is ever sent. It also carries defaults for both the language model and
+the embedding model, and only one of those has a home on this API.
+
+## Use OpenAILike
+
+```python
+import os
+from llama_index.llms.openai_like import OpenAILike
+
+llm = OpenAILike(
+    model="openai/gpt-4o-mini",
+    api_base="https://ai.uniblock.dev/v1",
+    api_key=os.environ["UNIBLOCK_API_KEY"],
+    is_chat_model=True,
+    context_window=128000,   # take the model's real window from GET /v1/models
+)
+
+print(llm.complete("Say hi in five words."))
+```
+
+`OpenAILike` is described by its own documentation as a thin wrapper around the
+OpenAI model that makes it compatible with third-party tools providing an
+OpenAI-compatible API. That is this API, and this is the class to use.
+
+**The setting is called `api_base`, not `base_url`.** This is the one place in
+this section where the name differs from the underlying SDK's. LlamaIndex
+translates it to the SDK's `base_url` when it builds the client, and the
+environment fallback is `OPENAI_API_BASE`. The key is `api_key`, falling back to
+`OPENAI_API_KEY`. The `/v1` belongs in the value, as it does everywhere else
+here.
+
+**`is_chat_model=True` is not optional.** It defaults to `False` on this class,
+and a language model that does not know it is a chat model will not send a chat
+completion. Set `is_function_calling_model=True` as well if you want tool
+calling.
+
+## Why the plain OpenAI class does not work
+
+`llama_index.llms.openai.OpenAI` takes `api_base` too, so it looks like it should
+work, and it fails on our model ids specifically:
+
+**It validates the model name against a hardcoded list of OpenAI's own models.**
+Its `metadata` property calls `openai_modelname_to_contextsize`, which looks the
+name up in a dictionary of official OpenAI model names and raises `ValueError`
+for anything absent:
+
+```python
+if modelname not in ALL_AVAILABLE_MODELS:
+    raise ValueError(f"Unknown model {modelname!r}. Please provide a valid OpenAI model name...")
+```
+
+Every model id on this API is a `provider/model` pair, and no such string is in
+that dictionary. So the class refuses `openai/gpt-4o-mini` even though it would
+have accepted `gpt-4o-mini`, and it refuses it locally: this is a `ValueError`
+raised in your own process, not a `400` from us, and LlamaIndex reads `metadata`
+internally during a call, so it surfaces from an ordinary `complete` or `chat`
+rather than at construction.
+
+`OpenAILike` exists to get out of exactly this. It overrides `metadata` and uses
+the `context_window`, `is_chat_model` and `is_function_calling_model` you passed,
+with no lookup at all, which is why those arguments are the ones that class adds.
+
+## Embeddings, which are the other thing to set
+
+**LlamaIndex reaches for an OpenAI embedding model by default, and this API does
+not serve embeddings.** `Settings.embed_model` resolves lazily: read it without
+setting it and LlamaIndex constructs an `OpenAIEmbedding` for you. So indexing a
+document reaches an embeddings endpoint, under whatever base URL that class is
+configured with, without anybody asking it to.
+
+The consequence is worth stating plainly, because it is the shape of failure this
+framework produces here: your language model calls work, and then the first thing
+you index fails. Set the embedding model explicitly to something this API is not
+being asked to serve:
+
+```python
+from llama_index.core import Settings
+
+Settings.llm = llm             # the OpenAILike above
+Settings.embed_model = ...     # an embedding provider that is not this API
+```
+
+There is a default language model too, resolved the same way, and it is a plain
+OpenAI client rather than an `OpenAILike` one. Setting `Settings.llm` is what
+stops that default being constructed behind you, and if you skip it you get the
+hardcoded-model-list failure above from code you did not write.
+
+## Where the request id is
+
+LlamaIndex calls the OpenAI SDK directly and does not appear to wrap the
+exceptions it raises, so an error arrives as the SDK's own and the request id is
+where that SDK puts it: `error.request_id` on `openai.APIStatusError`, read from
+the `x-request-id` header we set. The
+[Python SDK page](/integrations/openai-sdk-python) covers the details.
+
+Retries are LlamaIndex's own, through a retry decorator around the SDK call. It
+handles when to retry rather than changing what the failure is.
+
+## What we did not verify
+
+**Checked, and where.** That the base URL argument is `api_base` on both classes
+and that the environment fallback is `OPENAI_API_BASE`; that `api_key` and
+`OPENAI_API_KEY` are the key and its fallback; that `OpenAILike` exists in
+`llama-index-llms-openai-like` and how its own documentation describes itself;
+that `is_chat_model`, `is_function_calling_model` and `context_window` are its
+distinguishing arguments and that `is_chat_model` defaults to `False`; that the
+plain `OpenAI` class validates through `openai_modelname_to_contextsize` against
+`ALL_AVAILABLE_MODELS` and raises for an absent name; that `OpenAILike` overrides
+`metadata` and performs no such lookup; that `Settings.embed_model` and
+`Settings.llm` resolve to OpenAI defaults when unset. Read from the
+`run-llama/llama_index` repository on its main branch, in the
+`llama-index-llms-openai` and `llama-index-llms-openai-like` integration
+packages and in `llama-index-core`'s settings, embeddings and LLM resolution
+modules, plus the published API reference for both classes.
+
+**Not checked.** That a call configured this way succeeds against our hostname.
+Nothing on this page has been executed, because the base URL this site prints is
+not yet a host that answers.
+
+**Not checked either.** Which exact embedding model the default resolves to. That
+the default is an `OpenAIEmbedding` and that it therefore reaches an embeddings
+endpoint was read from the resolution code; the specific model name it picks was
+not confirmed from the current source, and this page does not print one because
+the fact that matters is the endpoint rather than the name.
+
+**And not checked.** That LlamaIndex never wraps an SDK exception. The completion
+path we read shows no wrapping, and the retry decorator around it does not appear
+to change the exception type, but this was read from part of a large module rather
+than traced through every call path. If you are relying on catching the SDK's own
+class, catch `Exception` alongside it until you have seen your own version behave.

@@ -105,7 +105,7 @@ report.note(`${pages.length} page(s) in navigation, ${new Set(pages).size} uniqu
 
 // Reserved prefixes, so growth never forces a move (DOCS_PLAN.md section 15).
 //
-// `integrations/` was added when the coding-harness pages were written, and
+// `integrations/` was added with the framework and coding-harness pages, and
 // DOCS_PLAN.md section 15 was amended in the same change to reserve it, with the
 // pages catalogued in section 7.6. Section 15 reserves a prefix so that growth
 // inside it never forces a redirect, and a prefix added here is a deliberate

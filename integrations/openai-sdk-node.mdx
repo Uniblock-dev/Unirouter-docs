@@ -1,0 +1,141 @@
+---
+title: "OpenAI SDK for Node"
+description: "Point the official openai npm package at Uniblock with two constructor options, and the one browser setting to leave switched off."
+status: partial
+gates: ["2.3", "2.11"]
+---
+
+import FeatureStatus from '/snippets/feature-status.mdx';
+import RequestIdNote from '/snippets/request-id-note.mdx';
+
+<FeatureStatus
+  feature="the official-SDK compatibility proof"
+  detail="This page sets two constructor options on the official openai package and changes nothing else. We have not published a proof run of an unmodified SDK against the production hostname, so read this as instructions rather than as a certification."
+/>
+
+The official `openai` package for Node and TypeScript takes its base URL as a
+constructor option. The change is the same two settings as the
+[Python SDK](/integrations/openai-sdk-python), under the names this library uses.
+
+## The configuration
+
+```javascript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "https://ai.uniblock.dev/v1",
+  apiKey: process.env.UNIBLOCK_API_KEY,
+});
+
+const response = await client.chat.completions.create({
+  model: "openai/gpt-4o-mini",
+  messages: [{ role: "user", content: "Say hi in five words." }],
+});
+
+console.log(response.choices[0].message.content);
+```
+
+`baseURL` and `apiKey` are the whole change, and both fall back to
+`OPENAI_BASE_URL` and `OPENAI_API_KEY` in the environment when you omit them.
+
+**The `/v1` belongs in the value**, for the same reason it does in Python: the
+library's own default is `https://api.openai.com/v1` and it appends
+`/chat/completions` to what you configure. The two SDKs agree on this, so a base
+URL that works in one works in the other.
+
+## What is specific to this SDK
+
+**Leave `dangerouslyAllowBrowser` alone.** This SDK refuses to construct in a
+browser unless you pass that option, and the guard is worth more here than it is
+against OpenAI. A Uniblock key belongs to a workspace, spends prepaid credit, and
+cannot be scoped down to one page or one user, so a key that reaches a browser
+is a key that reaches everyone who loads that page. Put this client behind your
+own server and let the browser talk to that. Turning the option on to make an
+error go away is the one change on this page that costs real money.
+
+**There is no default model.** `model` is required on
+`chat.completions.create`, so this SDK cannot send a bare id you did not write.
+
+**Nothing happens at construction.** The constructor normalises options and
+throws on conflicting ones, and makes no network call, so a wrong base URL
+surfaces on the first request. The SDK never calls `GET /v1/models` unless your
+code does.
+
+**The streamed usage line is skipped for you.** A streamed reply carries one SSE
+comment line before `data: [DONE]`, and this library's decoder discards it:
+
+```javascript
+if (line.startsWith(':')) {
+  return null;
+}
+```
+
+Quoted from the SDK's own SSE decoder. Your `for await` loop never sees it.
+[Streaming](/concepts/streaming) documents the line.
+
+## Where the request id is
+
+<RequestIdNote />
+
+The property names differ from Python's, which is the detail that sends people
+looking:
+
+| Where | How to read it |
+|---|---|
+| A successful response | `response._request_id` |
+| A response plus its metadata | `const { data, request_id } = await client.chat.completions.create({...}).withResponse()` |
+| A failed request | `error.requestID` on `OpenAI.APIError` |
+| Any error envelope | `request_id` inside the `error` object |
+
+Note the capitalisation: the error carries `requestID` and the response carries
+`_request_id`. Both come from the same `x-request-id` header we set.
+
+```javascript
+try {
+  await client.chat.completions.create({
+    model: "openai/gpt-4o-mini",
+    messages: [{ role: "user", content: "Say hi in five words." }],
+  });
+} catch (error) {
+  if (error instanceof OpenAI.APIError) {
+    console.log(error.status, error.type, error.code, error.requestID);
+  }
+}
+```
+
+`APIError` parses `type`, `code` and `param` off the envelope onto the error
+object itself, so you can branch without reaching for the body. Branch on those
+rather than on the message text. Every shipped code is in
+[errors](/concepts/errors).
+
+**One caveat on that parsing.** Those properties are read from the JSON body, so
+they are `undefined` rather than wrong if a response ever arrives without one. A
+client that treats `error.code` as always present is making an assumption this
+API happens to satisfy today.
+
+## Endpoints this SDK can reach and this API does not serve
+
+Calling `client.embeddings.create(...)` against this base URL reaches a path this
+API does not serve for you, and the SDK raises `NotFoundError`. The base URL is
+not the problem when that happens. See
+[OpenAI compatibility](/get-started/openai-compatibility) for what does serve.
+
+## What we did not verify
+
+**Checked, and where.** That `baseURL` and `apiKey` are the constructor options
+and that `OPENAI_BASE_URL` and `OPENAI_API_KEY` are their environment fallbacks;
+that the constructor makes no network call; that `dangerouslyAllowBrowser`
+defaults off and what it guards; that `requestID` on `APIError` is read from the
+`x-request-id` header while a response carries `_request_id`; that the SSE
+decoder discards comment lines. Read from the `openai-node` repository on its
+master branch, in `src/client.ts`, `src/core/error.ts` and
+`src/core/streaming.ts`, plus that repository's own README.
+
+**Not checked.** That a call configured this way succeeds against our hostname.
+Nothing on this page has been executed, because the base URL this site prints is
+not yet a host that answers.
+
+**Not checked either.** What this SDK does with an error body that is not the
+envelope we send. The `undefined` caveat above is read off the constructor's
+source rather than observed, and no response from this API has ever been in that
+shape.
