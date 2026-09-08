@@ -491,6 +491,15 @@ Tracked here so writers meet them where the work is; each names its unblock cond
 
     **The rest of the range did not touch the public surface.** The control plane grew from 191 operations to 197 and every addition is `/admin` or `/api/me`: the auto router's four, the per route activity read, and the remembered parameter refusal. The gateway spec changed only the same `model` description prose. Six migrations arrived, `0106` through `0111`. Recorded in the internal site's unresolved findings as SF-59 through SF-64.
 
+
+22. **A refusal row can now carry `malformed_body` in the Model column, and what the Activity screen should show there is an owner call** (2026-09-08 pm sync, `a4075b4b..cb61a125`, seven commits). The public `/v1` surface did not move at all: `sync-source-spec` reports all eight operations hashing as they did at the last reviewed sync, so the lock was already correct and the artifact was already current, and the sync point moves on the check rather than on a change. No operation was added, removed or classified, so `overlay.public.json` is untouched.
+
+    What did move is one value a customer can see. `cb61a12` added `SLUG_MALFORMED_BODY`, the literal `malformed_body`, to the usage vocabulary in `SRC/services/control-plane/src/usage/vocabulary.ts`, and `SRC/services/control-plane/src/usage/modelSlug.ts` stores it as the model slug on a refusal row whose request body could not be parsed as JSON at all. A body that was readable but named no usable model keeps `unknown`, which is the distinction the new literal exists for. A caller that names the reserved string as its own model has it remapped to `unknown`, so a request cannot forge the mark. `modelSlug` is in `CUSTOMER_VISIBLE_USAGE_FIELDS`, so the row reaches a customer read and the dashboard's Activity table.
+
+    **`guides/view-activity.mdx` describes its Model column as "the model that was asked for", which a row reading `malformed_body` is not.** Nothing was rewritten in this pass, and the reason is that the honest options differ in what they promise about the screen: explaining a staff-facing sentinel to customers, rendering it as something else on the table, or leaving it and saying the column can carry a reason the request was unreadable. That is the owner's call and not a writer's. Unblock: the owner says what the Model column shows for an unparseable body. Recorded in the internal site's unresolved findings as `SF-71`.
+
+    **The rest of the range carried nothing public.** Neither OpenAPI spec moved and `services/control-plane/drizzle/` did not, so no migration number quoted anywhere is at risk. Epic 19, price source sync, was registered in the tracker with seven story rows and an optional retrospective, all `backlog` and no code landed, so no gate on this site moves. The remaining commits are the signals parser, an Activity-unrelated dashboard padding fix on the Models list, the build-spec citation checker and a garden pass, none of which changes a claim here.
+
 ---
 
 ## 15. Redirects, SEO, accessibility
