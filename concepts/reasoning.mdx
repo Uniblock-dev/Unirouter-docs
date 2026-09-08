@@ -1,0 +1,108 @@
+---
+title: "Reasoning models"
+description: "Reasoning tokens are counted, priced as their own kind, and reported separately. What to send, what you are charged, and why max_tokens matters more here."
+status: partial
+gates: ["18.62"]
+---
+
+Some model lines produce reasoning tokens before they answer: text the model
+generates to work through the problem, which you are usually not shown and are
+always charged for. Nothing about that changes here, but three things about it
+are worth stating, because reasoning is where a request costs more than it looks
+like it should.
+
+## Asking for it
+
+`reasoning_effort` is an ordinary field in the request body and travels to the
+provider as you wrote it, like every other parameter. So is anything else a
+provider takes to control how much thinking it does. There is no Uniblock control
+for reasoning and nothing of ours is added to your body.
+
+Which values a model accepts is the model's business, and a value it will not
+take comes back as the provider's own refusal rather than as one of ours. See
+[Request parameters](/api-reference/parameters).
+
+## Reasoning tokens are inside the completion count
+
+This is the sentence to read twice.
+
+```text
+completion = output + reasoning
+```
+
+Reasoning tokens are part of `completion_tokens`, not a figure to add to it. When
+a provider reports them, the count arrives separately as well, as a second view
+of tokens already counted:
+
+```text
+:x-uniblock-usage {"v":1,"reported":true,"prompt_tokens":40,"completion_tokens":900,"total_tokens":940,"reasoning_tokens":768}
+```
+
+In that line the model produced nine hundred completion tokens, of which the
+great majority were reasoning and the rest were the answer you saw. Adding
+`reasoning_tokens` to `completion_tokens` would count them twice.
+
+The same figure reaches your usage record and the Activity screen as the
+reasoning count for that request. See
+[Usage and metering](/concepts/usage-and-metering).
+
+**Absent is not zero.** `reasoning_tokens` is omitted rather than sent as `0`
+when the provider did not report it, so a missing field means we were not told
+rather than none were used. A model that does no reasoning at all produces a
+usage line without the field.
+
+## What reasoning costs
+
+Reasoning is one of the five kinds of token a model's rate is expressed in, and
+it earns a price of its own because providers price it separately:
+
+```text
+completion = output + reasoning
+```
+
+See [Models](/concepts/models) for the whole vocabulary, and read what a request
+actually cost from your usage record rather than from a rate.
+
+## `max_tokens` matters more here than anywhere else
+
+Two reasons, and they pull in opposite directions.
+
+**A reasoning model can spend your whole ceiling thinking.** Reasoning tokens
+count against `max_tokens` on most providers, so a ceiling that is comfortable
+for an ordinary model can be consumed before the answer starts. What you get then
+is a reply that is empty or cut off, with `finish_reason` reading `length`, and
+you have paid for the reasoning. Check `finish_reason` before you parse anything.
+
+**A request naming no ceiling holds the model's published maximum.** Credit is
+held against a ceiling while a request runs, and with no `max_tokens` in the body
+that ceiling is whatever the model publishes as its maximum output, which on a
+reasoning model is often large. The hold comes back in full at settlement and you
+are charged for what was produced, but while the request is in flight it occupies
+that much of your account spend rate cap. See
+[Rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+
+So send `max_tokens`, and send one with room for the thinking and the answer
+both.
+
+## Streaming a reasoning model
+
+The stream is the provider's. Where a provider emits reasoning as its own kind of
+delta, that delta reaches you unchanged, and where it emits nothing until the
+thinking is done, the first thing you see is a long pause. Nothing here fills
+that pause, and nothing times it out sooner than the request deadline.
+
+The counts arrive at the end, on the usage comment line, as they do for any
+stream. A stream cut off part way carries no usage line, because there are no
+final counts to report. See [Streaming](/concepts/streaming).
+
+## What this platform does not do
+
+**We do not hide or strip reasoning content.** What the provider sends is what
+you get. If a provider returns its reasoning in the body, it reaches you; if it
+withholds it and reports only the count, that is the provider's choice and not
+ours.
+
+**We do not choose an effort level for you.** A request that names none is sent
+naming none, and the provider's own default applies.
+
+**We do not re-count anything.** Every figure above is the provider's own.

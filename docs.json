@@ -29,9 +29,16 @@
             "group": "Core concepts",
             "pages": [
               "concepts/models",
+              "concepts/model-capabilities",
+              "concepts/model-lifecycle",
               "concepts/bring-your-own-key",
               "concepts/routing-profiles",
               "concepts/streaming",
+              "concepts/tool-calling",
+              "concepts/structured-outputs",
+              "concepts/image-inputs",
+              "concepts/reasoning",
+              "concepts/prompt-caching",
               "concepts/credits-and-billing",
               "concepts/usage-and-metering",
               "concepts/rate-limits-and-spend-controls",
@@ -57,6 +64,8 @@
           {
             "group": "Resources",
             "pages": [
+              "resources/migrate-from-openai",
+              "resources/faq",
               "resources/security",
               "resources/glossary"
             ]
@@ -71,6 +80,7 @@
             "pages": [
               "api-reference/introduction",
               "api-reference/authentication",
+              "api-reference/parameters",
               "api-reference/errors",
               "api-reference/headers"
             ]

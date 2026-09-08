@@ -2,7 +2,7 @@
 title: "OpenAI compatibility"
 description: "What OpenAI-compatible means here: the endpoints that exist today, the differences that are additive, and what a call to anything else returns."
 status: partial
-gates: ["2.3", "2.10", "2.11"]
+gates: ["2.3", "2.10", "2.11", "13.9"]
 ---
 
 import FeatureStatus from '/snippets/feature-status.mdx';
@@ -11,7 +11,8 @@ import BaseUrl from '/snippets/base-url.mdx';
 "OpenAI-compatible" here means three specific things, and it is worth being
 exact about each of them rather than leaving you to find the edges by calling.
 
-1. The request and response bodies are OpenAI's, unchanged.
+1. The request and response bodies are OpenAI's, and travel unchanged but for
+   two rewrites named below.
 2. Errors arrive in the OpenAI error envelope, so your existing error handling
    parses them.
 3. What we add is additive: extra response headers and one SSE comment line,
@@ -65,15 +66,28 @@ method together.
 
 ## Request parameters
 
-The chat completion body is forwarded as you sent it. We neither parse it nor
-rebuild it, and there is no request schema of ours in front of it, so a parameter
-your client already sends works without waiting for us to add it. A body the
-provider rejects comes back as the provider's own OpenAI-shaped error.
+The chat completion body is forwarded as you sent it. There is no request schema
+of ours in front of it and no allowlist of parameters, so a parameter your client
+already sends works without waiting for us to add it. A body the provider rejects
+comes back as the provider's own OpenAI-shaped error.
+
+Two fields are read on the way through, both to work out what the request could
+cost before it is sent: `model`, and `max_tokens` or `max_completion_tokens`.
+Reading one does not change it.
+
+Two rewrites exist, and they are the whole list. A request naming a routing
+profile or `unirouter/auto` has its `model` replaced with the model being tried
+on that attempt, because that is what a route means. And a request that names no
+output ceiling, sent to a provider whose own API refuses a request without one,
+has `max_tokens` filled in with the model's published maximum output, which is
+the figure credit was already being held against. Every other provider is sent
+your body without the field. [Request parameters](/api-reference/parameters)
+covers both in full.
 
 Two consequences worth stating:
 
-- We add no parameters of our own to the body. There is nothing Uniblock-specific
-  to put in a request.
+- Nothing Uniblock-specific belongs in a request. There is no parameter of ours
+  to send, and no header can change how a request is served.
 - `max_tokens` is worth sending even though it is optional. It is what sizes the
   amount we hold against your balance before the call, so a request without it is
   held at a larger estimate and reaches your account spend rate cap sooner. See

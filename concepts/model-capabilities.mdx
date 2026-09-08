@@ -1,0 +1,101 @@
+---
+title: "Model capabilities"
+description: "The catalog answers five questions about every model in three words each, and why unknown is not the same answer as no."
+status: partial
+gates: ["18.13", "18.40"]
+---
+
+Models differ in what they will accept, not just in what they cost. Every entry
+in the catalog carries a `capabilities` object saying what this one can do, so
+you can decide before you spend a request finding out.
+
+## The five words
+
+```json
+{
+  "capabilities": {
+    "streaming": "yes",
+    "tools": "yes",
+    "json_mode": "yes",
+    "vision": "yes",
+    "audio": "no"
+  }
+}
+```
+
+It rides inside the `uniblock` block on every entry from `GET /v1/models` and on
+`GET /v1/models/{id}`.
+
+| Word | The question it answers |
+|---|---|
+| `streaming` | Will `"stream": true` produce server-sent events? See [Streaming](/concepts/streaming). |
+| `tools` | Does it take a `tools` array and answer with `tool_calls`? See [Tool calling](/concepts/tool-calling). |
+| `json_mode` | Does it take a `response_format`? See [Structured outputs](/concepts/structured-outputs). |
+| `vision` | Does it take an image part in a message? See [Image inputs](/concepts/image-inputs). |
+| `audio` | Does it take audio input? |
+
+## Three answers, not two
+
+Each word is `yes`, `no`, or `unknown`, and the third one is the point.
+
+**`unknown` is not `no`.** It means nobody has established the answer for this
+model yet, not that the answer is negative. A model whose capabilities are all
+`unknown` is a model we have not learned anything about, not a model that can do
+nothing.
+
+The alternative would be to guess, and a guessed `no` is the worse mistake of the
+two: it hides a model that would have worked, silently, from everybody who
+filters on the field. So the catalog says it does not know.
+
+What that means for your code:
+
+- **Filtering on `=== "yes"`** gives you the models we can vouch for, and skips
+  some that would have worked.
+- **Filtering on `!== "no"`** gives you everything not ruled out, and includes
+  some that will fail.
+- **Branching on truthiness** is the bug this field exists to prevent. All three
+  values are non-empty strings.
+
+## A capability is a description, not a gate
+
+Nothing on the request path checks your request against these words. If you send
+an image to a model whose `vision` is `no`, the request is forwarded and the
+provider refuses it in its own words, on its own status. We do not pre-empt that
+with a refusal of our own, and we do not translate the one you get.
+
+This is the same rule as everywhere else on the request path: your body reaches
+the provider as you wrote it, and the provider answers for it. See
+[Request parameters](/api-reference/parameters).
+
+The practical consequence is that the catalog is worth reading at the point where
+you *choose* a model, not at the point where you send. Choosing on the word is
+cheap. Discovering the answer from a failed request costs you a round trip, and
+tells you about one provider's copy of the model rather than about the model.
+
+## Where capabilities come from
+
+A capability word is a recorded answer rather than a claim we make. It is
+established from what a model's own sources publish and from what we observe
+when a model is exercised, and where those disagree, the stronger evidence wins.
+A word with no evidence behind it stays `unknown` rather than taking a default.
+
+Two things follow from that, and both are worth knowing before you build on the
+field:
+
+- **A word can change without the model changing.** New evidence about an
+  existing model moves the word. Read the catalog rather than caching it
+  indefinitely.
+- **The word describes the model as this catalog holds it**, which is not a
+  promise from the provider. It is the best answer available, said plainly, with
+  `unknown` used where there is no answer rather than a confident wrong one.
+
+## What is not here
+
+**A capability matrix in this documentation.** Which models can do what is a live
+fact that changes without a release on our side, so it belongs in the catalog and
+not on a page that would be wrong the first time it moved. Ask
+`GET /v1/models`.
+
+**Per-provider capability detail.** A model served by two providers is two
+entries with two ids, and each carries its own answer. There is no finer view
+than that on the public API today.

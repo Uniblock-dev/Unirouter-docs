@@ -1,0 +1,143 @@
+---
+title: "Tool calling"
+description: "Send a tools array and read tool_calls back, exactly as you would from OpenAI. What travels, what it costs, and what this platform does not do."
+status: partial
+gates: ["18.40"]
+---
+
+Tool calling here is OpenAI's tool calling. You send a `tools` array in the
+request body, the model answers with `tool_calls`, your code runs the tool and
+sends the result back as a `tool` message. Nothing about that loop changes when
+the request goes through Uniblock.
+
+This page is the short list of things that are worth knowing anyway.
+
+## What travels
+
+`tools`, `tool_choice` and `parallel_tool_calls` are ordinary body fields, and
+the body reaches the provider as you wrote it. There is no schema of ours in
+front of yours, so a tool definition your client already builds works without
+waiting for us to add anything.
+
+The reply comes back the same way. On a response that is not streamed,
+`choices[0].message.tool_calls` is the provider's own array, unchanged. On a
+streamed response, `tool_calls` arrive in `choices[0].delta` and the stream ends
+with `finish_reason` set to `tool_calls`, exactly as your existing streaming
+parser expects.
+
+<CodeGroup>
+
+```bash curl
+curl https://ai.uniblock.dev/v1/chat/completions \
+  -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "openai/gpt-4o-mini",
+    "messages": [{"role": "user", "content": "What is the weather in Oslo?"}],
+    "tools": [{
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "Current weather for a city.",
+        "parameters": {
+          "type": "object",
+          "properties": {"city": {"type": "string"}},
+          "required": ["city"]
+        }
+      }
+    }]
+  }'
+```
+
+```python Python
+response = client.chat.completions.create(
+    model="openai/gpt-4o-mini",
+    messages=[{"role": "user", "content": "What is the weather in Oslo?"}],
+    tools=[{
+        "type": "function",
+        "function": {
+            "name": "get_weather",
+            "description": "Current weather for a city.",
+            "parameters": {
+                "type": "object",
+                "properties": {"city": {"type": "string"}},
+                "required": ["city"],
+            },
+        },
+    }],
+)
+
+for call in response.choices[0].message.tool_calls or []:
+    print(call.function.name, call.function.arguments)
+```
+
+</CodeGroup>
+
+## Which models take tools
+
+Ask the catalog. Every entry carries a `tools` word in its `capabilities` block,
+answering `yes`, `no` or `unknown`. See
+[Model capabilities](/concepts/model-capabilities), and read the part about
+`unknown` before you filter on it.
+
+The word is a description and not a gate. A `tools` array sent to a model that
+does not take one is forwarded, and what you get back is the provider's own
+refusal in the provider's own words. We do not pre-empt it, so the useful place
+to check the word is where you choose the model.
+
+## What a tool-calling loop costs
+
+A loop is several requests, and each one is a request in every sense that
+matters here: it is charged, it lands in Activity as its own row, and it counts
+against your key's request rate and your account spend rate cap.
+
+Two consequences that surprise people:
+
+**Your tool definitions are prompt tokens, on every turn.** They are part of the
+body you send each time round the loop, so a large `tools` array is a cost you
+pay per turn rather than once. The token counts you get back are the provider's
+own and already include them.
+
+**A turn that only calls a tool still produces output tokens.** The `tool_calls`
+array is generated text. A loop that runs several turns before answering has
+paid for every one of them.
+
+Send `max_tokens` on each turn. It is what sizes the credit held while a request
+runs, and a loop holds credit several times over. See
+[Rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+
+## Errors in the middle of a loop
+
+Everything on [Errors](/concepts/errors) applies unchanged, and one habit is
+worth building. A loop that retries blindly on any failure can spend real credit
+turning one broken tool definition into a long conversation with itself. Branch
+on `type` and `code`: a `400` will fail identically on retry, and a `429` with
+`rate_limit_exceeded` carries `Retry-After`.
+
+Hold the request id from each turn. When a loop goes wrong, the useful question
+is which turn, and the id is what answers it.
+
+## What this platform does not do
+
+**We do not run tools for you.** There are no hosted tools, no web search, no
+code execution, no sandbox. Every tool in your `tools` array is executed by your
+own code, and the only thing on our side is the request that carries it. If a
+provider offers a tool that runs on the provider's own side, that is between your
+body and that provider.
+
+**We do not repair tool arguments.** A model that emits arguments which do not
+match your schema emits them to you unchanged. Nothing here validates the
+arguments against the schema you sent, and nothing retries to get a better
+answer.
+
+**We do not remember a conversation.** Every request carries its whole
+`messages` array, tool results included. Nothing is stored on our side between
+turns, which is the same fact as [Data and privacy](/concepts/data-and-privacy)
+seen from a different angle.
+
+## What we did not verify
+
+The examples above are written from the request and response shapes this API
+forwards, not transcribed from a recorded run against the production hostname.
+They are OpenAI's own shapes, and the forwarding is what this page documents, but
+we would rather say which of those two things we checked.
