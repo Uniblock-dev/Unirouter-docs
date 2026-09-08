@@ -70,7 +70,13 @@
               "integrations/vercel-ai-sdk",
               "integrations/langchain",
               "integrations/llamaindex",
-              "integrations/pydantic-ai"
+              "integrations/pydantic-ai",
+              "integrations/coding-harnesses",
+              "integrations/cline",
+              "integrations/continue",
+              "integrations/aider",
+              "integrations/zed",
+              "integrations/opencode"
             ]
           },
           {

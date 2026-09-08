@@ -104,17 +104,22 @@ for (const page of pages) {
 report.note(`${pages.length} page(s) in navigation, ${new Set(pages).size} unique`);
 
 // Reserved prefixes, so growth never forces a move (DOCS_PLAN.md section 15).
+//
+// `integrations/` was added with the framework and coding-harness pages, and
+// DOCS_PLAN.md section 15 was amended in the same change to reserve it, with the
+// pages catalogued in section 7.6. Section 15 reserves a prefix so that growth
+// inside it never forces a redirect, and a prefix added here is a deliberate
+// decision that these paths are permanent, which is exactly the human decision
+// the failure below exists to force. A prefix in this list and not in section 15
+// is the divergence this comment exists to prevent.
 const RESERVED = [
   'index',
   'get-started/',
   'concepts/',
   'guides/',
+  'integrations/',
   'resources/',
   'api-reference/',
-  // Added with the framework integration pages. One page per framework, so the
-  // prefix is what keeps a seventh from landing in resources/ and a move later
-  // from breaking a published path.
-  'integrations/',
 ];
 for (const page of pages) {
   if (!RESERVED.some((prefix) => page === prefix || page.startsWith(prefix))) {

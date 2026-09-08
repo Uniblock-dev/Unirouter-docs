@@ -1,0 +1,105 @@
+---
+title: "Cline"
+description: "Point Cline's OpenAI Compatible provider at Uniblock: the Base URL field, the model id, and the model metadata Cline asks you for."
+status: partial
+gates: ["2.3", "2.11"]
+---
+
+import { FeatureStatus } from '/snippets/feature-status.mdx';
+
+[Cline](https://cline.bot) is a VS Code extension that edits your code through a
+tool-calling loop. Read [coding harnesses](/integrations/coding-harnesses)
+first: the model id edit and the spend rate cap are the same on every harness and
+are not repeated here.
+
+<FeatureStatus
+  missing="a proof run of Cline against the production hostname"
+  instead="The settings below were read from the extension's own provider component and its model-refresh handler in the cline/cline repository on 2026-09-08, at the commit its main branch then pointed at. No Cline session has been run against this API."
+/>
+
+## The configuration surface
+
+In Cline's settings, choose the provider named **OpenAI Compatible**. It then
+shows a **Base URL** field, an **API Key** field and a **Model ID** field.
+
+**Cline does not append `/v1`.** Its model-refresh handler appends only `/models`
+to whatever you type, so the value you paste has to carry the version segment
+itself:
+
+```text Base URL
+https://ai.uniblock.dev/v1
+```
+
+Paste the key into **API Key**. Cline reads no environment variable for this
+provider: configuration is through the extension, and the settings it writes live
+under your home directory rather than in the repository. `.clinerules` in a
+project is an instructions file Cline reads into its prompt, not a place
+credentials go.
+
+## The model id
+
+**Model ID** is the field, and it takes an arbitrary string, so a pinned id goes
+in as it is:
+
+```text Model ID
+openai/gpt-4o-mini
+```
+
+The field is a dropdown when Cline has fetched a model list and a plain text box
+when it has not, and it always offers a **Use custom model ID** option, so you
+are never blocked by the list.
+
+## Cline will show you our catalog
+
+This is the one behaviour on this page worth knowing in advance. When you change
+the Base URL or the API Key, Cline calls `GET` on `/models` under the base URL
+you gave it, with your key on an `Authorization` header, and populates the Model
+ID dropdown from what comes back.
+
+That call is [`GET /v1/models`](/concepts/models). So the dropdown fills with our
+catalog rather than with a vendor's list, already in the pinned `provider/model`
+shape, and picking from it gives you a valid id without typing one. It also means
+the list is only as long as what your key can call, which is the intended
+behaviour rather than a truncated view.
+
+## The model metadata Cline asks you for
+
+The OpenAI Compatible provider has a **Model Configuration** section, and the
+fields in it are ones Cline cannot discover for a model it does not recognise:
+**Supports Images**, **Context Window Size**, **Max Output Tokens**, **Input
+Price** and **Output Price** per million tokens, and **Temperature**.
+
+Two of those matter here.
+
+**Max Output Tokens is the spend rate cap lever.** Cline sends `max_tokens` on
+its requests by default, and that figure is what sizes the amount we hold against
+your balance before the call. Setting it to something realistic for the work,
+rather than leaving it at whatever it defaults to, is what keeps the cap from
+binding. See [rate limits and spend
+controls](/concepts/rate-limits-and-spend-controls).
+
+**The price fields are Cline's own display, not our billing.** They drive the
+cost figure Cline shows you in its chat. What a request actually cost is in your
+usage record, which is computed from the rates in force when the request ran.
+Filling them in wrongly gives you a wrong number in the extension and changes
+nothing about the charge.
+
+Take the context window and maximum output for a model from
+`GET /v1/models`, which publishes both per model, rather than guessing.
+
+## What we did not verify
+
+- That a Cline session against this API succeeds. Nothing was run.
+- Whether Cline has any feature that calls an embeddings endpoint. Cline's own
+  writing says it indexes no codebase and uses no embeddings or vector store,
+  reading files directly instead, and we found no embeddings call while reading
+  the provider path. We did not audit the whole extension for one, so we do not
+  state it as a fact about the current version. If a feature of it fails against
+  this API, [no embeddings endpoint](/integrations/coding-harnesses) is the first
+  thing to check.
+- Whether the extension's documentation still matches its source. It listed a
+  capability toggle we could not find in the component, so where the two
+  disagree we went with the source and you may see a different set of fields.
+- Anything about prompt caching on this provider path. We found no caching
+  mechanism in it and no setting for one, which is an absence rather than a
+  confirmed negative.

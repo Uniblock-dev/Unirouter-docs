@@ -330,6 +330,19 @@ All guides share: source of truth is the shipped screen in `SRC/apps/dashboard/s
 - Source: `uniblockUsage.ts` + test; `FORWARDED_DIAGNOSTIC_HEADERS` in `inference/core.ts`; AD-14/AD-16; decision `the-gateway-does-not-copy-rate-limit-headers.md`.
 - Acceptance: documents exactly the shipped allowlist (re-read `FORWARDED_DIAGNOSTIC_HEADERS` at publication); `x-uniblock-served-by` added only when Story 2.13 lands it (§14 item 1); `x-uniblock-last-used-option-index` and `x-uniblock-config` never appear (internal); explicitly states provider rate-limit headers are not forwarded; the `upstream` field is never documented (reserved, no producer, by decision).
 
+### 7.6 Integrations
+
+Added 2026-09-08, after the catalog above was first written. A reader arriving from a client library or a coding agent asks a question none of the pages above answers: what do I put in this tool's configuration file. These pages carry that and nothing else, so a fact about the product lives on its concept page and is linked to rather than restated here.
+
+**`integrations/overview.mdx`** and the per-client pages · PARTIAL
+- Purpose: one page per OpenAI-compatible client this API is pointed at, each naming the two settings that change (base URL, key), the model-id form that client needs, and the settings of that client which route a request somewhere this site does not document.
+- Source of truth: each client's own published configuration reference, named on the page, plus this site's own concept pages for every product fact.
+- Acceptance: no page here restates a rate, a limit or an error contract that a concept page owns; every claim about a client's behaviour that was not verified against a run says so in as many words; no page predicts what an endpoint this site does not document answers.
+
+**`integrations/coding-harnesses.mdx`** and the per-harness pages · PARTIAL
+- Purpose: what is true of every coding agent pointed at this API (pinned model ids, the spend rate cap, one billed request per turn), then one page per harness for its own configuration file.
+- Acceptance: as above, plus no harness page claims a closed set of accepted `model` forms; [Models](/concepts/models) owns that list.
+
 **Endpoint pages** · generated from the OpenAPI artifact (§8): `POST /v1/chat/completions` (WRITE-NOW), `GET /v1/models` and `GET /v1/models/{id}` (WRITE-NOW with the §14 item 2 caveat resolved), `POST /v1/completions` and `POST /v1/embeddings` (BLOCKED on Story 2.10), `POST /v1/responses` (BLOCKED on Story 2.22).
 
 ---
@@ -504,7 +517,7 @@ Tracked here so writers meet them where the work is; each names its unblock cond
 
 ## 15. Redirects, SEO, accessibility
 
-**Redirects**: none at launch (greenfield site). Standing rule: once published, a path is permanent; moves ship with a `redirects` entry in docs.json in the same PR (CI check, §16). Reserve stable prefixes now (`/api-reference/*`, `/concepts/*`, `/guides/*`, `/get-started/*`, `/resources/*`) so growth never forces a move.
+**Redirects**: none at launch (greenfield site). Standing rule: once published, a path is permanent; moves ship with a `redirects` entry in docs.json in the same PR (CI check, §16). Reserve stable prefixes now (`/api-reference/*`, `/concepts/*`, `/guides/*`, `/get-started/*`, `/resources/*`) so growth never forces a move. `/integrations/*` joined that list on 2026-09-08 with the pages in §7.6; `scripts/check-docs-json.mjs` holds the same list and fails any path outside it, so the two are changed together or not at all.
 
 **SEO**: every page carries frontmatter `title` (verb-led for guides, noun-led for concepts) and `description` (one sentence, under 160 chars, stating the page's claim, not marketing). The phrase to own organically: "OpenAI-compatible LLM router" plus "base URL" migration terms; the index and compatibility pages carry them naturally. `noindex` on nothing (all pages are public by design); sitemap and canonical handled by Mintlify defaults once the hostname exists (§14 item 9). No structured-data investment in v1.
 
