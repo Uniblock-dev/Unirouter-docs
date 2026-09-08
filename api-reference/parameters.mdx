@@ -19,9 +19,16 @@ could cost before it is sent:
 | `model` | To find the provider, the rate, and whether we can serve it at all. |
 | `max_tokens`, or `max_completion_tokens` | To size the credit held while the request runs. When both are present, the larger is used. |
 
-Neither read changes the field. A value this cannot make sense of falls back to
-being treated as absent rather than being corrected, and the provider answers
-for its own body.
+Neither read changes the field, and the two fields answer differently when the
+value cannot be made sense of.
+
+A ceiling this cannot read falls back to being treated as absent rather than
+being corrected, so credit is held at the model's published maximum output and
+the provider answers for its own body. `model` has no such fallback: it is the
+one field admission cannot proceed without, so a missing model and a model id in
+a shape this does not accept are both refused here, before any provider is
+called. Both refusals are in [The refusals that are ours](#the-refusals-that-are-ours)
+below, and both name a `param`, which is how you tell them from the provider's.
 
 ## What is rewritten
 

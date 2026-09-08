@@ -2,7 +2,7 @@
 title: "Usage and metering"
 description: "What Uniblock records for every request, what it never records, when the figures appear, and how long they are kept."
 status: partial
-gates: ["5.4", "5.11", "5.12"]
+gates: ["5.4", "5.11", "5.12", "18.62"]
 ---
 
 import RequestIdNote from '/snippets/request-id-note.mdx';
@@ -30,6 +30,9 @@ single request lookup return them:
 | `promptTokens` | Input tokens counted, or null where no count arrived. |
 | `completionTokens` | Output tokens counted, or null where no count arrived. |
 | `totalTokens` | The sum of the two, or null. |
+| `cacheReadTokens` | Input tokens served from the provider's cache, or null where the provider reported no cache accounting at all. |
+| `cacheWriteTokens` | Input tokens written into that cache, or null on the same terms. |
+| `reasoningTokens` | Reasoning tokens, which are part of `completionTokens` rather than additional to them, or null where none were reported. |
 | `streamed` | Whether the reply was streamed. |
 | `costMinor` | What this request charged, in integer minor units. Null means it was never priced. |
 | `latencyMs` | The total time you waited, in milliseconds. |

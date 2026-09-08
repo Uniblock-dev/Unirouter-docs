@@ -91,6 +91,18 @@ claims:
     source: "PRD FR-11, FR-13"
     status: shipped
 
+  - id: catalog-capability-count
+    value: "five"
+    means: "How many capability words a catalog entry carries: streaming, tools, json_mode, vision and audio."
+    source: "packages/wire/src/models.ts (CatalogCapabilities)"
+    status: gated
+    gate: "18.13, 18.40"
+    used_by:
+      - concepts/model-capabilities
+      - resources/glossary
+      - resources/faq
+    note: "Registered in its own right rather than leaning on keys-per-workspace, which shares the token and means something unrelated. If the capability map gains a word, this claim is what the sweep finds."
+
   - id: key-secret-length
     value: "43"
     means: "Base64url characters after the environment prefix in an API key."

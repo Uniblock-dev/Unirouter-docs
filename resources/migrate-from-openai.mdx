@@ -70,7 +70,7 @@ curl https://ai.uniblock.dev/v1/models \
 
 | What | Why it survives |
 |---|---|
-| Your request bodies | Forwarded as you sent them. Nothing here parses or rebuilds them. |
+| Your request bodies | Forwarded as you sent them, with two named exceptions: `model` is replaced with the model being tried when you asked for a route rather than a model, and `max_tokens` is filled in when you named no ceiling and the provider's own API refuses a request without one. Nothing else is parsed or rebuilt. See [Request parameters](/api-reference/parameters). |
 | Your response handling | The reply is the OpenAI chat completion shape. |
 | Your streaming loop | Server-sent events in the same format, ending in the same `data: [DONE]`. |
 | Your error handling | The same envelope, the same closed set of `type` values, the same statuses. |
@@ -78,10 +78,11 @@ curl https://ai.uniblock.dev/v1/models \
 
 ## What is different
 
-**Endpoints.** `POST /v1/chat/completions` and `GET /v1/models` are the whole
-public surface. A call to any other path under `/v1` is a `404` with code
-`unknown_url` rather than a surprise. If your application calls embeddings or
-the legacy completions endpoint, that call has no home here yet. See
+**Endpoints.** The operations this site documents are
+`POST /v1/chat/completions`, `GET /v1/models` and `GET /v1/models/{id}`. That is
+the inventory to port against: if your application calls anything else, this site
+does not yet describe what it does here, so treat those call sites as unanswered
+rather than as either working or refused. See
 [OpenAI compatibility](/get-started/openai-compatibility).
 
 **Headers you send.** Only `Authorization` and `Content-Type` are read. Nothing
@@ -126,9 +127,9 @@ rate cap sooner.
     Two settings, both above. Keep the key in the environment rather than in
     source.
   </Step>
-  <Step title="Find any call to an endpoint that is not served here">
-    Embeddings and text completions return `unknown_url`. Decide what those call
-    sites do before you cut over rather than after.
+  <Step title="Find any call to an endpoint this site does not document">
+    Anything beyond chat completions and the two catalog reads is undocumented
+    here. Decide what those call sites do before you cut over rather than after.
   </Step>
   <Step title="Stop reading provider rate-limit headers">
     If your pacing depends on them, move it onto `429` codes and `Retry-After`.
