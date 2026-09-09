@@ -35,11 +35,15 @@ for a key we will not accept, and what a key does and does not grant.
 | Route | What it does |
 |---|---|
 | `POST /v1/chat/completions` | Call a model. Streamed or not, depending on `stream` in your body. |
+| `POST /v1/responses` | Call a model in the OpenAI Responses format. Streamed or not. |
 | `GET /v1/models` | List the models available to call. |
+| `GET /v1/models/{id}` | Read one model's entry. |
 
-Any other path under `/v1` answers `404` with the code `unknown_url` in the
-standard error body, so an endpoint we do not serve fails the same way every
-time rather than in a new way per path.
+Any other path under `/v1` answers `404` with the code
+`endpoint_not_supported` in the standard error body, so an endpoint we do not
+serve fails the same way every time rather than in a new way per path. A method
+we do not serve on a path we do is different: that is a `405` with
+`method_not_allowed` and an `Allow` header.
 
 The dashboard has its own private API behind your browser session. It is not an
 integration surface, it is not documented here, and it is not covered by
