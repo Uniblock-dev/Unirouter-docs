@@ -9,6 +9,11 @@
     "dark": "#00786a"
   },
   "favicon": "/favicon.svg",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg",
+    "href": "/"
+  },
   "appearance": {
     "default": "dark",
     "strict": false
