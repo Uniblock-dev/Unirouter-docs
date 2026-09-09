@@ -1,0 +1,83 @@
+---
+title: "Claude Code"
+description: "What Claude Code needs from an endpoint, why this API's published surface is not it yet, and the settings to know when that changes."
+status: partial
+gates: ["2.3"]
+---
+
+import { FeatureStatus } from '/snippets/feature-status.mdx';
+
+[Claude Code](https://code.claude.com/docs) is Anthropic's terminal coding
+agent. It can be pointed at a custom endpoint, and people do point it at
+gateways, so it is a reasonable thing to try here. It will not work here yet,
+and this page says exactly why and exactly what it would take.
+
+<FeatureStatus
+  missing="an Anthropic Messages endpoint on this API's published surface"
+  instead="Claude Code speaks the Anthropic Messages API and nothing else. This site publishes the OpenAI chat completions and Responses surfaces, and it publishes nothing about a Messages endpoint. Until it does, there is no base URL you can give Claude Code that this site can tell you the behaviour of."
+/>
+
+## The one thing that decides it
+
+Claude Code does not speak OpenAI chat completions. Anthropic's own gateway
+documentation lists exactly three client formats it will use, and the one
+selected by a custom base URL is the Anthropic Messages API, posted to
+`/v1/messages` on whatever origin you give it. There is no OpenAI-compatible
+mode, and Anthropic states that it does not support routing Claude Code to
+non-Claude models through a gateway.
+
+So this is not a configuration problem. Pointing Claude Code at the base URL
+that works for every other harness on this site sends it to an endpoint this
+site does not publish, and nothing on these pages tells you what comes back.
+
+**What would change it:** a Messages endpoint on the published surface, in the
+tracker, shipped. When that lands this page stops being a warning and becomes a
+configuration page, and the settings below are the ones it will use.
+
+## What Claude Code would need, and where this API already agrees
+
+Worth writing down, because two of these are already true here and are the parts
+people usually get wrong.
+
+**The base URL is an origin, with no `/v1`.** Claude Code appends `/v1/messages`
+itself, along with a query string. Every other harness on this site wants the
+`/v1` included, so this one is the exception rather than the rule, and pasting
+the value from another page would be wrong twice over.
+
+**The credential goes in `ANTHROPIC_AUTH_TOKEN`, not `ANTHROPIC_API_KEY`.**
+The two are not aliases: `ANTHROPIC_AUTH_TOKEN` sends `Authorization: Bearer`,
+and `ANTHROPIC_API_KEY` sends `x-api-key`. This API reads `Authorization:
+Bearer` and nothing else, so `ANTHROPIC_AUTH_TOKEN` is the one that would be
+read here, and it is also the one Anthropic recommends for a third-party
+gateway. [Authentication](/get-started/authentication) covers the header.
+
+**Model ids would not be a problem.** Anthropic states that Claude Code's model
+id check runs only against Anthropic's own API, and that behind a custom base
+URL the gateway defines the names, so any string is passed through. A slashed,
+provider-prefixed id is explicitly supported, which is the shape this API needs.
+There are several ids to pin rather than one: a session model, and separate
+family settings of which the small fast one drives background work.
+
+**Token counting would not be a problem either.** Claude Code will use a
+token-counting endpoint when one exists and count through the inference
+endpoint when one does not. Its absence costs requests, not correctness.
+
+**Streaming would be mandatory, with keep-alive frames.** Claude Code reads the
+stream as it arrives and gives up on one that goes quiet, counting keep-alive
+frames as traffic. A response assembled and sent in one piece stalls it.
+
+## What we did not verify
+
+- Anything about a Messages endpoint on this platform. This site publishes
+  none, so this page makes no claim about one, including no claim about what a
+  request to that path does today.
+- That any Claude Code session against this API succeeds or fails in any
+  particular way. Nothing was run.
+- Whether Claude Code's adaptive thinking field would be accepted. Claude Code
+  sends it without a matching beta header for model names it does not
+  recognise, which includes any id a gateway defines, and an endpoint that
+  rejects it answers `400` naming the field. Claude Code has a setting that
+  turns it off. We have not tested the interaction.
+- Which of the model settings a working configuration would actually need to
+  pin. Anthropic's documentation does not state a number and we are not going
+  to invent one.

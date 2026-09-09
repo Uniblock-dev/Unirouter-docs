@@ -76,7 +76,11 @@
               "integrations/continue",
               "integrations/aider",
               "integrations/zed",
-              "integrations/opencode"
+              "integrations/opencode",
+              "integrations/codex-cli",
+              "integrations/cursor",
+              "integrations/claude-code",
+              "integrations/t3-code"
             ]
           },
           {

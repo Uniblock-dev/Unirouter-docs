@@ -37,7 +37,8 @@ example value for a compatible endpoint, so this comes from the mechanism rather
 than from a quoted example: the endpoint path is appended to what you give it.
 The project carries a report of a version where the segment was dropped from the
 outgoing path and requests answered `404` as a result, so if every request comes
-back `404` with `unknown_url`, print the path Aider is calling before assuming
+back `404` with `endpoint_not_supported`, print the path Aider is calling before
+assuming
 the key or the model is wrong.
 
 ## The three models

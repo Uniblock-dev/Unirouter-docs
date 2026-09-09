@@ -1,16 +1,20 @@
 ---
 title: "Coding harnesses"
-description: "What is true of every coding agent you point at this API: pinned model ids, no embeddings, the spend rate cap, and one billed request per turn."
+description: "What is true of every coding agent you point at this API: which wire it speaks, pinned model ids, the spend rate cap, and one billed request per turn."
 status: partial
 gates: ["2.3", "2.10", "2.11"]
 ---
 
-import { FeatureStatus } from '/snippets/feature-status.mdx';
+import { FeatureStatus, NotDocumented } from '/snippets/feature-status.mdx';
 import BaseUrl from '/snippets/base-url.mdx';
 
 A coding harness is an agent that edits your code: an editor extension, or a CLI
 that runs in your repository. Most of them take a custom OpenAI-compatible base
 URL, and pointing one here is two settings and one edit you would not guess.
+
+Most, not all. Which wire protocol a harness speaks is the first thing to
+settle, because it decides whether the rest of this page applies to yours at
+all.
 
 This page carries the things that are true of every one of them. The per-harness
 pages carry only the settings and the surprises specific to that harness, which
@@ -27,16 +31,43 @@ Whether the value you paste ends in `/v1` differs by harness, and getting it
 wrong produces a `404` rather than an error about configuration. Each harness
 page says which form that harness wants and where we checked.
 
+## Which wire your harness speaks
+
+Three protocols turn up in coding harnesses, and a base URL is only useful if
+this site publishes the one your harness sends.
+
+**OpenAI chat completions** is what most of them speak and what this site is
+mostly about. Cline, Continue, Aider, Zed, OpenCode and Cursor are all here.
+
+**The OpenAI Responses API** is what Codex CLI speaks, and Codex speaks nothing
+else: the release that could use chat completions is several behind, and its
+own project removed the setting. This API serves that endpoint too, so
+Codex has a surface here to talk to, and its page is the one to read.
+
+**The Anthropic Messages API** is what Claude Code speaks, and it has no
+OpenAI-compatible mode. This site publishes nothing about a Messages endpoint,
+so Claude Code cannot be pointed here yet. Its page says what would have to
+change.
+
+A harness that only orchestrates other harnesses, like T3 Code, speaks none of
+them itself and inherits whichever its child does.
+
 ## Pin the model id before anything else
 
 Every harness ships with a default model name, and every one of those defaults
-is a bare OpenAI-style name. This API does not accept one. The two forms every
-harness page here uses are `provider/model`, where the part before the first
-slash names the provider that will serve the request, and a `profile/` slug
-naming one of your workspace's routing profiles. They are the two the refusal
-below names, and not a closed list: [Models](/concepts/models) carries every
+is a bare OpenAI-style name. This API does not accept one. The two forms the
+refusal below names are `provider/model`, where the part before the first slash
+names the provider that will serve the request, and a `profile/` slug naming one
+of your workspace's routing profiles. They are not a closed list: [Models](/concepts/models) carries every
 accepted form of a `model` field and is the page to read before assuming one is
 invalid.
+
+There is a third form, and for a coding harness it is usually the right one:
+`unirouter/auto`. It is a fixed string meaning whichever route your workspace
+made its default, so it goes into a config file once and the model behind it
+changes on the Routing screen instead. That matters more here than elsewhere,
+because a harness config file is exactly the kind of thing nobody edits twice.
+[Routing profiles](/concepts/routing-profiles) covers it.
 
 So `gpt-4o` is refused, before anything is looked up, with `400` and the code
 `model_id_not_pinned`:
@@ -64,48 +95,48 @@ pinned id. And a harness that offers a fixed dropdown of vendor model names
 rather than a free-text field cannot be pointed at an id of this shape at all;
 the per-harness pages say which kind each one is.
 
-## There are no embeddings here
+## Embeddings are not part of what this site documents
 
-<FeatureStatus
-  missing="POST /v1/embeddings"
-  instead="It is answered by the same catch-all as any other path we do not serve, so a harness feature that calls it receives a 404 rather than an empty result."
+<NotDocumented
+  subject="An embeddings endpoint"
+  reason="The route exists in the source tree and nothing about it is published: it is gated on a story that has not shipped, so this site describes no request shape, no response shape and no refusal for it. That means we also cannot tell you what a harness feature that calls it will do here."
 />
 
-```json 404
-{
-  "error": {
-    "message": "Unknown request URL: POST /v1/embeddings.",
-    "type": "invalid_request_error",
-    "param": null,
-    "code": "unknown_url",
-    "request_id": "00000000-0000-4000-8000-000000000000"
-  }
-}
-```
+Read that as an absence rather than as a promise in either direction. Earlier
+versions of this page said a request to an embeddings endpoint is answered with
+a `404`. That was wrong, it has been removed, and nothing has replaced it,
+because the honest position is that this site does not document the endpoint at
+all.
 
-This is the most likely bad first experience, and it is worth knowing which
-features it is. Any harness feature that builds an index of your repository to
-search it by meaning rather than by text calls an embeddings endpoint. In
-practice that is:
+What follows is still worth knowing, because it decides which of your harness's
+features depend on an answer we do not publish.
+
+Any harness feature that builds an index of your repository to search it by
+meaning rather than by text calls an embeddings endpoint, and those are the
+features to point somewhere you can rely on. In practice that is:
 
 - Codebase indexing, and whatever the harness calls the question that searches
   it. A feature you invoke as an at-mention of your codebase is usually this.
 - Retrieval over documentation the harness has ingested.
 - A long-term memory that recalls earlier sessions by similarity.
 - Reranking, on the harnesses that have it, which is usually not an
-  OpenAI-shaped endpoint at all and so will not work here either.
+  OpenAI-shaped endpoint at all and is not a surface this site documents
+  either.
 
-What does work is every harness whose context comes from reading files, grepping
-them, walking the syntax tree, or asking a language server. That is most of what
-a modern coding agent does. Of the harnesses documented here, one is confirmed to
-build its repository map that way and to call no embeddings endpoint at all, one
-is confirmed to have an embeddings role you must point elsewhere, and for the
-other three we found no embeddings feature in their own documentation without
-auditing them for one. Each page says which of the three it is.
+What does work, and works without touching any of this, is every harness whose
+context comes from reading files, grepping them, walking the syntax tree, or
+asking a language server. That is most of what a modern coding
+agent does. The harnesses documented here fall into
+three groups, and each page says which one it is in: confirmed to call no
+embeddings endpoint at all, confirmed to have an embeddings role you must point
+elsewhere, or no embeddings feature found in its own documentation without our
+auditing it for one.
 
-If your harness configures its embedding model separately from its chat model,
+**If your harness configures its embedding model separately from its chat model,
 which several do, leave that setting pointed wherever it already points and
-change only the chat model. Pointing both here breaks the indexing half.
+change only the chat model.** That is the practical advice on this page whose
+value does not depend on what our embeddings route does, and it is the one to
+follow.
 
 ## A harness spends faster than a chat client
 
@@ -195,11 +226,12 @@ config that is designed to be checked in.
 
 **Do not assume `OPENAI_API_KEY` and `OPENAI_BASE_URL` work.** Those are the
 names the official OpenAI SDKs read, and a harness is not an SDK. Not one of the
-five documented here takes its base URL from `OPENAI_BASE_URL`, and how each
-takes its key differs: two of the editor extensions read no shell environment at
-all and hold the key in their own settings, one CLI reads a similarly named but
-different variable, and the other two read a variable whose name you choose or
-interpolate one into their config file. Each page gives the form that harness
+harnesses documented here takes its base URL from `OPENAI_BASE_URL`, and how
+each takes its key differs about as much as it can: some read no shell
+environment at all and hold the key in their own settings, one CLI reads a
+similarly named but different variable, several read a variable whose name you
+choose or interpolate one into their config file, and one reads a variable named
+after a different vendor entirely. Each page gives the form that harness
 actually uses, and none of these pages guesses.
 
 A key is shown once, we keep only a hash, and a workspace holds up to five at a
@@ -251,6 +283,9 @@ moved since the date on the page is likelier than a setting that never existed.
 
 ## The harnesses
 
+These reach the surface this site publishes. Each page is short because the
+shared facts are above.
+
 <CardGroup cols={2}>
   <Card title="Cline" icon="robot" href="/integrations/cline">
     VS Code. A Base URL field, a model list it fetches from us, and model
@@ -271,5 +306,26 @@ moved since the date on the page is likelier than a setting that never existed.
   <Card title="OpenCode" icon="terminal" href="/integrations/opencode">
     A CLI. One config file, a provider package you have to pick correctly, and
     models you enumerate yourself.
+  </Card>
+  <Card title="Codex CLI" icon="terminal" href="/integrations/codex-cli">
+    A CLI, and the only one here on the Responses API. One provider block, a
+    base URL that wants `/v1`, and no output ceiling to set.
+  </Card>
+  <Card title="Cursor" icon="pen-to-square" href="/integrations/cursor">
+    An editor. A global override that captures its own models too, and a
+    request path that keeps Cursor's servers in it.
+  </Card>
+  <Card title="T3 Code" icon="layer-group" href="/integrations/t3-code">
+    Not a harness. It runs one of the others for you, so which child you pick
+    decides everything.
+  </Card>
+</CardGroup>
+
+### Not yet
+
+<CardGroup cols={2}>
+  <Card title="Claude Code" icon="triangle-exclamation" href="/integrations/claude-code">
+    Speaks the Anthropic Messages API, which this site does not publish. The
+    page says what it needs and what would have to change.
   </Card>
 </CardGroup>
