@@ -2,7 +2,7 @@
 title: "Errors and refusals"
 description: "One error body for the whole API, a closed set of types, and a request id on every response, so a failure tells you what to do next."
 status: write-now
-gates: [2.9, 13.9, 15.8]
+gates: [2.9, 13.9, 15.8, 21.48, 22.4]
 ---
 
 import ErrorEnvelope from '/snippets/error-envelope.mdx';
@@ -66,11 +66,22 @@ request starts, or the stream ending with `balance_exhausted` if credit runs out
 part way. Buy credit. Nothing is charged for the refusal, and a request cut off
 part way is charged for what it produced and no more.
 
-**A limit refused it.** `429`, with `rate_limit_exceeded` for your key's request
-rate (which carries `Retry-After`) or `spend_rate_exceeded` for the account's
-spend rate cap. Back off for the first. For the second, sending `max_tokens`
-lowers what each request reserves; see
-[Rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+**A limit refused it.** `429`, with one of three codes, and the code is the part
+to read: `rate_limit_exceeded` for your key's request rate, `spend_rate_exceeded`
+for the account's spend rate cap, or `upstream_rate_limited` for the model's
+provider rate-limiting the call. Back off for the first. For the second, sending
+`max_tokens` lowers what each request reserves; see
+[Rate limits and spend controls](/concepts/rate-limits-and-spend-controls). The
+third is not your allowance and not your cap: nothing about the request is wrong
+and nothing is charged for it. `rate_limit_exceeded` and `upstream_rate_limited`
+both carry `Retry-After` in whole seconds.
+
+**The body was too large.** `413` with `payload_too_large`. The maximum request
+body this API accepts is 8388608 bytes, eight mebibytes, and a larger one is
+refused at the door: a body that declares its length is refused without a byte
+being read, and one that declares none is read only as far as the ceiling and
+then abandoned. Nothing is parsed, no credit is held, no model is called and
+nothing is charged. Send fewer messages, a shorter prompt, or fewer inputs.
 
 **Your own provider key was refused.** Only if you bring your own key for a
 provider: every request to it then runs on that key alone, and if the provider
@@ -109,6 +120,11 @@ from it rather than from a description of what the screen said.
 - `429` with `rate_limit_exceeded`: retry after `Retry-After` seconds.
 - `429` with `spend_rate_exceeded`: retry, and consider sending `max_tokens` so
   each request reserves less.
+- `429` with `upstream_rate_limited`: retry after `Retry-After` seconds. The
+  figure is one we compute rather than the provider's header passed through:
+  their number where they sent one, held between one and sixty seconds, and five
+  seconds where they sent none.
+- `413` with `payload_too_large`: do not retry unchanged. Send a smaller body.
 - `429` with `provider_key_refused`: retry with backoff. It carries no
   `Retry-After`, but a provider's own limit clears on its own.
 - `403` with `model_not_permitted`: do not retry. The permitted set has to be

@@ -2,7 +2,7 @@
 title: "Rate limits and spend controls"
 description: "The limits that can refuse a request, what the spend rate cap counts, and the one lever that makes it bind less often."
 status: partial
-gates: ["10.11", "9.6", "9.26"]
+gates: ["10.11", "9.6", "9.26", "21.48", "22.4"]
 ---
 
 import FeatureStatus from '/snippets/feature-status.mdx';
@@ -21,6 +21,8 @@ attempted too quickly" from "this key is done" without asking us.
 |---|---|---|---|
 | 429 | `rate_limit_exceeded` | This key's request rate. | Wait the number of seconds in `Retry-After`. |
 | 429 | `spend_rate_exceeded` | Your spend rate cap, which counts money reserved rather than money spent. | Wait up to 60 seconds, or send `max_tokens`. See below. |
+| 429 | `upstream_rate_limited` | Nothing of yours. The model's provider rate-limited the call. | Wait the number of seconds in `Retry-After`. Nothing about the request is wrong and nothing is charged. |
+| 413 | `payload_too_large` | Nothing. The request body is over the 8388608 byte maximum this API accepts. | Send fewer messages, a shorter prompt, or fewer inputs. |
 | 402 | `insufficient_credit` | Available credit at admission. | Buy credit. |
 | 402 | `key_limit_exceeded` | This key's own credit limit, for its current window. | Wait for the window to roll, raise the limit, or send on another key. |
 | 402 | `member_limit_exceeded` | Your own monthly spend limit, for the current calendar month. | Ask the workspace owner to raise or clear it. Your colleagues are unaffected. |
@@ -32,11 +34,12 @@ Every refusal arrives in the standard error envelope, and the `code` field is th
 to branch on. Messages are prose and may be reworded; the fields are the contract.
 
 <FeatureStatus>
-  Two further 429 meanings are specified and not yet shipped: one for a provider pool
-  we are protecting, and one for a provider refusing us. They are deliberately absent
-  from the table above rather than described early. Until they ship, treat a 429
-  carrying neither code above as a condition to retry after a short pause, and quote
-  the request id if it persists.
+  One further 429 meaning is specified and not yet shipped, for a provider pool we are
+  protecting. It is deliberately absent from the table above rather than described
+  early. The other one this callout used to name, a provider refusing us, has shipped:
+  it is the `upstream_rate_limited` row above. Until the remaining one ships, treat a
+  429 carrying none of the codes above as a condition to retry after a short pause,
+  and quote the request id if it persists.
 </FeatureStatus>
 
 ## The per key request rate

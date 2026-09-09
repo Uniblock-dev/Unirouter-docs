@@ -2,7 +2,7 @@
 title: "Errors"
 description: "One error body for the whole API: a closed set of type values, a stable code, and the request id inside the body."
 status: write-now
-gates: [2.9, 9.6, 9.26, 13.9, 15.8]
+gates: [2.9, 9.6, 9.26, 13.9, 15.8, 21.48, 22.4]
 ---
 
 import ErrorEnvelope from '/snippets/error-envelope.mdx';
@@ -76,8 +76,10 @@ separates causes sharing a status.
 | 404 | `not_found_error` | `model_not_available` | The id is catalogued and is not being served right now, either at all or on the endpoint you called. Told apart from `model_not_found` so a withdrawn model does not read as a typo. The status and the code are the same in every case; the **message** says which case it is, and whether waiting helps. A model the provider has retired says it is gone rather than unwell, that retrying will not bring it back, and that no change to the request reaches it. A model the provider still serves that we cannot reach right now says that instead, and says that nothing about your request is wrong. Anything else keeps the sentence this code has always carried: known here, not being served at the moment, and retrying later is worth more than changing the request. No message names a replacement model unless the provider named one itself. |
 | 404 | `invalid_request_error` | `model_not_available` | The same code from the other direction, on a request that sent `unirouter/auto`: `param` is `model`, and the message names your cost tier, because that is the fact that decides what you do next. Either the tier has no published list, or nothing in it can be served right now. Both ways out are named in the message: pick another cost tier, or create a route and make it the default. |
 | 405 | `invalid_request_error` | `method_not_allowed` | A method other than GET on a path that exists. Carries an `Allow` header. Answered before any key is looked at, so it costs nothing and reveals nothing. |
+| 413 | `invalid_request_error` | `payload_too_large` | The request body is larger than the 8388608 byte maximum this API accepts, and it was refused at the door. A body that declares its length is refused without a byte being read; one that declares none is read only as far as the ceiling and then abandoned. Nothing was parsed, no credit was held, no model was called and nothing was charged. The message names the figure and what to change: fewer messages, a shorter prompt, or fewer inputs. |
 | 429 | `rate_limit_error` | `rate_limit_exceeded` | This key's request rate limit. Carries `Retry-After`. |
 | 429 | `rate_limit_error` | `spend_rate_exceeded` | The account's spend rate cap. Nothing to fix; requests are admitted again as the window rolls forward. |
+| 429 | `rate_limit_error` | `upstream_rate_limited` | The model's provider rate-limited the call. Nothing about the request is wrong and nothing is charged for it. Carries `Retry-After` in whole seconds: the provider's own figure where it sent one, and five seconds where it sent none. Back off and retry. |
 | 429 | `rate_limit_error` | `provider_key_refused` | The request ran on your own key for that provider, and the provider says that key is over its limit there. Nothing to fix on our side; it clears on its own. |
 | 500 | `api_error` | `null` | An unhandled fault on our side. Quote the request id. |
 | 503 | `api_error` | `no_provider_configured` | We are not currently configured to serve this. Retry later. |
@@ -94,7 +96,8 @@ produced before it was cut and no more.
 
 ### Rate limits and spend refusals
 
-Two codes share `429`, and they call for different behaviour:
+Three codes share `429`, and they call for different behaviour. Read the code:
+the status alone does not tell you which of the three you met.
 
 - `rate_limit_exceeded` is your key sending too many requests. The response
   carries `Retry-After` in seconds. Back off and retry.
@@ -103,9 +106,28 @@ Two codes share `429`, and they call for different behaviour:
   There is no `Retry-After`. Sending `max_tokens` on your requests lowers the
   estimated maximum each one reserves. See
   [Rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+- `upstream_rate_limited` is the model's provider rate-limiting the call. It is
+  not your key's allowance and not your account's cap, nothing about the request
+  is wrong, and nothing is charged. It carries `Retry-After` in whole seconds.
 
-`Retry-After` is present on `rate_limit_exceeded` and is not sent on other
-statuses. Do not infer a retry delay from its absence.
+`Retry-After` is present on `rate_limit_exceeded` and on `upstream_rate_limited`,
+and is not sent on other statuses. Do not infer a retry delay from its absence.
+
+The `Retry-After` on `upstream_rate_limited` is a figure we compute rather than
+the provider's header passed through: their number where they sent one, held
+between one and sixty seconds, and five seconds where they sent none. A wait of
+zero is never sent, and no wait longer than a minute is, whatever the provider
+asked for.
+
+A provider that answers `529` rather than `429` carries the same
+`upstream_rate_limited` code, with `type` `api_error` as the status class
+requires. The code is the part to branch on.
+
+The **message** on `upstream_rate_limited` is our generic one, the same sentence
+every fault on our side carries, and that is deliberate rather than an oversight:
+a throttle on a credential of ours is not a fact about your request, and the
+provider's own words about it name our account. The `code` and the `Retry-After`
+are the actionable half, which is why the code is what to read.
 
 ### Provider key refusals
 
