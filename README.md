@@ -1,4 +1,4 @@
-# Unirouter docs (public)
+# Hopscotch docs (public)
 
 The customer-facing Mintlify site. It carries only what a customer can act on:
 published `/v1` operations, error codes, money and limits, and the dashboard

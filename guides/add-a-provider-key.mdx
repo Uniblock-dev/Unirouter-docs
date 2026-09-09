@@ -5,7 +5,7 @@ status: partial
 gates: ["14.1"]
 ---
 
-Provider keys are managed in the dashboard, at [BYOK](https://app.uniblock.dev),
+Provider keys are managed in the dashboard, at [BYOK](https://app.hopscotchlabs.ai),
 directly under API keys in the workspace rail. This page walks that screen. For
 what bringing a key actually does, and what it does not do, read
 [Bring your own key](/concepts/bring-your-own-key) first.
@@ -26,7 +26,7 @@ there, whether or not this workspace holds any keys yet.
 </Step>
 <Step title="Pick the provider">
 Add key opens a picker of the providers you can bring a key for: everything
-Uniblock currently carries that this workspace has no key for already, each
+Hopscotch currently carries that this workspace has no key for already, each
 one showing how many credential fields it will ask for. A provider that
 authenticates with nothing, or one you already hold a key for, is not offered
 here.
@@ -53,7 +53,7 @@ own words underneath it, so you can correct the value and try again.
 ## Nothing is saved until the provider accepts it
 
 This is the whole shape of adding or replacing a key, and it is worth stating
-plainly because it changes what you do when it fails. Uniblock does not store
+plainly because it changes what you do when it fails. Hopscotch does not store
 a credential and find out later whether it works. It makes a real call to the
 provider first, with nothing on the wire but that call, and only writes the
 key down once the provider has answered that it is good.
@@ -61,8 +61,8 @@ key down once the provider has answered that it is good.
 A refusal is the provider's own answer, relayed back to you rather than
 reworded or generalised. Nothing about your workspace changes because of it:
 no key is stored, no existing key is touched, and no attempt is charged
-against your Uniblock credit. If a check keeps failing, the value you typed is
-what the provider is rejecting, not anything Uniblock did to it.
+against your Hopscotch credit. If a check keeps failing, the value you typed is
+what the provider is rejecting, not anything Hopscotch did to it.
 
 Because each check is a live call to the provider, there is a limit on how
 many you can run: ten checks per hour, counted across your whole account
@@ -99,12 +99,12 @@ and add it again.
 ## Removing a key
 
 Removing asks you to confirm first, and tells you plainly what happens next:
-requests to that provider move back onto Uniblock's own key, and normal
-billing on your Uniblock credit, immediately. It is a permanent removal with no
+requests to that provider move back onto Hopscotch's own key, and normal
+billing on your Hopscotch credit, immediately. It is a permanent removal with no
 history kept; there is nothing to restore afterward, only adding the key again
 from scratch.
 
-If Uniblock has stopped carrying a provider you still hold a key for, that
+If Hopscotch has stopped carrying a provider you still hold a key for, that
 provider's card still offers Remove even though it no longer offers Replace:
 you can always take a key out, even for a provider you can no longer bring a
 new one for.

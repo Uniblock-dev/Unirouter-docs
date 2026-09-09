@@ -16,7 +16,7 @@ import BaseUrl from '/snippets/base-url.mdx';
 Every framework in this section works here for the same reason, and it is worth
 saying once rather than seven times: each of them already has an
 OpenAI-compatible provider, because each of them already talks to OpenAI. Point
-that provider at our base URL, give it a Uniblock key, and the framework does not
+that provider at our base URL, give it a Hopscotch key, and the framework does not
 need to know anything else has changed.
 
 <BaseUrl />
@@ -66,12 +66,12 @@ table and the refusals.
 
 - **The base URL carries `/v1` and nothing after it.** Every library here builds
   its request path by appending `/chat/completions` to what you configure, so
-  `https://ai.uniblock.dev/v1` is the value and `https://ai.uniblock.dev` is not.
+  `https://api.hopscotchlabs.ai/v1` is the value and `https://api.hopscotchlabs.ai` is not.
   Getting this wrong produces a `404` rather than a helpful message.
 - **The key comes from the environment.** Every example reads it from a variable
-  rather than holding it in source. A Uniblock key spends real credit.
-- **Nothing Uniblock-specific goes in the request.** Only `Authorization` and
-  `Content-Type` are read, and `x-uniblock-*` is stripped inbound, so a
+  rather than holding it in source. A Hopscotch key spends real credit.
+- **Nothing Hopscotch-specific goes in the request.** Only `Authorization` and
+  `Content-Type` are read, and `x-hopscotch-*` is stripped inbound, so a
   framework's custom-header option cannot change how a request is served.
 
 ## The pages

@@ -1,6 +1,6 @@
 ---
 title: "Zed"
-description: "Configure Zed's openai_compatible provider against Uniblock: api_url, the models you declare yourself, and the capability that must stay on."
+description: "Configure Zed's openai_compatible provider against Hopscotch: api_url, the models you declare yourself, and the capability that must stay on."
 status: partial
 gates: ["2.3", "2.11"]
 ---
@@ -26,12 +26,12 @@ an id you choose. The base URL key is `api_url`:
 {
   "language_models": {
     "openai_compatible": {
-      "uniblock": {
-        "api_url": "https://ai.uniblock.dev/v1",
+      "hopscotch": {
+        "api_url": "https://api.hopscotchlabs.ai/v1",
         "available_models": [
           {
             "name": "openai/gpt-4o-mini",
-            "display_name": "GPT-4o mini via Uniblock",
+            "display_name": "GPT-4o mini via Hopscotch",
             "max_tokens": 128000
           }
         ]
@@ -71,7 +71,7 @@ the provider id you chose, upper-cased with `_API_KEY` appended. For the id in
 the example above that is:
 
 ```bash
-export UNIBLOCK_API_KEY=ub_live_YOUR_KEY_HERE
+export HOPSCOTCH_API_KEY=ub_live_YOUR_KEY_HERE
 ```
 
 The environment variable takes precedence over the keychain entry when it is set

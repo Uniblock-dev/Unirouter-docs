@@ -21,7 +21,7 @@ and nothing else does.
 <CodeGroup>
 
 ```bash curl
-curl https://ai.uniblock.dev/v1/chat/completions \
+curl https://api.hopscotchlabs.ai/v1/chat/completions \
   -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
   -H "Content-Type: application/json" \
   -d '{"model": "openai/gpt-4o-mini", "messages": [{"role": "user", "content": "Hello."}]}'
@@ -32,7 +32,7 @@ from openai import OpenAI
 
 # The SDK puts the key on the Authorization header for you.
 client = OpenAI(
-    base_url="https://ai.uniblock.dev/v1",
+    base_url="https://api.hopscotchlabs.ai/v1",
     api_key="ub_live_YOUR_KEY_HERE",
 )
 ```
@@ -42,7 +42,7 @@ import OpenAI from "openai";
 
 // The SDK puts the key on the Authorization header for you.
 const client = new OpenAI({
-  baseURL: "https://ai.uniblock.dev/v1",
+  baseURL: "https://api.hopscotchlabs.ai/v1",
   apiKey: "ub_live_YOUR_KEY_HERE",
 });
 ```
@@ -65,7 +65,7 @@ alphabet, which is `A-Z`, `a-z`, `0-9`, `-` and `_`.
 | `ub_dev_` | Development. |
 
 The prefix carries the environment for two reasons. Secret scanners can recognise
-a leaked Uniblock key in a public repository, and a key pasted into the wrong
+a leaked Hopscotch key in a public repository, and a key pasted into the wrong
 configuration says out loud which environment it belongs to rather than failing
 with a puzzle.
 
@@ -151,7 +151,7 @@ here, while an expired key was valid and just needs replacing. Branch on
 | What happened | The message |
 |---|---|
 | No `Authorization` header, or a scheme other than `Bearer` | `You did not provide an API key. Send it in an Authorization header using Bearer auth.` |
-| A string that is not shaped like a Uniblock key | `Incorrect API key format. A Uniblock key looks like ub_live_ followed by 43 characters. Check you have not pasted a key from another provider.` |
+| A string that is not shaped like a Hopscotch key | `Incorrect API key format. A Hopscotch key looks like ub_live_ followed by 43 characters. Check you have not pasted a key from another provider.` |
 | A correctly shaped key we do not accept | `Incorrect API key provided.` |
 | A key past its own expiry date (`code: key_expired`) | Names the instant the key expired on. Checked before the per-key rate limiter, so an expired key never consumes that allowance. |
 

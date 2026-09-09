@@ -63,7 +63,7 @@ accepted form of a `model` field and is the page to read before assuming one is
 invalid.
 
 There is a third form, and for a coding harness it is usually the right one:
-`unirouter/auto`. It is a fixed string meaning whichever route your workspace
+`hopscotch/auto`. It is a fixed string meaning whichever route your workspace
 made its default, so it goes into a config file once and the model behind it
 changes on the Routing screen instead. That matters more here than elsewhere,
 because a harness config file is exactly the kind of thing nobody edits twice.
@@ -245,7 +245,7 @@ it costs you nothing else.
 We do not recommend models, and the catalog moves. Ask for it:
 
 ```bash
-curl https://ai.uniblock.dev/v1/models \
+curl https://api.hopscotchlabs.ai/v1/models \
   -H "Authorization: Bearer ub_live_XXXXXXXXXXXX"
 ```
 

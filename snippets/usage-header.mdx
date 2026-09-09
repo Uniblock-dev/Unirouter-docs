@@ -1,8 +1,8 @@
-A streamed response carries Uniblock's own token counts as a server-sent events
+A streamed response carries Hopscotch's own token counts as a server-sent events
 comment line, written immediately before `data: [DONE]`:
 
 ```text The usage line
-:x-uniblock-usage {"v":1,"reported":true,"prompt_tokens":12,"completion_tokens":8,"total_tokens":20}
+:x-hopscotch-usage {"v":1,"reported":true,"prompt_tokens":12,"completion_tokens":8,"total_tokens":20}
 ```
 
 A line beginning with a colon is a comment the server-sent events specification

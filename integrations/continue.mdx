@@ -1,6 +1,6 @@
 ---
 title: "Continue"
-description: "Configure Continue's openai provider against Uniblock: apiBase, the model roles, and the two things that can change which endpoint it calls."
+description: "Configure Continue's openai provider against Hopscotch: apiBase, the model roles, and the two things that can change which endpoint it calls."
 status: partial
 gates: ["2.3", "2.10", "2.11"]
 ---
@@ -29,11 +29,11 @@ The generic OpenAI-compatible provider is `openai`, and the base URL key is
 
 ```yaml config.yaml
 models:
-  - name: Uniblock
+  - name: Hopscotch
     provider: openai
     model: openai/gpt-4o-mini
-    apiBase: https://ai.uniblock.dev/v1
-    apiKey: ${{ secrets.UNIBLOCK_API_KEY }}
+    apiBase: https://api.hopscotchlabs.ai/v1
+    apiKey: ${{ secrets.HOPSCOTCH_API_KEY }}
     roles:
       - chat
       - edit

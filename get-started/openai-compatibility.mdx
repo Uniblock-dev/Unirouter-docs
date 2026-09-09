@@ -45,7 +45,7 @@ so it fails the same way every time rather than in a new way per path. It is a
 `endpoint_not_supported`:
 
 ```bash
-curl https://ai.uniblock.dev/v1/images/generations \
+curl https://api.hopscotchlabs.ai/v1/images/generations \
   -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
   -H "Content-Type: application/json" \
   -d '{"model": "openai/gpt-4o-mini", "prompt": "hello"}'
@@ -80,7 +80,7 @@ cost before it is sent: `model`, and `max_tokens` or `max_completion_tokens`.
 Reading one does not change it.
 
 Two rewrites exist, and they are the whole list. A request naming a routing
-profile or `unirouter/auto` has its `model` replaced with the model being tried
+profile or `hopscotch/auto` has its `model` replaced with the model being tried
 on that attempt, because that is what a route means. And a request that names no
 output ceiling, sent to a provider whose own API refuses a request without one,
 has `max_tokens` filled in with the model's published maximum output, which is
@@ -90,7 +90,7 @@ covers both in full.
 
 Two consequences worth stating:
 
-- Nothing Uniblock-specific belongs in a request. There is no parameter of ours
+- Nothing Hopscotch-specific belongs in a request. There is no parameter of ours
   to send, and no header can change how a request is served.
 - `max_tokens` is worth sending even though it is optional. It is what sizes the
   amount we hold against your balance before the call, so a request without it is
@@ -104,7 +104,7 @@ first slash: the part before it names the provider that will serve the request, 
 it is that provider's own id for the model, slashes included and passed on unchanged. The same model
 carried by two providers is two ids, and you choose which one you send.
 
-A bare OpenAI-style name with no provider is not a Uniblock model id. It is refused with `400` and
+A bare OpenAI-style name with no provider is not a Hopscotch model id. It is refused with `400` and
 the code `model_id_not_pinned`, naming both accepted forms, rather than being routed to whichever
 provider we happen to carry it under. Ask [`GET /v1/models`](/concepts/models) for the ids you can
 call.
@@ -116,7 +116,7 @@ request we make on your behalf is built from your request body and our own
 provider credential, with a fresh header set, so headers beyond those two are
 neither honoured nor passed to the provider.
 
-`x-uniblock-*` is our reserved namespace on both directions of the wire. Sending
+`x-hopscotch-*` is our reserved namespace on both directions of the wire. Sending
 one has no effect for the same reason: it does not travel.
 
 ## Response differences
@@ -125,7 +125,7 @@ All three differences are additions to an otherwise unchanged OpenAI response.
 
 ### The request id
 
-Every response, success or error, carries `x-uniblock-request-id`, and the same
+Every response, success or error, carries `x-hopscotch-request-id`, and the same
 value on `x-request-id`, which is the header the OpenAI SDKs already read. On an
 error, the id also appears as `request_id` inside the `error` object. That fifth
 field inside `error` is the one shape difference from OpenAI's envelope, and it
@@ -139,10 +139,10 @@ These are the ones that ship today:
 
 | Header | What it says |
 |---|---|
-| `x-uniblock-provider` | Which provider family answered. |
-| `x-uniblock-retry-attempt-count` | How many attempts it took, so a slow success has a visible reason. |
-| `x-uniblock-cache-status` | Whether the reply came from cache rather than from the provider. |
-| `x-uniblock-trace-id` | A second internal id, distinct from your request id. |
+| `x-hopscotch-provider` | Which provider family answered. |
+| `x-hopscotch-retry-attempt-count` | How many attempts it took, so a slow success has a visible reason. |
+| `x-hopscotch-cache-status` | Whether the reply came from cache rather than from the provider. |
+| `x-hopscotch-trace-id` | A second internal id, distinct from your request id. |
 
 Nothing else the provider sets travels onward. That is deliberate rather than
 incidental, and it has one consequence you will notice: **provider rate limit
@@ -158,7 +158,7 @@ A streamed reply carries one extra line immediately before `data: [DONE]`,
 starting with a colon:
 
 ```text
-:x-uniblock-usage {"v":1,...}
+:x-hopscotch-usage {"v":1,...}
 ```
 
 The SSE specification requires a parser to ignore a line starting with a colon,
@@ -178,7 +178,7 @@ sentences are prose that may be reworded. Every shipped code and its status is i
 One difference in kind is worth naming. Some of our refusals are about money
 rather than about your request: not enough credit, or an account spend rate cap.
 Those reuse OpenAI's own `insufficient_quota` and `rate_limit_error` types, so the
-branch your client already has keeps working, and carry a Uniblock `code` that
+branch your client already has keeps working, and carry a Hopscotch `code` that
 says which of them happened.
 
 ## What we do not claim

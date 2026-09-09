@@ -1,6 +1,6 @@
 ---
 title: "Pydantic AI"
-description: "Point Pydantic AI at Uniblock: the base URL goes on the provider, and the model class you pick decides which API gets called."
+description: "Point Pydantic AI at Hopscotch: the base URL goes on the provider, and the model class you pick decides which API gets called."
 status: partial
 gates: ["2.3", "2.11"]
 ---
@@ -27,8 +27,8 @@ from pydantic_ai.providers.openai import OpenAIProvider
 model = OpenAIChatModel(
     "openai/gpt-4o-mini",
     provider=OpenAIProvider(
-        base_url="https://ai.uniblock.dev/v1",
-        api_key=os.environ["UNIBLOCK_API_KEY"],
+        base_url="https://api.hopscotchlabs.ai/v1",
+        api_key=os.environ["HOPSCOTCH_API_KEY"],
     ),
 )
 

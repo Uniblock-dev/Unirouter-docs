@@ -63,7 +63,7 @@ rules:
     pattern: "services/gateway|the gateway service"
     reason: >-
       An internal service behind a service binding. A customer reaches
-      ai.uniblock.dev and nothing else.
+      api.hopscotchlabs.ai and nothing else.
 
   # 2. Provider topology and procurement
   - id: provider-count
@@ -80,7 +80,7 @@ rules:
       buy.
 
   - id: internal-request-headers
-    pattern: "x-uniblock-config|x-uniblock-last-used-option-index"
+    pattern: "x-(hopscotch|uniblock)-config|x-(hopscotch|uniblock)-last-used-option-index"
     reason: >-
       Internal mechanics. Neither is a header a customer may set or will
       receive.
@@ -116,13 +116,13 @@ rules:
 
   # 6. Signals
   - id: signals-epic-12
-    pattern: "signals\\.uniblock\\.dev|billing-mail|provider balance polling"
+    pattern: "signals\\.hopscotch\\.dev|billing-mail|provider balance polling"
     reason: >-
       Epic 12 is an internal system. It has no customer surface.
 
   # 7. Internal architecture nouns
   - id: internal-architecture
-    pattern: "durable object|\\bKV (namespace|prefix)\\b|\\bD1\\b|\\bR2\\b|service binding|wrangler|workers\\.dev|x-uniblock-internal-secret"
+    pattern: "durable object|\\bKV (namespace|prefix)\\b|\\bD1\\b|\\bR2\\b|service binding|wrangler|workers\\.dev|x-(hopscotch|uniblock)-internal-secret"
     reason: >-
       Internal topology. None of it is reachable, actionable, or stable from a
       customer's side, and worker names and hostnames are a map of the system.

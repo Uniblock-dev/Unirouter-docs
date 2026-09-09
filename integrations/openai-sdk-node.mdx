@@ -1,6 +1,6 @@
 ---
 title: "OpenAI SDK for Node"
-description: "Point the official openai npm package at Uniblock with two constructor options, and the one browser setting to leave switched off."
+description: "Point the official openai npm package at Hopscotch with two constructor options, and the one browser setting to leave switched off."
 status: partial
 gates: ["2.3", "2.11"]
 ---
@@ -23,8 +23,8 @@ constructor option. The change is the same two settings as the
 import OpenAI from "openai";
 
 const client = new OpenAI({
-  baseURL: "https://ai.uniblock.dev/v1",
-  apiKey: process.env.UNIBLOCK_API_KEY,
+  baseURL: "https://api.hopscotchlabs.ai/v1",
+  apiKey: process.env.HOPSCOTCH_API_KEY,
 });
 
 const response = await client.chat.completions.create({
@@ -47,7 +47,7 @@ URL that works in one works in the other.
 
 **Leave `dangerouslyAllowBrowser` alone.** This SDK refuses to construct in a
 browser unless you pass that option, and the guard is worth more here than it is
-against OpenAI. A Uniblock key belongs to a workspace, spends prepaid credit, and
+against OpenAI. A Hopscotch key belongs to a workspace, spends prepaid credit, and
 cannot be scoped down to one page or one user, so a key that reaches a browser
 is a key that reaches everyone who loads that page. Put this client behind your
 own server and let the browser talk to that. Turning the option on to make an
