@@ -151,6 +151,26 @@ claims:
     status: shipped
     note: "Quoted inside the shipped refusal message, so it is customer-visible already."
 
+  - id: request-body-max-bytes
+    value: "8388608"
+    means: "The maximum request body this API accepts. A larger one is refused 413 payload_too_large before it is read."
+    source: "services/control-plane/src/inference/requestBody.ts (MAX_INFERENCE_BODY_BYTES)"
+    status: shipped
+    note: >-
+      Quoted inside the shipped refusal sentence, so the byte figure is
+      customer-visible already. It is a constant rather than a tunable
+      precisely so the bound enforced and the bound documented cannot drift,
+      which services/control-plane/test/openapi-bounds.test.ts holds. Write
+      the byte figure, and "eight mebibytes" beside it where prose needs a
+      readable form; both spellings are registered.
+
+  - id: request-body-max-mebibytes
+    value: "eight"
+    means: "The same ceiling in readable form: eight mebibytes."
+    source: "services/control-plane/src/inference/requestBody.ts (MAX_INFERENCE_BODY_BYTES)"
+    status: shipped
+    note: "The prose spelling of request-body-max-bytes. Never publish it as a rounded 'about 8 MB'."
+
   - id: error-type-count
     value: "eight"
     means: "How many values the error envelope's `type` field can take."
