@@ -5,8 +5,8 @@ wrong shape, and a key we reject are all answered with `401`.
 <CodeGroup>
 
 ```bash curl
-curl https://ai.uniblock.dev/v1/chat/completions \
-  -H "Authorization: Bearer $UNIBLOCK_API_KEY" \
+curl https://api.hopscotchlabs.ai/v1/chat/completions \
+  -H "Authorization: Bearer $HOPSCOTCH_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "openai/gpt-4o-mini",
@@ -19,8 +19,8 @@ import os
 from openai import OpenAI
 
 client = OpenAI(
-    base_url="https://ai.uniblock.dev/v1",
-    api_key=os.environ["UNIBLOCK_API_KEY"],
+    base_url="https://api.hopscotchlabs.ai/v1",
+    api_key=os.environ["HOPSCOTCH_API_KEY"],
 )
 ```
 
@@ -28,8 +28,8 @@ client = OpenAI(
 import OpenAI from "openai";
 
 const client = new OpenAI({
-  baseURL: "https://ai.uniblock.dev/v1",
-  apiKey: process.env.UNIBLOCK_API_KEY,
+  baseURL: "https://api.hopscotchlabs.ai/v1",
+  apiKey: process.env.HOPSCOTCH_API_KEY,
 });
 ```
 

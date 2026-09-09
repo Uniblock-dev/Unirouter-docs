@@ -1,6 +1,6 @@
 ---
 title: "LangChain"
-description: "Point LangChain's ChatOpenAI at Uniblock in Python and in JavaScript, and why its default model is the thing that fails first."
+description: "Point LangChain's ChatOpenAI at Hopscotch in Python and in JavaScript, and why its default model is the thing that fails first."
 status: partial
 gates: ["2.3", "2.11"]
 ---
@@ -25,8 +25,8 @@ from langchain_openai import ChatOpenAI
 
 llm = ChatOpenAI(
     model="openai/gpt-4o-mini",
-    base_url="https://ai.uniblock.dev/v1",
-    api_key=os.environ["UNIBLOCK_API_KEY"],
+    base_url="https://api.hopscotchlabs.ai/v1",
+    api_key=os.environ["HOPSCOTCH_API_KEY"],
 )
 
 print(llm.invoke("Say hi in five words.").content)
@@ -45,9 +45,9 @@ import { ChatOpenAI } from "@langchain/openai";
 
 const llm = new ChatOpenAI({
   model: "openai/gpt-4o-mini",
-  apiKey: process.env.UNIBLOCK_API_KEY,
+  apiKey: process.env.HOPSCOTCH_API_KEY,
   configuration: {
-    baseURL: "https://ai.uniblock.dev/v1",
+    baseURL: "https://api.hopscotchlabs.ai/v1",
   },
 });
 
@@ -134,7 +134,7 @@ except openai.APIStatusError as error:
 
 On the success path, Python's `ChatOpenAI` takes `include_response_headers=True`,
 which puts the response headers into `response_metadata["headers"]` on the
-message, so `x-uniblock-request-id` and `x-request-id` are readable there. That
+message, so `x-hopscotch-request-id` and `x-request-id` are readable there. That
 is off by default.
 
 ## What we did not verify

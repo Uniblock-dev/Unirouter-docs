@@ -1,6 +1,6 @@
 ---
 title: "OpenAI SDK for Python"
-description: "Point the official openai Python package at Uniblock with two constructor arguments, and where the request id shows up when a call fails."
+description: "Point the official openai Python package at Hopscotch with two constructor arguments, and where the request id shows up when a call fails."
 status: partial
 gates: ["2.3", "2.11"]
 ---
@@ -25,8 +25,8 @@ import os
 from openai import OpenAI
 
 client = OpenAI(
-    base_url="https://ai.uniblock.dev/v1",
-    api_key=os.environ["UNIBLOCK_API_KEY"],
+    base_url="https://api.hopscotchlabs.ai/v1",
+    api_key=os.environ["HOPSCOTCH_API_KEY"],
 )
 
 response = client.chat.completions.create(

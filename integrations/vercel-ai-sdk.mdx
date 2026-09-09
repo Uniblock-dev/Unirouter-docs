@@ -1,6 +1,6 @@
 ---
 title: "Vercel AI SDK"
-description: "Which of the AI SDK's two OpenAI providers to use with Uniblock, and why its default call shape is the wrong one for this API."
+description: "Which of the AI SDK's two OpenAI providers to use with Hopscotch, and why its default call shape is the wrong one for this API."
 status: partial
 gates: ["2.3", "2.11"]
 ---
@@ -23,14 +23,14 @@ rather than with a code block.
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { generateText } from "ai";
 
-const uniblock = createOpenAICompatible({
-  name: "uniblock",
-  baseURL: "https://ai.uniblock.dev/v1",
-  apiKey: process.env.UNIBLOCK_API_KEY,
+const hopscotch = createOpenAICompatible({
+  name: "hopscotch",
+  baseURL: "https://api.hopscotchlabs.ai/v1",
+  apiKey: process.env.HOPSCOTCH_API_KEY,
 });
 
 const { text } = await generateText({
-  model: uniblock("openai/gpt-4o-mini"),
+  model: hopscotch("openai/gpt-4o-mini"),
   prompt: "Say hi in five words.",
 });
 ```
@@ -63,8 +63,8 @@ letting the default choose:
 import { createOpenAI } from "@ai-sdk/openai";
 
 const openai = createOpenAI({
-  baseURL: "https://ai.uniblock.dev/v1",
-  apiKey: process.env.UNIBLOCK_API_KEY,
+  baseURL: "https://api.hopscotchlabs.ai/v1",
+  apiKey: process.env.HOPSCOTCH_API_KEY,
 });
 
 const model = openai.chat("openai/gpt-4o-mini");
@@ -115,7 +115,7 @@ import { APICallError } from "ai";
 
 try {
   await generateText({
-    model: uniblock("openai/gpt-4o-mini"),
+    model: hopscotch("openai/gpt-4o-mini"),
     prompt: "Say hi in five words.",
   });
 } catch (error) {
@@ -135,7 +135,7 @@ so a connection failure that never got a response has neither, and the `?.` abov
 is not decoration. Our error envelope is in `responseBody` as sent, so parse
 `type` and `code` out of it rather than matching on the message.
 
-`x-uniblock-request-id` carries the same value if you would rather read ours.
+`x-hopscotch-request-id` carries the same value if you would rather read ours.
 Quote either one when you ask us about a request.
 
 ## What we did not verify

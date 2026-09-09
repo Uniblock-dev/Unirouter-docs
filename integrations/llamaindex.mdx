@@ -1,6 +1,6 @@
 ---
 title: "LlamaIndex"
-description: "Use LlamaIndex's OpenAILike class with Uniblock, why the plain OpenAI class refuses our model ids before sending, and what to do about embeddings."
+description: "Use LlamaIndex's OpenAILike class with Hopscotch, why the plain OpenAI class refuses our model ids before sending, and what to do about embeddings."
 status: partial
 gates: ["2.3", "2.11"]
 ---
@@ -25,8 +25,8 @@ from llama_index.llms.openai_like import OpenAILike
 
 llm = OpenAILike(
     model="openai/gpt-4o-mini",
-    api_base="https://ai.uniblock.dev/v1",
-    api_key=os.environ["UNIBLOCK_API_KEY"],
+    api_base="https://api.hopscotchlabs.ai/v1",
+    api_key=os.environ["HOPSCOTCH_API_KEY"],
     is_chat_model=True,
     context_window=128000,   # take the model's real window from GET /v1/models
 )

@@ -39,18 +39,18 @@ The file is `~/.codex/config.toml`, with a project-scoped `.codex/config.toml`
 alongside it. Add a provider and select it:
 
 ```toml ~/.codex/config.toml
-model_provider = "uniblock"
-model = "unirouter/auto"
+model_provider = "hopscotch"
+model = "hopscotch/auto"
 
-[model_providers.uniblock]
-name = "Uniblock"
-base_url = "https://ai.uniblock.dev/v1"
-env_key = "UNIBLOCK_API_KEY"
+[model_providers.hopscotch]
+name = "Hopscotch"
+base_url = "https://api.hopscotchlabs.ai/v1"
+env_key = "HOPSCOTCH_API_KEY"
 wire_api = "responses"
 ```
 
 ```bash
-export UNIBLOCK_API_KEY=ub_live_XXXXXXXXXXXX
+export HOPSCOTCH_API_KEY=ub_live_XXXXXXXXXXXX
 ```
 
 Two things about that block are easy to get wrong.
@@ -62,7 +62,7 @@ the two are documented side by side here for that reason.
 
 **Do not name the provider `openai`.** The built-in provider ids are reserved
 and a block of that name is ignored rather than refused, which is the kind of
-failure that costs an afternoon. Any other id works; `uniblock` above is
+failure that costs an afternoon. Any other id works; `hopscotch` above is
 arbitrary.
 
 ## The key comes from a variable you name
@@ -82,7 +82,7 @@ Codex's `model` field is free text and this API needs it to name a provider, so
 the default has to change before the first request. Every accepted form is on
 [Models](/concepts/models).
 
-For a harness specifically, `unirouter/auto` is the form worth reaching for. It
+For a harness specifically, `hopscotch/auto` is the form worth reaching for. It
 is one fixed string that means whichever route your workspace made its default,
 so the model behind your editor changes on the Routing screen rather than in a
 TOML file you have to find again. [Routing

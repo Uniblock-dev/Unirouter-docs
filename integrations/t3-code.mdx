@@ -63,15 +63,15 @@ rather than carrying it:
 ```json opencode.json
 {
   "provider": {
-    "uniblock": {
+    "hopscotch": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "Uniblock",
+      "name": "Hopscotch",
       "options": {
-        "baseURL": "https://ai.uniblock.dev/v1",
-        "apiKey": "{env:UNIBLOCK_API_KEY}"
+        "baseURL": "https://api.hopscotchlabs.ai/v1",
+        "apiKey": "{env:HOPSCOTCH_API_KEY}"
       },
       "models": {
-        "unirouter/auto": { "name": "Default route via Uniblock" }
+        "hopscotch/auto": { "name": "Default route via Hopscotch" }
       }
     }
   }
@@ -82,7 +82,7 @@ Then, in T3 Code's settings, on the provider instance that runs OpenCode, add
 the environment variable that block is waiting for:
 
 ```text Environment variable
-UNIBLOCK_API_KEY = ub_live_XXXXXXXXXXXX
+HOPSCOTCH_API_KEY = ub_live_XXXXXXXXXXXX
 ```
 
 **Mark it sensitive.** A variable marked that way is written to a secrets
@@ -101,7 +101,7 @@ nothing else.
 
 T3 Code keeps its own model list per instance and lets you add ids as free text,
 so this is a second place a model id has to be pinned. Add ids this API accepts,
-which means a provider-pinned `provider/model` or `unirouter/auto`; slashes are
+which means a provider-pinned `provider/model` or `hopscotch/auto`; slashes are
 fine and are what the field expects. [Models](/concepts/models) has the accepted
 forms.
 

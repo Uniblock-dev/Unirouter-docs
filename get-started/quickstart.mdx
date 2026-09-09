@@ -1,6 +1,6 @@
 ---
 title: "Quickstart"
-description: "Get a key, point your client at the Uniblock base URL, and send your first chat completion."
+description: "Get a key, point your client at the Hopscotch base URL, and send your first chat completion."
 status: partial
 gates: ["2.3", "2.10", "2.11"]
 ---
@@ -23,7 +23,7 @@ them is missing:
 
 <Steps>
   <Step title="A verified account">
-    Sign up and verify your email address at [app.uniblock.dev](https://app.uniblock.dev).
+    Sign up and verify your email address at [app.hopscotchlabs.ai](https://app.hopscotchlabs.ai).
   </Step>
   <Step title="A workspace with credit">
     Credit is prepaid, so a workspace with a zero balance refuses requests
@@ -45,8 +45,8 @@ Two forms of the same address, and which one you use depends on your client:
 
 | Where | Value |
 |---|---|
-| An OpenAI SDK `base_url` / `baseURL` | `https://ai.uniblock.dev/v1` |
-| A raw HTTP call | `https://ai.uniblock.dev/v1/chat/completions` |
+| An OpenAI SDK `base_url` / `baseURL` | `https://api.hopscotchlabs.ai/v1` |
+| A raw HTTP call | `https://api.hopscotchlabs.ai/v1/chat/completions` |
 
 The SDKs append the endpoint path themselves, which is why their setting carries
 the `/v1` and nothing after it.
@@ -58,7 +58,7 @@ the `/v1` and nothing after it.
 <CodeGroup>
 
 ```bash curl
-curl https://ai.uniblock.dev/v1/chat/completions \
+curl https://api.hopscotchlabs.ai/v1/chat/completions \
   -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
   -H "Content-Type: application/json" \
   -d '{
@@ -71,7 +71,7 @@ curl https://ai.uniblock.dev/v1/chat/completions \
 from openai import OpenAI
 
 client = OpenAI(
-    base_url="https://ai.uniblock.dev/v1",
+    base_url="https://api.hopscotchlabs.ai/v1",
     api_key="ub_live_YOUR_KEY_HERE",
 )
 
@@ -87,7 +87,7 @@ print(response.choices[0].message.content)
 import OpenAI from "openai";
 
 const client = new OpenAI({
-  baseURL: "https://ai.uniblock.dev/v1",
+  baseURL: "https://api.hopscotchlabs.ai/v1",
   apiKey: "ub_live_YOUR_KEY_HERE",
 });
 
@@ -112,7 +112,7 @@ value:
 
 | Header | What it carries |
 |---|---|
-| `x-uniblock-request-id` | Our name for the id. |
+| `x-hopscotch-request-id` | Our name for the id. |
 | `x-request-id` | The same value on the header the OpenAI SDKs read and surface on their error objects, so your client holds it without being taught to. |
 
 <RequestIdNote />
@@ -133,7 +133,7 @@ lines, so an OpenAI SDK skips it without being taught about it.
 <CodeGroup>
 
 ```bash curl
-curl https://ai.uniblock.dev/v1/chat/completions \
+curl https://api.hopscotchlabs.ai/v1/chat/completions \
   -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
   -H "Content-Type: application/json" \
   -N \
@@ -176,7 +176,7 @@ The raw stream ends like this. The comment line is the one starting with a colon
 ```text Annotated SSE tail
 data: {"id":"...","object":"chat.completion.chunk","choices":[{"delta":{},"finish_reason":"stop","index":0}]}
 
-:x-uniblock-usage {"v":1,...}
+:x-hopscotch-usage {"v":1,...}
 
 data: [DONE]
 ```
@@ -208,13 +208,13 @@ Sending no `Authorization` header at all:
 }
 ```
 
-Sending a string that is not shaped like a Uniblock key, which is the answer you
+Sending a string that is not shaped like a Hopscotch key, which is the answer you
 get if you paste a key from another provider:
 
 ```json 401
 {
   "error": {
-    "message": "Incorrect API key format. A Uniblock key looks like ub_live_ followed by 43 characters. Check you have not pasted a key from another provider.",
+    "message": "Incorrect API key format. A Hopscotch key looks like ub_live_ followed by 43 characters. Check you have not pasted a key from another provider.",
     "type": "authentication_error",
     "param": null,
     "code": "invalid_api_key",

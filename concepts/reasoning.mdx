@@ -15,7 +15,7 @@ like it should.
 
 `reasoning_effort` is an ordinary field in the request body and travels to the
 provider as you wrote it, like every other parameter. So is anything else a
-provider takes to control how much thinking it does. There is no Uniblock control
+provider takes to control how much thinking it does. There is no Hopscotch control
 for reasoning and nothing of ours is added to your body.
 
 Which values a model accepts is the model's business, and a value it will not
@@ -35,7 +35,7 @@ a provider reports them, the count arrives separately as well, as a second view
 of tokens already counted:
 
 ```text
-:x-uniblock-usage {"v":1,"reported":true,"prompt_tokens":40,"completion_tokens":900,"total_tokens":940,"reasoning_tokens":768}
+:x-hopscotch-usage {"v":1,"reported":true,"prompt_tokens":40,"completion_tokens":900,"total_tokens":940,"reasoning_tokens":768}
 ```
 
 In that line the model produced nine hundred completion tokens, of which the

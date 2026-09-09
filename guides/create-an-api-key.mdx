@@ -5,8 +5,8 @@ status: partial
 gates: ["3.9", "3.10", "3.11", "3.13", "9.22", "9.23"]
 ---
 
-An API key is what authenticates your calls to `https://ai.uniblock.dev`. Keys
-are created in the dashboard, at [Keys](https://app.uniblock.dev), and never
+An API key is what authenticates your calls to `https://api.hopscotchlabs.ai`. Keys
+are created in the dashboard, at [Keys](https://app.hopscotchlabs.ai), and never
 through the API.
 
 **Who can do this:** owner, admin or developer. A viewer cannot, and is refused
@@ -45,7 +45,7 @@ the once-only showing exists to discourage.
 Send it as a bearer token:
 
 ```bash
-curl https://ai.uniblock.dev/v1/chat/completions \
+curl https://api.hopscotchlabs.ai/v1/chat/completions \
   -H "Authorization: Bearer ub_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" \
   -H "Content-Type: application/json" \
   -d '{"model":"openai/gpt-4o-mini","messages":[{"role":"user","content":"Hello"}]}'
@@ -156,7 +156,7 @@ A lapse or a cancellation is not a revocation, because the key never existed.
 
 Exactly three things revoke a key, and the list is closed: an explicit revoke, a
 replacement, and a removal in which somebody chose revoke for that key. A role
-change never revokes a key. Uniblock staff can also revoke a key from our side,
+change never revokes a key. Hopscotch staff can also revoke a key from our side,
 recorded against a named member of staff.
 
 <Warning>

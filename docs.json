@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Uniblock",
+  "name": "Hopscotch",
   "description": "OpenAI-compatible LLM router. One key, one endpoint, every model.",
   "colors": {
     "primary": "#00786a",
@@ -38,7 +38,7 @@
     "links": [
       {
         "label": "Dashboard",
-        "href": "https://app.uniblock.dev"
+        "href": "https://app.hopscotchlabs.ai"
       }
     ]
   },

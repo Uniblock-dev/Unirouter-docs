@@ -30,7 +30,7 @@ and leave the rest of your client configuration where it is.
 from openai import OpenAI
 
 client = OpenAI(
-    base_url="https://ai.uniblock.dev/v1",   # was: unset, or the OpenAI default
+    base_url="https://api.hopscotchlabs.ai/v1",   # was: unset, or the OpenAI default
     api_key="ub_live_YOUR_KEY_HERE",         # was: your OpenAI key
 )
 ```
@@ -39,7 +39,7 @@ client = OpenAI(
 import OpenAI from "openai";
 
 const client = new OpenAI({
-  baseURL: "https://ai.uniblock.dev/v1",  // was: unset, or the OpenAI default
+  baseURL: "https://api.hopscotchlabs.ai/v1",  // was: unset, or the OpenAI default
   apiKey: "ub_live_YOUR_KEY_HERE",        // was: your OpenAI key
 });
 ```
@@ -62,7 +62,7 @@ dashboard. Do not assemble them by hand from a provider's own naming. See
 [Models](/concepts/models).
 
 ```bash
-curl https://ai.uniblock.dev/v1/models \
+curl https://api.hopscotchlabs.ai/v1/models \
   -H "Authorization: Bearer ub_live_YOUR_KEY_HERE"
 ```
 
@@ -88,7 +88,7 @@ rather than as either working or refused. See
 **Headers you send.** Only `Authorization` and `Content-Type` are read. Nothing
 else you send reaches the provider, because the upstream request is built from
 your body and our own credential with a fresh header set. Organisation and
-project headers, and anything in the `x-uniblock-*` namespace, do not travel.
+project headers, and anything in the `x-hopscotch-*` namespace, do not travel.
 
 **Headers you receive.** Provider rate-limit headers are not forwarded, so if you
 currently read remaining-requests and reset headers to pace yourself, that input
@@ -97,7 +97,7 @@ on, and the per-key one carries `Retry-After`. See
 [Rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
 
 **One extra line on a stream.** A streamed reply carries a
-`:x-uniblock-usage` comment line immediately before `data: [DONE]`. The
+`:x-hopscotch-usage` comment line immediately before `data: [DONE]`. The
 server-sent events specification requires a parser to ignore a line starting
 with a colon, so a conforming client never sees it. See
 [Streaming](/concepts/streaming).

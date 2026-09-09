@@ -36,6 +36,6 @@ export const PRIVATE_PATH_PREFIXES = [
 ];
 
 export const PRODUCTION_SERVER = {
-  url: 'https://ai.uniblock.dev',
+  url: 'https://api.hopscotchlabs.ai',
   description: 'Production',
 };

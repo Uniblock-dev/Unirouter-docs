@@ -23,7 +23,7 @@ Three properties of this body are worth stating because clients depend on them:
   `null` rather than omitted, so a missing field never has to be told apart from
   a null one.
 - `request_id` is stamped on every error body, whatever produced the error. It is
-  the same value as the `x-uniblock-request-id` and `x-request-id` response
+  the same value as the `x-hopscotch-request-id` and `x-request-id` response
   headers.
 - No other field appears inside `error`. Nothing about our internals travels in
   an error body, and a body that would carry anything else is replaced before it
@@ -61,7 +61,7 @@ separates causes sharing a status.
 | Status | `type` | `code` | Meaning |
 |---|---|---|---|
 | 400 | `invalid_request_error` | `null` | A required parameter is missing. `param` names it. |
-| 400 | `invalid_request_error` | `model_id_not_pinned` | The `model` field is none of the forms this API accepts. It does not begin with a provider we serve, it is not a `profile/` slug, and it is not `unirouter/auto`. `param` is `model`. This is a 400 and not a `model_not_found` 404 on purpose: nothing was looked up, because the string does not say which provider should serve it, and what is missing is a prefix rather than a correct spelling. |
+| 400 | `invalid_request_error` | `model_id_not_pinned` | The `model` field is none of the forms this API accepts. It does not begin with a provider we serve, it is not a `profile/` slug, and it is not `hopscotch/auto`. `param` is `model`. This is a 400 and not a `model_not_found` 404 on purpose: nothing was looked up, because the string does not say which provider should serve it, and what is missing is a prefix rather than a correct spelling. |
 | 400 | `invalid_request_error` | `context_length_exceeded` | The request is too large to price or serve. `param` is `messages`. Send less in one call. |
 | 400 | `invalid_request_error` | `unsupported_value` | A field carries a value this API cannot honour. Today that is `store: true` on `POST /v1/responses`, because this platform stores no response: `param` is `store`, and the fix is to send `false` or leave the field out. Refused before admission, so nothing is held and no provider is called. |
 | 400 | `invalid_request_error` | `provider_key_refused` | The request ran on your own key for that provider, and the provider rejected the key itself or refused this particular call under it. Replace the key on the Provider keys screen; retrying will not change the answer. |
@@ -75,7 +75,7 @@ separates causes sharing a status.
 | 404 | `invalid_request_error` | `endpoint_not_supported` | The path is not one this release serves, whether or not it exists upstream. The message names the method and the path and says it is not supported in this release. |
 | 404 | `not_found_error` | `model_not_found` | No model of that id is in the live catalog, which is what a typo produces. Check the spelling, or list what this key can call with `GET /v1/models`. `param` is `model` on the model routes and `null` on an inference call. |
 | 404 | `not_found_error` | `model_not_available` | The id is catalogued and is not being served right now, either at all or on the endpoint you called. Told apart from `model_not_found` so a withdrawn model does not read as a typo. The status and the code are the same in every case; the **message** says which case it is, and whether waiting helps. A model the provider has retired says it is gone rather than unwell, that retrying will not bring it back, and that no change to the request reaches it. A model the provider still serves that we cannot reach right now says that instead, and says that nothing about your request is wrong. Anything else keeps the sentence this code has always carried: known here, not being served at the moment, and retrying later is worth more than changing the request. No message names a replacement model unless the provider named one itself. |
-| 404 | `invalid_request_error` | `model_not_available` | The same code from the other direction, on a request that sent `unirouter/auto`: `param` is `model`, and the message names your cost tier, because that is the fact that decides what you do next. Either the tier has no published list, or nothing in it can be served right now. Both ways out are named in the message: pick another cost tier, or create a route and make it the default. |
+| 404 | `invalid_request_error` | `model_not_available` | The same code from the other direction, on a request that sent `hopscotch/auto`: `param` is `model`, and the message names your cost tier, because that is the fact that decides what you do next. Either the tier has no published list, or nothing in it can be served right now. Both ways out are named in the message: pick another cost tier, or create a route and make it the default. |
 | 405 | `invalid_request_error` | `method_not_allowed` | A method other than GET on a path that exists. Carries an `Allow` header. Answered before any key is looked at, so it costs nothing and reveals nothing. |
 | 429 | `rate_limit_error` | `rate_limit_exceeded` | This key's request rate limit. Carries `Retry-After`. |
 | 429 | `rate_limit_error` | `spend_rate_exceeded` | The account's spend rate cap. Nothing to fix; requests are admitted again as the window rolls forward. |
@@ -111,7 +111,7 @@ statuses. Do not infer a retry delay from its absence.
 ### Provider key refusals
 
 `provider_key_refused` only appears on a request that ran on your own key for
-that provider, never on a Uniblock-held key for it. While your workspace holds
+that provider, never on a Hopscotch-held key for it. While your workspace holds
 that key, every request to the provider runs on it alone, and nothing falls
 back to a different credential if the provider refuses it.
 
@@ -151,7 +151,7 @@ client can always tell "never started" from "cut off part way".
 
 The `request_deadline_exceeded` line is the one error body on this API without a
 `request_id`: it is written after the response has left the point that stamps the
-id. Read the id from the `x-uniblock-request-id` response header instead.
+id. Read the id from the `x-hopscotch-request-id` response header instead.
 
 A non-streamed response that we terminate part way through does not receive an
 error body. There is nowhere to put one, so the connection errors instead. Treat a

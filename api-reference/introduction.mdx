@@ -1,6 +1,6 @@
 ---
 title: "API reference"
-description: "The Uniblock API is OpenAI-shaped: one base URL, one bearer key, and the request and response bodies your client already sends."
+description: "The Hopscotch API is OpenAI-shaped: one base URL, one bearer key, and the request and response bodies your client already sends."
 status: write-now
 gates: []
 ---
@@ -9,8 +9,8 @@ import BaseUrl from '/snippets/base-url.mdx';
 import AuthHeader from '/snippets/auth-header.mdx';
 import RequestIdNote from '/snippets/request-id-note.mdx';
 
-The Uniblock API is the product. You point an OpenAI-compatible client at our
-base URL, send a Uniblock API key instead of a provider key, and name the model
+The Hopscotch API is the product. You point an OpenAI-compatible client at our
+base URL, send a Hopscotch API key instead of a provider key, and name the model
 you want. Request and response bodies keep the shapes your client already
 parses, including error bodies.
 
@@ -72,7 +72,7 @@ extra comment line we add and the events that end a stream early.
 ## Every response carries a request id
 
 Each request gets an id, returned on two response headers with the same value:
-`x-uniblock-request-id`, which is ours, and `x-request-id`, which is the one the
+`x-hopscotch-request-id`, which is ours, and `x-request-id`, which is the one the
 official OpenAI SDKs surface on their error objects. Error bodies also carry it
 as `request_id` inside `error`.
 

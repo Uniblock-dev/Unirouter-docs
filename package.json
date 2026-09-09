@@ -1,8 +1,8 @@
 {
-  "name": "uniblock-docs",
+  "name": "hopscotch-docs",
   "version": "0.0.0",
   "private": true,
-  "description": "The public documentation site for Uniblock Gateway, built on Mintlify.",
+  "description": "The public documentation site for Hopscotch Gateway, built on Mintlify.",
   "type": "module",
   "engines": {
     "node": ">=22"
