@@ -1,0 +1,249 @@
+/**
+ * Uniblock brand styling for the docs site.
+ *
+ * Mintlify loads every `.css` file that sits beside `docs.json`, on every page.
+ * There is no import step and no build: this file being here is what ships it.
+ *
+ * ## What this file is, and what `docs.json` is
+ *
+ * The palette, the grounds, the fonts and the code-block theme are set in
+ * `docs.json`, because Mintlify has first-class keys for all four and a
+ * supported key survives an upgrade in a way a CSS override does not. This file
+ * is only for the parts of the dashboard's design that `docs.json` has no key
+ * for: the mono face, the corner curve, the selection colour, the focus ring,
+ * the scrollbars, and the reduced-motion guard.
+ *
+ * ## Where the values come from
+ *
+ * `apps/dashboard/src/styles/globals.css` in Gateway-LLM, which is itself a
+ * deliberate copy of `unirouter-design/src/index.css`. The token block below is
+ * a third copy in that same chain, and copied for the same stated reason: a
+ * change made in the reference should be brought over by reading two files side
+ * by side, rather than by translating one into the other.
+ *
+ * ## The rule this file follows
+ *
+ * Nothing here targets a Mintlify internal class name or CSS variable. Every
+ * selector is either a plain element, a documented `[data-component-part]`
+ * attribute, or a standard pseudo-element. That is a deliberate ceiling rather
+ * than an oversight: Mintlify's internals are unversioned, and an override
+ * keyed to one is a rule that stops working on some Thursday with no warning
+ * and no error. Where a value has to react to light or dark mode, it is mixed
+ * against `currentColor` so that it follows the theme without this file needing
+ * to know which class Mintlify puts on `html` to signal the mode.
+ */
+
+/* Geist Sans is set in `docs.json` (`fonts.family`), which is what makes
+   Mintlify load it. Geist Mono has no equivalent key, so it is fetched here and
+   applied to code by element selector below. */
+@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400..600&display=swap");
+
+/**
+ * The dashboard's tokens.
+ *
+ * Declared rather than applied. Nothing in this file consumes most of them yet,
+ * and that is on purpose: the accent-per-provider work and the pane treatment
+ * for Cards and the API playground are a separate change, and a token that
+ * arrives with that change arrives after somebody has already hard-coded the
+ * hex it names. They are also the reference a human needs when writing a
+ * one-off style into an MDX page.
+ */
+:root {
+  /* The greyscale, dark. */
+  --uni-bg: #111110;
+  --uni-pane: #161615;
+  --uni-ink: #d2d2cc;
+  --uni-mute: #9e9e98;
+  --uni-dim: #80807a;
+  --uni-faint: #61615b;
+
+  /* The greyscale, light. Both ramps are declared side by side rather than one
+     of them living in a mode block, because a page that wants the light ink for
+     a deliberate reason should not have to fight a media query to get it. */
+  --uni-bg-light: #f1f0ea;
+  --uni-pane-light: #fafaf6;
+  --uni-ink-light: #2b2b25;
+  --uni-mute-light: #51514b;
+  --uni-dim-light: #6c6c66;
+  --uni-faint-light: #8a8a84;
+
+  /**
+   * The one STATE colour, and the only one in the system that moves between
+   * themes. `#00c5a9` measures 8.6:1 on the dark ground and 1.9:1 on the light
+   * one, which is why light mode gets a darker teal of the same hue at 4.7:1
+   * instead. `docs.json` carries these same two values as `colors.light` and
+   * `colors.primary`; they are here as well because an MDX page cannot read
+   * `docs.json`.
+   */
+  --uni-live: #00c5a9;
+  --uni-live-light: #00786a;
+
+  /**
+   * The eight identity accents, which deliberately do NOT change between
+   * themes. A provider's colour has to be the same colour whichever way the
+   * page is read, because the colour IS the name.
+   */
+  --uni-blue: #00afff;
+  --uni-cyan: #00bfdf;
+  --uni-indigo: #7c9cff;
+  --uni-lime: #98b305;
+  --uni-orange: #ef8600;
+  --uni-pink: #f771a0;
+  --uni-teal: #00c5a9;
+  --uni-violet: #b688fe;
+
+  --uni-ease-snap: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/**
+ * The mono face.
+ *
+ * On the elements rather than on a variable, because the variable Mintlify
+ * reads for code is an internal and this file does not touch internals. The
+ * fallback stack is the full one, so a page still renders in a sensible mono if
+ * the Google Fonts request fails or is blocked.
+ */
+code,
+kbd,
+samp,
+pre,
+pre *,
+[data-component-part="code-block"],
+[data-component-part="code-block"] * {
+  font-family: "Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo,
+    Consolas, monospace;
+}
+
+/**
+ * The corner curve, which is not the corner radius.
+ *
+ * Ported verbatim from the dashboard, including the reason it is on `*`: a
+ * squircle spends more of the curve near the straight edges and less at the
+ * corner itself, so the same radius draws a visibly different shape. The
+ * dashboard and the docs currently diverge on exactly this, and matching the
+ * radius alone would not close the gap.
+ *
+ * `@supports` is doing real work. `corner-shape` is Chromium-only today, so
+ * everywhere else the whole block is skipped and every corner stays the round
+ * one it is now — a slightly different curve, not a broken layout.
+ */
+@supports (corner-shape: squircle) {
+  * {
+    corner-shape: squircle;
+  }
+}
+
+/**
+ * Selection.
+ *
+ * The tint is a literal in the dashboard too, and stays one: it is a highlight
+ * colour rather than a token any component reads. The text colour is
+ * `currentColor` rather than the dashboard's `var(--color-ink)`, which is what
+ * lets one rule serve both modes here — the dashboard could name its ink
+ * because it owns the variable that moves; this file cannot, and does not need
+ * to.
+ */
+::selection {
+  background: rgb(126 200 212 / 0.28);
+  color: currentColor;
+}
+
+/**
+ * The focus ring.
+ *
+ * Inputs are excluded exactly as they are in the dashboard: they carry their
+ * own caret and focus treatment, and a ring around a text field as well as a
+ * caret reads as an error rather than as focus.
+ *
+ * Mixed against `currentColor` so it is a light ring on a dark ground and a
+ * dark ring on a light one without this file knowing which is in play. It is
+ * layered over whatever Mintlify draws rather than replacing it, so if this
+ * rule is ever dropped the focus indicator does not disappear.
+ */
+:focus-visible:not(input):not(textarea):not(select) {
+  outline: 1.5px solid color-mix(in srgb, currentColor 55%, transparent);
+  outline-offset: 3px;
+}
+
+/**
+ * Scrollbars.
+ *
+ * A default scrollbar on the near-black ground is a bright band down the side
+ * of the page, which is the single most visible way the docs currently read as
+ * a different product from the dashboard. Applied to the page and to anything
+ * that scrolls sideways — long code blocks and wide tables — rather than to
+ * every element, because a thin scrollbar on a small box is harder to grab.
+ *
+ * Mixed against `currentColor` for the same reason as the focus ring above.
+ */
+html,
+body,
+pre,
+[data-component-part="code-block"],
+.overflow-x-auto,
+.overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, currentColor 16%, transparent) transparent;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+pre::-webkit-scrollbar,
+[data-component-part="code-block"]::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+pre::-webkit-scrollbar-thumb,
+[data-component-part="code-block"]::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, currentColor 16%, transparent);
+  border-radius: 99px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+pre::-webkit-scrollbar-track,
+[data-component-part="code-block"]::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/**
+ * Type rendering, ported from the dashboard's `body` rule.
+ *
+ * `ss01` and `cv11` are Geist stylistic sets. They are what make the docs' type
+ * the same type as the product's rather than merely the same family — without
+ * them the same font renders visibly differently in the two places, most
+ * obviously on the single-storey `a` and `g`.
+ */
+body {
+  font-feature-settings: "ss01" on, "cv11" on;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/**
+ * Reduced motion.
+ *
+ * Not decoration. Somebody who has asked their operating system to stop
+ * animations has usually asked for a reason, and this is the kind of rule that
+ * never gets added later.
+ *
+ * `!important` is wrong in general and right here: this has to outrank every
+ * transition and animation Mintlify declares anywhere in its own stylesheets,
+ * and without it the rule loses to any of them.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

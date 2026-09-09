@@ -4,12 +4,43 @@
   "name": "Uniblock",
   "description": "OpenAI-compatible LLM router. One key, one endpoint, every model.",
   "colors": {
-    "primary": "#0071B5",
-    "light": "#1FB6FF",
-    "dark": "#0071B5"
+    "primary": "#00786a",
+    "light": "#00c5a9",
+    "dark": "#00786a"
+  },
+  "favicon": "/favicon.svg",
+  "appearance": {
+    "default": "dark",
+    "strict": false
+  },
+  "background": {
+    "color": {
+      "light": "#f1f0ea",
+      "dark": "#111110"
+    }
   },
   "fonts": {
     "family": "Geist"
+  },
+  "icons": {
+    "library": "tabler"
+  },
+  "styling": {
+    "eyebrows": "section",
+    "codeblocks": {
+      "theme": {
+        "light": "vitesse-light",
+        "dark": "vesper"
+      }
+    }
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Dashboard",
+        "href": "https://app.uniblock.dev"
+      }
+    ]
   },
   "navigation": {
     "tabs": [
@@ -112,14 +143,6 @@
             "openapi": "api-reference/openapi.public.json"
           }
         ]
-      }
-    ]
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Dashboard",
-        "href": "https://app.uniblock.dev"
       }
     ]
   },
