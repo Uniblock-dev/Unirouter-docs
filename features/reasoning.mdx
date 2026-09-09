@@ -44,7 +44,7 @@ great majority were reasoning and the rest were the answer you saw. Adding
 
 The same figure reaches your usage record and the Activity screen as the
 reasoning count for that request. See
-[Usage and metering](/concepts/usage-and-metering).
+[Usage and metering](/manage/usage-and-metering).
 
 **Absent is not zero.** `reasoning_tokens` is omitted rather than sent as `0`
 when the provider did not report it, so a missing field means we were not told
@@ -60,7 +60,7 @@ it earns a price of its own because providers price it separately:
 completion = output + reasoning
 ```
 
-See [Models](/concepts/models) for the whole vocabulary, and read what a request
+See [Models](/features/models) for the whole vocabulary, and read what a request
 actually cost from your usage record rather than from a rate.
 
 ## `max_tokens` matters more here than anywhere else
@@ -79,7 +79,7 @@ that ceiling is whatever the model publishes as its maximum output, which on a
 reasoning model is often large. The hold comes back in full at settlement and you
 are charged for what was produced, but while the request is in flight it occupies
 that much of your account spend rate cap. See
-[Rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+[Rate limits and spend controls](/manage/rate-limits-and-spend-controls).
 
 So send `max_tokens`, and send one with room for the thinking and the answer
 both.
@@ -93,7 +93,7 @@ that pause, and nothing times it out sooner than the request deadline.
 
 The counts arrive at the end, on the usage comment line, as they do for any
 stream. A stream cut off part way carries no usage line, because there are no
-final counts to report. See [Streaming](/concepts/streaming).
+final counts to report. See [Streaming](/features/streaming).
 
 ## What this platform does not do
 

@@ -36,7 +36,7 @@ key.** Cursor says so on the same page.
 **Pointing Cursor at a private gateway does not make the traffic private to
 you.** If the reason you are configuring a base URL is that your prompts must
 not reach a third party, Cursor cannot deliver that, and no setting documented
-here changes it. [Data and privacy](/concepts/data-and-privacy) covers what
+here changes it. [Data and privacy](/manage/data-and-privacy) covers what
 happens to a request once it reaches us, which is a separate question from what
 happens to it before that.
 
@@ -87,8 +87,8 @@ Cursor lets you add model ids as free text under the same Models settings, and a
 slug with a slash in it is what people put there. Use an id this API accepts:
 either a provider-pinned `provider/model`, or `unirouter/auto`, which is one
 fixed string meaning whichever route your workspace made its default.
-[Models](/concepts/models) has every accepted form and
-[Routing profiles](/concepts/routing-profiles) covers the fixed id.
+[Models](/features/models) has every accepted form and
+[Routing profiles](/features/routing-profiles) covers the fixed id.
 
 A model you add this way is a chat model. It does not become available to the
 features named below.
@@ -103,7 +103,7 @@ by anything on this page.
 A forum thread handled by Cursor staff adds one more: subagents do not inherit
 the custom base URL or the custom model list, and fall back to Cursor's own
 models silently rather than refusing. If you are counting requests, that is a
-population of them that will never appear in [Activity](/guides/view-activity).
+population of them that will never appear in [Activity](/manage/view-activity).
 
 If your workspace is on a Cursor team plan, an administrator can turn bring
 your own key off for everyone under Team Settings, in which case none of this

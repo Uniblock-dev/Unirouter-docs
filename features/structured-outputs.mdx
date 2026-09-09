@@ -36,7 +36,7 @@ JSON", and `{"type": "json_schema", ...}` for "answer in this shape".
 
 Every catalog entry carries a `json_mode` word in its `capabilities` block,
 answering `yes`, `no` or `unknown`. See
-[Model capabilities](/concepts/model-capabilities).
+[Model capabilities](/features/model-capabilities).
 
 The word covers both forms together. It does not tell you whether a model that
 takes `json_object` also takes a `json_schema` with `strict` set, and that
@@ -96,7 +96,7 @@ Accumulate the deltas and parse once at the end, unless you have a streaming
 parser that is built for partial documents.
 
 The stream itself is unchanged by any of this. See
-[Streaming](/concepts/streaming).
+[Streaming](/features/streaming).
 
 ## What it costs
 

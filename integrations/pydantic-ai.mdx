@@ -85,8 +85,8 @@ can send a bare id you did not write.
 **Structured output and tool calling need no other endpoint.** Both run through
 the same chat completions call, so the feature set that makes this library worth
 using does not widen the API surface it needs. See
-[tool calling](/concepts/tool-calling) and
-[structured outputs](/concepts/structured-outputs) for what travels.
+[tool calling](/features/tool-calling) and
+[structured outputs](/features/structured-outputs) for what travels.
 
 **Nothing calls the catalog or embeddings.** No default agent run reaches
 `GET /v1/models` or an embeddings endpoint.
@@ -111,7 +111,7 @@ except ModelHTTPError as error:
 `headers` is `None` when the provider supplied none, so the guard above is not
 decoration. Our error envelope arrives in `body`, so read `type` and `code` out
 of it rather than matching on the message text. Every shipped code is in
-[errors](/concepts/errors).
+[errors](/features/errors).
 
 `UnexpectedModelBehavior` is a different thing and is not an HTTP failure: it is
 raised when a reply is not the shape the library expected. A refusal from us

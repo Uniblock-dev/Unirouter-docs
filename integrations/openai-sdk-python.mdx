@@ -81,7 +81,7 @@ if line.startswith(":"):
 
 That is the behaviour the SSE specification requires, and it is quoted here from
 the SDK's own decoder rather than assumed from the specification.
-[Streaming](/concepts/streaming) documents what the line carries if you do want
+[Streaming](/features/streaming) documents what the line carries if you do want
 to read it.
 
 ## Where the request id is
@@ -114,7 +114,7 @@ Branch on `type` and `code`, never on the message text. The fields are the
 contract and the sentences are prose. `APIStatusError` also has the subclasses
 you already catch, so an unpinned model id arrives as `BadRequestError` and a
 refusal for credit arrives with status `402`. Every shipped code is in
-[errors](/concepts/errors).
+[errors](/features/errors).
 
 ## What we did not verify
 

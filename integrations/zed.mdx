@@ -52,7 +52,7 @@ models the Agent Panel offers are exactly the entries in `available_models`, and
 `display_name` is what you see in the picker, and `max_tokens` is the model's
 context window.
 
-Take both figures from [`GET /v1/models`](/concepts/models), which publishes the
+Take both figures from [`GET /v1/models`](/features/models), which publishes the
 context window and the maximum output for every model. An entry also accepts
 `max_output_tokens`, and a wrong `max_tokens` is not corrected by anything on our
 side: it changes how much conversation Zed sends before it trims, which shows up
@@ -101,7 +101,7 @@ spend rate cap bind early. Zed's model entry carries both a `max_output_tokens`
 key and a `max_tokens_parameter` capability, and we did not verify which of them
 results in a `max_tokens` on the wire. If the cap starts refusing requests during
 an agent session, that pair is the first place to look. See [rate limits and
-spend controls](/concepts/rate-limits-and-spend-controls).
+spend controls](/manage/rate-limits-and-spend-controls).
 
 ## What we did not verify
 

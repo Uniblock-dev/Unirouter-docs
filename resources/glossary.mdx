@@ -14,7 +14,7 @@ A credential you use to call `https://api.hopscotchlabs.ai`. It belongs to a wor
 rather than to a person, and it is never a provider credential. Shown once at
 creation, stored only as a one-way hash, and identified afterwards by its name,
 its prefix and its last four characters. See
-[Create an API key](/guides/create-an-api-key).
+[Create an API key](/get-started/create-an-api-key).
 
 ### Balance
 
@@ -26,7 +26,7 @@ One of five recorded answers about what a model can do, carried on every catalog
 entry: `streaming`, `tools`, `json_mode`, `vision` and `audio`. Each answers
 `yes`, `no` or `unknown`, and `unknown` means nobody has established the answer
 rather than that the answer is no. A capability describes a model; it does not
-gate a request. See [Model capabilities](/concepts/model-capabilities).
+gate a request. See [Model capabilities](/features/model-capabilities).
 
 ### Credit
 
@@ -38,14 +38,14 @@ the card, and the credit granted. On this site, "credit" always means the second
 ### Deprecation
 
 The date a provider stopped recommending a model. The model still answers. It is
-not the same as a sunset. See [Model lifecycle](/concepts/model-lifecycle).
+not the same as a sunset. See [Model lifecycle](/features/model-lifecycle).
 
 ### Invitation
 
 An emailed link that offers somebody a role in a workspace. Bound to one email
 address, valid for seven days, confers nothing until it is accepted, and may
 carry a key reservation. See
-[Invite and manage members](/guides/invite-and-manage-members).
+[Invite and manage members](/manage/invite-and-manage-members).
 
 ### Key reservation
 
@@ -58,7 +58,7 @@ cancelled was never a key, so ending it is not a revocation.
 
 A model that is callable right now, because we hold working credentials for it
 and it has been enabled. Only live models are offered to you. See
-[Models](/concepts/models).
+[Models](/features/models).
 
 ### Member
 
@@ -93,13 +93,13 @@ nothing.
 The percentage Hopscotch adds to the credit you buy, charged at the moment of
 purchase and never taken when a request is served. Currently 2.5%. The rate that
 applies to a purchase is fixed when checkout starts. See
-[Credits and billing](/concepts/credits-and-billing).
+[Credits and billing](/manage/credits-and-billing).
 
 ### Playground
 
 A dashboard screen that sends a real request to a real model, authenticated by
 your session and attributed to a key you choose. It spends real credit and stores
-no prompt or reply. See [Playground](/guides/playground).
+no prompt or reply. See [Playground](/features/playground).
 
 ### Provider
 
@@ -111,7 +111,7 @@ one, and you never do.
 Tokens a model generates while working out its answer, before the answer itself.
 They are counted inside the completion count rather than added to it, they are
 priced as their own kind, and they are reported separately where the provider
-reports them at all. See [Reasoning models](/concepts/reasoning).
+reports them at all. See [Reasoning models](/features/reasoning).
 
 ### Request id
 
@@ -123,13 +123,13 @@ single request is looked up in your usage.
 
 What a member may do in one workspace: one of owner, admin, developer or viewer,
 and a member holds exactly one. A role is a set of permissions rather than a
-rank. See [Workspaces and members](/concepts/workspaces-and-members).
+rank. See [Workspaces and members](/manage/workspaces-and-members).
 
 ### Spend rate cap
 
 A ceiling on how much a workspace may commit to in-flight requests over a rolling
 window. It is the one limit you may raise yourself. See
-[Spend controls](/guides/spend-controls).
+[Spend controls](/manage/spend-controls).
 
 ### Statement
 
@@ -141,13 +141,13 @@ only the owner may act on money.
 
 The date a model stops answering. After it, the model leaves the catalog and a
 request naming it is refused. Distinct from a deprecation, which is advice rather
-than a shutdown. See [Model lifecycle](/concepts/model-lifecycle).
+than a shutdown. See [Model lifecycle](/features/model-lifecycle).
 
 ### Usage record
 
 The record of one request: when it was made, which model, which provider served
 it, the token counts, the cost, the latency, and the outcome. Never the prompt
-and never the reply. See [Usage and metering](/concepts/usage-and-metering).
+and never the reply. See [Usage and metering](/manage/usage-and-metering).
 
 ### Workspace
 

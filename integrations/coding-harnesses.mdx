@@ -58,7 +58,7 @@ Every harness ships with a default model name, and every one of those defaults
 is a bare OpenAI-style name. This API does not accept one. The two forms the
 refusal below names are `provider/model`, where the part before the first slash
 names the provider that will serve the request, and a `profile/` slug naming one
-of your workspace's routing profiles. They are not a closed list: [Models](/concepts/models) carries every
+of your workspace's routing profiles. They are not a closed list: [Models](/features/models) carries every
 accepted form of a `model` field and is the page to read before assuming one is
 invalid.
 
@@ -67,7 +67,7 @@ There is a third form, and for a coding harness it is usually the right one:
 made its default, so it goes into a config file once and the model behind it
 changes on the Routing screen instead. That matters more here than elsewhere,
 because a harness config file is exactly the kind of thing nobody edits twice.
-[Routing profiles](/concepts/routing-profiles) covers it.
+[Routing profiles](/features/routing-profiles) covers it.
 
 So `gpt-4o` is refused, before anything is looked up, with `400` and the code
 `model_id_not_pinned`:
@@ -161,7 +161,7 @@ itself 60 seconds after the earliest reservation it counted.
 gets several times more requests a minute out of the same cap, and is charged
 exactly what it was before, because the charge has always been for what was
 actually produced. Where a harness exposes a maximum-output setting, set it.
-[Rate limits and spend controls](/concepts/rate-limits-and-spend-controls)
+[Rate limits and spend controls](/manage/rate-limits-and-spend-controls)
 covers the cap, its default, and which limits are yours to raise.
 
 ### Running out part way through a session
@@ -175,7 +175,7 @@ A request that starts when the workspace cannot cover its hold is refused with
 A stream already running when the credit underneath it runs out is cut. The
 terminating line carries `insufficient_quota` and the code `balance_exhausted`,
 and you are charged for what was produced before the cut and nothing more. There
-is no `data: [DONE]` after it. [Streaming](/concepts/streaming) documents that
+is no `data: [DONE]` after it. [Streaming](/features/streaming) documents that
 line and the two other codes that can end a stream.
 
 **An agent loop that retries on a `402` will not recover.** The condition is a
@@ -201,7 +201,7 @@ request, separately billed, and lands in Activity as its own row.** One
 instruction you gave a harness can be a dozen rows, each with its own model,
 tokens and charge, and each resending a conversation slightly longer than the
 last. That is what an agent session looks like in
-[Activity](/guides/view-activity), and it is not a metering fault.
+[Activity](/manage/view-activity), and it is not a metering fault.
 
 ## Prompt caching is worth having here specifically
 
@@ -212,7 +212,7 @@ costing what it looks like it should and costing considerably more.
 
 Provider caching passes through, and reads from a cache and writes to one are
 priced as their own kinds of token rather than as plain input.
-[Models](/concepts/models) covers that rate vocabulary and where a charge's
+[Models](/features/models) covers that rate vocabulary and where a charge's
 prices come from. There is nothing of ours to switch on, and whether your harness
 sends what a provider needs to cache is a question about the harness.
 
@@ -257,7 +257,7 @@ agent loop either stalls or starts inventing file edits in the chat. That is a
 worse failure than a refusal because it looks like the model being unhelpful.
 
 Check `streaming` too, since most harnesses stream by default, and `vision` if
-you paste screenshots at it. [Models](/concepts/models) covers the catalog, the
+you paste screenshots at it. [Models](/features/models) covers the catalog, the
 capability vocabulary, and why a model appears in it at all.
 
 ## What we did not verify

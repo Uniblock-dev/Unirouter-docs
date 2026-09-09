@@ -95,7 +95,7 @@ Two consequences worth stating:
 - `max_tokens` is worth sending even though it is optional. It is what sizes the
   amount we hold against your balance before the call, so a request without it is
   held at a larger estimate and reaches your account spend rate cap sooner. See
-  [rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+  [rate limits and spend controls](/manage/rate-limits-and-spend-controls).
 
 ## Model ids
 
@@ -106,7 +106,7 @@ carried by two providers is two ids, and you choose which one you send.
 
 A bare OpenAI-style name with no provider is not a Hopscotch model id. It is refused with `400` and
 the code `model_id_not_pinned`, naming both accepted forms, rather than being routed to whichever
-provider we happen to carry it under. Ask [`GET /v1/models`](/concepts/models) for the ids you can
+provider we happen to carry it under. Ask [`GET /v1/models`](/features/models) for the ids you can
 call.
 
 ## Request headers
@@ -150,7 +150,7 @@ headers are not forwarded.** If you currently read the remaining-requests and
 reset headers that a provider sets, those are absent here, because they describe
 a pool we hold rather than a limit that applies to you. Your own limits arrive as
 429 responses with codes you can branch on, documented in
-[rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+[rate limits and spend controls](/manage/rate-limits-and-spend-controls).
 
 ### The usage comment line on a stream
 
@@ -163,7 +163,7 @@ starting with a colon:
 
 The SSE specification requires a parser to ignore a line starting with a colon,
 so the OpenAI SDKs skip it and your own parser should too unless you want the
-counts. [Streaming](/concepts/streaming) documents its fields.
+counts. [Streaming](/features/streaming) documents its fields.
 
 A non-streamed reply carries no equivalent header today. The counts are read on
 our side and become your usage record, which is where to read them.
@@ -173,7 +173,7 @@ our side and become your usage record, which is where to read them.
 Status codes and the closed set of `type` values are OpenAI's. Branch on `type`
 and `code`, never on the message text: the fields are the contract and the
 sentences are prose that may be reworded. Every shipped code and its status is in
-[errors](/concepts/errors).
+[errors](/features/errors).
 
 One difference in kind is worth naming. Some of our refusals are about money
 rather than about your request: not enough credit, or an account spend rate cap.

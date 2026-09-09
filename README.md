@@ -14,6 +14,7 @@ the subject line of each sync commit, as `... move the sync point to <sha>`.
 
 | Section | What it settles |
 |---|---|
+| 5 | The five tabs and the reserved path prefix each one owns |
 | 7 | The page catalog, and which pages are blocked |
 | 8 | The OpenAPI strategy: a derived public artifact, never a repo spec verbatim |
 | 13 | The must-not-publish register, enforced by the banned-content linter |

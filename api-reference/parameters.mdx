@@ -39,7 +39,7 @@ error message.
 **`model`, when you asked for a route rather than a model.** A request naming
 `profile/{identifier}` or `unirouter/auto` is a request for a list of models
 tried in order, so the body that reaches a provider carries the id of the model
-being tried on that attempt. See [Routing profiles](/concepts/routing-profiles).
+being tried on that attempt. See [Routing profiles](/features/routing-profiles).
 
 **`max_tokens`, when the provider's own API refuses a request without one.** Some
 providers require the field. If your body carries neither `max_tokens` nor
@@ -108,7 +108,7 @@ GET /v1/models lists the exact strings this key can call.
 ```
 
 A well-formed id with no provider in front of it is a different refusal, `400`
-with the code `model_id_not_pinned`. See [Models](/concepts/models).
+with the code `model_id_not_pinned`. See [Models](/features/models).
 
 **A prompt too large to hold credit against.** `400` with
 `context_length_exceeded` and `param` set to `messages`. This is a refusal about
@@ -146,7 +146,7 @@ The hold is returned in full at settlement and you are charged for what the
 request actually produced, so sending `max_tokens` never costs you the
 difference. What it changes is how much of your account spend rate cap one
 request occupies while it is in flight. See
-[Rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+[Rate limits and spend controls](/manage/rate-limits-and-spend-controls).
 
 ## The parameters a given model takes
 

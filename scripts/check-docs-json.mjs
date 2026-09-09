@@ -112,11 +112,16 @@ report.note(`${pages.length} page(s) in navigation, ${new Set(pages).size} uniqu
 // decision that these paths are permanent, which is exactly the human decision
 // the failure below exists to force. A prefix in this list and not in section 15
 // is the divergence this comment exists to prevent.
+//
+// `concepts/` and `guides/` were retired on 2026-09-09 in favour of `features/`
+// and `manage/`, so that a path names the tab a page lives in. That move was
+// free of redirects only because the site had not been published yet; the
+// permanence rule applies to every prefix in this list from here on.
 const RESERVED = [
   'index',
   'get-started/',
-  'concepts/',
-  'guides/',
+  'features/',
+  'manage/',
   'integrations/',
   'resources/',
   'api-reference/',

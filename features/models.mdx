@@ -38,8 +38,8 @@ The `model` field accepts these three forms and nothing else:
 | Form | What it does |
 |---|---|
 | `provider/model` | That model, from that provider. If that provider cannot serve it, the request fails rather than moving to another host. The half after the slash is the provider's own id, or a shorter name we hold for it. |
-| `profile/{identifier}` | A [routing profile](/concepts/routing-profiles) you built: your own `provider/model` lines, tried in your order. |
-| `unirouter/auto` | A fixed id that means [whichever route you made your default](/concepts/routing-profiles), and a list we publish for your cost tier until you have one. |
+| `profile/{identifier}` | A [routing profile](/features/routing-profiles) you built: your own `provider/model` lines, tried in your order. |
+| `unirouter/auto` | A fixed id that means [whichever route you made your default](/features/routing-profiles), and a list we publish for your cost tier until you have one. |
 
 A bare id such as `gpt-4o-mini` is refused with `400` and the code `model_id_not_pinned`. The message
 names both forms and points you at `GET /v1/models`.
@@ -81,7 +81,7 @@ model and answers `404`.
 **In the dashboard.** The Models screen browses the same catalog without your
 having to write a request, and the playground offers the models you can send to
 as a list, so you can pick one rather than having to know an id first. See
-[Playground](/guides/playground).
+[Playground](/features/playground).
 
 The screen and the API answer at different grains, and it is worth knowing which
 you are reading. `GET /v1/models` lists one entry per callable id, so a model
@@ -117,19 +117,19 @@ Bringing your own key for a provider does not change this list. Your key only
 changes which credential answers your calls to a provider we already serve; it
 cannot add a provider or a model that is not already here. A model that is not
 live stays not live no matter whose key you hold for it. See
-[Bring your own key](/concepts/bring-your-own-key) for what your own key does
+[Bring your own key](/features/bring-your-own-key) for what your own key does
 change.
 
 The other half of the same rule is what happens when you name a model anyway. A
 request for a model that is not live, or that your workspace may not use, is
 refused with an error that names the reason rather than failing vaguely. See
-[Errors](/concepts/errors).
+[Errors](/features/errors).
 
 ## What a request takes from your balance
 
 A served request deducts the provider's rate at face value. There is no markup
 on a request. The platform fee is added when you buy credit, not when you spend
-it. See [Credits and billing](/concepts/credits-and-billing).
+it. See [Credits and billing](/manage/credits-and-billing).
 
 So the price of a model is the provider's price, and the number you should
 compare between us and calling a provider directly is the fee on the purchase,

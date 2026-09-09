@@ -102,7 +102,7 @@ nothing else.
 T3 Code keeps its own model list per instance and lets you add ids as free text,
 so this is a second place a model id has to be pinned. Add ids this API accepts,
 which means a provider-pinned `provider/model` or `unirouter/auto`; slashes are
-fine and are what the field expects. [Models](/concepts/models) has the accepted
+fine and are what the field expects. [Models](/features/models) has the accepted
 forms.
 
 There are three model settings rather than one, and they are not all the coding
@@ -110,7 +110,7 @@ model. Besides the default model there is one for generated text, which writes
 thread titles, branch names, commit messages and pull request descriptions, and
 one for the source control writer. Each is its own selection and each spends.
 The second of those runs often and quietly, which is the kind of traffic that
-turns up in [Activity](/guides/view-activity) unexplained if nobody pinned it on
+turns up in [Activity](/manage/view-activity) unexplained if nobody pinned it on
 purpose.
 
 There is no separate model for applying an edit, because T3 Code does not apply
@@ -125,7 +125,7 @@ endpoint. Whether the child agent does is the child's page's answer.
 It has no maximum-output-tokens setting either. Its nearest control is when a
 conversation gets compacted. As on every other page here, that leaves requests
 holding a model's whole published maximum against your spend rate cap; see
-[rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+[rate limits and spend controls](/manage/rate-limits-and-spend-controls).
 
 ## What we did not verify
 
