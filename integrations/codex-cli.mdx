@@ -80,13 +80,13 @@ provider is authenticated; leave it alone and use `env_key`.
 
 Codex's `model` field is free text and this API needs it to name a provider, so
 the default has to change before the first request. Every accepted form is on
-[Models](/concepts/models).
+[Models](/features/models).
 
 For a harness specifically, `unirouter/auto` is the form worth reaching for. It
 is one fixed string that means whichever route your workspace made its default,
 so the model behind your editor changes on the Routing screen rather than in a
 TOML file you have to find again. [Routing
-profiles](/concepts/routing-profiles) covers it.
+profiles](/features/routing-profiles) covers it.
 
 A provider-pinned id works too, and if you use one, be aware of a rough edge
 that is Codex's rather than ours: a model id containing a slash is sent
@@ -138,7 +138,7 @@ That matters here because a request naming no output ceiling holds the model's
 whole published maximum against your account's spend rate cap. Codex is
 therefore one of the harnesses that will reach that cap while your real spending
 is a fraction of it, and there is no setting in Codex that changes the shape.
-[Rate limits and spend controls](/concepts/rate-limits-and-spend-controls)
+[Rate limits and spend controls](/manage/rate-limits-and-spend-controls)
 covers what the cap counts and which limits are yours to raise.
 
 ## No embeddings

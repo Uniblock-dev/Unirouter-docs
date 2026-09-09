@@ -82,42 +82,114 @@ Explicit non-audiences: Hopscotch staff (the console is internal, Cloudflare Acc
 
 ## 5. Site architecture and complete navigation tree
 
-Two Mintlify tabs: **Documentation** and **API Reference**. (A Changelog tab is deferred until there is a release cadence to record.)
+**Five Mintlify tabs**, one per job a reader arrives with: **Get started**,
+**Features**, **Manage & monitor**, **Integrations**, **API Reference**. (A
+Changelog tab is deferred until there is a release cadence to record.)
+
+This replaced a single "Documentation" tab on 2026-09-09. That tab had grown to
+51 pages behind one 17-item "Core concepts" group, which is a list rather than a
+structure: nothing in it told a reader that `streaming` and `monitor-usage`
+belong to different jobs. **A path now names the tab its page lives in**, so
+`concepts/` and `guides/` were retired in favour of `features/` and `manage/`
+(§15 records the prefix change; it cost no redirects only because the site had
+not been published yet).
+
+Two rules hold the shape:
+
+1. **A tab is a job, not a content type.** `Manage & monitor` deliberately mixes
+   concept and dashboard task, so `credits-and-billing` sits beside `buy-credit`
+   and `usage-and-metering` beside `monitor-usage`. Reading what a number means
+   and changing it are one click apart.
+2. **A feature is documented once.** `Features` explains behaviour;
+   `API Reference` stays parameter-level and links up to it. No page appears in
+   two tabs (`scripts/check-docs-json.mjs` fails a duplicate).
 
 ```
-Documentation
-├── Get started
+Get started
+├── First request
 │   ├── index                          (Welcome / what Hopscotch is)
 │   ├── get-started/quickstart
+│   ├── get-started/authentication
+│   └── get-started/create-an-api-key
+├── Coming from OpenAI
 │   ├── get-started/openai-compatibility
-│   └── get-started/authentication
-├── Core concepts
-│   ├── concepts/models
-│   ├── concepts/routing-and-reliability
-│   ├── concepts/streaming
-│   ├── concepts/credits-and-billing
-│   ├── concepts/usage-and-metering
-│   ├── concepts/rate-limits-and-spend-controls
-│   ├── concepts/errors
-│   ├── concepts/workspaces-and-members
-│   └── concepts/data-and-privacy
-├── Dashboard guides
-│   ├── guides/create-an-api-key
-│   ├── guides/buy-credit
-│   ├── guides/monitor-usage
-│   ├── guides/invite-and-manage-members
-│   ├── guides/playground
-│   └── guides/spend-controls
+│   └── get-started/migrate-from-openai
+├── Your own provider keys
+│   └── get-started/add-a-provider-key
 └── Resources
-    ├── resources/security
-    ├── resources/support
+    ├── resources/faq
     └── resources/glossary
 
+Features
+├── Overview
+│   └── features/overview              (tab landing, card grid)
+├── Models
+│   ├── features/models
+│   ├── features/model-capabilities
+│   └── features/model-lifecycle
+├── Request features
+│   ├── features/streaming
+│   ├── features/tool-calling
+│   ├── features/structured-outputs
+│   ├── features/image-inputs
+│   ├── features/reasoning
+│   └── features/prompt-caching
+├── Routing and reliability
+│   ├── features/routing-profiles
+│   ├── features/bring-your-own-key
+│   └── features/errors
+└── Try it
+    └── features/playground
+
+Manage & monitor
+├── Overview
+│   └── manage/overview                (tab landing, card grid)
+├── Usage
+│   ├── manage/usage-and-metering
+│   ├── manage/monitor-usage
+│   └── manage/view-activity
+├── Spend
+│   ├── manage/credits-and-billing
+│   ├── manage/buy-credit
+│   ├── manage/rate-limits-and-spend-controls
+│   └── manage/spend-controls
+├── Workspace
+│   ├── manage/workspaces-and-members
+│   ├── manage/create-a-workspace
+│   └── manage/invite-and-manage-members
+└── Trust
+    ├── manage/data-and-privacy
+    └── manage/security
+
+Integrations
+├── Overview
+│   └── integrations/overview
+├── SDKs and frameworks
+│   ├── integrations/openai-sdk-python
+│   ├── integrations/openai-sdk-node
+│   ├── integrations/vercel-ai-sdk
+│   ├── integrations/langchain
+│   ├── integrations/llamaindex
+│   └── integrations/pydantic-ai
+└── Coding agents
+    ├── integrations/coding-harnesses
+    ├── integrations/claude-code
+    ├── integrations/cursor
+    ├── integrations/cline
+    ├── integrations/continue
+    ├── integrations/aider
+    ├── integrations/zed
+    ├── integrations/opencode
+    ├── integrations/codex-cli
+    └── integrations/t3-code
+
 API Reference
-├── api-reference/introduction
-├── api-reference/authentication
-├── api-reference/errors
-├── api-reference/headers
+├── Overview
+│   ├── api-reference/introduction
+│   ├── api-reference/authentication
+│   ├── api-reference/parameters
+│   ├── api-reference/errors
+│   └── api-reference/headers
 ├── Endpoints (OpenAPI-generated)
 │   ├── POST /v1/chat/completions
 │   └── GET  /v1/models
@@ -126,6 +198,12 @@ API Reference
     └── POST /v1/embeddings            (Story 2.10)
 ```
 
+`index` is a router rather than a second homepage: two "start here" cards
+(quickstart, compatibility) and four cards, one per remaining tab, each landing
+on that tab's overview page. `features/overview` and `manage/overview` exist for
+the same reason: a tab whose first page is an arbitrary concept page gives a
+reader no map.
+
 Deliberately absent, with reasons:
 
 - **No self-hosting/deployment section** (§10).
@@ -133,7 +211,7 @@ Deliberately absent, with reasons:
 - **No status page / SLA page.** No status page exists in evidence; NFR-2's 99.9% is tagged `[ASSUMPTION-3]` ("No customer has asked for this figure") and must not be published as a promise.
 - **No terms/privacy/refund legal pages.** PRD §11 OQ-5: refund enforceability is an open legal question, owner Abhinav, to be answered "before the terms are published". The plan reserves paths (`resources/terms`, `resources/privacy`) but they are owner-gated, not writer-gated. The phrase "subject to applicable law" is explicitly banned as a rendering of the open caveat (PRD §11).
 - **No capture pages.** Epic 7 is entirely backlog; FR-28's disclosure text does not exist yet. Documenting it would be inventing a product.
-- **No workloads page.** FR-62 / Story 2.21 backlog. Reserved path: `concepts/workloads`.
+- **No workloads page.** FR-62 / Story 2.21 backlog. Reserved path: `features/workloads`.
 
 ---
 
@@ -181,6 +259,11 @@ Notes:
 
 Format per page: **Path** (`.mdx`) · Status · Purpose · Source of truth · Required examples · Acceptance criteria. All pages also inherit the global acceptance criteria in §20.
 
+A page's tab and group are given by §5, which is authoritative for placement.
+The subsections below group pages by the lane they were written in, and each
+entry carries the page's current path, which names its tab. Where the two read
+differently, §5 wins.
+
 ### 7.1 Get started
 
 **`index.mdx`** · WRITE-NOW
@@ -207,98 +290,98 @@ Format per page: **Path** (`.mdx`) · Status · Purpose · Source of truth · Re
 - Required examples: correct header; the 401 envelope for a bad key (one identical message for unknown and revoked, by design).
 - Acceptance: states that unknown and revoked keys get the same 401 on purpose; does NOT promise one-second global revocation (FR-12's story 2.17 is backlog; say "revocation takes effect quickly" only after verifying shipped behavior, otherwise omit timing); never shows a real-looking full key (use `ub_live_` + obvious placeholder).
 
-### 7.2 Core concepts
+### 7.2 Features
 
-**`concepts/models.mdx`** · PARTIAL
+**`features/models.mdx`** · PARTIAL
 - Purpose: how models work: `family/model` ids, the live-model rule (FR-32: "a customer must never be offered a model that would fail on call"), discovery via `GET /v1/models` and the dashboard, per-usage-type pricing vocabulary (input, cached input reads, cache writes, output, reasoning; decision `a-model-rate-is-per-usage-type-and-tier-not-a-column.md`), price provenance (rates carry a source and date).
 - Source of truth: FR-6/FR-31/FR-32/FR-43; `customerModelList()` in `SRC/services/control-plane/src/models/store.ts`; the model-rate decisions.
 - Required examples: `GET /v1/models` request and a representative response entry.
 - Acceptance: `GET /v1/models` and `GET /v1/models/{id}` answer from our own curated catalog projection, not a forwarded live provider list (Story 8.5 done, 2026-08-31 sync). The page documents the endpoint's contract shape only after re-verifying the response against a live call at publication time (§9 owed transcripts). No static price table, no provider roster, no margin-adjacent fields.
 
-**`concepts/routing-and-reliability.mdx`** · BLOCKED (Story 2.12 fallback, 2.13 served-by header; both backlog)
+**`features/routing-and-reliability.mdx`** · BLOCKED (Story 2.12 fallback, 2.13 served-by header; both backlog)
 - Purpose (when unblocked): what Hopscotch does on a provider failure: fallback to an alternative provider for the same model on 5xx, 429/529, connection error, or 10s to first byte; at most limited attempts; **you are billed only for the attempt that produced the response** (FR-7); which provider answered is reported (`x-uniblock-served-by`); routing order is ours to manage and customers cannot pin targets (recorded answer: no; decision `routing-policy-lives-in-the-control-plane.md`).
 - Source of truth: FR-7/FR-8/FR-62-65; AD-22/AD-23; decision `the-fork-owns-routing-we-own-keys.md`; cross-epic audit contract table.
 - Required examples: response headers of a normal reply; none for internals.
 - Acceptance: publishes nothing about attempt reasons, strain, candidate lists, committed capacity, or provider ordering inputs (all internal per FR-63/FR-64/FR-65); resolves the `x-uniblock-served-by` vs `x-uniblock-provider` inversion (§14 item 1) before publication; until unblocked, the *page does not exist* (no "coming soon" stub on a reliability promise).
 
-**`concepts/streaming.mdx`** · PARTIAL (streaming works; the 100-concurrent proof, Story 2.7, is owed)
+**`features/streaming.mdx`** · PARTIAL (streaming works; the 100-concurrent proof, Story 2.7, is owed)
 - Purpose: `stream: true` semantics; SSE format identical to OpenAI; the `:x-uniblock-usage` comment line before `data: [DONE]` and why SDKs ignore it; mid-stream credit exhaustion behavior (terminating `data:` line, type `insufficient_quota`, code `balance_exhausted`, nothing charged for the cut request).
 - Source of truth: AD-14; `SRC/services/gateway/src/uniblockUsage.ts` and its test; decision `epic-4-terminate-a-request-that-outlives-its-credit-2026-08-19.md`; FR-3.
 - Required examples: a streamed curl with annotated SSE transcript including the usage comment line; the balance-exhausted terminating event.
 - Acceptance: no concurrency-count promises; the usage line's JSON matches the emitter exactly (`v`, `reported`, token fields omitted-not-zeroed); distinguishes `balance_exhausted` (cut mid-stream) from `balance_exhausted_at_admission` / `insufficient_credit` (never started).
 
-**`concepts/credits-and-billing.mdx`** · WRITE-NOW (with one legal fence)
+**`manage/credits-and-billing.mdx`** · WRITE-NOW (with one legal fence)
 - Purpose: the money model: prepaid credit; you choose the credit received, the fee is added on top (worked example: 100 credits charges 102.50 at the launch rate of 2.5%); the rate is fixed when checkout starts; minimum purchase $30 of credit; credit granted only on payment confirmation, never on a browser redirect (closing the tab cannot lose your credit, FR-16/FR-17); requests deduct provider cost at face value with no markup; the balance is spendable in full; zero balance refuses new requests and ends in-flight ones (FR-20); every balance change is recorded and explainable (FR-21); statement shows amount charged and credit granted per purchase.
 - Source of truth: FR-14 through FR-21; decisions `the-platform-fee-is-taken-at-purchase.md`, `the-checkout-session-fixes-the-fee-rate.md`, `epic-4-open-questions-resolved-2026-08-18.md`, AD-8, AD-13.
 - Required examples: the 100 → 102.50 worked example; the rounding rule stated once (half-up, once).
 - Acceptance: **no refund language of any kind** until counsel answers OQ-5; the settled commercial position ("credit is non-refundable once bought") is NOT published because its enforceability is open and the PRD bans hedged renderings; the fee rate is written as "currently 2.5%" sourced from FR-33's staff-changeable row, never hard-coded as permanent; no trial-credit mention (Story 4.17 backlog); no negotiated-rate mention (internal, decision `epic-4-per-customer-negotiated-rates-2026-08-18.md`).
 
-**`concepts/usage-and-metering.mdx`** · PARTIAL (Epic 5 at review; verify shipped fields before publishing)
+**`manage/usage-and-metering.mdx`** · PARTIAL (Epic 5 at review; verify shipped fields before publishing)
 - Purpose: what is recorded per request (timestamp, model, provider, token counts, cost, latency, outcome; never the prompt or reply, FR-24); usage appears within 60 seconds; usage reconciles exactly with balance (FR-23); the customer-visible field set is fenced (Story 5.3; internal figures like added latency and attempt count never cross); retention window as shown on the Data screen (90 days configured over a 62-day floor); charges are explained by the model-rate revision in force.
 - Source of truth: FR-22/23/24; decision `usage-record-retention-and-the-fr-22-split-2026-08-21.md`; `SRC/services/control-plane/src/usage/reads.ts` and `usage-reads.test.ts` (the exact wire field set); AD-10.
 - Required examples: an Activity row's fields, taken from the tested wire shape, not the schema.
 - Acceptance: field list matches `usage-reads.test.ts` exactly; retention stated as the product states it (configured window with floor), not as a marketing promise; "reported vs not reported" token semantics (null never zero) explained in the product's own vocabulary.
 
-**`concepts/rate-limits-and-spend-controls.mdx`** · PARTIAL
+**`manage/rate-limits-and-spend-controls.mdx`** · PARTIAL
 - Purpose: the three 429 meanings a client can tell apart (AD-22/FR-49) with their codes; the account spend-rate cap: what it counts (reserved estimated maximums, not settled spend), the default, why requests without `max_tokens` hit it sooner, and **the documented lever: send `max_tokens`** (the decision record says this belongs "in our own documentation rather than in a support reply"); the asymmetry: you may raise your own spend-rate cap, you may never raise request or token rates (AD-21, stated on the product screen and restated here); `Retry-After` on per-key limits; refusals name the unit that ran out (AD-19).
 - Source of truth: decision `epic-4-spend-rate-cap-2026-08-19.md`; AD-19/21/22; FR-46/48/49; `SRC/services/control-plane/src/limits/customer.ts`.
 - Required examples: the 429 envelope for `spend_rate_exceeded` and for `rate_limit_exceeded` with `Retry-After`; a before/after `max_tokens` illustration.
 - Acceptance: does NOT publish the auth-surface limiter table (sign-in 5/60s etc.: operational anti-abuse detail) or the unreconciled 3-accounts-per-IP figure (§14 item 6); does not publish pool mechanics, shard counts, or the 2000 bps reserve; publishes `upstream_capacity_exhausted`/`upstream_rate_limited` only after Story 10.11 ships those codes (until then, section carries only the shipped codes: verify against handlers at publication).
 
-**`concepts/errors.mdx`** · WRITE-NOW
+**`features/errors.mdx`** · WRITE-NOW
 - Purpose: the error contract in prose: one envelope on the public API (exactly `message`, `type`, `param`, `code`, `request_id`; `param`/`code` present-and-null rather than omitted); the eight `type` values; the status-code map for shipped codes (401 `invalid_api_key`, 402 `insufficient_quota`, 404 `unknown_url`, 429 codes, 5xx `api_error`/`server_error`, 504 deadline); refusal vs error (a refusal is us working correctly and saying no); always quote `request_id` to support.
 - Source of truth: AD-9; `SRC/services/control-plane/src/errors/openai.ts` (the closed sets live here); §D of the architecture evidence.
 - Required examples: one real envelope per family; an SDK catch example (Python `APIStatusError`).
 - Acceptance: every documented code exists in `openai.ts` or a shipped handler on publication day; codes with unsettled strings (workspace spend-limit, playground role refusal, the fourth revocation sentence) are excluded until settled (§14); the internal `{error:{code,message}}` shape is never shown.
 
-**`concepts/workspaces-and-members.mdx`** · PARTIAL (Epic 9 mid-flight; document shipped roles behavior, gate the rest)
+**`manage/workspaces-and-members.mdx`** · PARTIAL (Epic 9 mid-flight; document shipped roles behavior, gate the rest)
 - Purpose: the workspace is the unit: keys, usage, playground, spend limit, and billing all hang off it; roles (owner/admin/developer/viewer) and what each may do; exactly one owner, who alone manages billing and alone grants admin; ownership moves only by transfer; any member may read balance and statement, only the owner may act on money (the product's own sentence: only the workspace owner manages billing); invitations: email-bound, 7 days, authority re-checked at redemption, optional key reservation occupying one of the five slots; removal never silently revokes a key (the explicit choice per key); a key's member limit is visibility scoping, not request-path enforcement, and promises no per-person usage split.
 - Source of truth: FR-38/39/40/41; decisions `the-workspace-is-the-unit.md`, `money-actions-are-the-owners.md`; AD-17; `SRC/services/control-plane/src/members/can.ts`; `src/workspaces/index.ts`.
 - Required examples: a role-capability table (customer-facing capabilities only); the 403 owner-only refusal sentence as the product sends it.
 - Acceptance: multi-workspace features (second workspace, switching) documented only if shipped (Stories 9.4/9.5 backlog; the switcher component exists in the dashboard, verify at publication); no mention of the internal `account` row (FR-38: never shown as distinct); the one-card-one-workspace consequence stated plainly.
 
-**`concepts/data-and-privacy.mdx`** · WRITE-NOW
+**`manage/data-and-privacy.mdx`** · WRITE-NOW
 - Purpose: the data stance a customer can rely on: metadata only, never prompt or response bodies (FR-24); the playground stores no prompt or reply, so it has no history (FR-42); usage record retention and what survives purge (the money survives in the ledger); session list shows approximate location/browser/times so you can end sessions you do not recognize (decision `session-geolocation-is-on.md`, gate on Story 3.15 shipping); what we cannot do: we keep only a hash of your key.
 - Source of truth: FR-24/42; PRD §7; decisions cited.
 - Acceptance: no capture/opt-in storage content (Epic 7 backlog); this page is a factual data-handling page, not a legal privacy policy, and says so; nothing about provider-side data handling is claimed (we do not control it and no evidence supports claims).
 
-### 7.3 Dashboard guides
+### 7.3 Manage and monitor
 
 All guides share: source of truth is the shipped screen in `SRC/apps/dashboard/src/app/(portal)/` plus the control-plane routes it calls; voice per `EXPERIENCE.md` (state the number and the consequence together; name the way out); each documents role requirements inline.
 
-**`guides/create-an-api-key.mdx`** · PARTIAL (screen shipped at `(portal)/keys/`; Story 3.9 flow at review)
+**`get-started/create-an-api-key.mdx`** · PARTIAL (screen shipped at `(portal)/keys/`; Story 3.9 flow at review)
 - Purpose: mint, name, copy-once, revoke, replace; the five-slot rule including reservations; who can see which keys.
 - Sources: `(portal)/keys/` (MintKeyForm, PendingKeyPanel); `/api/me/keys*` routes; FR-11.
 - Acceptance: screenshots (or none) match the shipped screen; the shown-once sentence uses the product's own wording; reservation lapse rules stated (7 days).
 
-**`guides/buy-credit.mdx`** · WRITE-NOW (Epic 4 core is done; saved-card story 4.20 at review)
+**`manage/buy-credit.mdx`** · WRITE-NOW (Epic 4 core is done; saved-card story 4.20 at review)
 - Purpose: owner-only; choose credit amount (min $30), see the fee and total before paying, pay by card through Stripe Checkout; credit lands on payment confirmation even if you close the browser; the statement line shows amount charged, credit granted, and fee; low-credit email threshold setting.
 - Sources: `(portal)/billing/` (AddCreditPanel, StatementPanel); `/api/me/credit/*`; FR-14-19; decision `epic-4-the-low-credit-email-2026-08-19.md`.
 - Acceptance: no refund language; non-owner experience documented (403 with the product's sentence); the low-credit email described by its actual content ("nothing is charged for a request we refuse"); saved-card flow included only once 4.20 is done.
 
-**`guides/monitor-usage.mdx`** · PARTIAL (Epic 5 screens at review)
+**`manage/monitor-usage.mdx`** · PARTIAL (Epic 5 screens at review)
 - Purpose: Overview, Activity list (filters, newest-first), request detail by id, summary breakdowns (by model, provider, key, member, scoped to what the viewer may see); reconciling a statement line with usage.
 - Sources: `(portal)/overview/`, `(portal)/activity/`; `/api/me/usage/*`; Story 5.3 field fence.
 - Acceptance: only the fenced customer-visible fields are named; the 60-second freshness expectation set; per-member visibility scoping stated.
 
-**`guides/invite-and-manage-members.mdx`** · PARTIAL (Epic 9 salvage in progress; verify each flow)
+**`manage/invite-and-manage-members.mdx`** · PARTIAL (Epic 9 salvage in progress; verify each flow)
 - Purpose: invite by email, what the invitee sees (`/invitations/[token]` works signed-in or signed-out), roles and changing them, transfer ownership, removal with the per-key choice, the removal-cost preview.
 - Sources: `(portal)/members/`; `invitations/[token]/`; `/api/me/members/*`, `/api/me/invitations/*`.
 - Acceptance: each documented flow was exercised against a shipped screen or route on publication day; no flow documented from a story title (repo's own hard-won rule).
 
-**`guides/playground.mdx`** · PARTIAL (surface partially shipped; Stories 8.10-8.23 mostly backlog)
+**`features/playground.mdx`** · PARTIAL (surface partially shipped; Stories 8.10-8.23 mostly backlog)
 - Purpose: run a real request from the browser; **every playground run spends as a named workspace key** (choose a key; no key means no playground, and the screen points at Keys); it spends real credit and lands in Activity like any request; nothing is stored, so there is no history and no share link.
 - Sources: `(portal)/playground/`; `/api/me/playground` (+ required `?key=` per decision `the-playground-spends-as-a-key.md`); FR-42.
 - Acceptance: the key requirement, the single refusal message for absent-or-hidden keys, and the no-history fact are all stated; the metrics line documented only as shipped.
 
-**`guides/spend-controls.mdx`** · PARTIAL
+**`manage/spend-controls.mdx`** · PARTIAL
 - Purpose: pause the workspace (any member may read pause state; the write is owner-only with its own refusal sentence); set your own spend-rate cap and what it counts; the low-credit notice; what you cannot raise (request/token rates) and why the product says so.
 - Sources: `(portal)/settings/` (LimitRows, PauseRow); `/api/me/pause`, `/api/me/limits*`; AD-21; decision `money-actions-are-the-owners.md`.
 - Acceptance: pause read/write role split exact; the cap explanation matches the decision record (reserved maximums, rolling 60s); the `max_tokens` lever cross-linked to the concepts page.
 
 ### 7.4 Resources
 
-**`resources/security.mdx`** · WRITE-NOW
+**`manage/security.mdx`** · WRITE-NOW
 - Purpose: the security promises a customer can verify: keys hashed one-way (a database leak yields no usable keys, FR-13); you never hold or see a provider credential and we never expose ours (FR-5, stated as a customer promise without mechanism); prompts and replies are not stored (FR-24); sessions are listable and endable; money figures come from one accounting source so your balance and usage cannot disagree (AD-10, customer-altitude phrasing).
 - Acceptance: no internal mechanisms (no Durable Object names, KV prefixes, Secrets Store, encryption architecture, or the header-injection finding); no compliance claims (no SOC2/GDPR statements exist in evidence); each promise maps to an FR.
 
@@ -341,7 +424,7 @@ Added 2026-09-08, after the catalog above was first written. A reader arriving f
 
 **`integrations/coding-harnesses.mdx`** and the per-harness pages · PARTIAL
 - Purpose: what is true of every coding agent pointed at this API (pinned model ids, the spend rate cap, one billed request per turn), then one page per harness for its own configuration file.
-- Acceptance: as above, plus no harness page claims a closed set of accepted `model` forms; [Models](/concepts/models) owns that list.
+- Acceptance: as above, plus no harness page claims a closed set of accepted `model` forms; [Models](/features/models) owns that list.
 
 **Endpoint pages** · generated from the OpenAPI artifact (§8): `POST /v1/chat/completions` (WRITE-NOW), `GET /v1/models` and `GET /v1/models/{id}` (WRITE-NOW with the §14 item 2 caveat resolved), `POST /v1/completions` and `POST /v1/embeddings` (BLOCKED on Story 2.10), `POST /v1/responses` (BLOCKED on Story 2.22).
 
@@ -458,9 +541,9 @@ Tracked here so writers meet them where the work is; each names its unblock cond
 11. **Trial credit (4.17), capture (Epic 7), workloads (2.21), completions/embeddings (2.10), fallback (2.12)**: unshipped; their pages/sections are BLOCKED per §7, and `/v1/completions` and `/v1/embeddings` are classified `blocked` in the overlay with those gates. **The Responses API (2.22) moved to done on 2026-08-31**: its gate is met and it is no longer unshipped, but `/v1/responses` stays `blocked` in the overlay until a writer transcribes its schemas and refusals from the handler and gives it a page, which is the pass that entry now records. **The Anthropic Messages API** reached the source tree the same day with no story in the tracker at all, so `/v1/messages` is `blocked` on that absence rather than on a gate. The public catalog is no longer on this list: 8.1 through 8.5 are done and the models page's gates are now 8.6 through 8.8. One thing a writer inherits when 2.10 unblocks: `#427` gave the embeddings path a response ceiling, and an OpenAI embedding reply over 45 MB is refused with a 413 the customer does not see the reason for. The fork writes an actionable body naming `encoding_format: 'base64'` and a smaller batch, and the public boundary replaces the body of every platform-credential refusal with the generic internal-error sentence, so what arrives is a 413 of type `invalid_request_error` with a null `code`. On a customer's own provider key nothing sanitizes it and the fork's own sentence arrives instead. Neither shape is on the error table, and which of them the table should state is not a writer's call. Recorded in the internal site's unresolved findings as `SF-31`.
 12. **Retention "90 days"**: a configured value the product prints, not a promise anybody made (CONTEXT.md). Docs phrase it as the product does: configured window over a stated floor.
 13. **RESOLVED (2026-09-09): the customer-facing brand and base URL are named.** This item stood open as `SF-23` because the base URL every page printed was not a host that exists, and because naming the replacement was not a writer's call. The owner has now named both, and this pass carried them through the site. **The brand is Hopscotch**: `Uniblock` and `Unirouter` are both retired as customer-facing names, and every page, example, `docs.json`, `README.md` and `package.json` now prints `Hopscotch`. **The base URL is `https://api.hopscotchlabs.ai`** and the dashboard is `https://app.hopscotchlabs.ai`; `PRODUCTION_SERVER` in `scripts/lib/paths.mjs` and the artifact's `servers` both say so. The history this item recorded is unchanged and still true: the old `ai.uniblock.dev` was retired, the tracker's Story 2.3 says so in as many words and 2.3 has moved to `review`; the two Custom Domains came off the gateway Worker on 2026-09-02, which a manifest rule now enforces, and both customer hostnames sat on the control plane, `dev.unirouter.app` on dev and `api.unirouter.app` on production, each named by `PUBLIC_API_ORIGIN` in its own scope and asserted per environment by `test/wrangler-config.test.ts`. **PARTLY REOPENED (2026-09-09 pm sync), on the condition this item set for itself.** The am pass carried the rename into wire values as well as prose, recording it as done on the owner's instruction: the eight `x-uniblock-*` response headers were rewritten to `x-hopscotch-*`, the fixed model id `unirouter/auto` to `hopscotch/auto`, and the example key variable to `HOPSCOTCH_API_KEY`. It then wrote its own reopen condition: "if the control plane and gateway have not shipped the matching rename, these pages are wrong on the wire and this item reopens." **They have not.** At `ba63651e` the control-plane spec carries `x-uniblock-served-by`, `x-uniblock-request-id` and `x-uniblock-internal-secret` and no `x-hopscotch-` string anywhere, and `unirouter/auto` appears in it thirteen times. `cb787e8d`, the commit that renamed the product, is explicit about what it deliberately did not rename: `unirouter/auto` is a published model id in `openapi.json` and in the wire package and stays, because renaming it would break every caller, and `@uniblock/*`, the `uniblock` catalog field, `x-uniblock-request-id` and the `sk-uniblock-` prefix are protocol and untouched. **So this pass reverted the wire half of the rename**: every header name and the fixed model id are back to the strings the platform actually emits and accepts, across twenty-two files, the overlay, the artifact, `claims.yml`, the banned-content register and this document. Every instance of the brand in prose stays Hopscotch, and `HOPSCOTCH_API_KEY` stays, because it names a variable in the customer's own shell rather than anything sent on the wire. **What the owner must confirm**: whether the wire rename is coming, in which case these pages are rewritten again on the day it ships and not before, per the rule that this site never claims unshipped behaviour. The prose brand and both hostnames are unaffected and remain resolved. Recorded in the internal site's `unresolved-findings.md` as SF-94. Not renamed, deliberately, because they are internal source identifiers in Gateway-LLM rather than customer surface: `services/gateway/src/uniblockUsage.ts`, `UNIBLOCK_USAGE_VERSION`, `signals.uniblock.dev`, `unirouter-design/src/index.css`, and this repository's own name `Unirouter-docs`.
-14. **Story 2.9's three model refusals are published while the story reads `review`.** The handler is merged on develop and the source spec carries the new 403 and 404 on `POST /v1/chat/completions`, which the §8 build cannot omit because it gates by path and not by response. The refusals are documented from the shipped strings, and `api-reference/errors`, `concepts/errors` and `concepts/routing-profiles` each carry `gates: [2.9]` so the release checklist holds them until the tracker says `done`. Unblock: 2.9 done.
+14. **Story 2.9's three model refusals are published while the story reads `review`.** The handler is merged on develop and the source spec carries the new 403 and 404 on `POST /v1/chat/completions`, which the §8 build cannot omit because it gates by path and not by response. The refusals are documented from the shipped strings, and `api-reference/errors`, `features/errors` and `features/routing-profiles` each carry `gates: [2.9]` so the release checklist holds them until the tracker says `done`. Unblock: 2.9 done.
 
-15. **Two more 402 refusal codes are published while their stories read `review` and `in-progress`.** The source spec carries `member_limit_exceeded` and `workspace_limit_exceeded` on all five inference paths, in the 402 response description rather than as their own response blocks, which is how every refusal on those operations is stated. Both are documented from the shipped strings on `api-reference/errors` and `concepts/rate-limits-and-spend-controls`, and both pages carry `gates: [9.6, 9.26]` so the release checklist holds them. The member ceiling is Story 9.26, `review`; the workspace ceiling is Story 9.6, which moved from `in-progress` to `review` on 2026-09-03 once `#368` merged the spend tab, the per-member limits and the admission half together. A move into `review` is not acceptance, so both pages keep their gates. Unblock: 9.6 and 9.26 done.
+15. **Two more 402 refusal codes are published while their stories read `review` and `in-progress`.** The source spec carries `member_limit_exceeded` and `workspace_limit_exceeded` on all five inference paths, in the 402 response description rather than as their own response blocks, which is how every refusal on those operations is stated. Both are documented from the shipped strings on `api-reference/errors` and `manage/rate-limits-and-spend-controls`, and both pages carry `gates: [9.6, 9.26]` so the release checklist holds them. The member ceiling is Story 9.26, `review`; the workspace ceiling is Story 9.6, which moved from `in-progress` to `review` on 2026-09-03 once `#368` merged the spend tab, the per-member limits and the admission half together. A move into `review` is not acceptance, so both pages keep their gates. Unblock: 9.6 and 9.26 done.
 
 16. **The two catalog operations publish three new fields while Story 18.47 reads `review`.** The 2026-09-04 sync (`60134960..bd6042f8`, 193 commits, almost all of Epic 18) moved the public `/v1` surface in exactly one place: `GET /v1/models` and `GET /v1/models/{id}` gained `author_slug`, `author_source` and `provider_families` in their response examples, all three added by `0a9dd6fb` under Story 18.47. The other five `/v1` operations hashed as changed against shared components and their own path objects are byte-identical. The build gates by path and not by field, so the artifact carries the three the moment the base spec does, exactly as §14 item 14 describes for a response block.
 
@@ -468,25 +551,25 @@ Tracked here so writers meet them where the work is; each names its unblock cond
 
     **The must-not-publish register in §13 is not breached, and the reason is in the handler rather than in the artifact.** A provider we serve without naming publishes `null` in `provider_families` rather than its family, because the display name is already masked to `Hopscotch` and a family would be one lookup away from the vendor the mask exists to hide. A writer who later documents these fields must document that null, and must not describe it as an absence of data.
 
-    **No page on this site describes any of the three.** They reach customers only as example values inside the generated artifact, so nothing was gated in this pass: `concepts/models.mdx` keeps `gates: ["8.6", "8.7", "8.8"]`, which are its own, and adding `18.47` to a page that makes no claim about the fields would gate a sentence nobody wrote. The gate is owed by the first page that describes them. Unblock for prose: 18.47 done. Recorded in the internal site's unresolved findings as `SF-37`.
+    **No page on this site describes any of the three.** They reach customers only as example values inside the generated artifact, so nothing was gated in this pass: `features/models.mdx` keeps `gates: ["8.6", "8.7", "8.8"]`, which are its own, and adding `18.47` to a page that makes no claim about the fields would gate a sentence nobody wrote. The gate is owed by the first page that describes them. Unblock for prose: 18.47 done. Recorded in the internal site's unresolved findings as `SF-37`.
 
     **Rechecked on the 2026-09-04 pm pass (`bd6042f8..2aad9ff4`, seventy-seven commits): the public surface did not move at all.** `sync-source-spec` reports every one of the seven `/v1` operations hashing as it did at the last reviewed sync, so the lock was already correct and the artifact was already current; the sync point moves on the check rather than on a change. The control-plane spec did grow, from 166 operations to 169, but all three additions are `/admin` or `/api/me` and none of them is public. Story 18.25, the one that publishes the new catalog fields through the four doors and says so in the spec, moved from `backlog` to `review` in this range. That is movement toward this item's unblock and not the unblock itself, so nothing here is gated or ungated by it, and 18.47 is still `review`. Recorded in the internal site's unresolved findings as `SF-41`.
 
-17. **A model id names its provider, and a bare id is refused** (2026-09-05 sync). The owner decided on 2026-09-04 that the `model` field accepts a provider-pinned `provider/model` id or a `profile/{identifier}` slug and nothing else (`decisions/the-model-field-names-its-provider-or-a-profile.md`), and Story 13.4 shipped it. The id is split once on the first slash, the left half must name a configured provider, and the right half is that provider's own id passed on verbatim. A bare id is refused `400` with `invalid_request_error` and the code `model_id_not_pinned`, `param` `model`, transcribed from `SRC/services/control-plane/src/inference/modelRefusal.ts`. This pass rewrote the id-shape sentence on `index.mdx`, `api-reference/introduction.mdx`, `get-started/openai-compatibility.mdx`, `concepts/models.mdx` and `concepts/usage-and-metering.mdx`, all of which said `family/model`, and added the refusal to both error tables. **What a writer inherits:** Story 13.6 renames six dev catalog ids so their first segment is the provider that serves them, and the ids this site prints in examples come from the spec's own examples rather than from a live call, so the publication-day transcript in item 2 now has to cover the model id as well as the models list.
+17. **A model id names its provider, and a bare id is refused** (2026-09-05 sync). The owner decided on 2026-09-04 that the `model` field accepts a provider-pinned `provider/model` id or a `profile/{identifier}` slug and nothing else (`decisions/the-model-field-names-its-provider-or-a-profile.md`), and Story 13.4 shipped it. The id is split once on the first slash, the left half must name a configured provider, and the right half is that provider's own id passed on verbatim. A bare id is refused `400` with `invalid_request_error` and the code `model_id_not_pinned`, `param` `model`, transcribed from `SRC/services/control-plane/src/inference/modelRefusal.ts`. This pass rewrote the id-shape sentence on `index.mdx`, `api-reference/introduction.mdx`, `get-started/openai-compatibility.mdx`, `features/models.mdx` and `manage/usage-and-metering.mdx`, all of which said `family/model`, and added the refusal to both error tables. **What a writer inherits:** Story 13.6 renames six dev catalog ids so their first segment is the provider that serves them, and the ids this site prints in examples come from the spec's own examples rather than from a live call, so the publication-day transcript in item 2 now has to cover the model id as well as the models list.
 
 18. **`GET /v1/usage/{id}` is classified `blocked` on the absence of a tracker story** (2026-09-05 sync). It shipped in PR #536 and lets a key read back one request's tokens and charge without a dashboard session, which is the first `/v1` operation added since this register was opened. `sprint-status.yaml` carries no story for it: 5.11 through 5.16 are the dashboard's usage reads. Unblock: a tracked story that says it ships, plus a writer pass transcribing `KeyUsageRequest` from the handler and giving it a page. Recorded in the internal site's `unresolved-findings.md` as SF-43.
 
 19. **The ledger counts in micro-dollars, and three pages were corrected while Stories 4.27 and 5.18 read `review`** (2026-09-05 pm sync, `9a5920d8..c7e96651`, twenty-two commits). Story 4.27 moved every amount this platform COMPUTES from whole cents to millionths of one dollar (`SRC/services/control-plane/drizzle/0098_the_ledger_counts_in_micro_dollars.sql`), because a charge rounded to a whole cent served the smallest requests free and overcharged the ones just above half a cent, in a direction fixed by the size of the request rather than averaging out. The reasoning is a dated amendment inside `decisions/epic-4-build-decisions-2026-08-18.md`, which supersedes that record's confinement of the unit change to the projection.
 
-    **What did not move is the half that keeps three pages correct.** Everything a PERSON typed or a THIRD PARTY published stays in minor units: the spend rate cap, the low balance threshold, a key's credit limit, and what Stripe charged the card. `guides/spend-controls.mdx`, `guides/buy-credit.mdx` and `concepts/rate-limits-and-spend-controls.mdx` all state ceilings in minor units and all three are still right, which is verified rather than assumed: `MIN_SPEND_CAP_MINOR` and `MAX_SPEND_CAP_MINOR` still guard `writeSpendCap` in `SRC/services/control-plane/src/money/balance.ts` and its refusal still says "a whole number of minor units".
+    **What did not move is the half that keeps three pages correct.** Everything a PERSON typed or a THIRD PARTY published stays in minor units: the spend rate cap, the low balance threshold, a key's credit limit, and what Stripe charged the card. `manage/spend-controls.mdx`, `manage/buy-credit.mdx` and `manage/rate-limits-and-spend-controls.mdx` all state ceilings in minor units and all three are still right, which is verified rather than assumed: `MIN_SPEND_CAP_MINOR` and `MAX_SPEND_CAP_MINOR` still guard `writeSpendCap` in `SRC/services/control-plane/src/money/balance.ts` and its refusal still says "a whole number of minor units".
 
-    **Three pages were wrong and are corrected.** `concepts/credits-and-billing.mdx` said money is held in integer minor units throughout, which is now false for every computed figure, and its 402 example carried a message the handler no longer sends: `withMicroDollars` renders the count and the dollars together. `guides/view-activity.mdx` and `guides/monitor-usage.mdx` described the Activity charge column in minor units, and the dashboard renders it through `requestMicroMoney` in `SRC/apps/dashboard/src/lib/money.ts`, which prints dollars to as many places as the figure needs and never fewer than two. All three carry a gate: `4.27` on the credits page, `5.18` on the two guides, because both stories read `review` and a merge is not an acceptance. Unblock: 4.27 and 5.18 done.
+    **Three pages were wrong and are corrected.** `manage/credits-and-billing.mdx` said money is held in integer minor units throughout, which is now false for every computed figure, and its 402 example carried a message the handler no longer sends: `withMicroDollars` renders the count and the dollars together. `manage/view-activity.mdx` and `manage/monitor-usage.mdx` described the Activity charge column in minor units, and the dashboard renders it through `requestMicroMoney` in `SRC/apps/dashboard/src/lib/money.ts`, which prints dollars to as many places as the figure needs and never fewer than two. All three carry a gate: `4.27` on the credits page, `5.18` on the two guides, because both stories read `review` and a merge is not an acceptance. Unblock: 4.27 and 5.18 done.
 
     **The public operation set did not move.** The control-plane spec gained two operations, `POST /admin/models/aliases` and `POST /admin/providers/{slug}/problem/recheck`, and both are `/admin`. Exactly one `/v1` operation hashed as changed: `GET /v1/usage/{id}`, whose `charge` object renamed `amount_minor` to `amount_micros` and gained a rendered `amount` string beside it, transcribed from `KeyUsageRequest` in `SRC/services/control-plane/src/usage/keyReadback.ts`. The field is renamed rather than re-typed on purpose, so a client reading the old name gets nothing rather than a figure ten thousand times too large. **That operation stays `blocked` on item 18's gate**, which has not moved: the tracker still carries no story for it. Nothing about it is published, so the lock moves and the artifact does not. Recorded in the internal site's unresolved findings as SF-46.
 
 20. **A provider's shorter name for a model is served as the pinned id, while Story 18.58 reads `review`** (2026-09-06 am sync, `c7e96651..2480e3c7`, forty-one commits). Exactly one `/v1` operation hashed as changed and no `/v1` operation was added or removed: `GET /v1/models` gained a sentence in its description. The behaviour behind it is `aliasPinnedId` in `SRC/services/control-plane/src/models/fullModelId.ts` and the request path's reading of it in `SRC/services/control-plane/src/models/aliasRoutes.ts`. A customer may send `provider/alias`, for example `anthropic/opus`, and it is served, charged and answered as the pinned id this catalog holds. A bare alias returns null from that function and is refused by Story 13.4's sentence, which is unchanged, and `unpinnedModelMessage` in `SRC/services/control-plane/src/providers/upstream.ts` is byte-identical to the string item 17 transcribed, so neither error table moves. A `provider/alias` pair the map does not carry falls through to the `404` that already names the provider and the id, which the alias module deliberately does not write itself.
 
-    **`concepts/models.mdx` carries it, with `18.58` added to its gates.** The story reads `review`, and a merge is not an acceptance, so the release checklist holds the sentence exactly as items 14, 15 and 19 hold theirs. The page keeps saying the `model` field takes two forms, because the alias is a reading of the right half of `provider/model` rather than a third shape: the string a customer sends is the same shape either way. Unblock: 18.58 done.
+    **`features/models.mdx` carries it, with `18.58` added to its gates.** The story reads `review`, and a merge is not an acceptance, so the release checklist holds the sentence exactly as items 14, 15 and 19 hold theirs. The page keeps saying the `model` field takes two forms, because the alias is a reading of the right half of `provider/model` rather than a third shape: the string a customer sends is the same shape either way. Unblock: 18.58 done.
 
     **One half of the spec's own new sentence is deliberately not published.** It says the pinned id is what "the reply and the `x-uniblock-served-by` header carry". That header is item 1 on this list: Story 2.13 still reads `backlog` in `sprint-status.yaml`, so the header is not set and naming it here would publish an unshipped surface. The page states only what the reply carries. Unblock for the header half: 2.13 done.
 
@@ -494,7 +577,7 @@ Tracked here so writers meet them where the work is; each names its unblock cond
 
 21. **`unirouter/auto` is a third accepted `model` string, and a `model_not_available` refusal now says why** (2026-09-07 am sync, `9eeb3961..c0333c4b`, forty-two commits). Five `/v1` operations hashed as changed and none was added or removed, so `overlay.public.json` is untouched and nothing was classified in this pass. Two changes reach a customer and both are published from the shipped strings, with gates.
 
-    **The third form.** `unirouter/auto` names whichever route the workspace made its default (FR-66, Story 13.9), resolved in `SRC/services/control-plane/src/inference/core.ts` before anything else reads the model field, after which it is the ordinary route path with the same failover and the same charge for the hop that answered. `concepts/models.mdx` now states three forms rather than two, which is a real third shape and not a reading of the right half of `provider/model` the way item 20's alias was, and `concepts/routing-profiles.mdx` carries the section. Both pages gate on `13.9`, which reads `review`.
+    **The third form.** `unirouter/auto` names whichever route the workspace made its default (FR-66, Story 13.9), resolved in `SRC/services/control-plane/src/inference/core.ts` before anything else reads the model field, after which it is the ordinary route path with the same failover and the same charge for the hop that answered. `features/models.mdx` now states three forms rather than two, which is a real third shape and not a reading of the right half of `provider/model` the way item 20's alias was, and `features/routing-profiles.mdx` carries the section. Both pages gate on `13.9`, which reads `review`.
 
     **The spec's own sentence about it is already stale, and the handler wins.** The `model` description says a workspace with no default route set is refused `404` `model_not_available` "saying exactly that". The handler does not: the `absent` branch falls through to the cost tier chain, and its own comment records that the 404 was the wrong way round, because the one id put in front of every customer only worked for customers who had already built a route. The refusal survives one branch further down, for a tier with no published chain or a chain with nothing servable, and `autoTierExhausted` names the tier and both ways out. **This site publishes the handler's behaviour and not the spec's sentence.** Recorded in the internal site's unresolved findings as SF-59.
 
@@ -509,7 +592,7 @@ Tracked here so writers meet them where the work is; each names its unblock cond
 
     What did move is one value a customer can see. `cb61a12` added `SLUG_MALFORMED_BODY`, the literal `malformed_body`, to the usage vocabulary in `SRC/services/control-plane/src/usage/vocabulary.ts`, and `SRC/services/control-plane/src/usage/modelSlug.ts` stores it as the model slug on a refusal row whose request body could not be parsed as JSON at all. A body that was readable but named no usable model keeps `unknown`, which is the distinction the new literal exists for. A caller that names the reserved string as its own model has it remapped to `unknown`, so a request cannot forge the mark. `modelSlug` is in `CUSTOMER_VISIBLE_USAGE_FIELDS`, so the row reaches a customer read and the dashboard's Activity table.
 
-    **`guides/view-activity.mdx` describes its Model column as "the model that was asked for", which a row reading `malformed_body` is not.** Nothing was rewritten in this pass, and the reason is that the honest options differ in what they promise about the screen: explaining a staff-facing sentinel to customers, rendering it as something else on the table, or leaving it and saying the column can carry a reason the request was unreadable. That is the owner's call and not a writer's. Unblock: the owner says what the Model column shows for an unparseable body. Recorded in the internal site's unresolved findings as `SF-71`.
+    **`manage/view-activity.mdx` describes its Model column as "the model that was asked for", which a row reading `malformed_body` is not.** Nothing was rewritten in this pass, and the reason is that the honest options differ in what they promise about the screen: explaining a staff-facing sentinel to customers, rendering it as something else on the table, or leaving it and saying the column can carry a reason the request was unreadable. That is the owner's call and not a writer's. Unblock: the owner says what the Model column shows for an unparseable body. Recorded in the internal site's unresolved findings as `SF-71`.
 
     **The rest of the range carried nothing public.** Neither OpenAPI spec moved and `services/control-plane/drizzle/` did not, so no migration number quoted anywhere is at risk. Epic 19, price source sync, was registered in the tracker with seven story rows and an optional retrospective, all `backlog` and no code landed, so no gate on this site moves. The remaining commits are the signals parser, an Activity-unrelated dashboard padding fix on the Models list, the build-spec citation checker and a garden pass, none of which changes a claim here.
 
@@ -543,7 +626,7 @@ Tracked here so writers meet them where the work is; each names its unblock cond
 
 ## 15. Redirects, SEO, accessibility
 
-**Redirects**: none at launch (greenfield site). Standing rule: once published, a path is permanent; moves ship with a `redirects` entry in docs.json in the same PR (CI check, §16). Reserve stable prefixes now (`/api-reference/*`, `/concepts/*`, `/guides/*`, `/get-started/*`, `/resources/*`) so growth never forces a move. `/integrations/*` joined that list on 2026-09-08 with the pages in §7.6; `scripts/check-docs-json.mjs` holds the same list and fails any path outside it, so the two are changed together or not at all.
+**Redirects**: none at launch (greenfield site). Standing rule: once published, a path is permanent; moves ship with a `redirects` entry in docs.json in the same PR (CI check, §16). Reserve stable prefixes now (`/api-reference/*`, `/features/*`, `/manage/*`, `/get-started/*`, `/resources/*`) so growth never forces a move. `/integrations/*` joined that list on 2026-09-08 with the pages in §7.6. **`/concepts/*` and `/guides/*` were retired on 2026-09-09** for the five-tab structure in §5, so that a path names its tab: `concepts/` split into `features/` and `manage/`, `guides/` split into `get-started/`, `features/` and `manage/`, and `resources/security` and `resources/migrate-from-openai` moved to `manage/` and `get-started/`. That move shipped **no redirects**, which was only legitimate because no page had been published yet and no external link could exist; the permanence rule binds every prefix above from that date on. `scripts/check-docs-json.mjs` holds the same list and fails any path outside it, so the two are changed together or not at all.
 
 **SEO**: every page carries frontmatter `title` (verb-led for guides, noun-led for concepts) and `description` (one sentence, under 160 chars, stating the page's claim, not marketing). The phrase to own organically: "OpenAI-compatible LLM router" plus "base URL" migration terms; the index and compatibility pages carry them naturally. `noindex` on nothing (all pages are public by design); sitemap and canonical handled by Mintlify defaults once the hostname exists (§14 item 9). No structured-data investment in v1.
 
@@ -574,12 +657,12 @@ Five lanes; **no file has two owners**; cross-lane needs are expressed as PR rev
 | Lane | Owner scope (exact files) | Depends on |
 |---|---|---|
 | **A. Onboarding** | `index.mdx`, `get-started/quickstart.mdx`, `get-started/openai-compatibility.mdx`, `get-started/authentication.mdx` | E (snippets), B (envelope facts via snippet) |
-| **B. API contract** | `api-reference/introduction.mdx`, `api-reference/authentication.mdx`, `api-reference/errors.mdx`, `api-reference/headers.mdx`, `api-reference/overlay.public.json`, `concepts/errors.mdx`, `concepts/streaming.mdx` | E (pipeline scripts) |
-| **C. Money and usage** | `concepts/credits-and-billing.mdx`, `concepts/usage-and-metering.mdx`, `concepts/rate-limits-and-spend-controls.mdx`, `guides/buy-credit.mdx`, `guides/monitor-usage.mdx`, `guides/spend-controls.mdx` | B (error codes via snippet) |
-| **D. Workspace and product surface** | `concepts/workspaces-and-members.mdx`, `concepts/models.mdx`, `concepts/data-and-privacy.mdx`, `guides/create-an-api-key.mdx`, `guides/invite-and-manage-members.mdx`, `guides/playground.mdx`, `resources/glossary.mdx`, `resources/security.mdx` | — |
+| **B. API contract** | `api-reference/introduction.mdx`, `api-reference/authentication.mdx`, `api-reference/errors.mdx`, `api-reference/headers.mdx`, `api-reference/overlay.public.json`, `features/errors.mdx`, `features/streaming.mdx` | E (pipeline scripts) |
+| **C. Money and usage** | `manage/credits-and-billing.mdx`, `manage/usage-and-metering.mdx`, `manage/rate-limits-and-spend-controls.mdx`, `manage/buy-credit.mdx`, `manage/monitor-usage.mdx`, `manage/spend-controls.mdx` | B (error codes via snippet) |
+| **D. Workspace and product surface** | `manage/workspaces-and-members.mdx`, `features/models.mdx`, `manage/data-and-privacy.mdx`, `get-started/create-an-api-key.mdx`, `manage/invite-and-manage-members.mdx`, `features/playground.mdx`, `resources/glossary.mdx`, `manage/security.mdx` | — |
 | **E. Infrastructure** | `docs.json`, all `snippets/*`, all `scripts/*`, `banned-content.yml`, `claims.yml`, `api-reference/openapi.public.json` (generated), CI workflow, `images/`, `logo/` | — |
 
-Rules: snippets change only via Lane E PRs (any lane may propose text); docs.json navigation entries are added by Lane E on a lane's request when a page reaches reviewable state; `concepts/routing-and-reliability.mdx` and other BLOCKED pages have no owner until unblocked (assigned at unblock, default Lane B for wire-contract pages, Lane C for money pages); §14 drift items each have a named watcher (1→B, 2→D, 3→D, 4→C, 7→C, 9/10→E).
+Rules: snippets change only via Lane E PRs (any lane may propose text); docs.json navigation entries are added by Lane E on a lane's request when a page reaches reviewable state; `features/routing-and-reliability.mdx` and other BLOCKED pages have no owner until unblocked (assigned at unblock, default Lane B for wire-contract pages, Lane C for money pages); §14 drift items each have a named watcher (1→B, 2→D, 3→D, 4→C, 7→C, 9/10→E).
 
 ---
 
@@ -590,34 +673,34 @@ Every public capability and route, traced to its page(s). "Route" means what a c
 | Capability | Public route(s) / surface | Page(s) | Status |
 |---|---|---|---|
 | Chat completions | `POST /v1/chat/completions` | quickstart; api endpoint; compatibility | WRITE-NOW |
-| Model listing | `GET /v1/models` | concepts/models; api endpoint | PARTIAL (§14.2) |
+| Model listing | `GET /v1/models` | features/models; api endpoint | PARTIAL (§14.2) |
 | Text completions | `POST /v1/completions` (planned) | api endpoint (reserved) | BLOCKED 2.10 |
 | Embeddings | `POST /v1/embeddings` (planned) | api endpoint (reserved) | BLOCKED 2.10 |
-| Streaming | `stream:true` on chat completions | concepts/streaming; headers | PARTIAL |
+| Streaming | `stream:true` on chat completions | features/streaming; headers | PARTIAL |
 | API key auth | Bearer on `/v1/*` | get-started/authentication; api-reference/authentication | WRITE-NOW |
-| Error envelope + request id | all `/v1` responses | concepts/errors; api-reference/errors | WRITE-NOW |
-| Usage on the wire | `x-uniblock-usage` header / SSE line | api-reference/headers; concepts/streaming | WRITE-NOW |
+| Error envelope + request id | all `/v1` responses | features/errors; api-reference/errors | WRITE-NOW |
+| Usage on the wire | `x-uniblock-usage` header / SSE line | api-reference/headers; features/streaming | WRITE-NOW |
 | Diagnostic headers | response allowlist | api-reference/headers | WRITE-NOW (shipped set only) |
-| Fallback/reliability | (behavior, not a route) | concepts/routing-and-reliability | BLOCKED 2.12/2.13 |
-| Workloads | `x-uniblock-workload` (planned) | concepts/workloads (reserved) | BLOCKED 2.21 |
+| Fallback/reliability | (behavior, not a route) | features/routing-and-reliability | BLOCKED 2.12/2.13 |
+| Workloads | `x-uniblock-workload` (planned) | features/workloads (reserved) | BLOCKED 2.21 |
 | Sign-up / sign-in / verification / reset / OAuth | dashboard `(signed-out)` screens | quickstart prerequisites; (no dedicated page until Epic 3 accepted; OAuth undocumented until proven) | PARTIAL |
-| Key management | dashboard Keys; `/api/me/keys*` | guides/create-an-api-key; get-started/authentication | PARTIAL |
-| Buy credit / fee / statement | dashboard Billing; `/api/me/credit/*` | concepts/credits-and-billing; guides/buy-credit | WRITE-NOW |
-| Balance + low-credit notice | dashboard Billing/rail; `/api/me/credit/balance`, `/low-credit-notice` | guides/buy-credit; guides/spend-controls | WRITE-NOW |
-| Zero-balance refusal + mid-stream cutoff | 402 / `balance_exhausted` | concepts/credits-and-billing; concepts/streaming; api errors | WRITE-NOW |
-| Usage visibility | dashboard Overview/Activity; `/api/me/usage/*` | concepts/usage-and-metering; guides/monitor-usage | PARTIAL (Epic 5 review) |
-| Rate limits (3 codes) | 429s on `/v1` | concepts/rate-limits-and-spend-controls; api errors | PARTIAL (shipped codes only) |
-| Spend-rate cap + self-service raise | Settings; `/api/me/limits/spend-rate-cap` | guides/spend-controls; concepts/rate-limits | PARTIAL |
-| Pause | Settings; `/api/me/pause` | guides/spend-controls | PARTIAL (4.19 review) |
-| Workspaces | `/api/me/workspaces`; switcher | concepts/workspaces-and-members | PARTIAL (multi-workspace gated) |
-| Members, roles, transfer, removal | Members screen; `/api/me/members/*` | concepts/workspaces-and-members; guides/invite-and-manage-members | PARTIAL (Epic 9) |
-| Invitations + key reservations | `/invitations/[token]`; `/api/me/invitations/*`, key reservation routes | guides/invite-and-manage-members | PARTIAL |
-| Playground | dashboard Playground; `/api/me/playground?key=` | guides/playground | PARTIAL |
-| Public model catalog (key-authenticated) | Epic 8 (8.1-8.5 done, 2026-08-31 sync) | concepts/models; api-reference (GET /v1/models, GET /v1/models/{id}) | PARTIAL (gates 8.6-8.8) |
+| Key management | dashboard Keys; `/api/me/keys*` | get-started/create-an-api-key; get-started/authentication | PARTIAL |
+| Buy credit / fee / statement | dashboard Billing; `/api/me/credit/*` | manage/credits-and-billing; manage/buy-credit | WRITE-NOW |
+| Balance + low-credit notice | dashboard Billing/rail; `/api/me/credit/balance`, `/low-credit-notice` | manage/buy-credit; manage/spend-controls | WRITE-NOW |
+| Zero-balance refusal + mid-stream cutoff | 402 / `balance_exhausted` | manage/credits-and-billing; features/streaming; api errors | WRITE-NOW |
+| Usage visibility | dashboard Overview/Activity; `/api/me/usage/*` | manage/usage-and-metering; manage/monitor-usage | PARTIAL (Epic 5 review) |
+| Rate limits (3 codes) | 429s on `/v1` | manage/rate-limits-and-spend-controls; api errors | PARTIAL (shipped codes only) |
+| Spend-rate cap + self-service raise | Settings; `/api/me/limits/spend-rate-cap` | manage/spend-controls; manage/rate-limits | PARTIAL |
+| Pause | Settings; `/api/me/pause` | manage/spend-controls | PARTIAL (4.19 review) |
+| Workspaces | `/api/me/workspaces`; switcher | manage/workspaces-and-members | PARTIAL (multi-workspace gated) |
+| Members, roles, transfer, removal | Members screen; `/api/me/members/*` | manage/workspaces-and-members; manage/invite-and-manage-members | PARTIAL (Epic 9) |
+| Invitations + key reservations | `/invitations/[token]`; `/api/me/invitations/*`, key reservation routes | manage/invite-and-manage-members | PARTIAL |
+| Playground | dashboard Playground; `/api/me/playground?key=` | features/playground | PARTIAL |
+| Public model catalog (key-authenticated) | Epic 8 (8.1-8.5 done, 2026-08-31 sync) | features/models; api-reference (GET /v1/models, GET /v1/models/{id}) | PARTIAL (gates 8.6-8.8) |
 | Trial credit | Story 4.17 (unbuilt) | none (deliberate) | BLOCKED |
 | Capture / request history | Epic 7 (unbuilt) | none (deliberate) | BLOCKED |
-| Data/privacy stance | (product-wide) | concepts/data-and-privacy; resources/security | WRITE-NOW |
-| Sessions list/end | Story 3.15 | concepts/data-and-privacy (gated section) | BLOCKED 3.15 |
+| Data/privacy stance | (product-wide) | manage/data-and-privacy; manage/security | WRITE-NOW |
+| Sessions list/end | Story 3.15 | manage/data-and-privacy (gated section) | BLOCKED 3.15 |
 | Suspension (customer view) | 403 `account_suspended` | api-reference/errors | WRITE-NOW (code only) |
 | Support / request id | FR-8 | snippets/request-id-note; resources/support | Snippet now; page BLOCKED (§14.10) |
 | Terms / privacy / refunds | — | reserved paths | BLOCKED (§14.7) |

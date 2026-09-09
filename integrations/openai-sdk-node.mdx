@@ -71,7 +71,7 @@ if (line.startsWith(':')) {
 ```
 
 Quoted from the SDK's own SSE decoder. Your `for await` loop never sees it.
-[Streaming](/concepts/streaming) documents the line.
+[Streaming](/features/streaming) documents the line.
 
 ## Where the request id is
 
@@ -106,7 +106,7 @@ try {
 `APIError` parses `type`, `code` and `param` off the envelope onto the error
 object itself, so you can branch without reaching for the body. Branch on those
 rather than on the message text. Every shipped code is in
-[errors](/concepts/errors).
+[errors](/features/errors).
 
 **One caveat on that parsing.** Those properties are read from the JSON body, so
 they are `undefined` rather than wrong if a response ever arrives without one. A

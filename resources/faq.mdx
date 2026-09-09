@@ -16,14 +16,14 @@ so rather than being left out.
 <Accordion title="How much of my code has to change?">
 Two settings: the base URL and the key. Then one edit that is not optional, which
 is putting a provider in front of every model id. See
-[Migrate from OpenAI](/resources/migrate-from-openai).
+[Migrate from OpenAI](/get-started/migrate-from-openai).
 </Accordion>
 
 <Accordion title="Why was my model id refused?">
 A bare id such as `gpt-4o-mini` is not a Hopscotch model id. Ids name the provider
 that serves them, so it is `openai/gpt-4o-mini`. A bare id is refused with `400`
 and the code `model_id_not_pinned` rather than being routed to whichever provider
-we happen to carry it under. See [Models](/concepts/models).
+we happen to carry it under. See [Models](/features/models).
 </Accordion>
 
 <Accordion title="Which models can I call?">
@@ -55,35 +55,35 @@ as a certification.
 <Accordion title="Does tool calling work?">
 Yes, as OpenAI defines it. `tools`, `tool_choice` and the `tool_calls` that come
 back all travel unchanged, streamed and not. Nothing is executed on our side. See
-[Tool calling](/concepts/tool-calling).
+[Tool calling](/features/tool-calling).
 </Accordion>
 
 <Accordion title="Does response_format work?">
 Yes, both forms, forwarded as written. Nothing here validates your schema or the
-reply against it. See [Structured outputs](/concepts/structured-outputs).
+reply against it. See [Structured outputs](/features/structured-outputs).
 </Accordion>
 
 <Accordion title="Can I send images?">
 Yes, in OpenAI's message-part shape, to a model that takes one. See
-[Image inputs](/concepts/image-inputs).
+[Image inputs](/features/image-inputs).
 </Accordion>
 
 <Accordion title="How do I know whether a model supports something?">
 Every catalog entry carries five capability words, each answering `yes`, `no` or
 `unknown`. Read `unknown` as "nobody has established this" rather than as "no".
-See [Model capabilities](/concepts/model-capabilities).
+See [Model capabilities](/features/model-capabilities).
 </Accordion>
 
 <Accordion title="Does prompt caching work?">
 Provider prompt caching passes through unchanged, and the cached-token counts
 come back separately and are priced as their own kind. There is nothing of ours
-to enable. See [Prompt caching](/concepts/prompt-caching).
+to enable. See [Prompt caching](/features/prompt-caching).
 </Accordion>
 
 <Accordion title="Can I set a fallback order across models?">
 Yes, with a routing profile: your own ordered list of `provider/model` lines,
 requested as `profile/{identifier}` in the `model` field. See
-[Routing profiles](/concepts/routing-profiles).
+[Routing profiles](/features/routing-profiles).
 </Accordion>
 
 <Accordion title="Can I pin which provider serves a request?">
@@ -107,7 +107,7 @@ nothing than describe a call you cannot rely on.
 <Accordion title="Is there a markup on requests?">
 No. A request deducts the provider's rate at face value. The platform fee is
 added when you buy credit, not when you spend it. See
-[Credits and billing](/concepts/credits-and-billing).
+[Credits and billing](/manage/credits-and-billing).
 </Accordion>
 
 <Accordion title="Why did my request return 402?">
@@ -120,7 +120,7 @@ refusal. See [Errors](/api-reference/errors).
 `rate_limit_exceeded` is your key's request rate, and it carries `Retry-After`.
 `spend_rate_exceeded` is your account spend rate cap, and the lever for it is
 sending `max_tokens`. See
-[Rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+[Rate limits and spend controls](/manage/rate-limits-and-spend-controls).
 </Accordion>
 
 <Accordion title="Why does sending max_tokens help?">
@@ -133,13 +133,13 @@ settlement either way. See [Request parameters](/api-reference/parameters).
 <Accordion title="Where do I see what a request actually cost?">
 On the Activity screen, one row per request. The usage record is the authority on
 what a request cost, not a rate in the catalog. See
-[View activity](/guides/view-activity).
+[View activity](/manage/view-activity).
 </Accordion>
 
 <Accordion title="Can I use my own provider key?">
 Yes, for a provider we already serve. Your key then answers every request to that
 provider and the provider bills you directly. It does not add models to your
-catalog. See [Bring your own key](/concepts/bring-your-own-key).
+catalog. See [Bring your own key](/features/bring-your-own-key).
 </Accordion>
 
 </AccordionGroup>
@@ -151,7 +151,7 @@ catalog. See [Bring your own key](/concepts/bring-your-own-key).
 <Accordion title="Do you store my prompts and replies?">
 No. What is recorded is metadata about a request: what was called, what it cost,
 how long it took, what happened. Never the content. See
-[Data and privacy](/concepts/data-and-privacy).
+[Data and privacy](/manage/data-and-privacy).
 </Accordion>
 
 <Accordion title="Can you show me my API key again?">

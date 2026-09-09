@@ -53,82 +53,163 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Documentation",
+        "tab": "Get started",
+        "icon": "player-play",
         "groups": [
           {
-            "group": "Get started",
+            "group": "First request",
             "pages": [
               "index",
               "get-started/quickstart",
+              "get-started/authentication",
+              "get-started/create-an-api-key"
+            ]
+          },
+          {
+            "group": "Coming from OpenAI",
+            "pages": [
               "get-started/openai-compatibility",
-              "get-started/authentication"
+              "get-started/migrate-from-openai"
             ]
           },
           {
-            "group": "Core concepts",
+            "group": "Your own provider keys",
             "pages": [
-              "concepts/models",
-              "concepts/model-capabilities",
-              "concepts/model-lifecycle",
-              "concepts/bring-your-own-key",
-              "concepts/routing-profiles",
-              "concepts/streaming",
-              "concepts/tool-calling",
-              "concepts/structured-outputs",
-              "concepts/image-inputs",
-              "concepts/reasoning",
-              "concepts/prompt-caching",
-              "concepts/credits-and-billing",
-              "concepts/usage-and-metering",
-              "concepts/rate-limits-and-spend-controls",
-              "concepts/errors",
-              "concepts/workspaces-and-members",
-              "concepts/data-and-privacy"
+              "get-started/add-a-provider-key"
             ]
           },
           {
-            "group": "Dashboard guides",
+            "group": "Resources",
             "pages": [
-              "guides/create-an-api-key",
-              "guides/add-a-provider-key",
-              "guides/buy-credit",
-              "guides/monitor-usage",
-              "guides/view-activity",
-              "guides/create-a-workspace",
-              "guides/invite-and-manage-members",
-              "guides/playground",
-              "guides/spend-controls"
+              "resources/faq",
+              "resources/glossary"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Features",
+        "icon": "stack-2",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "features/overview"
             ]
           },
           {
-            "group": "Integrations",
+            "group": "Models",
             "pages": [
-              "integrations/overview",
+              "features/models",
+              "features/model-capabilities",
+              "features/model-lifecycle"
+            ]
+          },
+          {
+            "group": "Request features",
+            "pages": [
+              "features/streaming",
+              "features/tool-calling",
+              "features/structured-outputs",
+              "features/image-inputs",
+              "features/reasoning",
+              "features/prompt-caching"
+            ]
+          },
+          {
+            "group": "Routing and reliability",
+            "pages": [
+              "features/routing-profiles",
+              "features/bring-your-own-key",
+              "features/errors"
+            ]
+          },
+          {
+            "group": "Try it",
+            "pages": [
+              "features/playground"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Manage & monitor",
+        "icon": "gauge",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "manage/overview"
+            ]
+          },
+          {
+            "group": "Usage",
+            "pages": [
+              "manage/usage-and-metering",
+              "manage/monitor-usage",
+              "manage/view-activity"
+            ]
+          },
+          {
+            "group": "Spend",
+            "pages": [
+              "manage/credits-and-billing",
+              "manage/buy-credit",
+              "manage/rate-limits-and-spend-controls",
+              "manage/spend-controls"
+            ]
+          },
+          {
+            "group": "Workspace",
+            "pages": [
+              "manage/workspaces-and-members",
+              "manage/create-a-workspace",
+              "manage/invite-and-manage-members"
+            ]
+          },
+          {
+            "group": "Trust",
+            "pages": [
+              "manage/data-and-privacy",
+              "manage/security"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Integrations",
+        "icon": "plug",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "integrations/overview"
+            ]
+          },
+          {
+            "group": "SDKs and frameworks",
+            "pages": [
               "integrations/openai-sdk-python",
               "integrations/openai-sdk-node",
               "integrations/vercel-ai-sdk",
               "integrations/langchain",
               "integrations/llamaindex",
-              "integrations/pydantic-ai",
+              "integrations/pydantic-ai"
+            ]
+          },
+          {
+            "group": "Coding agents",
+            "pages": [
               "integrations/coding-harnesses",
+              "integrations/claude-code",
+              "integrations/cursor",
               "integrations/cline",
               "integrations/continue",
               "integrations/aider",
               "integrations/zed",
               "integrations/opencode",
               "integrations/codex-cli",
-              "integrations/cursor",
-              "integrations/claude-code",
               "integrations/t3-code"
-            ]
-          },
-          {
-            "group": "Resources",
-            "pages": [
-              "resources/migrate-from-openai",
-              "resources/faq",
-              "resources/security",
-              "resources/glossary"
             ]
           }
         ]
@@ -150,7 +231,8 @@
             "group": "Endpoints",
             "openapi": "api-reference/openapi.public.json"
           }
-        ]
+        ],
+        "icon": "code"
       }
     ]
   },

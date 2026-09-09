@@ -55,7 +55,7 @@ the same message:
 
 One message rather than two, because two would tell you which hidden keys exist,
 which is the thing a member limit is for. See
-[Who can see which keys](/guides/create-an-api-key#who-can-see-which-keys).
+[Who can see which keys](/get-started/create-an-api-key#who-can-see-which-keys).
 
 ## What a run does to your balance
 
@@ -86,7 +86,7 @@ it rather than letting you find out:
 
 There is no history, no saved session, and no shareable link to a run. If you
 want to keep a prompt, keep it on your side. See
-[Data and privacy](/concepts/data-and-privacy).
+[Data and privacy](/manage/data-and-privacy).
 
 The metadata is kept, like any request: the model, the token counts, the cost,
 the latency and the outcome. That is what makes the run visible in your usage
@@ -108,14 +108,14 @@ Two absences worth knowing about:
   streamed API request does carry that timing.
 - **No cost appears on this line.** The charge is computed in one place and shown
   in your usage figures, not worked out by this screen. To see what a run cost,
-  read it in your usage. See [Monitor usage](/guides/monitor-usage).
+  read it in your usage. See [Monitor usage](/manage/monitor-usage).
 
 ## Refusals you may hit
 
 **Requests are paused.** If the owner has paused the workspace, requests are
 refused, playground runs included. Reading the pause state is open to every
 member; changing it is the owner's. See
-[Spend controls](/guides/spend-controls).
+[Spend controls](/manage/spend-controls).
 
 **The workspace is suspended.** A suspended workspace cannot send at all:
 
@@ -123,7 +123,7 @@ member; changing it is the owner's. See
 
 **No credit.** A run that the balance cannot cover is refused before the model is
 called. Nothing is charged for a request we refuse. See
-[Credits and billing](/concepts/credits-and-billing).
+[Credits and billing](/manage/credits-and-billing).
 
 ## What is not built yet
 

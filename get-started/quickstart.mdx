@@ -28,7 +28,7 @@ them is missing:
   <Step title="A workspace with credit">
     Credit is prepaid, so a workspace with a zero balance refuses requests
     before they reach a provider. The workspace owner buys credit on the Billing
-    screen. See [buying credit](/guides/buy-credit).
+    screen. See [buying credit](/manage/buy-credit).
   </Step>
   <Step title="An API key">
     Mint one on the Keys screen. The key appears once and we keep only a hash,
@@ -120,7 +120,7 @@ value:
 Token counts do not ride back on a header on a non-streamed reply today. They are
 read on our side and turn into your usage record, and they reach you on the wire
 only on a streamed reply, as the comment line described below. Your token counts
-for a non-streamed request are in [Activity](/guides/monitor-usage) rather than
+for a non-streamed request are in [Activity](/manage/monitor-usage) rather than
 in a response header.
 
 ## Stream the response
@@ -181,7 +181,7 @@ data: {"id":"...","object":"chat.completion.chunk","choices":[{"delta":{},"finis
 data: [DONE]
 ```
 
-[Streaming](/concepts/streaming) covers the usage line's fields and what happens
+[Streaming](/features/streaming) covers the usage line's fields and what happens
 if a stream outlives the credit paying for it.
 
 ## The two first-run failures
@@ -293,7 +293,7 @@ try {
   <Card title="OpenAI compatibility" icon="plug" href="/get-started/openai-compatibility">
     Which endpoints exist today, and what a call to one that does not returns.
   </Card>
-  <Card title="Errors" icon="alert-triangle" href="/concepts/errors">
+  <Card title="Errors" icon="alert-triangle" href="/features/errors">
     Every shipped code, its status, and what to do about it.
   </Card>
 </CardGroup>

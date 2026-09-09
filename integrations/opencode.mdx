@@ -62,7 +62,7 @@ step for one, so the models it offers are the keys of your `models` object, and
 those keys are pinned ids. Adding a model means editing the file again.
 
 Each model may carry a `limit` object with `context` and `output`. Fill both in
-from [`GET /v1/models`](/concepts/models), which publishes the context window and
+from [`GET /v1/models`](/features/models), which publishes the context window and
 the maximum output for every model.
 
 `limit.output` is worth setting rather than leaving out. A request that names no
@@ -70,7 +70,7 @@ output ceiling holds the model's whole published maximum against your balance,
 which is what makes the spend rate cap bind during an agent session. We did not
 verify what OpenCode sends when the limit is absent, and the project carries
 reports of a default that exceeds some models' real maximum, so set it. See
-[rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+[rate limits and spend controls](/manage/rate-limits-and-spend-controls).
 
 ## The key, and the file that gets committed
 

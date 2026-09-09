@@ -1,0 +1,82 @@
+---
+title: "Features"
+description: "What the API can do beyond a plain chat completion, grouped by the question you arrived with."
+status: write-now
+gates: []
+---
+
+This section covers what the API does once your first request works. Every page
+here describes behaviour you reach through the same endpoint and the same key,
+so nothing below needs a second integration.
+
+Three questions bring people here, and the groups in the sidebar answer one
+each.
+
+## Which model should I name?
+
+Model ids carry their provider, the set of callable models is a live fact rather
+than a documented list, and models arrive and retire on their providers'
+schedules rather than ours.
+
+<CardGroup cols={3}>
+  <Card title="Models" icon="box" href="/features/models">
+    Id forms, how to discover what your key can call, and how a rate is expressed.
+  </Card>
+  <Card title="Model capabilities" icon="checkbox" href="/features/model-capabilities">
+    Which features a given model supports, and how to ask before you rely on one.
+  </Card>
+  <Card title="Model lifecycle" icon="history" href="/features/model-lifecycle">
+    How a model appears, changes, and goes away, and what your code sees when it does.
+  </Card>
+</CardGroup>
+
+## What can I put in a request?
+
+These are the request-shaping features. Each is the OpenAI parameter you already
+know, with a note on what differs when a router rather than a single provider is
+serving it.
+
+<CardGroup cols={3}>
+  <Card title="Streaming" icon="wave-sine" href="/features/streaming">
+    Server-sent events, the usage comment before the final line, and mid-stream failure.
+  </Card>
+  <Card title="Tool calling" icon="tool" href="/features/tool-calling">
+    Passing tools through, and what a model that cannot call them does instead.
+  </Card>
+  <Card title="Structured outputs" icon="braces" href="/features/structured-outputs">
+    JSON mode and schema-constrained responses, and which models honour them.
+  </Card>
+  <Card title="Image inputs" icon="photo" href="/features/image-inputs">
+    Multi-modal messages, and the refusal a text-only model returns.
+  </Card>
+  <Card title="Reasoning" icon="bulb" href="/features/reasoning">
+    Reasoning-model behaviour, the tokens it spends, and how they are billed.
+  </Card>
+  <Card title="Prompt caching" icon="database" href="/features/prompt-caching">
+    Where caching happens, who controls it, and what it does to a request's cost.
+  </Card>
+</CardGroup>
+
+## What happens when something goes wrong?
+
+Routing is the part of the product you did not have when you called a provider
+directly, so it is the part worth reading before an incident rather than during
+one.
+
+<CardGroup cols={3}>
+  <Card title="Routing profiles" icon="route" href="/features/routing-profiles">
+    How a request reaches a provider, and what you can say about that choice.
+  </Card>
+  <Card title="Bring your own key" icon="key" href="/features/bring-your-own-key">
+    Serving a model on your own provider credential instead of ours.
+  </Card>
+  <Card title="Errors" icon="alert-triangle" href="/features/errors">
+    The error envelope, the closed set of types, and what each one asks you to do.
+  </Card>
+</CardGroup>
+
+## Try it without writing code
+
+The [playground](/features/playground) sends real requests on your workspace's
+credit, which makes it the fastest way to check whether a model does what a page
+here says it does.

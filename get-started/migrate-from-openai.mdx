@@ -59,7 +59,7 @@ and about who sees your prompt that we are not willing to make on your behalf.
 
 Find the ids you can call with `GET /v1/models`, or on the Models screen in the
 dashboard. Do not assemble them by hand from a provider's own naming. See
-[Models](/concepts/models).
+[Models](/features/models).
 
 ```bash
 curl https://api.hopscotchlabs.ai/v1/models \
@@ -94,13 +94,13 @@ project headers, and anything in the `x-uniblock-*` namespace, do not travel.
 currently read remaining-requests and reset headers to pace yourself, that input
 is gone. Your own limits arrive as `429` responses carrying codes you can branch
 on, and the per-key one carries `Retry-After`. See
-[Rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+[Rate limits and spend controls](/manage/rate-limits-and-spend-controls).
 
 **One extra line on a stream.** A streamed reply carries a
 `:x-uniblock-usage` comment line immediately before `data: [DONE]`. The
 server-sent events specification requires a parser to ignore a line starting
 with a colon, so a conforming client never sees it. See
-[Streaming](/concepts/streaming).
+[Streaming](/features/streaming).
 
 **One extra field in an error.** The error object carries `request_id` alongside
 the fields OpenAI defines. It is inside `error` rather than beside it so that a
@@ -109,7 +109,7 @@ client reading only the fields it knows ignores it safely.
 **Billing.** Credit is prepaid and the platform fee is added when you buy credit,
 not when you spend it, so a request deducts the provider's own rate with nothing
 on top. A zero balance refuses new requests with `402` and ends in-flight ones.
-See [Credits and billing](/concepts/credits-and-billing).
+See [Credits and billing](/manage/credits-and-billing).
 
 **`max_tokens` is worth sending even where you left it out before.** It sizes
 what we hold against your balance while a request runs, so a request without it

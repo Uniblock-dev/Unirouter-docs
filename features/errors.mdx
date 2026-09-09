@@ -71,7 +71,7 @@ to read: `rate_limit_exceeded` for your key's request rate, `spend_rate_exceeded
 for the account's spend rate cap, or `upstream_rate_limited` for the model's
 provider rate-limiting the call. Back off for the first. For the second, sending
 `max_tokens` lowers what each request reserves; see
-[Rate limits and spend controls](/concepts/rate-limits-and-spend-controls). The
+[Rate limits and spend controls](/manage/rate-limits-and-spend-controls). The
 third is not your allowance and not your cap: nothing about the request is wrong
 and nothing is charged for it. `rate_limit_exceeded` and `upstream_rate_limited`
 both carry `Retry-After` in whole seconds.

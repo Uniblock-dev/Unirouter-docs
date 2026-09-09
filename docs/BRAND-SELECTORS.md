@@ -144,7 +144,7 @@ square corners.
 
 **Nothing in the docs uses either form today.** Every provider slug in the
 corpus sits inside a code fence, where a `<span>` cannot go, and
-`concepts/models.mdx` states that the list of providers we hold accounts with is
+`features/models.mdx` states that the list of providers we hold accounts with is
 not published. Putting provider names into prose is an editorial decision about
 that policy, not a styling one, so the mechanism is shipped and left unused
 rather than retrofitted.

@@ -93,7 +93,7 @@ workspace's balance and its requests land in the workspace's usage. That has a
 consequence worth knowing before you organise your team around it: removing the
 member who created a key does not, on its own, stop the key. Revoking is an
 explicit choice, made per key, at the moment of removal. See
-[workspaces and members](/concepts/workspaces-and-members).
+[workspaces and members](/manage/workspaces-and-members).
 
 ## Five live keys per workspace
 
@@ -198,7 +198,7 @@ and it carries a `Retry-After` header in seconds. The message names the wait:
 This is the limit on your key's request rate, which is ours to set and which you
 cannot raise yourself. It is a different refusal from your account spend rate cap,
 which you can raise, and the codes are distinct so your client can tell them
-apart. See [rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+apart. See [rate limits and spend controls](/manage/rate-limits-and-spend-controls).
 
 <RequestIdNote />
 
@@ -215,4 +215,4 @@ apart. See [rate limits and spend controls](/concepts/rate-limits-and-spend-cont
   key stays live until something on the list above ends it. You may give a key an
   expiry date of your own, and a key past it is refused with code `key_expired`.
   See [rate limits and spend
-  controls](/concepts/rate-limits-and-spend-controls).
+  controls](/manage/rate-limits-and-spend-controls).

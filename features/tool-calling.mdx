@@ -77,7 +77,7 @@ for call in response.choices[0].message.tool_calls or []:
 
 Ask the catalog. Every entry carries a `tools` word in its `capabilities` block,
 answering `yes`, `no` or `unknown`. See
-[Model capabilities](/concepts/model-capabilities), and read the part about
+[Model capabilities](/features/model-capabilities), and read the part about
 `unknown` before you filter on it.
 
 The word is a description and not a gate. A `tools` array sent to a model that
@@ -104,11 +104,11 @@ paid for every one of them.
 
 Send `max_tokens` on each turn. It is what sizes the credit held while a request
 runs, and a loop holds credit several times over. See
-[Rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+[Rate limits and spend controls](/manage/rate-limits-and-spend-controls).
 
 ## Errors in the middle of a loop
 
-Everything on [Errors](/concepts/errors) applies unchanged, and one habit is
+Everything on [Errors](/features/errors) applies unchanged, and one habit is
 worth building. A loop that retries blindly on any failure can spend real credit
 turning one broken tool definition into a long conversation with itself. Branch
 on `type` and `code`: a `400` will fail identically on retry, and a `429` with
@@ -132,7 +132,7 @@ answer.
 
 **We do not remember a conversation.** Every request carries its whole
 `messages` array, tool results included. Nothing is stored on our side between
-turns, which is the same fact as [Data and privacy](/concepts/data-and-privacy)
+turns, which is the same fact as [Data and privacy](/manage/data-and-privacy)
 seen from a different angle.
 
 ## What we did not verify

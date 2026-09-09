@@ -44,7 +44,7 @@ completion = client.chat.completions.create(
 
 Nothing else about the request changes. A profile is a value in the same
 field a model id occupies, not a different kind of call. See
-[Models](/concepts/models) for how a plain model id is shaped.
+[Models](/features/models) for how a plain model id is shaped.
 
 ## The identifier does not change
 
@@ -98,7 +98,7 @@ that never existed, is refused identically either way: HTTP 503, code
 
 There is no separate error for "archived" versus "never created", and there is
 no way to restore an archived profile: only to create a new one, under a new
-identifier. See [Errors and refusals](/concepts/errors) for the envelope every
+identifier. See [Errors and refusals](/features/errors) for the envelope every
 failing route shares.
 
 ## When no model in the profile can be served
@@ -165,7 +165,7 @@ means the same thing every time.
 ## Which key a route runs on
 
 A route can also say whose provider key its steps run on, which matters only if
-you have [brought your own key](/concepts/bring-your-own-key) for a provider we
+you have [brought your own key](/features/bring-your-own-key) for a provider we
 carry. The choice is per route and it has three values: follow your workspace's
 own rule, which is what every route does unless you say otherwise; run on your
 own key; or run on ours. It is the way to keep one route off your own provider
@@ -179,16 +179,16 @@ Creating a profile, renaming it, replacing its model list, or archiving it all
 take the same permission: only the workspace owner and admins may do them. Any
 member of the workspace, including a developer or a viewer, may see the
 profiles that exist and request them, the same as any key in the workspace
-already can. See [Workspaces and members](/concepts/workspaces-and-members) for
+already can. See [Workspaces and members](/manage/workspaces-and-members) for
 the full role table.
 
 ## Next
 
 <CardGroup cols={2}>
-  <Card title="Models" href="/concepts/models">
+  <Card title="Models" href="/features/models">
     How a model id is shaped, and how to discover which ones you can call.
   </Card>
-  <Card title="Errors and refusals" href="/concepts/errors">
+  <Card title="Errors and refusals" href="/features/errors">
     The one error body the whole API uses, and how to read it.
   </Card>
 </CardGroup>

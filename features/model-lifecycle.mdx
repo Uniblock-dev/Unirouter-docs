@@ -75,13 +75,13 @@ The refusal is a `404`, and the message is what tells you which kind of nothing
 you have hit. A model the provider has **retired** says it is gone rather than
 unwell, and says that retrying will not bring it back. That is the sentence to
 branch your operational response on: no amount of backoff reaches a model that
-has been switched off. See [Errors](/concepts/errors).
+has been switched off. See [Errors](/features/errors).
 
 The dates are the provider's, not ours, so a model can also stop earlier than its
 published sunset if the provider stops serving it. The catalog follows what is
 actually servable rather than what was announced, which is the same rule that
 governs everything in it: you are never offered a model that would fail on call.
-See [Models](/concepts/models).
+See [Models](/features/models).
 
 ## Building for it
 
@@ -100,12 +100,12 @@ are usually months apart, and the gap is the whole point of publishing both.
 is set, is what the provider says the successor is. It is not a promise that the
 successor behaves like its predecessor on your prompts, prices the same, or has
 the same capability words. Read
-[Model capabilities](/concepts/model-capabilities) for the model you are moving
+[Model capabilities](/features/model-capabilities) for the model you are moving
 to, and test before you cut over.
 
 **A model id names a provider.** A model that ends at one provider may still be
 served by another, as a different id with its own price. See
-[Models](/concepts/models) for how ids are shaped.
+[Models](/features/models) for how ids are shaped.
 
 ## What is not here
 

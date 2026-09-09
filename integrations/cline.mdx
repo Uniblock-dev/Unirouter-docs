@@ -56,7 +56,7 @@ the Base URL or the API Key, Cline calls `GET` on `/models` under the base URL
 you gave it, with your key on an `Authorization` header, and populates the Model
 ID dropdown from what comes back.
 
-That call is [`GET /v1/models`](/concepts/models). So the dropdown fills with our
+That call is [`GET /v1/models`](/features/models). So the dropdown fills with our
 catalog rather than with a vendor's list, already in the pinned `provider/model`
 shape, and picking from it gives you a valid id without typing one. It also means
 the list is only as long as what your key can call, which is the intended
@@ -76,7 +76,7 @@ its requests by default, and that figure is what sizes the amount we hold agains
 your balance before the call. Setting it to something realistic for the work,
 rather than leaving it at whatever it defaults to, is what keeps the cap from
 binding. See [rate limits and spend
-controls](/concepts/rate-limits-and-spend-controls).
+controls](/manage/rate-limits-and-spend-controls).
 
 **The price fields are Cline's own display, not our billing.** They drive the
 cost figure Cline shows you in its chat. What a request actually cost is in your

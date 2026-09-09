@@ -21,7 +21,7 @@ a usage record with real prompt and completion token counts, it appears in
 Usage and in Activity exactly like any other request, and it is counted apart
 from the requests we serve on our own keys rather than folded into them. Read
 "free" as **we charge you nothing for this one**, not as **this one leaves no
-trace**. See [Usage and metering](/concepts/usage-and-metering) for the full
+trace**. See [Usage and metering](/manage/usage-and-metering) for the full
 field set a request produces.
 
 The provider itself is not free. Running on your own key means the provider
@@ -49,7 +49,7 @@ already carry. It does not make a new provider or a new model callable.
 What you can call is still exactly what Hopscotch carries. Your own key never
 adds to that list, and a model that is not already callable through us stays
 not callable no matter whose key you hold for it. See
-[Models](/concepts/models) for how the callable set is decided and discovered.
+[Models](/features/models) for how the callable set is decided and discovered.
 
 ## Which providers you can bring a key for
 
@@ -67,8 +67,8 @@ whatever the provider sent back internally: the message names the provider,
 says nothing was charged, and tells you to fix the key. The message calls that place
 the Provider keys screen; the dashboard's own sidebar calls it BYOK, and they are the
 same screen. See
-[Add a provider key](/guides/add-a-provider-key) for how to replace it, and
-[Errors and refusals](/concepts/errors) for how a response like this is
+[Add a provider key](/get-started/add-a-provider-key) for how to replace it, and
+[Errors and refusals](/features/errors) for how a response like this is
 shaped.
 
 ## Who can manage keys
@@ -76,16 +76,16 @@ shaped.
 Managing provider keys, including seeing which ones a workspace already
 holds, takes the same authority as managing routing or inviting somebody:
 owner or admin. A developer or a viewer cannot see or change this workspace's
-provider keys. See [Workspaces and members](/concepts/workspaces-and-members)
+provider keys. See [Workspaces and members](/manage/workspaces-and-members)
 for the full role table.
 
 ## Next
 
 <CardGroup cols={2}>
-  <Card title="Add a provider key" href="/guides/add-a-provider-key">
+  <Card title="Add a provider key" href="/get-started/add-a-provider-key">
     Finding the screen, adding a key, and what proving it before saving means.
   </Card>
-  <Card title="Models" href="/concepts/models">
+  <Card title="Models" href="/features/models">
     How the callable set is decided, and why your own key cannot extend it.
   </Card>
 </CardGroup>

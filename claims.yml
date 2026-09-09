@@ -104,7 +104,7 @@ claims:
     status: gated
     gate: "18.13, 18.40"
     used_by:
-      - concepts/model-capabilities
+      - features/model-capabilities
       - resources/glossary
       - resources/faq
     note: "Registered in its own right rather than leaning on keys-per-workspace, which shares the token and means something unrelated. If the capability map gains a word, this claim is what the sweep finds."
@@ -196,10 +196,10 @@ claims:
     status: gated
     gate: epic-5
     used_by:
-      - concepts/usage-and-metering
-      - concepts/data-and-privacy
-      - guides/monitor-usage
-      - guides/view-activity
+      - manage/usage-and-metering
+      - manage/data-and-privacy
+      - manage/monitor-usage
+      - manage/view-activity
     note: >-
       A configured value the product prints, not a promise anybody made
       (DOCS_PLAN.md section 14 item 12). Phrase it as the product does: a
@@ -213,9 +213,9 @@ claims:
     status: gated
     gate: epic-5
     used_by:
-      - concepts/usage-and-metering
-      - concepts/data-and-privacy
-      - guides/view-activity
+      - manage/usage-and-metering
+      - manage/data-and-privacy
+      - manage/view-activity
 
   - id: fee-basis-points
     value: "250"
@@ -269,8 +269,8 @@ claims:
     status: gated
     gate: epic-5
     used_by:
-      - guides/monitor-usage
-      - concepts/usage-and-metering
+      - manage/monitor-usage
+      - manage/usage-and-metering
 
   - id: usage-range-7d
     value: "7"
@@ -285,8 +285,8 @@ claims:
     status: gated
     gate: epic-5
     used_by:
-      - guides/monitor-usage
-      - concepts/usage-and-metering
+      - manage/monitor-usage
+      - manage/usage-and-metering
 
   - id: activity-page-size-default
     value: "25"
@@ -295,8 +295,8 @@ claims:
     status: gated
     gate: epic-5
     used_by:
-      - guides/monitor-usage
-      - guides/view-activity
+      - manage/monitor-usage
+      - manage/view-activity
 
   - id: activity-page-size-fifty
     value: "50"
@@ -305,8 +305,8 @@ claims:
     status: gated
     gate: epic-5
     used_by:
-      - guides/monitor-usage
-      - guides/view-activity
+      - manage/monitor-usage
+      - manage/view-activity
 
   - id: activity-page-size-hundred
     value: "100"
@@ -315,8 +315,8 @@ claims:
     status: gated
     gate: epic-5
     used_by:
-      - guides/monitor-usage
-      - guides/view-activity
+      - manage/monitor-usage
+      - manage/view-activity
     note: >-
       Registered for the record rather than because the checker asks for it: a
       bare 100 already matches the HTTP status allow pattern above, so this entry
@@ -329,8 +329,8 @@ claims:
     status: gated
     gate: epic-5
     used_by:
-      - guides/monitor-usage
-      - concepts/usage-and-metering
+      - manage/monitor-usage
+      - manage/usage-and-metering
     note: >-
       A one year window over a retention floor well short of a year shows what
       is kept, not a year of data. Say that beside the option or do not name it.
