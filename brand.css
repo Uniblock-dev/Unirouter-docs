@@ -342,6 +342,17 @@ body {
      enclosed label below, exactly as the dashboard's `Chip` and meter track
      share theirs. */
   --uni-ramp-chip: color-mix(in srgb, var(--uni-ramp-ink) 6%, transparent);
+
+  /* The hover face of a filled ink plate, the dashboard's `ink-hover`. Mixed
+     against the resolved ground rather than given two literals, so it moves the
+     right way in both modes: the dark plate on light lifts toward the page, the
+     light plate on dark settles toward it. 12% is the smallest step that is
+     visible on both grounds without touching the label's contrast. */
+  --uni-ramp-ink-hover: color-mix(
+    in srgb,
+    var(--uni-ramp-ink) 88%,
+    var(--uni-ramp-bg)
+  );
 }
 
 html.dark {
@@ -721,7 +732,7 @@ details.accordion,
 }
 
 .tryit-button:hover {
-  background: var(--uni-ramp-ink);
+  background: var(--uni-ramp-ink-hover);
   filter: none;
   opacity: 1;
 }
