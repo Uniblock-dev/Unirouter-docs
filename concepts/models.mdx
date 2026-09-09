@@ -2,7 +2,7 @@
 title: "Models"
 description: "How model ids are shaped, how to discover which models are callable right now, and the vocabulary a model's rate is expressed in."
 status: partial
-gates: ["8.6", "8.7", "8.8", "8.40", "13.9", "18.58", "18.87"]
+gates: ["8.6", "8.7", "8.8", "8.40", "13.9", "18.58", "18.87", "22.1"]
 ---
 
 You name a model in the `model` field of a request, exactly as you would when
@@ -39,7 +39,7 @@ The `model` field accepts these three forms and nothing else:
 |---|---|
 | `provider/model` | That model, from that provider. If that provider cannot serve it, the request fails rather than moving to another host. The half after the slash is the provider's own id, or a shorter name we hold for it. |
 | `profile/{identifier}` | A [routing profile](/concepts/routing-profiles) you built: your own `provider/model` lines, tried in your order. |
-| `hopscotch/auto` | A fixed id that means [whichever route you made your default](/concepts/routing-profiles), and a list we publish for your cost tier until you have one. |
+| `unirouter/auto` | A fixed id that means [whichever route you made your default](/concepts/routing-profiles), and a list we publish for your cost tier until you have one. |
 
 A bare id such as `gpt-4o-mini` is refused with `400` and the code `model_id_not_pinned`. The message
 names both forms and points you at `GET /v1/models`.
@@ -92,6 +92,12 @@ callable id. That fold is a reading aid on the screen and nothing else. What you
 put in the `model` field is unchanged, and it is still a specific provider's id:
 there is no bare-model form, and the row you are looking at is not itself
 callable. Take the id from the provider line, or from `GET /v1/models`.
+
+Every id the list returns is a string you can send as it stands. A catalog row
+that has no provider identity behind it is left out of the answer rather than
+rendered as a bare id, because a bare id is not something the request path
+accepts: an entry you could not call would be worse than an entry that is
+missing.
 
 ## A model is offered only when it is live
 

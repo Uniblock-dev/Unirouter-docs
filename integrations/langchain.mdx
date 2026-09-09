@@ -134,7 +134,7 @@ except openai.APIStatusError as error:
 
 On the success path, Python's `ChatOpenAI` takes `include_response_headers=True`,
 which puts the response headers into `response_metadata["headers"]` on the
-message, so `x-hopscotch-request-id` and `x-request-id` are readable there. That
+message, so `x-uniblock-request-id` and `x-request-id` are readable there. That
 is off by default.
 
 ## What we did not verify
