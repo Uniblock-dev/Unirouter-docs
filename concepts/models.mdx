@@ -39,7 +39,7 @@ The `model` field accepts these three forms and nothing else:
 |---|---|
 | `provider/model` | That model, from that provider. If that provider cannot serve it, the request fails rather than moving to another host. The half after the slash is the provider's own id, or a shorter name we hold for it. |
 | `profile/{identifier}` | A [routing profile](/concepts/routing-profiles) you built: your own `provider/model` lines, tried in your order. |
-| `unirouter/auto` | A fixed id that means [whichever route you made your default](/concepts/routing-profiles), and a list we publish for your cost tier until you have one. |
+| `hopscotch/auto` | A fixed id that means [whichever route you made your default](/concepts/routing-profiles), and a list we publish for your cost tier until you have one. |
 
 A bare id such as `gpt-4o-mini` is refused with `400` and the code `model_id_not_pinned`. The message
 names both forms and points you at `GET /v1/models`.
@@ -58,7 +58,7 @@ can call is worse than no list.
 client that already lists OpenAI models works unchanged:
 
 ```bash
-curl https://ai.uniblock.dev/v1/models \
+curl https://api.hopscotchlabs.ai/v1/models \
   -H "Authorization: Bearer ub_live_XXXXXXXXXXXX"
 ```
 

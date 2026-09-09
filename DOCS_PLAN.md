@@ -1,7 +1,7 @@
-# Uniblock Gateway — Public Documentation Site: Architecture and Implementation Plan
+# Hopscotch Gateway — Public Documentation Site: Architecture and Implementation Plan
 
 Status: implementation-ready plan. Date: 2026-08-25.
-Scope: a public-facing product and developer documentation site for Uniblock Gateway, built on Mintlify, living in this repository (`Unirouter-docs`).
+Scope: a public-facing product and developer documentation site for Hopscotch Gateway, built on Mintlify, living in this repository (`Unirouter-docs`).
 Source repository: `C:\Users\CoolHenry\Documents\VS\Gateway-LLM` (referred to below as `SRC/`).
 
 This is a plan for **customer-facing documentation**, not internal repository documentation. Every page below traces to evidence in the source repo. Handler code wins over stale prose; where they disagree, the disagreement is flagged in §14.
@@ -10,7 +10,7 @@ This is a plan for **customer-facing documentation**, not internal repository do
 
 ## 1. Executive summary
 
-Uniblock Gateway is an OpenAI-compatible LLM router. A developer changes one base URL (`https://ai.uniblock.dev`) and one API key, keeps their existing OpenAI SDK, and calls models across providers on one prepaid balance. The fee is 2.5% (250 basis points), taken **at credit purchase**; a served request deducts the provider's rate at face value with no markup (`SRC/_bmad-output/product/decisions/the-platform-fee-is-taken-at-purchase.md`).
+Hopscotch Gateway is an OpenAI-compatible LLM router. A developer changes one base URL (`https://api.hopscotchlabs.ai`) and one API key, keeps their existing OpenAI SDK, and calls models across providers on one prepaid balance. The fee is 2.5% (250 basis points), taken **at credit purchase**; a served request deducts the provider's rate at face value with no markup (`SRC/_bmad-output/product/decisions/the-platform-fee-is-taken-at-purchase.md`).
 
 The docs site has three jobs:
 
@@ -41,13 +41,13 @@ Facts safe to state publicly, each with its source of truth:
 
 | Fact | Value | Source |
 |---|---|---|
-| Public API base URL | `https://ai.uniblock.dev` | PRD FR-1; whitepaper; `GATEWAY_PUBLIC_URL` defaults in `SRC/services/gateway/README.md` |
-| Dashboard URL | `https://app.uniblock.dev` | `SRC/_bmad-output/product/epics.md` (production origin) |
+| Public API base URL | `https://api.hopscotchlabs.ai` | PRD FR-1; whitepaper; `GATEWAY_PUBLIC_URL` defaults in `SRC/services/gateway/README.md` |
+| Dashboard URL | `https://app.hopscotchlabs.ai` | `SRC/_bmad-output/product/epics.md` (production origin) |
 | API auth | `Authorization: Bearer <key>` | `SRC/services/control-plane/src/middleware/customerAuth.ts` |
 | Key format | `ub_live_` + 43 base64url chars (env prefixes `ub_dev_`, `ub_stg_`, `ub_live_`) | `SRC/services/control-plane/src/keys/format.ts`; decision `1-7-key-format-and-accountability.md` |
 | Keys per workspace | up to 5, shown once, hashed at rest, last four retained | PRD FR-11, FR-13 |
 | Error envelope | OpenAI shape, one top-level `error` with exactly `message`, `type`, `param`, `code`, `request_id`; `type` closed set of 8 | AD-9; `SRC/services/control-plane/src/errors/openai.ts` |
-| Usage on the wire | `x-uniblock-usage` header (non-streamed) / `:x-uniblock-usage {...}` SSE comment before `data: [DONE]` (streamed) | AD-14; `SRC/services/gateway/src/uniblockUsage.ts`; `src/usage/emitter.ts` |
+| Usage on the wire | `x-hopscotch-usage` header (non-streamed) / `:x-hopscotch-usage {...}` SSE comment before `data: [DONE]` (streamed) | AD-14; `SRC/services/gateway/src/uniblockUsage.ts`; `src/usage/emitter.ts` |
 | Fee model | 2.5% added at credit purchase; buying 100 credits charges 102.50 and grants 100; a served request deducts provider cost at face value, no markup; rate fixed at checkout-session creation | Decisions `the-platform-fee-is-taken-at-purchase.md`, `the-checkout-session-fixes-the-fee-rate.md`; FR-15, FR-18 |
 | Minimum purchase | $30, expressed in credit granted | Decision `epic-4-open-questions-resolved-2026-08-18.md`; FR-14 |
 | Roles | owner, admin, developer, viewer; exactly one owner; owner alone touches money | FR-39; decisions `the-workspace-is-the-unit.md`, `money-actions-are-the-owners.md` |
@@ -76,7 +76,7 @@ Facts safe to state publicly, each with its source of truth:
 
 **A5. Support-seeking customer.** Arrives from an error. Journey: error code → the errors reference → the specific concept page (rate limits, credit) → quote `request_id` to support. Every error-adjacent page ends with the request-id support note (shared snippet).
 
-Explicit non-audiences: Uniblock staff (the console is internal, Cloudflare Access-gated); self-hosters (§10: the product is hosted-only); contributors to the source repo.
+Explicit non-audiences: Hopscotch staff (the console is internal, Cloudflare Access-gated); self-hosters (§10: the product is hosted-only); contributors to the source repo.
 
 ---
 
@@ -87,7 +87,7 @@ Two Mintlify tabs: **Documentation** and **API Reference**. (A Changelog tab is 
 ```
 Documentation
 ├── Get started
-│   ├── index                          (Welcome / what Uniblock is)
+│   ├── index                          (Welcome / what Hopscotch is)
 │   ├── get-started/quickstart
 │   ├── get-started/openai-compatibility
 │   └── get-started/authentication
@@ -145,7 +145,7 @@ One file, owned by Lane E (§17). Skeleton (values with evidence; nothing invent
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Uniblock",
+  "name": "Hopscotch",
   "description": "OpenAI-compatible LLM router. One key, one endpoint, every model.",
   "colors": {
     // Brand blue #1FB6FF fails WCAG on white as text/link (2.28:1) and is
@@ -158,7 +158,7 @@ One file, owned by Lane E (§17). Skeleton (values with evidence; nothing invent
   "fonts": { "family": "Geist Sans", "code": { "family": "Geist Mono" } },
   "navigation": { "tabs": [ /* exactly the tree in §5 */ ] },
   "navbar": {
-    "links": [{ "label": "Dashboard", "href": "https://app.uniblock.dev" }]
+    "links": [{ "label": "Dashboard", "href": "https://app.hopscotchlabs.ai" }]
   },
   "api": {
     "openapi": "api-reference/openapi.public.json",
@@ -173,7 +173,7 @@ Notes:
 
 - **Docs hostname is undecided.** No docs domain exists anywhere in the source repo; `EXPERIENCE.md` specifies a rail-foot "docs link with a status dot" in the dashboard but it is unimplemented and targetless. Getting the hostname (and the dashboard link wired to it) is an owner decision, tracked in §14. Do not invent one in page content; use relative links internally.
 - Logo/favicon assets do not exist yet (§11).
-- The API playground targets `https://ai.uniblock.dev` via the OpenAPI `servers` list of the public spec artifact (§8); local/dev servers are stripped from the public artifact.
+- The API playground targets `https://api.hopscotchlabs.ai` via the OpenAPI `servers` list of the public spec artifact (§8); local/dev servers are stripped from the public artifact.
 
 ---
 
@@ -184,19 +184,19 @@ Format per page: **Path** (`.mdx`) · Status · Purpose · Source of truth · Re
 ### 7.1 Get started
 
 **`index.mdx`** · WRITE-NOW
-- Purpose: what Uniblock is in one screen; the two-line migration promise; where to go next (cards: Quickstart, API Reference, Dashboard guides). Tone per `EXPERIENCE.md`: plain, specific, never cheerful about money; no exclamation marks.
+- Purpose: what Hopscotch is in one screen; the two-line migration promise; where to go next (cards: Quickstart, API Reference, Dashboard guides). Tone per `EXPERIENCE.md`: plain, specific, never cheerful about money; no exclamation marks.
 - Source of truth: `SRC/README.md` lines 1-5; whitepaper masthead ("One key, one endpoint, every model."); PRD §1.
 - Examples: the before/after two-line diff (base URL + key) as the hero code block.
 - Acceptance: no availability, latency, or provider-count claims; no "78 providers"; does not name the gateway fork or any internal service; links resolve; the fee is stated as "2.5% when you buy credit, nothing on requests" with no competitor comparison (the OpenRouter comparison is positioning, not documentation).
 
 **`get-started/quickstart.mdx`** · PARTIAL (write against shipped `/v1/chat/completions`; the "works with the official SDKs" claim is a promise pending Story 2.11's proof, so phrase as instructions, not certification)
-- Purpose: from key in hand to first response in under five minutes: get a key in the dashboard, set base URL, send a chat completion, read the response and the `x-uniblock-request-id`.
+- Purpose: from key in hand to first response in under five minutes: get a key in the dashboard, set base URL, send a chat completion, read the response and the `x-hopscotch-request-id`.
 - Source of truth: `SRC/services/control-plane/openapi.json` `/v1/chat/completions`; `customerAuth.ts` (Bearer); PRD FR-1/FR-4; key mint flow `SRC/apps/dashboard/src/app/(portal)/keys/`.
 - Required examples: curl; OpenAI Python SDK (`base_url` param); OpenAI Node SDK (`baseURL`); streaming variant with `stream: true`. Model id from spec examples (`openai/gpt-4o-mini`). Each example must be runnable verbatim except the key placeholder.
 - Acceptance: prerequisites state a verified account, a workspace with credit, and a key; the 402 (`insufficient_quota`) and 401 (`invalid_api_key`) first-run failure modes are shown with their real envelopes; no invented model names; SDK snippets pin no SDK version claims beyond "the official OpenAI SDKs".
 
 **`get-started/openai-compatibility.mdx`** · PARTIAL
-- Purpose: exactly what "OpenAI-compatible" means here. Supported today: chat completions, model listing. Planned per FR-2's closed V1 set: completions and embeddings (marked "coming", not documented). Everything else returns a documented not-supported error rather than surprises (FR-2). Differences: our `request_id` inside the error envelope; the `x-uniblock-usage` mechanism as additive; headers customers may NOT set (`x-uniblock-*` is stripped inbound, AD-16); provider rate-limit headers are not forwarded (decision `the-gateway-does-not-copy-rate-limit-headers.md`: "customers do not see provider rate-limit headers").
+- Purpose: exactly what "OpenAI-compatible" means here. Supported today: chat completions, model listing. Planned per FR-2's closed V1 set: completions and embeddings (marked "coming", not documented). Everything else returns a documented not-supported error rather than surprises (FR-2). Differences: our `request_id` inside the error envelope; the `x-hopscotch-usage` mechanism as additive; headers customers may NOT set (`x-hopscotch-*` is stripped inbound, AD-16); provider rate-limit headers are not forwarded (decision `the-gateway-does-not-copy-rate-limit-headers.md`: "customers do not see provider rate-limit headers").
 - Source of truth: PRD FR-1/FR-2; AD-9, AD-14, AD-16; `SRC/services/control-plane/src/inference/core.ts` (`FORWARDED_DIAGNOSTIC_HEADERS`).
 - Required examples: an unsupported-endpoint call and its actual error body (verify against handler; the `/v1` catch-all answers 404 `unknown_url` in the OpenAI envelope).
 - Acceptance: never mentions Portkey, the fork, or the gateway service; the supported-endpoint list matches the shipped control-plane `/v1` surface on the day of publication, not the gateway's internal route table; the not-supported behavior is verified by an actual request, not assumed.
@@ -216,13 +216,13 @@ Format per page: **Path** (`.mdx`) · Status · Purpose · Source of truth · Re
 - Acceptance: `GET /v1/models` and `GET /v1/models/{id}` answer from our own curated catalog projection, not a forwarded live provider list (Story 8.5 done, 2026-08-31 sync). The page documents the endpoint's contract shape only after re-verifying the response against a live call at publication time (§9 owed transcripts). No static price table, no provider roster, no margin-adjacent fields.
 
 **`concepts/routing-and-reliability.mdx`** · BLOCKED (Story 2.12 fallback, 2.13 served-by header; both backlog)
-- Purpose (when unblocked): what Uniblock does on a provider failure: fallback to an alternative provider for the same model on 5xx, 429/529, connection error, or 10s to first byte; at most limited attempts; **you are billed only for the attempt that produced the response** (FR-7); which provider answered is reported (`x-uniblock-served-by`); routing order is ours to manage and customers cannot pin targets (recorded answer: no; decision `routing-policy-lives-in-the-control-plane.md`).
+- Purpose (when unblocked): what Hopscotch does on a provider failure: fallback to an alternative provider for the same model on 5xx, 429/529, connection error, or 10s to first byte; at most limited attempts; **you are billed only for the attempt that produced the response** (FR-7); which provider answered is reported (`x-hopscotch-served-by`); routing order is ours to manage and customers cannot pin targets (recorded answer: no; decision `routing-policy-lives-in-the-control-plane.md`).
 - Source of truth: FR-7/FR-8/FR-62-65; AD-22/AD-23; decision `the-fork-owns-routing-we-own-keys.md`; cross-epic audit contract table.
 - Required examples: response headers of a normal reply; none for internals.
-- Acceptance: publishes nothing about attempt reasons, strain, candidate lists, committed capacity, or provider ordering inputs (all internal per FR-63/FR-64/FR-65); resolves the `x-uniblock-served-by` vs `x-uniblock-provider` inversion (§14 item 1) before publication; until unblocked, the *page does not exist* (no "coming soon" stub on a reliability promise).
+- Acceptance: publishes nothing about attempt reasons, strain, candidate lists, committed capacity, or provider ordering inputs (all internal per FR-63/FR-64/FR-65); resolves the `x-hopscotch-served-by` vs `x-hopscotch-provider` inversion (§14 item 1) before publication; until unblocked, the *page does not exist* (no "coming soon" stub on a reliability promise).
 
 **`concepts/streaming.mdx`** · PARTIAL (streaming works; the 100-concurrent proof, Story 2.7, is owed)
-- Purpose: `stream: true` semantics; SSE format identical to OpenAI; the `:x-uniblock-usage` comment line before `data: [DONE]` and why SDKs ignore it; mid-stream credit exhaustion behavior (terminating `data:` line, type `insufficient_quota`, code `balance_exhausted`, nothing charged for the cut request).
+- Purpose: `stream: true` semantics; SSE format identical to OpenAI; the `:x-hopscotch-usage` comment line before `data: [DONE]` and why SDKs ignore it; mid-stream credit exhaustion behavior (terminating `data:` line, type `insufficient_quota`, code `balance_exhausted`, nothing charged for the cut request).
 - Source of truth: AD-14; `SRC/services/gateway/src/uniblockUsage.ts` and its test; decision `epic-4-terminate-a-request-that-outlives-its-credit-2026-08-19.md`; FR-3.
 - Required examples: a streamed curl with annotated SSE transcript including the usage comment line; the balance-exhausted terminating event.
 - Acceptance: no concurrency-count promises; the usage line's JSON matches the emitter exactly (`v`, `reported`, token fields omitted-not-zeroed); distinguishes `balance_exhausted` (cut mid-stream) from `balance_exhausted_at_admission` / `insufficient_credit` (never started).
@@ -303,7 +303,7 @@ All guides share: source of truth is the shipped screen in `SRC/apps/dashboard/s
 - Acceptance: no internal mechanisms (no Durable Object names, KV prefixes, Secrets Store, encryption architecture, or the header-injection finding); no compliance claims (no SOC2/GDPR statements exist in evidence); each promise maps to an FR.
 
 **`resources/support.mdx`** · BLOCKED on owner input (no support channel exists in evidence)
-- Purpose: how to get help; always include `x-uniblock-request-id` / the `request_id` from the error envelope (FR-8: quotable on every response including errors).
+- Purpose: how to get help; always include `x-hopscotch-request-id` / the `request_id` from the error envelope (FR-8: quotable on every response including errors).
 - Acceptance: the request-id guidance is writable now as a snippet used by other pages; the page itself waits for a real support channel rather than inventing an email.
 
 **`resources/glossary.mdx`** · WRITE-NOW
@@ -314,7 +314,7 @@ All guides share: source of truth is the shipped screen in `SRC/apps/dashboard/s
 ### 7.5 API reference pages
 
 **`api-reference/introduction.mdx`** · WRITE-NOW
-- Purpose: base URL `https://ai.uniblock.dev`; one API, OpenAI-shaped; auth summary; the request-id promise; content types; how streaming is signaled; versioning stance (none declared: document that the surface is additive and the error envelope is the stable contract; make no version promises absent evidence).
+- Purpose: base URL `https://api.hopscotchlabs.ai`; one API, OpenAI-shaped; auth summary; the request-id promise; content types; how streaming is signaled; versioning stance (none declared: document that the surface is additive and the error envelope is the stable contract; make no version promises absent evidence).
 - Acceptance: server URL matches the public OpenAPI artifact; no dev/staging server URLs (workers.dev hostnames stay internal).
 
 **`api-reference/authentication.mdx`** · WRITE-NOW
@@ -326,9 +326,9 @@ All guides share: source of truth is the shipped screen in `SRC/apps/dashboard/s
 - Source: `openai.ts`; handlers. Acceptance: byte-accurate envelope; codes cross-checked against handlers on publication day; unsettled strings excluded.
 
 **`api-reference/headers.mdx`** · WRITE-NOW (this is the page the specs do not cover today; §8)
-- Purpose: request headers you may send (standard OpenAI ones; `x-uniblock-*` is reserved and stripped inbound, AD-16) and response headers you will receive: `x-uniblock-request-id` (quote to support), `x-uniblock-usage` (full JSON contract: `v`, `reported`, token fields, cache fields omitted-not-zeroed; header vs SSE comment placement), plus the diagnostic allowlist as shipped (`x-uniblock-provider`, `x-uniblock-retry-attempt-count`, `x-uniblock-cache-status`, `x-uniblock-trace-id`).
+- Purpose: request headers you may send (standard OpenAI ones; `x-hopscotch-*` is reserved and stripped inbound, AD-16) and response headers you will receive: `x-hopscotch-request-id` (quote to support), `x-hopscotch-usage` (full JSON contract: `v`, `reported`, token fields, cache fields omitted-not-zeroed; header vs SSE comment placement), plus the diagnostic allowlist as shipped (`x-hopscotch-provider`, `x-hopscotch-retry-attempt-count`, `x-hopscotch-cache-status`, `x-hopscotch-trace-id`).
 - Source: `uniblockUsage.ts` + test; `FORWARDED_DIAGNOSTIC_HEADERS` in `inference/core.ts`; AD-14/AD-16; decision `the-gateway-does-not-copy-rate-limit-headers.md`.
-- Acceptance: documents exactly the shipped allowlist (re-read `FORWARDED_DIAGNOSTIC_HEADERS` at publication); `x-uniblock-served-by` added only when Story 2.13 lands it (§14 item 1); `x-uniblock-last-used-option-index` and `x-uniblock-config` never appear (internal); explicitly states provider rate-limit headers are not forwarded; the `upstream` field is never documented (reserved, no producer, by decision).
+- Acceptance: documents exactly the shipped allowlist (re-read `FORWARDED_DIAGNOSTIC_HEADERS` at publication); `x-hopscotch-served-by` added only when Story 2.13 lands it (§14 item 1); `x-hopscotch-last-used-option-index` and `x-hopscotch-config` never appear (internal); explicitly states provider rate-limit headers are not forwarded; the `upstream` field is never documented (reserved, no producer, by decision).
 
 ### 7.6 Integrations
 
@@ -351,7 +351,7 @@ Added 2026-09-08, after the catalog above was first written. A reader arriving f
 
 **Decision: publish a derived public spec, never either repo spec verbatim.**
 
-- `SRC/services/gateway/openapi.json` is **internal-only**. It documents the fork's whole surface (catch-all proxies, Anthropic routes, files/batches/audio, `x-uniblock-config` mechanics) which is not the customer contract, carries workers.dev hostnames, declares no auth (the gateway sits behind a service binding), and self-describes as "close-but-not-contractual". Publishing it would document endpoints customers cannot reach and reveal internal topology.
+- `SRC/services/gateway/openapi.json` is **internal-only**. It documents the fork's whole surface (catch-all proxies, Anthropic routes, files/batches/audio, `x-hopscotch-config` mechanics) which is not the customer contract, carries workers.dev hostnames, declares no auth (the gateway sits behind a service binding), and self-describes as "close-but-not-contractual". Publishing it would document endpoints customers cannot reach and reveal internal topology.
 - `SRC/services/control-plane/openapi.json` is the source, but it covers four surfaces (`/admin`, `/api/me`, `/internal`, `/v1`). Only **`/v1`** is the public API-key product. `/api/me` is the dashboard's private API (documented in prose guides, not as a reference; it is session-cookie-bound and not a supported integration surface). `/admin` and `/internal` and `/webhooks/stripe` are never published.
 
 **The artifact**: `api-reference/openapi.public.json`, produced by a filter script (§16) that:
@@ -359,8 +359,8 @@ Added 2026-09-08, after the catalog above was first written. A reader arriving f
 1. Starts from `SRC/services/control-plane/openapi.json`.
 2. Keeps only `paths` under `/v1` (today: `POST /v1/chat/completions`, `GET /v1/models`) plus referenced components.
 3. Keeps only the `customerApiKey` security scheme; strips `staffAccess`, `internalSecret`, `sessionCookie*`, `stripeSignature`.
-4. Rewrites `servers` to exactly `[{"url": "https://ai.uniblock.dev", "description": "Production"}]`; strips localhost and workers.dev entries.
-5. **Injects the header documentation the source spec lacks** (the api-scout finding: neither spec documents `x-uniblock-usage`, request-id headers, or the 402/429 money statuses): response headers on `/v1/chat/completions` (`x-uniblock-request-id`, `x-uniblock-usage`, diagnostics), and the 401/402/429/404/5xx responses with the OpenAI envelope schema from `openai.ts`. These injections live in a checked-in overlay file (`api-reference/overlay.public.json`) so the pipeline is reproducible: base spec + overlay = artifact.
+4. Rewrites `servers` to exactly `[{"url": "https://api.hopscotchlabs.ai", "description": "Production"}]`; strips localhost and workers.dev entries.
+5. **Injects the header documentation the source spec lacks** (the api-scout finding: neither spec documents `x-hopscotch-usage`, request-id headers, or the 402/429 money statuses): response headers on `/v1/chat/completions` (`x-hopscotch-request-id`, `x-hopscotch-usage`, diagnostics), and the 401/402/429/404/5xx responses with the OpenAI envelope schema from `openai.ts`. These injections live in a checked-in overlay file (`api-reference/overlay.public.json`) so the pipeline is reproducible: base spec + overlay = artifact.
 6. Fails the build if a kept path has no `example`, or if the base spec added a `/v1` path the overlay does not classify (forcing a human decision per new route).
 
 Upstream contribution to flag to the source-repo owner (not done by docs writers): the money statuses and custom headers belong in the source spec itself under its "spec moves with the code" rule; when that lands, the overlay shrinks.
@@ -375,7 +375,7 @@ Mintlify wiring: `docs.json` `api.openapi` points at the artifact; endpoint MDX 
 - Every code block on Get-started and API pages uses Mintlify `<CodeGroup>` with the three tabs, sourced from shared snippets (§12) so the base URL and header appear in exactly one place per language.
 - **Example values policy**: model ids only from spec examples (`openai/gpt-4o-mini`, `anthropic/claude-sonnet-5`); keys always `ub_live_` + obvious placeholder (e.g. `ub_live_XXXXXXXX...`), never 43 plausible chars; money examples reuse the decision records' own worked numbers (100 → 102.50) so docs and product explain money identically.
 - **Runnability rule**: an example ships only after being executed against a real environment (locally via `SRC/scripts/apidocs/serve.py` proxying to `wrangler dev` services, or the deployed dev Worker) with the transcript attached to the PR. "It should work" is banned here for the same reason the source repo bans it.
-- Streaming examples show the raw SSE transcript including the `:x-uniblock-usage` comment line, annotated.
+- Streaming examples show the raw SSE transcript including the `:x-hopscotch-usage` comment line, annotated.
 - Error-handling examples catch on `type` and `code`, never on message text (messages are prose and may change; the envelope fields are the contract).
 
 ---
@@ -384,7 +384,7 @@ Mintlify wiring: `docs.json` `api.openapi` points at the artifact; endpoint MDX 
 
 **The product is hosted-only. There is no self-hosting documentation, by evidence, not by omission.**
 
-Evidence: the business model requires Uniblock holding provider accounts, metering, and selling prepaid credit (`SRC/README.md`); the customer contract is "swap your base URL to `ai.uniblock.dev`" (whitepaper); the technical blueprint enumerates exactly three surfaces (inference API, dashboard API, staff API) with no distribution surface; no Dockerfile, container publishing, or third-party install path exists; deployment is pinned to Uniblock's own Cloudflare account. The gateway's open-source ancestry is deliberately stripped from the product surface (`SRC/services/gateway/README.md`: branding test fails the build if the upstream name reappears; third-party notices are "never shipped to customers").
+Evidence: the business model requires Hopscotch holding provider accounts, metering, and selling prepaid credit (`SRC/README.md`); the customer contract is "swap your base URL to `api.hopscotchlabs.ai`" (whitepaper); the technical blueprint enumerates exactly three surfaces (inference API, dashboard API, staff API) with no distribution surface; no Dockerfile, container publishing, or third-party install path exists; deployment is pinned to Hopscotch's own Cloudflare account. The gateway's open-source ancestry is deliberately stripped from the product surface (`SRC/services/gateway/README.md`: branding test fails the build if the upstream name reappears; third-party notices are "never shipped to customers").
 
 Consequently: no deployment tab, no self-hosting guide, and a standing editorial rule that docs never mention the fork, its upstream, or Cloudflare/Vercel topology. If self-hosting ever becomes an offering, that is a product decision that arrives with its own PRD; this plan reserves nothing for it.
 
@@ -413,7 +413,7 @@ All under `snippets/`, single-owner (Lane E), imported rather than copied:
 | `snippets/auth-header.mdx` | The Bearer header in all three languages | quickstart, auth pages |
 | `snippets/error-envelope.mdx` | The canonical envelope JSON + field table | errors concept, api errors, quickstart |
 | `snippets/request-id-note.mdx` | "Quote the request id" support note | every error-adjacent page |
-| `snippets/usage-header.mdx` | The `x-uniblock-usage` JSON contract | streaming, headers, usage concept |
+| `snippets/usage-header.mdx` | The `x-hopscotch-usage` JSON contract | streaming, headers, usage concept |
 | `snippets/owner-only-note.mdx` | The owner-manages-billing sentence as the product sends it | billing, members, spend-controls |
 | `snippets/playground-spends-note.mdx` | "Playground requests spend real credit" | playground guide, api endpoint pages |
 | `snippets/feature-status.mdx` | Parameterized callout for PARTIAL pages naming what is not yet available, in EXPERIENCE.md's explained-absence voice | all PARTIAL pages |
@@ -427,12 +427,12 @@ Components: standard Mintlify (`Card`, `CodeGroup`, `Steps`, `Callout`, `ParamFi
 The editorial fence, enforced by the banned-content linter (§16). **Never publish:**
 
 1. **Fork provenance**: Portkey, "fork", upstream issue/PR numbers, gateway internals, `services/gateway` as a concept. (The product's own build fails if the upstream name reappears; docs hold the same line.)
-2. **Provider topology and procurement**: which/how many provider accounts we hold ("78" anything), provider ordering, candidate lists, attempt reasons, strain, committed/discounted capacity, per-family capacity facts (e.g. DeepSeek's behavior under load), `x-uniblock-last-used-option-index`, `x-uniblock-config`, `x-uniblock-provider` as a *request* header.
+2. **Provider topology and procurement**: which/how many provider accounts we hold ("78" anything), provider ordering, candidate lists, attempt reasons, strain, committed/discounted capacity, per-family capacity facts (e.g. DeepSeek's behavior under load), `x-hopscotch-last-used-option-index`, `x-hopscotch-config`, `x-hopscotch-provider` as a *request* header.
 3. **Provider credentials in any form** (FR-5/NFR-5/AD-5): including that rotation exists, key topology, Secrets Store, encryption design.
 4. **Unit economics**: Stripe cost tables, breakeven figures, absorbed cost, margins, why 2.5% was chosen, negotiated per-account fee overrides, trial-credit economics.
 5. **Staff surfaces**: the console, Cloudflare Access, staff roles/capabilities, `/admin/*` routes, audit mechanics, suspension tooling (the customer-visible `account_suspended` refusal may be documented; the staff workflow may not).
 6. **Signals/Epic 12**: billing-mail ingestion, `signals.uniblock.dev`, provider balance polling.
-7. **Internal architecture nouns**: Durable Object class names, KV prefixes, D1/R2 names, service bindings, worker names, workers.dev URLs, `x-uniblock-internal-secret`, the internal `{error:{code,message}}` shape, the internal `account` row.
+7. **Internal architecture nouns**: Durable Object class names, KV prefixes, D1/R2 names, service bindings, worker names, workers.dev URLs, `x-hopscotch-internal-secret`, the internal `{error:{code,message}}` shape, the internal `account` row.
 8. **Security findings and unproven claims**: the header-injection finding; the streaming spike's evidentiary weakness; "social sign-in works" (never completed an OAuth round trip per `trusted-providers-stays-unset.md`); one-second revocation; 50ms p95; 99.9% availability; 100 concurrent streams; 3-accounts-per-IP.
 9. **Unsettled strings**: workspace spend-limit refusal code, playground role-refusal envelope, the fourth `revoked_reason` sentence, trial-credit figures, capture pricing/disclosure, refund/terms language.
 10. **Numbers with no evidence**: any pricing, limit, date, SLA, or provider claim not in §3's table or a shipped handler.
@@ -445,8 +445,8 @@ The editorial fence, enforced by the banned-content linter (§16). **Never publi
 
 Tracked here so writers meet them where the work is; each names its unblock condition.
 
-1. **`x-uniblock-served-by` inverted**: Story 2.13's shipped header is `x-uniblock-provider`; the required `x-uniblock-served-by` is not set (`sprint-status.yaml` note). Headers page documents what ships; the routing page waits. Unblock: 2.13 done.
-2. **`GET /v1/models` answers from our own catalog** (Story 8.5 done, 2026-08-31 sync). The list and `GET /v1/models/{id}` both carry the `uniblock` block; the overlay and the models page were rewritten against `src/models/catalogResponses.ts`. What is still owed is a transcript: the published examples are transcribed from the response builders, not from a live call. Unblock: publication-day live call.
+1. **`x-hopscotch-served-by` inverted**: Story 2.13's shipped header is `x-hopscotch-provider`; the required `x-hopscotch-served-by` is not set (`sprint-status.yaml` note). Headers page documents what ships; the routing page waits. Unblock: 2.13 done.
+2. **`GET /v1/models` answers from our own catalog** (Story 8.5 done, 2026-08-31 sync). The list and `GET /v1/models/{id}` both carry the `hopscotch` block; the overlay and the models page were rewritten against `src/models/catalogResponses.ts`. What is still owed is a transcript: the published examples are transcribed from the response builders, not from a live call. Unblock: publication-day live call.
 3. **CONTEXT.md vs PRD on account/workspace direction**: PRD FR-38 (2026-08-19 rewrite) wins; glossary follows the PRD. Surface to source-repo owner as a CONTEXT.md staleness finding; do not resolve silently.
 4. **Whitepaper says "2.5% our fee, on spend"; the decision record says the fee is at purchase.** The decision (and FR-18's no-fee-at-request test) wins. Never source fee copy from the whitepaper.
 5. **Control-plane README "Not built yet" list is stale**; never mine it for capability claims.
@@ -457,7 +457,7 @@ Tracked here so writers meet them where the work is; each names its unblock cond
 10. **Support channel** (§7.4): none in evidence; blocks `resources/support`.
 11. **Trial credit (4.17), capture (Epic 7), workloads (2.21), completions/embeddings (2.10), fallback (2.12)**: unshipped; their pages/sections are BLOCKED per §7, and `/v1/completions` and `/v1/embeddings` are classified `blocked` in the overlay with those gates. **The Responses API (2.22) moved to done on 2026-08-31**: its gate is met and it is no longer unshipped, but `/v1/responses` stays `blocked` in the overlay until a writer transcribes its schemas and refusals from the handler and gives it a page, which is the pass that entry now records. **The Anthropic Messages API** reached the source tree the same day with no story in the tracker at all, so `/v1/messages` is `blocked` on that absence rather than on a gate. The public catalog is no longer on this list: 8.1 through 8.5 are done and the models page's gates are now 8.6 through 8.8. One thing a writer inherits when 2.10 unblocks: `#427` gave the embeddings path a response ceiling, and an OpenAI embedding reply over 45 MB is refused with a 413 the customer does not see the reason for. The fork writes an actionable body naming `encoding_format: 'base64'` and a smaller batch, and the public boundary replaces the body of every platform-credential refusal with the generic internal-error sentence, so what arrives is a 413 of type `invalid_request_error` with a null `code`. On a customer's own provider key nothing sanitizes it and the fork's own sentence arrives instead. Neither shape is on the error table, and which of them the table should state is not a writer's call. Recorded in the internal site's unresolved findings as `SF-31`.
 12. **Retention "90 days"**: a configured value the product prints, not a promise anybody made (CONTEXT.md). Docs phrase it as the product does: configured window over a stated floor.
-13. **The public base URL every page prints is not a host that exists.** This plan, the PRD's FR-1 and the whitepaper all give `https://ai.uniblock.dev`, and §8 rewrites the artifact's `servers` to exactly that. The source tree has now settled half of this and left the other half with an owner. Settled: `ai.uniblock.dev` is retired, the tracker's Story 2.3 says so in as many words and 2.3 has moved to `review`; the two Custom Domains came off the gateway Worker on 2026-09-02, which a manifest rule now enforces, and both customer hostnames sit on the control plane, `dev.unirouter.app` on dev and `api.unirouter.app` on production, each named by `PUBLIC_API_ORIGIN` in its own scope and asserted per environment by `test/wrangler-config.test.ts`. The tracker records production evidence that `api.unirouter.app/v1/models` answers this control plane's own `invalid_api_key`. Not settled, and not a writer's call: which of these is the customer-facing brand name this site prints. It is carried by FR-1, the whitepaper, every code example here and `PRODUCTION_SERVER` in `scripts/lib/paths.mjs`, and changing it is a one-way customer-facing rename. Nothing was rewritten in this pass either. Unblock: the owner names the customer base URL. Recorded in the internal site's unresolved findings as `SF-23`, which supersedes `SF-21`.
+13. **RESOLVED (2026-09-09): the customer-facing brand and base URL are named.** This item stood open as `SF-23` because the base URL every page printed was not a host that exists, and because naming the replacement was not a writer's call. The owner has now named both, and this pass carried them through the site. **The brand is Hopscotch**: `Uniblock` and `Unirouter` are both retired as customer-facing names, and every page, example, `docs.json`, `README.md` and `package.json` now prints `Hopscotch`. **The base URL is `https://api.hopscotchlabs.ai`** and the dashboard is `https://app.hopscotchlabs.ai`; `PRODUCTION_SERVER` in `scripts/lib/paths.mjs` and the artifact's `servers` both say so. The history this item recorded is unchanged and still true: the old `ai.uniblock.dev` was retired, the tracker's Story 2.3 says so in as many words and 2.3 has moved to `review`; the two Custom Domains came off the gateway Worker on 2026-09-02, which a manifest rule now enforces, and both customer hostnames sat on the control plane, `dev.unirouter.app` on dev and `api.unirouter.app` on production, each named by `PUBLIC_API_ORIGIN` in its own scope and asserted per environment by `test/wrangler-config.test.ts`. **What this pass assumed, and what the owner must confirm**: the rename was carried into wire values as well as prose, on the owner's instruction — the eight `x-uniblock-*` response headers became `x-hopscotch-*`, the fixed model id `unirouter/auto` became `hopscotch/auto`, and the example key variable became `HOPSCOTCH_API_KEY`. **This site now documents strings the gateway must actually emit and accept.** If the control plane and gateway have not shipped the matching rename, these pages are wrong on the wire and this item reopens. Not renamed, deliberately, because they are internal source identifiers in Gateway-LLM rather than customer surface: `services/gateway/src/uniblockUsage.ts`, `UNIBLOCK_USAGE_VERSION`, `signals.uniblock.dev`, `unirouter-design/src/index.css`, and this repository's own name `Unirouter-docs`.
 14. **Story 2.9's three model refusals are published while the story reads `review`.** The handler is merged on develop and the source spec carries the new 403 and 404 on `POST /v1/chat/completions`, which the §8 build cannot omit because it gates by path and not by response. The refusals are documented from the shipped strings, and `api-reference/errors`, `concepts/errors` and `concepts/routing-profiles` each carry `gates: [2.9]` so the release checklist holds them until the tracker says `done`. Unblock: 2.9 done.
 
 15. **Two more 402 refusal codes are published while their stories read `review` and `in-progress`.** The source spec carries `member_limit_exceeded` and `workspace_limit_exceeded` on all five inference paths, in the 402 response description rather than as their own response blocks, which is how every refusal on those operations is stated. Both are documented from the shipped strings on `api-reference/errors` and `concepts/rate-limits-and-spend-controls`, and both pages carry `gates: [9.6, 9.26]` so the release checklist holds them. The member ceiling is Story 9.26, `review`; the workspace ceiling is Story 9.6, which moved from `in-progress` to `review` on 2026-09-03 once `#368` merged the spend tab, the per-member limits and the admission half together. A move into `review` is not acceptance, so both pages keep their gates. Unblock: 9.6 and 9.26 done.
@@ -466,7 +466,7 @@ Tracked here so writers meet them where the work is; each names its unblock cond
 
     `author` is unchanged and still the provider's own `owned_by` string. The three additions are the canonicalization beside it: `author_slug` is a slug derived either from the recorded word or from the shape of the model id, and `author_source` says which of the two was used, so a consumer can tell a recorded author from an inferred one. `provider_families` is aligned index for index with `provider_display_names`.
 
-    **The must-not-publish register in §13 is not breached, and the reason is in the handler rather than in the artifact.** A provider we serve without naming publishes `null` in `provider_families` rather than its family, because the display name is already masked to `Uniblock` and a family would be one lookup away from the vendor the mask exists to hide. A writer who later documents these fields must document that null, and must not describe it as an absence of data.
+    **The must-not-publish register in §13 is not breached, and the reason is in the handler rather than in the artifact.** A provider we serve without naming publishes `null` in `provider_families` rather than its family, because the display name is already masked to `Hopscotch` and a family would be one lookup away from the vendor the mask exists to hide. A writer who later documents these fields must document that null, and must not describe it as an absence of data.
 
     **No page on this site describes any of the three.** They reach customers only as example values inside the generated artifact, so nothing was gated in this pass: `concepts/models.mdx` keeps `gates: ["8.6", "8.7", "8.8"]`, which are its own, and adding `18.47` to a page that makes no claim about the fields would gate a sentence nobody wrote. The gate is owed by the first page that describes them. Unblock for prose: 18.47 done. Recorded in the internal site's unresolved findings as `SF-37`.
 
@@ -488,19 +488,19 @@ Tracked here so writers meet them where the work is; each names its unblock cond
 
     **`concepts/models.mdx` carries it, with `18.58` added to its gates.** The story reads `review`, and a merge is not an acceptance, so the release checklist holds the sentence exactly as items 14, 15 and 19 hold theirs. The page keeps saying the `model` field takes two forms, because the alias is a reading of the right half of `provider/model` rather than a third shape: the string a customer sends is the same shape either way. Unblock: 18.58 done.
 
-    **One half of the spec's own new sentence is deliberately not published.** It says the pinned id is what "the reply and the `x-uniblock-served-by` header carry". That header is item 1 on this list: Story 2.13 still reads `backlog` in `sprint-status.yaml`, so the header is not set and naming it here would publish an unshipped surface. The page states only what the reply carries. Unblock for the header half: 2.13 done.
+    **One half of the spec's own new sentence is deliberately not published.** It says the pinned id is what "the reply and the `x-hopscotch-served-by` header carry". That header is item 1 on this list: Story 2.13 still reads `backlog` in `sprint-status.yaml`, so the header is not set and naming it here would publish an unshipped surface. The page states only what the reply carries. Unblock for the header half: 2.13 done.
 
     **The rest of the range did not touch the public surface.** The control-plane spec grew from 183 operations to 188 and every addition is `/admin` or `/api/me`: `GET` and `POST /admin/settings/playground`, `GET /api/me/playground/settings`, `GET /api/me/models/{id}` and `POST /admin/catalog/rate-proposals/sweep`. Nothing new is classifiable under `/v1`, so `overlay.public.json` is untouched and no operation was classified in this pass. The gateway spec is unchanged. Recorded in the internal site's unresolved findings as SF-55, with SF-51 to SF-54 covering the internal-only surfaces this range moved.
 
-21. **`unirouter/auto` is a third accepted `model` string, and a `model_not_available` refusal now says why** (2026-09-07 am sync, `9eeb3961..c0333c4b`, forty-two commits). Five `/v1` operations hashed as changed and none was added or removed, so `overlay.public.json` is untouched and nothing was classified in this pass. Two changes reach a customer and both are published from the shipped strings, with gates.
+21. **`hopscotch/auto` is a third accepted `model` string, and a `model_not_available` refusal now says why** (2026-09-07 am sync, `9eeb3961..c0333c4b`, forty-two commits). Five `/v1` operations hashed as changed and none was added or removed, so `overlay.public.json` is untouched and nothing was classified in this pass. Two changes reach a customer and both are published from the shipped strings, with gates.
 
-    **The third form.** `unirouter/auto` names whichever route the workspace made its default (FR-66, Story 13.9), resolved in `SRC/services/control-plane/src/inference/core.ts` before anything else reads the model field, after which it is the ordinary route path with the same failover and the same charge for the hop that answered. `concepts/models.mdx` now states three forms rather than two, which is a real third shape and not a reading of the right half of `provider/model` the way item 20's alias was, and `concepts/routing-profiles.mdx` carries the section. Both pages gate on `13.9`, which reads `review`.
+    **The third form.** `hopscotch/auto` names whichever route the workspace made its default (FR-66, Story 13.9), resolved in `SRC/services/control-plane/src/inference/core.ts` before anything else reads the model field, after which it is the ordinary route path with the same failover and the same charge for the hop that answered. `concepts/models.mdx` now states three forms rather than two, which is a real third shape and not a reading of the right half of `provider/model` the way item 20's alias was, and `concepts/routing-profiles.mdx` carries the section. Both pages gate on `13.9`, which reads `review`.
 
     **The spec's own sentence about it is already stale, and the handler wins.** The `model` description says a workspace with no default route set is refused `404` `model_not_available` "saying exactly that". The handler does not: the `absent` branch falls through to the cost tier chain, and its own comment records that the 404 was the wrong way round, because the one id put in front of every customer only worked for customers who had already built a route. The refusal survives one branch further down, for a tier with no published chain or a chain with nothing servable, and `autoTierExhausted` names the tier and both ways out. **This site publishes the handler's behaviour and not the spec's sentence.** Recorded in the internal site's unresolved findings as SF-59.
 
     **The cost tier is published; who curates the chains is not.** A workspace's tier is its own setting, read and written through `GET` and `POST /api/me/routing/auto`, and `balanced` is what a workspace that never chose is on. That the three lists are curated by staff, and the console they are curated in, are §13 item 5 material and appear nowhere: the page says only that we publish a list for each tier. Nothing about the KV document, its prefix or its single writer is published either, per §13 item 7.
 
-    **The refusal that says why.** `notServingMessage` in `SRC/services/control-plane/src/providers/upstreamRefusal.ts` picks one of three sentences from the reason word the serve verdict now carries (`SRC/services/control-plane/drizzle/0110_serve_verdict_reason.sql`). The status and the code are unchanged for all three, `404` `model_not_available`, so a client branching on either keeps working, and only the words move. A retired model is told it is gone rather than unwell and that retrying will not bring it back; a model this platform's own account cannot reach is told that instead, and that nothing about the request is wrong; anything else keeps the sentence the code has always carried. **No sentence names a replacement model** unless the provider named one itself, and the function's own header gives the reason: a wrong guess in an error body is worse than no guess, because the developer acts on it. Both error tables carry it and both gate on `15.8`, which reads `review`. The `param` on the `unirouter/auto` refusal is `model`, unlike the direct path's `null`, and the tables say so.
+    **The refusal that says why.** `notServingMessage` in `SRC/services/control-plane/src/providers/upstreamRefusal.ts` picks one of three sentences from the reason word the serve verdict now carries (`SRC/services/control-plane/drizzle/0110_serve_verdict_reason.sql`). The status and the code are unchanged for all three, `404` `model_not_available`, so a client branching on either keeps working, and only the words move. A retired model is told it is gone rather than unwell and that retrying will not bring it back; a model this platform's own account cannot reach is told that instead, and that nothing about the request is wrong; anything else keeps the sentence the code has always carried. **No sentence names a replacement model** unless the provider named one itself, and the function's own header gives the reason: a wrong guess in an error body is worse than no guess, because the developer acts on it. Both error tables carry it and both gate on `15.8`, which reads `review`. The `param` on the `hopscotch/auto` refusal is `model`, unlike the direct path's `null`, and the tables say so.
 
     **The rest of the range did not touch the public surface.** The control plane grew from 191 operations to 197 and every addition is `/admin` or `/api/me`: the auto router's four, the per route activity read, and the remembered parameter refusal. The gateway spec changed only the same `model` description prose. Six migrations arrived, `0106` through `0111`. Recorded in the internal site's unresolved findings as SF-59 through SF-64.
 
@@ -582,10 +582,10 @@ Every public capability and route, traced to its page(s). "Route" means what a c
 | Streaming | `stream:true` on chat completions | concepts/streaming; headers | PARTIAL |
 | API key auth | Bearer on `/v1/*` | get-started/authentication; api-reference/authentication | WRITE-NOW |
 | Error envelope + request id | all `/v1` responses | concepts/errors; api-reference/errors | WRITE-NOW |
-| Usage on the wire | `x-uniblock-usage` header / SSE line | api-reference/headers; concepts/streaming | WRITE-NOW |
+| Usage on the wire | `x-hopscotch-usage` header / SSE line | api-reference/headers; concepts/streaming | WRITE-NOW |
 | Diagnostic headers | response allowlist | api-reference/headers | WRITE-NOW (shipped set only) |
 | Fallback/reliability | (behavior, not a route) | concepts/routing-and-reliability | BLOCKED 2.12/2.13 |
-| Workloads | `x-uniblock-workload` (planned) | concepts/workloads (reserved) | BLOCKED 2.21 |
+| Workloads | `x-hopscotch-workload` (planned) | concepts/workloads (reserved) | BLOCKED 2.21 |
 | Sign-up / sign-in / verification / reset / OAuth | dashboard `(signed-out)` screens | quickstart prerequisites; (no dedicated page until Epic 3 accepted; OAuth undocumented until proven) | PARTIAL |
 | Key management | dashboard Keys; `/api/me/keys*` | guides/create-an-api-key; get-started/authentication | PARTIAL |
 | Buy credit / fee / statement | dashboard Billing; `/api/me/credit/*` | concepts/credits-and-billing; guides/buy-credit | WRITE-NOW |

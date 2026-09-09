@@ -1,0 +1,129 @@
+---
+title: "Cursor"
+description: "Point Cursor at this API, and understand first that a custom base URL does not take Cursor's own servers out of the request path."
+status: partial
+gates: ["2.3"]
+---
+
+import { FeatureStatus } from '/snippets/feature-status.mdx';
+
+[Cursor](https://cursor.com) is an editor with a chat pane and an agent. It
+takes an OpenAI API key and an OpenAI-compatible base URL, so it can be pointed
+here. Before you do, read the next section, because the thing most people expect
+a custom base URL to buy them is not what it buys them here. Then read [coding
+harnesses](/integrations/coding-harnesses).
+
+<FeatureStatus
+  missing="a proof run of Cursor against the production hostname"
+  instead="Cursor's own documentation describes the API key feature but not the base URL override. The privacy and feature statements below were read from cursor.com/docs on 2026-09-09; the setting's name, its /v1 requirement and its model field were read from replies by Cursor staff on Cursor's own forum, each dated where it is used. No Cursor session has been run against this API."
+/>
+
+## Your key and your requests still go through Cursor
+
+This is the fact to decide on before any of the configuration below matters.
+Cursor's own documentation on API keys says that the key is sent to Cursor's
+backend with every request, because every request is routed through Cursor's
+servers so that the final prompt can be assembled there. The key is not stored,
+and the transport is encrypted, and neither of those changes the shape: setting
+a custom base URL adds your endpoint to the path rather than removing Cursor's
+from it.
+
+Two things follow that are worth knowing rather than discovering.
+
+**Cursor's zero data retention policy does not apply when you bring your own
+key.** Cursor says so on the same page.
+
+**Pointing Cursor at a private gateway does not make the traffic private to
+you.** If the reason you are configuring a base URL is that your prompts must
+not reach a third party, Cursor cannot deliver that, and no setting documented
+here changes it. [Data and privacy](/concepts/data-and-privacy) covers what
+happens to a request once it reaches us, which is a separate question from what
+happens to it before that.
+
+Nothing about this is hidden or unusual for an editor that builds prompts server
+side. It is documented here because the other harnesses on this site do not work
+that way, and a reader moving between these pages will otherwise carry the wrong
+assumption into this one.
+
+## The setting
+
+In Cursor's settings, under Models, there is an OpenAI API key field and, beside
+it, **Override OpenAI Base URL**. Paste the key into one and the base URL into
+the other, then save and let Cursor verify them.
+
+```text Base URL
+https://api.hopscotchlabs.ai/v1
+```
+
+```text API key
+ub_live_XXXXXXXXXXXX
+```
+
+**Include `/v1`.** Cursor appends `/chat/completions` to what you give it. This
+is the opposite of Claude Code's convention and the same as Codex's, which is
+why the shared page tells you to check per harness rather than assume.
+
+Cursor's own documentation does not describe this field. Its name and its
+behaviour come from threads on Cursor's forum handled by Cursor staff, the
+latest of them dated 2026-08-21. If the field has been renamed or moved since, the mechanism is what to
+search for rather than the menu path.
+
+## The override is global, including for Cursor's own models
+
+A Cursor staff reply dated 2026-08-21 states that while the base URL override is
+enabled, every request to an OpenAI-family model goes to your endpoint,
+including models you picked from Cursor's built-in list.
+
+That is a larger switch than it looks. A model name Cursor offers you is not a
+model name this API accepts, so a built-in selection sent to your endpoint
+arrives here as an unpinned id and is refused with `400` and the code
+`model_id_not_pinned`. The refusal is correct and it will look like the model
+being broken. There is no per-model override; the way to use a Cursor model is
+to turn the setting off.
+
+## Pin the model id
+
+Cursor lets you add model ids as free text under the same Models settings, and a
+slug with a slash in it is what people put there. Use an id this API accepts:
+either a provider-pinned `provider/model`, or `hopscotch/auto`, which is one
+fixed string meaning whichever route your workspace made its default.
+[Models](/concepts/models) has every accepted form and
+[Routing profiles](/concepts/routing-profiles) covers the fixed id.
+
+A model you add this way is a chat model. It does not become available to the
+features named below.
+
+## What keeps using Cursor's own models
+
+Cursor's documentation states plainly that a custom API key works with chat
+models, and that Tab completion continues to use Cursor's built-in models. So
+the autocomplete you type against all day is not billed here and is not affected
+by anything on this page.
+
+A forum thread handled by Cursor staff adds one more: subagents do not inherit
+the custom base URL or the custom model list, and fall back to Cursor's own
+models silently rather than refusing. If you are counting requests, that is a
+population of them that will never appear in [Activity](/guides/view-activity).
+
+If your workspace is on a Cursor team plan, an administrator can turn bring
+your own key off for everyone under Team Settings, in which case none of this
+applies.
+
+## What we did not verify
+
+- That a Cursor session against this API succeeds. Nothing was run.
+- Whether Apply uses the custom key. Cursor's documentation says custom keys
+  work with chat models and does not name Apply either way, and we found no
+  statement from Cursor that settles it.
+- Whether Cursor still builds an embeddings-backed index of your repository.
+  Its current documentation describes a grep-based search tool and does not
+  mention embeddings or codebase indexing at all, and the page that used to
+  describe indexing is gone. We are not asserting either answer. If a Cursor
+  search feature fails against this API, [no embeddings
+  endpoint](/integrations/coding-harnesses) is still the first thing to check.
+- Whether the override reaches Cursor's cloud or background agents. There is an
+  open request asking for it, which suggests it does not, and no statement from
+  Cursor that says so.
+- Anything about prompt caching through Cursor. Prompts are assembled on
+  Cursor's servers, so what reaches a provider is not what your editor sent, and
+  we have not measured what that does to a cache prefix.

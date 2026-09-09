@@ -8,7 +8,7 @@ gates: ["18.40"]
 Tool calling here is OpenAI's tool calling. You send a `tools` array in the
 request body, the model answers with `tool_calls`, your code runs the tool and
 sends the result back as a `tool` message. Nothing about that loop changes when
-the request goes through Uniblock.
+the request goes through Hopscotch.
 
 This page is the short list of things that are worth knowing anyway.
 
@@ -28,7 +28,7 @@ parser expects.
 <CodeGroup>
 
 ```bash curl
-curl https://ai.uniblock.dev/v1/chat/completions \
+curl https://api.hopscotchlabs.ai/v1/chat/completions \
   -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
   -H "Content-Type: application/json" \
   -d '{

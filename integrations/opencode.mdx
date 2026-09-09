@@ -1,6 +1,6 @@
 ---
 title: "OpenCode"
-description: "Add Uniblock as a custom provider in OpenCode: the config file, the provider package that decides the endpoint, and the models you list yourself."
+description: "Add Hopscotch as a custom provider in OpenCode: the config file, the provider package that decides the endpoint, and the models you list yourself."
 status: partial
 gates: ["2.3", "2.11"]
 ---
@@ -25,16 +25,16 @@ The file is `opencode.json`, either at your repository root or globally at
 ```json opencode.json
 {
   "provider": {
-    "uniblock": {
+    "hopscotch": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "Uniblock",
+      "name": "Hopscotch",
       "options": {
-        "baseURL": "https://ai.uniblock.dev/v1",
-        "apiKey": "{env:UNIBLOCK_API_KEY}"
+        "baseURL": "https://api.hopscotchlabs.ai/v1",
+        "apiKey": "{env:HOPSCOTCH_API_KEY}"
       },
       "models": {
         "openai/gpt-4o-mini": {
-          "name": "GPT-4o mini via Uniblock"
+          "name": "GPT-4o mini via Hopscotch"
         }
       }
     }
@@ -82,11 +82,11 @@ variable is unset. There is a `{file:path}` form too if you would rather read it
 from a file outside the repository.
 
 ```bash
-export UNIBLOCK_API_KEY=ub_live_YOUR_KEY_HERE
+export HOPSCOTCH_API_KEY=ub_live_YOUR_KEY_HERE
 ```
 
 A provider block also accepts `options.headers` for extra request headers. You
-need none for this API, and `x-uniblock-*` is a reserved namespace that does not
+need none for this API, and `x-hopscotch-*` is a reserved namespace that does not
 travel inbound, so a header of that shape has no effect. See [OpenAI
 compatibility](/get-started/openai-compatibility).
 

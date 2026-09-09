@@ -1,0 +1,166 @@
+---
+title: "Codex CLI"
+description: "Point Codex at this API: the provider block, the wire protocol it is now the only client for, and the one body field this door reads."
+status: partial
+gates: ["2.3"]
+---
+
+import { FeatureStatus } from '/snippets/feature-status.mdx';
+
+[Codex CLI](https://developers.openai.com/codex) is OpenAI's terminal coding
+agent, configured by one TOML file. It is the reason this API serves the
+Responses endpoint at all, and it is the only harness documented here that
+cannot use chat completions. Read [coding
+harnesses](/integrations/coding-harnesses) first.
+
+<FeatureStatus
+  missing="a proof run of Codex CLI against the production hostname"
+  instead="The configuration below was read from Codex's own configuration reference and from model-provider-info in the openai/codex repository on 2026-09-09. No Codex session has been run against this API."
+/>
+
+## It speaks the Responses API and nothing else
+
+Codex used to offer a choice of wire protocol. It does not any more. The
+`wire_api` key accepts one value, `responses`, and the string `chat` is not a
+fallback but a startup error naming the removal. A version of Codex old enough
+to speak chat completions is old enough that its own project has stopped
+supporting the path.
+
+That makes the choice of endpoint yours to make once and never again: Codex
+posts to [`POST /v1/responses`](/api-reference/openapi.public.json), which this
+API serves. Everything below the door is shared with chat completions, so the
+same key, the same catalog, the same holds against your balance and the same
+usage rows apply. What differs is the wire, and
+[Responses](/api-reference/openapi.public.json) is the reference for it.
+
+## The configuration surface
+
+The file is `~/.codex/config.toml`, with a project-scoped `.codex/config.toml`
+alongside it. Add a provider and select it:
+
+```toml ~/.codex/config.toml
+model_provider = "hopscotch"
+model = "hopscotch/auto"
+
+[model_providers.hopscotch]
+name = "Hopscotch"
+base_url = "https://api.hopscotchlabs.ai/v1"
+env_key = "HOPSCOTCH_API_KEY"
+wire_api = "responses"
+```
+
+```bash
+export HOPSCOTCH_API_KEY=ub_live_XXXXXXXXXXXX
+```
+
+Two things about that block are easy to get wrong.
+
+**`base_url` must include `/v1`.** Codex appends only `/responses` to whatever
+you give it, so a base URL that stops at the hostname posts to `/responses` and
+receives a `404`. This is the opposite of the convention Claude Code uses, and
+the two are documented side by side here for that reason.
+
+**Do not name the provider `openai`.** The built-in provider ids are reserved
+and a block of that name is ignored rather than refused, which is the kind of
+failure that costs an afternoon. Any other id works; `hopscotch` above is
+arbitrary.
+
+## The key comes from a variable you name
+
+`env_key` names the environment variable Codex reads, and it reads it at request
+time rather than caching it. There is no requirement to call it anything in
+particular, and nothing here reads `OPENAI_API_KEY` unless you point `env_key`
+at that name yourself.
+
+Codex also has a login flow that writes a credential to `~/.codex/auth.json`.
+That path belongs to the built-in OpenAI provider and is not how a custom
+provider is authenticated; leave it alone and use `env_key`.
+
+## Pin the model id, and prefer the fixed one
+
+Codex's `model` field is free text and this API needs it to name a provider, so
+the default has to change before the first request. Every accepted form is on
+[Models](/concepts/models).
+
+For a harness specifically, `hopscotch/auto` is the form worth reaching for. It
+is one fixed string that means whichever route your workspace made its default,
+so the model behind your editor changes on the Routing screen rather than in a
+TOML file you have to find again. [Routing
+profiles](/concepts/routing-profiles) covers it.
+
+A provider-pinned id works too, and if you use one, be aware of a rough edge
+that is Codex's rather than ours: a model id containing a slash is sent
+correctly but does not always appear in the `/model` picker, and the picker has
+been reported overwriting a custom provider's selection. Setting `model` in the
+file rather than choosing it in the session avoids both.
+
+There is one more model setting, `review_model`, which `/review` uses and which
+defaults to the session model. If you set it, pin it the same way.
+
+<FeatureStatus
+  missing="a way to stop Codex naming its own model id on the auto-review path"
+  instead="Codex sends the literal string codex-auto-review as the model for the review it runs after certain sandboxed commands. That string names no provider, so this API refuses it with 400 and the code model_id_not_pinned, and the review does not run. The rest of the session is unaffected. This is reported upstream in Codex's own issue tracker, unresolved, and there is no setting on our side that changes it."
+/>
+
+## `store` is the one field this door reads
+
+The Responses API defaults to storing the response at the provider. This
+platform stores none, so `store: true` is refused before admission, with `400`,
+the code `unsupported_value`, and `param` set to `store`. Nothing is held
+against your balance and nothing reaches a provider.
+
+**Codex sends `store: false`, so this does not bite.** The field is documented
+here because it is the only part of a Responses body this API inspects, and
+because a wrapper or a script of your own that sets it will be refused.
+
+## Codex sends parameters this API forwards without opinion
+
+A Codex request carries `reasoning`, `verbosity`, `service_tier`,
+`prompt_cache_key`, `include` and `parallel_tool_calls`. Your body is forwarded
+as you sent it, so all of those travel to whichever provider serves the request,
+and none of them is read, rewritten or removed on the way.
+
+The consequence is that a provider which does not accept one of them answers
+with its own refusal, and you get that refusal relayed with the provider's own
+sentence quoted after the provider's name. It reads as a parameter problem
+because it is one. `model_reasoning_effort`, `model_verbosity` and
+`model_supports_reasoning_summaries` are the Codex settings that decide whether
+those fields are sent at all, and they are the levers to reach for when a model
+rejects one.
+
+## There is no output ceiling to set
+
+Codex has no maximum-output-tokens setting. It has `model_context_window`, which
+is an input-side figure, and `model_auto_compact_token_limit`, which decides
+when a conversation is compacted rather than how long a reply may be.
+
+That matters here because a request naming no output ceiling holds the model's
+whole published maximum against your account's spend rate cap. Codex is
+therefore one of the harnesses that will reach that cap while your real spending
+is a fraction of it, and there is no setting in Codex that changes the shape.
+[Rate limits and spend controls](/concepts/rate-limits-and-spend-controls)
+covers what the cap counts and which limits are yours to raise.
+
+## No embeddings
+
+Codex builds its context by reading and searching files, and by compacting the
+conversation. Its client speaks to a fixed set of endpoints, none of which is an
+embeddings endpoint, so none of the failure modes on [coding
+harnesses](/integrations/coding-harnesses) applies to it.
+
+## What we did not verify
+
+- That a Codex session against this API succeeds. Nothing was run.
+- Whether Codex validates the `model` string anywhere outside the provider
+  path. We read the provider code and found no allowlist there, and we did not
+  trace the whole model-resolution path.
+- The schema of `model_catalog_json`, which is the documented way to declare a
+  custom model's metadata and which may be the fix for the `/model` picker
+  behaviour described above.
+- Whether `model_supports_reasoning_summaries` suppresses the `reasoning` field
+  entirely or only its summary half.
+- Codex carries an open report of requests failing against non-OpenAI Responses
+  endpoints with an upstream error, while the same body sent by hand succeeds
+  (`openai/codex#24973`). It has no diagnosis upstream and we have not
+  reproduced it here. If a session fails in a way this page does not explain,
+  it is worth reading before assuming the fault is ours.

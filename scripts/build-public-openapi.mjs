@@ -44,6 +44,11 @@ const FORBIDDEN_SUBSTRINGS = [
   'localhost',
   '127.0.0.1',
   'staging-',
+  'x-hopscotch-internal-secret',
+  'x-hopscotch-config',
+  'x-hopscotch-last-used-option-index',
+  // Pre-rebrand spellings. Kept so a paste from an older internal doc is still
+  // caught after the Uniblock -> Hopscotch rename.
   'x-uniblock-internal-secret',
   'x-uniblock-config',
   'x-uniblock-last-used-option-index',
@@ -288,10 +293,10 @@ function auditArtifact(artifact, report) {
         if (json && !hasExample(json)) {
           report.fail(`${where} ${status}`, 'response has content with no example.');
         }
-        if (!response.headers?.['x-uniblock-request-id']) {
+        if (!response.headers?.['x-hopscotch-request-id']) {
           report.fail(
             `${where} ${status}`,
-            'does not document x-uniblock-request-id. It is on every response, errors included, and it is the one thing support needs.'
+            'does not document x-hopscotch-request-id. It is on every response, errors included, and it is the one thing support needs.'
           );
         }
       }

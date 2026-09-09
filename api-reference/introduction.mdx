@@ -1,6 +1,6 @@
 ---
 title: "API reference"
-description: "The Uniblock API is OpenAI-shaped: one base URL, one bearer key, and the request and response bodies your client already sends."
+description: "The Hopscotch API is OpenAI-shaped: one base URL, one bearer key, and the request and response bodies your client already sends."
 status: write-now
 gates: []
 ---
@@ -9,8 +9,8 @@ import BaseUrl from '/snippets/base-url.mdx';
 import AuthHeader from '/snippets/auth-header.mdx';
 import RequestIdNote from '/snippets/request-id-note.mdx';
 
-The Uniblock API is the product. You point an OpenAI-compatible client at our
-base URL, send a Uniblock API key instead of a provider key, and name the model
+The Hopscotch API is the product. You point an OpenAI-compatible client at our
+base URL, send a Hopscotch API key instead of a provider key, and name the model
 you want. Request and response bodies keep the shapes your client already
 parses, including error bodies.
 
@@ -35,11 +35,15 @@ for a key we will not accept, and what a key does and does not grant.
 | Route | What it does |
 |---|---|
 | `POST /v1/chat/completions` | Call a model. Streamed or not, depending on `stream` in your body. |
+| `POST /v1/responses` | Call a model in the OpenAI Responses format. Streamed or not. |
 | `GET /v1/models` | List the models available to call. |
+| `GET /v1/models/{id}` | Read one model's entry. |
 
-Any other path under `/v1` answers `404` with the code `unknown_url` in the
-standard error body, so an endpoint we do not serve fails the same way every
-time rather than in a new way per path.
+Any other path under `/v1` answers `404` with the code
+`endpoint_not_supported` in the standard error body, so an endpoint we do not
+serve fails the same way every time rather than in a new way per path. A method
+we do not serve on a path we do is different: that is a `405` with
+`method_not_allowed` and an `Allow` header.
 
 The dashboard has its own private API behind your browser session. It is not an
 integration surface, it is not documented here, and it is not covered by
@@ -68,7 +72,7 @@ extra comment line we add and the events that end a stream early.
 ## Every response carries a request id
 
 Each request gets an id, returned on two response headers with the same value:
-`x-uniblock-request-id`, which is ours, and `x-request-id`, which is the one the
+`x-hopscotch-request-id`, which is ours, and `x-request-id`, which is the one the
 official OpenAI SDKs surface on their error objects. Error bodies also carry it
 as `request_id` inside `error`.
 

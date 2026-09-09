@@ -1,0 +1,144 @@
+---
+title: "T3 Code"
+description: "T3 Code runs other coding agents for you, so pointing it here means configuring a child agent. Which child decides whether it works."
+status: partial
+gates: ["2.3"]
+---
+
+import { FeatureStatus } from '/snippets/feature-status.mdx';
+
+[T3 Code](https://t3.codes) is not a coding agent. It is a control surface: a
+server with a web, desktop and mobile front end that launches somebody else's
+coding agent as a child process and gives you one place to watch and steer
+several at once. Read [coding harnesses](/integrations/coding-harnesses) first,
+and then read this page for the part that is specific to it, which is that
+almost none of the configuration is T3 Code's.
+
+<FeatureStatus
+  missing="a proof run of T3 Code against the production hostname"
+  instead="The configuration below was read from the pingdotgg/t3code repository, its in-repo documentation and its source, on 2026-09-09. The project publishes no hosted documentation site and its own README describes it as very early. No T3 Code session has been run against this API."
+/>
+
+## It has no base URL, no key and no wire of its own
+
+T3 Code never talks to this API. It has no base URL setting, no API key field
+and no model provider of its own, and it depends on no client library that
+would speak to one. What it has is a per-instance list of environment variables
+that it injects into the child agent when it launches it.
+
+So the whole of pointing T3 Code here is: pick a child agent this API serves,
+configure that agent the way its own page on this site says to, and use T3
+Code's environment variables to deliver the pieces that belong in the
+environment.
+
+That also means every question about the endpoint belongs to the child. Whether
+the base URL wants `/v1` on the end is the child's answer and it differs between
+them, which is exactly the trap the shared page warns about.
+
+## Which child agent
+
+<CardGroup cols={2}>
+  <Card title="OpenCode" icon="terminal" href="/integrations/opencode">
+    Chat completions. Documented here, and the shortest path to a working T3
+    Code instance.
+  </Card>
+  <Card title="Codex CLI" icon="terminal" href="/integrations/codex-cli">
+    The Responses API. Documented here.
+  </Card>
+</CardGroup>
+
+Its other drivers are Claude Code, Cursor's CLI, Grok's agent and Antigravity.
+[Claude Code](/integrations/claude-code) needs an endpoint this site does not
+publish, so a T3 Code instance running it will not reach this API, and that is
+worth knowing because it is the configuration T3 Code's own documentation uses
+as its worked example. We have not checked the other three, and this site says
+nothing about them.
+
+## A worked instance, running OpenCode
+
+Configure the child first. [OpenCode](/integrations/opencode) reads its provider
+block from `opencode.json`, and that block reads the key from the environment
+rather than carrying it:
+
+```json opencode.json
+{
+  "provider": {
+    "hopscotch": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Hopscotch",
+      "options": {
+        "baseURL": "https://api.hopscotchlabs.ai/v1",
+        "apiKey": "{env:HOPSCOTCH_API_KEY}"
+      },
+      "models": {
+        "hopscotch/auto": { "name": "Default route via Hopscotch" }
+      }
+    }
+  }
+}
+```
+
+Then, in T3 Code's settings, on the provider instance that runs OpenCode, add
+the environment variable that block is waiting for:
+
+```text Environment variable
+HOPSCOTCH_API_KEY = ub_live_XXXXXXXXXXXX
+```
+
+**Mark it sensitive.** A variable marked that way is written to a secrets
+directory beside T3 Code's own state rather than into the settings file, and it
+is not shown again afterwards. An unmarked value sits in `settings.json` in
+plain text. That file lives under `~/.t3` by default, which is outside your
+repository, so this is a smaller exposure than the config files the shared page
+warns about; mark it anyway.
+
+Instances are independent, so a second instance of the same agent can carry a
+different key and a different model list. Minting one key per instance is worth
+doing for the same reason it is worth doing per harness: revoking it costs you
+nothing else.
+
+## Model ids
+
+T3 Code keeps its own model list per instance and lets you add ids as free text,
+so this is a second place a model id has to be pinned. Add ids this API accepts,
+which means a provider-pinned `provider/model` or `hopscotch/auto`; slashes are
+fine and are what the field expects. [Models](/concepts/models) has the accepted
+forms.
+
+There are three model settings rather than one, and they are not all the coding
+model. Besides the default model there is one for generated text, which writes
+thread titles, branch names, commit messages and pull request descriptions, and
+one for the source control writer. Each is its own selection and each spends.
+The second of those runs often and quietly, which is the kind of traffic that
+turns up in [Activity](/guides/view-activity) unexplained if nobody pinned it on
+purpose.
+
+There is no separate model for applying an edit, because T3 Code does not apply
+edits. The child agent does.
+
+## No embeddings, and no output ceiling
+
+T3 Code indexes your workspace by filename and content search rather than by
+meaning, and carries no embedding provider, so nothing in it calls an embeddings
+endpoint. Whether the child agent does is the child's page's answer.
+
+It has no maximum-output-tokens setting either. Its nearest control is when a
+conversation gets compacted. As on every other page here, that leaves requests
+holding a model's whole published maximum against your spend rate cap; see
+[rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
+
+## What we did not verify
+
+- That a T3 Code session against this API succeeds. Nothing was run.
+- Whether T3 Code passes an injected environment variable through unchanged to
+  every driver. We read the shape of the setting and its worked example rather
+  than tracing each driver's launch.
+- Anything about the Cursor CLI, Grok or Antigravity drivers, including whether
+  they can be pointed at a custom endpoint at all.
+- Whether a model id added to a T3 Code instance is sent as the `model` field
+  byte for byte. A mismatch would show as a `400` with `model_id_not_pinned` or
+  a `404` with `model_not_found`, neither of which costs anything.
+- How stable any of this is. The project has no published documentation site,
+  its documentation lives in the repository, its own README says it is very
+  early, and it fetches its model catalog live, so its model list changes
+  between releases without a release happening.

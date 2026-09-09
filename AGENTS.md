@@ -2,7 +2,7 @@
 
 ## About this project
 
-- The customer-facing Mintlify site for Unirouter. Pages are MDX with YAML frontmatter; configuration lives in `docs.json`.
+- The customer-facing Mintlify site for Hopscotch. Pages are MDX with YAML frontmatter; configuration lives in `docs.json`.
 - `DOCS_PLAN.md` is the planning authority. Read sections 7, 8, 13 and 14 before writing.
 - The source repository (`Gateway-LLM`) is **read-only** from here: no edits, no generation, no installs. Never open `.env*`, `.dev.vars`, or anything credential-shaped. Secret names may be cited; values never.
 

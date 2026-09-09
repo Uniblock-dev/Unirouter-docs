@@ -26,7 +26,7 @@ Put `profile/` and the identifier in the `model` field, exactly where a model
 id would otherwise go:
 
 ```bash
-curl https://ai.uniblock.dev/v1/chat/completions \
+curl https://api.hopscotchlabs.ai/v1/chat/completions \
   -H "Authorization: Bearer ub_live_XXXXXXXX" \
   -H "Content-Type: application/json" \
   -d '{
@@ -139,9 +139,9 @@ from.
 | Name | 1 to 120 characters. |
 | Profiles per workspace | 20 live at a time. Archiving one frees a slot, not its identifier. |
 
-## The fixed id `unirouter/auto`
+## The fixed id `hopscotch/auto`
 
-`unirouter/auto` is one string you can put in a client's configuration and leave
+`hopscotch/auto` is one string you can put in a client's configuration and leave
 there. It names whichever of your routes you have made the default, so the route
 behind it changes on the Routing screen without touching the code that calls us.
 Once it resolves, everything after that is the ordinary route path: the same

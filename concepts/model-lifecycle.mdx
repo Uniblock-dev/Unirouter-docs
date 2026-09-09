@@ -37,14 +37,14 @@ key rather than for a value.
   "created": 1756080000,
   "owned_by": "openai",
   "shutdown_date": 1790000000,
-  "uniblock": { }
+  "hopscotch": { }
 }
 ```
 
 It is on the list, and not only on the detail, precisely so that a client can
 find every model it depends on that is ending without fetching each one.
 
-**On `GET /v1/models/{id}`**, three fields inside the `uniblock` block carry the
+**On `GET /v1/models/{id}`**, three fields inside the `hopscotch` block carry the
 whole picture:
 
 ```json

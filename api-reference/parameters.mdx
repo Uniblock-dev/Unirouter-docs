@@ -37,7 +37,7 @@ from the one you sent should never be something you discover from a provider's
 error message.
 
 **`model`, when you asked for a route rather than a model.** A request naming
-`profile/{identifier}` or `unirouter/auto` is a request for a list of models
+`profile/{identifier}` or `hopscotch/auto` is a request for a list of models
 tried in order, so the body that reaches a provider carries the id of the model
 being tried on that attempt. See [Routing profiles](/concepts/routing-profiles).
 
@@ -68,6 +68,15 @@ This cuts both ways, and the second half is the half worth planning for:
 So a `400` on a chat completion has two possible authors. Ours name a `param` and
 come from the short list below. Everything else on that status came from the
 provider and reads like the provider.
+
+The same is true of a request on `POST /v1/responses`, with one addition. That
+endpoint reads one field of your body before forwarding it: `store`. This
+platform stores no response, so `store: true` is refused with `400`, the code
+`unsupported_value` and `param` set to `store`, before anything is held and
+before any provider is called. Sending `store: false`, or leaving the field out
+entirely, is served. Every other field of a Responses body, including the
+reasoning and verbosity parameters a client may send, travels to the provider
+untouched and is answered by the provider.
 
 ## The refusals that are ours
 

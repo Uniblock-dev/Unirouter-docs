@@ -1,4 +1,4 @@
-# Unirouter docs (public)
+# Hopscotch docs (public)
 
 The customer-facing Mintlify site. It carries only what a customer can act on:
 published `/v1` operations, error codes, money and limits, and the dashboard
@@ -29,6 +29,38 @@ Runs, in order: the OpenAPI artifact build in `--check` mode, the `docs.json`
 validator, the banned-content linter, the claims registry check, and the status
 gate check. CI runs `npm run ci`, which is the same set with the status gate
 allowed to tolerate missing pages.
+
+## Local preview
+
+```
+npm run dev
+```
+
+If this exits with `RangeError: Maximum call stack size exceeded` before the
+server binds, count the files under the repository root:
+
+```
+find . -type f | wc -l
+```
+
+Mintlify's prebuild walks the whole content directory with `getFileListSync`,
+which applies no ignore list at all — not `.mintignore`, not `.gitignore`, not
+even `.git` — and collects the result with `files.push(...recursiveCall())`.
+Spreading an array into `push` passes one argument per element, so once the walk
+exceeds V8's argument limit the call overflows the stack. The ceiling measured
+on Node 24 sits between 124,000 and 167,000 files.
+
+Nothing in `docs.json` or `.mintignore` raises that ceiling, so the fix is to
+keep the file count down. In practice the cause is a `node_modules` inside a
+`.claude/worktrees/*` checkout: each one adds about 41,500 files, so three
+worktrees are enough on their own to break the preview. Deleting
+`node_modules` from the worktrees you are not currently building in is enough,
+and costs nothing that `npm install` will not regenerate.
+
+The error itself gives no hint of this. Mintlify's `dev` handler lets the
+`RangeError` reach yargs, whose failure path prints the command's usage text
+followed by the error with no stack, so the terminal shows a help screen and one
+bracketed line.
 
 ## Syncing against the source tree
 

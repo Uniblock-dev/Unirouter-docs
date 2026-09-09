@@ -41,6 +41,12 @@ allow_patterns:
     reason: "A model identifier, which comes from the catalog rather than from us."
   - pattern: "^utf-8$|^base64$|^base64url$|^sha-?256$"
     reason: "The name of an encoding or algorithm."
+  - pattern: "^(https?://)?t3(\\.codes)?$|t3code"
+    reason: >-
+      The product name "T3 Code", its repository (pingdotgg/t3code) and its
+      domain (t3.codes). A vendor's name that happens to carry a digit is not a
+      number this platform promises anything about.
+
   - pattern: "^/v[0-9]+/[a-z-]+$"
     reason: >-
       A full API path, e.g. /v1/embeddings. The path set is the contract and is
@@ -179,7 +185,7 @@ claims:
 
   - id: usage-value-version
     value: "1"
-    means: "The `v` field of the x-uniblock-usage value."
+    means: "The `v` field of the x-hopscotch-usage value."
     source: "services/gateway/src/uniblockUsage.ts (UNIBLOCK_USAGE_VERSION)"
     status: shipped
 
