@@ -452,6 +452,43 @@
               }
             }
           },
+          "529": {
+            "description": "The model's provider answered `529` rather than `429`. Carries the same `upstream_rate_limited` code as the 429 case, with `type` `api_error` as the status class requires: nothing about the request is wrong, nothing is charged, and it carries `Retry-After`.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "description": "Seconds to wait. Present the same way as on the 429 `upstream_rate_limited`.",
+                "example": 17
+              },
+              "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "upstream_rate_limited": {
+                    "summary": "The model's provider rate-limited the call, at 529",
+                    "value": {
+                      "error": {
+                        "message": "The server had an error while processing your request. Sorry about that! Quote the request id if you contact support.",
+                        "type": "api_error",
+                        "param": null,
+                        "code": "upstream_rate_limited",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "500": {
             "description": "A fault on our side. The request id is the one thing worth keeping.",
             "content": {
