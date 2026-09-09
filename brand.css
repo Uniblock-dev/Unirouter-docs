@@ -21,16 +21,53 @@
  * change made in the reference should be brought over by reading two files side
  * by side, rather than by translating one into the other.
  *
- * ## The rule this file follows
+ * ## The rule this file follows, and where it was deliberately raised
  *
- * Nothing here targets a Mintlify internal class name or CSS variable. Every
- * selector is either a plain element, a documented `[data-component-part]`
- * attribute, or a standard pseudo-element. That is a deliberate ceiling rather
- * than an oversight: Mintlify's internals are unversioned, and an override
- * keyed to one is a rule that stops working on some Thursday with no warning
- * and no error. Where a value has to react to light or dark mode, it is mixed
- * against `currentColor` so that it follows the theme without this file needing
- * to know which class Mintlify puts on `html` to signal the mode.
+ * The base rule is unchanged: no Mintlify CSS variable is read or written
+ * anywhere in this file, and no Tailwind utility class is used as a selector.
+ * Mintlify's internals are unversioned, and an override keyed to one is a rule
+ * that stops working on some Thursday with no warning and no error.
+ *
+ * The ceiling below that rule moved once, on purpose, and the section marked
+ * "Component parts" is what moved it. Reaching a Card's fill, an Accordion's
+ * edge or a parameter row needs two kinds of hook that the earlier sections did
+ * without:
+ *
+ *   1. `[data-component-part="..."]` attributes. Mintlify's own CSS guidance
+ *      names these as the supported way to reach inside a component, and they
+ *      are the safest hook on the page.
+ *   2. Mintlify's SEMANTIC class names — `card`, `accordion`, `callout`,
+ *      `api-section`, `param-head`, `tryit-button`. These are hand-written
+ *      names that sit alongside the utility classes on the same element, and
+ *      Mintlify's CSS guidance points at them too. They are a step less safe
+ *      than a data attribute and a large step safer than a utility class.
+ *
+ * Every selector added for component parts was read off the rendered DOM of
+ * this site rather than guessed, at mint 4.2.823. The list is in
+ * `docs/BRAND-SELECTORS.md`, with the page each one was observed on, so the
+ * next person can re-run the check after a Mintlify release instead of
+ * bisecting a stylesheet. That file is the maintenance cost this section buys,
+ * and it is real: this is the part most likely to need a touch-up.
+ *
+ * ## How these rules win, which is not by specificity
+ *
+ * Mintlify is built on Tailwind v4, so every utility class on the page sits in
+ * `@layer utilities`. This file is unlayered. Unlayered CSS beats layered CSS
+ * outright, whatever the specificity on either side, which is why a plain
+ * `[data-component-part="card-title"]` here overrides a `dark:text-white` that
+ * resolves to `.dark .dark\:text-white` — a selector twice as specific. Nothing
+ * below needs a specificity ladder, and adding one would only make the file
+ * harder to read.
+ *
+ * The one thing that does beat an unlayered rule is an `!important` utility,
+ * and Mintlify uses a few. Where that happens the note is on the rule.
+ *
+ * Where a value has to react to light or dark mode, the earlier sections mix
+ * against `currentColor` so they never need to know how the mode is signalled.
+ * The component-part section cannot do that — a surface fill is not a shade of
+ * the text on it — so it resolves the ramp once, in one place, under
+ * "The resolved ramp" below. That one block is the only thing in this file that
+ * knows Mintlify writes `class="dark"` on `<html>`.
  */
 
 /* Geist Sans is set in `docs.json` (`fonts.family`), which is what makes
@@ -41,12 +78,10 @@
 /**
  * The dashboard's tokens.
  *
- * Declared rather than applied. Nothing in this file consumes most of them yet,
- * and that is on purpose: the accent-per-provider work and the pane treatment
- * for Cards and the API playground are a separate change, and a token that
- * arrives with that change arrives after somebody has already hard-coded the
- * hex it names. They are also the reference a human needs when writing a
- * one-off style into an MDX page.
+ * Both ramps and all eight accents, declared side by side. The component-part
+ * section at the bottom of this file is the main consumer; the rest are here
+ * because an MDX page cannot read `docs.json`, and a writer who needs a one-off
+ * colour should be able to name a token rather than paste a hex.
  */
 :root {
   /* The greyscale, dark. */
@@ -246,4 +281,616 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ==========================================================================
+   Component parts
+   ==========================================================================
+
+   Everything above this line styles the page. Everything below it styles
+   Mintlify's components, and it is the part of this file that carries real
+   maintenance cost. Read the "where the ceiling was raised" note in the file
+   header before adding to it, and add the selector to `docs/BRAND-SELECTORS.md`
+   in the same commit.
+
+   The shape of the whole section is one idea: the dashboard draws a screen as
+   soft panes on a ground, with a hairline edge, no drop shadow, and an ink ramp
+   doing the work that colour does in most admin templates. A Card, an Accordion
+   and an API section are all the same object in that language — a pane — so
+   they get the same three declarations and differ only in radius.
+   ========================================================================== */
+
+/**
+ * The resolved ramp.
+ *
+ * The two ramps declared at the top of this file are both always available by
+ * name. These six resolve to whichever one is on screen, and they are what the
+ * rules below consume, so that a pane fill is written once rather than twice.
+ *
+ * This block is the only place in the file that knows how Mintlify signals the
+ * mode. It is written the opposite way up from the dashboard's `globals.css`,
+ * and the inversion is worth stating: the dashboard declares dark on `:root`
+ * and overrides eleven tokens under `html.light`, because dark is what its
+ * Tailwind `@theme` block emits. Mintlify does the conventional Tailwind thing
+ * instead — light is the base and `class="dark"` lands on `<html>` — so here
+ * light is the base and the override block is the dark one. Same eleven values,
+ * same two ramps, cascade the other way round.
+ *
+ * `docs.json` sets `appearance.default` to `dark` with `strict: false`, so a
+ * reader can be in either mode and both branches are live.
+ */
+:root {
+  --uni-ramp-bg: var(--uni-bg-light);
+  --uni-ramp-pane: var(--uni-pane-light);
+  --uni-ramp-ink: var(--uni-ink-light);
+  --uni-ramp-mute: var(--uni-mute-light);
+  --uni-ramp-dim: var(--uni-dim-light);
+  --uni-ramp-faint: var(--uni-faint-light);
+
+  /* The two hairlines and the inset top highlight, from the dashboard's
+     `--color-line` and `--color-line-strong`. Written as a mix against the
+     resolved ink rather than as the literal `rgb(43 43 37 / 0.1)`, so that the
+     pair stays in step if the ink ramp is ever corrected. */
+  --uni-ramp-line: color-mix(in srgb, var(--uni-ramp-ink) 10%, transparent);
+  --uni-ramp-line-strong: color-mix(
+    in srgb,
+    var(--uni-ramp-ink) 16%,
+    transparent
+  );
+
+  /* The chip fill, 6% of ink on the plate. One value, used by every small
+     enclosed label below, exactly as the dashboard's `Chip` and meter track
+     share theirs. */
+  --uni-ramp-chip: color-mix(in srgb, var(--uni-ramp-ink) 6%, transparent);
+}
+
+html.dark {
+  --uni-ramp-bg: var(--uni-bg);
+  --uni-ramp-pane: var(--uni-pane);
+  --uni-ramp-ink: var(--uni-ink);
+  --uni-ramp-mute: var(--uni-mute);
+  --uni-ramp-dim: var(--uni-dim);
+  --uni-ramp-faint: var(--uni-faint);
+
+  /* Not the same percentages. The dashboard's dark hairlines are 8% and 14% of
+     white, not 10% and 16% of the ink, because a light line on a dark ground
+     reads heavier than a dark line on a light one at the same alpha. Copying
+     the light numbers here would draw a visibly harder edge in dark mode. */
+  --uni-ramp-line: rgb(255 255 255 / 0.08);
+  --uni-ramp-line-strong: rgb(255 255 255 / 0.14);
+}
+
+/**
+ * The pane.
+ *
+ * Four things, and the fourth is the one that makes it look like the product:
+ *
+ *   - `pane` fill, one step off the page ground.
+ *   - A hairline edge and no drop shadow. The dashboard has no shadow anywhere,
+ *     and one on a flat design reads as a different app rather than as depth.
+ *   - A radius from the ladder: 14px for a panel, 12px for the smaller ones.
+ *   - An inset 1px highlight along the top edge, mixed against ink rather than
+ *     fixed white, so it is a faint shade on light and a pale sheen on dark. An
+ *     inset line reads as the edge the plate was cut at; a border reads as a box
+ *     drawn on top of it. This is `box-shadow`, which is what an inset line has
+ *     to be in CSS, and it is not the drop shadow the paragraph above rules out.
+ *
+ * The dashboard's panes are also blurred glass over a dot field. That is
+ * deliberately NOT ported: there is no dot field behind these, so a backdrop
+ * filter over a flat ground costs a compositing layer per Card and buys
+ * nothing, and Mintlify already nests components inside one another in places
+ * where two stacked blurs would compound into mud.
+ */
+.card,
+details.accordion,
+.callout,
+.api-section {
+  background: var(--uni-ramp-pane);
+  border: 1px solid var(--uni-ramp-line);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--uni-ramp-ink) 6%, transparent);
+}
+
+.card {
+  border-radius: 14px;
+}
+
+details.accordion,
+.callout,
+.api-section {
+  border-radius: 12px;
+}
+
+/**
+ * Cards.
+ *
+ * `.card` is the outer plate; the four parts inside it are Mintlify's own
+ * documented hooks. The type is the dashboard's, which means the hierarchy is
+ * carried by the ink ramp rather than by weight: a title is `ink` and a
+ * description is `mute` at the same modest weight, because that is how every
+ * pane in the product separates a label from its value.
+ */
+.card {
+  transition: border-color 200ms var(--uni-ease-snap);
+}
+
+.card:hover {
+  border-color: var(--uni-ramp-line-strong);
+}
+
+/**
+ * The card icon.
+ *
+ * `mute`, not an accent. The dashboard spends colour on exactly two things, a
+ * vendor and a failure class, and a decorative icon is neither. A card that
+ * genuinely names a provider can opt into the accent by carrying
+ * `data-provider` — see the identity accents at the bottom of this file.
+ */
+[data-component-part="card-icon"] {
+  color: var(--uni-ramp-mute);
+  fill: var(--uni-ramp-mute);
+}
+
+/* `section-title`: 0.875rem, weight 400, line-height 1.3. The weight is the
+   token's and not a slip — see the ink-ramp note above. */
+[data-component-part="card-title"] {
+  color: var(--uni-ramp-ink);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.3;
+  margin-top: 0.75rem;
+}
+
+/* `body`: 0.8125rem, line-height 1.4, in `mute`. */
+[data-component-part="card-content"],
+[data-component-part="card-content"] p,
+[data-component-part="card-content"] span {
+  color: var(--uni-ramp-mute);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+/**
+ * Accordions.
+ *
+ * An accordion group in the dashboard's language is a list of rows inside one
+ * pane, not a stack of separate panes: one edge around the whole thing, a
+ * hairline between the rows, and no gap. Mintlify already flattens the members
+ * of a group, so the only work here is putting the outer edge back on the group
+ * and the hairline between the rows.
+ */
+.accordion-group {
+  background: var(--uni-ramp-pane);
+  border: 1px solid var(--uni-ramp-line);
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--uni-ramp-ink) 6%, transparent);
+  overflow: hidden;
+}
+
+.accordion-group > details.accordion {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.accordion-group > details.accordion + details.accordion {
+  border-top: 1px solid var(--uni-ramp-line);
+}
+
+[data-component-part="accordion-button"] {
+  padding: 0.75rem 1.25rem;
+}
+
+[data-component-part="accordion-title"] {
+  color: var(--uni-ramp-ink);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+/* The caret is chrome, so it takes the chrome colour, and it moves on the one
+   curve the whole design uses. */
+[data-component-part="accordion-caret-right"] {
+  color: var(--uni-ramp-faint);
+  transition: transform 200ms var(--uni-ease-snap);
+}
+
+[data-component-part="accordion-content"] {
+  border-top: 1px solid var(--uni-ramp-line);
+  padding: 1rem 1.25rem;
+}
+
+/**
+ * Callouts.
+ *
+ * Mintlify gives each callout kind a tinted plate and a tinted edge — blue for
+ * Note, amber for Warning, and so on. That is the pattern the dashboard rules
+ * out by name: colour marks a vendor or a failure class, and a Note is neither.
+ * So the plate becomes an ordinary pane and the whole signal moves to the icon,
+ * which keeps whatever colour Mintlify computed for it. The result is the
+ * dashboard's own convention — one mark carries the meaning, the surface stays
+ * quiet — and a Note stops competing with the prose around it.
+ *
+ * The tint lives on the same element as the semantic class, as a pair of
+ * utility classes, so the fill and the edge above have to be reasserted here
+ * rather than merely set. They are set at equal specificity and later in the
+ * cascade, which is enough: custom CSS is the last stylesheet Mintlify loads.
+ */
+.callout {
+  padding: 1rem 1.25rem;
+}
+
+[data-component-part="callout-content"],
+[data-component-part="callout-content"] p {
+  color: var(--uni-ramp-ink);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+/**
+ * Code chrome, and not the code.
+ *
+ * The block's own fill and its syntax colours are set in `docs.json`
+ * (`styling.codeblocks.theme`, `vitesse-light` and `vesper`), which is a
+ * supported key, and the fill also arrives as an inline style that only
+ * `!important` could beat. Both are reasons to leave it alone. What is styled
+ * here is the frame around it: the edge, the radius from the control step of
+ * the ladder, and the header and tab bar, which are meta and therefore mono,
+ * 0.75rem, `dim`.
+ */
+/* No radius here on purpose. The doc-page blocks take `.rounded-xt`, which is
+   an ordinary utility this file would beat, but the blocks inside the API
+   panels take the same value through an `!important` arbitrary variant that
+   nothing short of `!important` can move. Setting 10px would therefore give one
+   page two different code-block radii. 14px is on the ladder as `panel`, so the
+   value Mintlify lands on is a value the design already has a name for, and the
+   right move is to leave it. */
+[data-component-part="code-block-root"] {
+  border: 1px solid var(--uni-ramp-line);
+}
+
+[data-component-part="code-block-header"],
+[data-component-part="code-block-header-filename"],
+[data-component-part="code-group-tab-bar"] {
+  color: var(--uni-ramp-dim);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+[data-component-part="code-group-tab-bar"] {
+  border-bottom: 1px solid var(--uni-ramp-line);
+}
+
+/**
+ * Steps.
+ *
+ * A `<Steps>` block is a rail with numbered markers, which is the one place in
+ * the docs that has a direct counterpart in the dashboard's chrome: the rail's
+ * own hairline and a `Chip` beside it. So the connector takes `line`, the marker
+ * takes the chip fill and ink type, and the title takes `section-title` like
+ * every other title in this section.
+ *
+ * `step-number` is the marker's wrapper rather than the marker itself, so the
+ * fill is set on its child. The child is an unnamed div, which is why this is
+ * written as a descendant rule and not as a part: there is no part to name.
+ */
+[data-component-part="step-line"] {
+  background: var(--uni-ramp-line);
+}
+
+[data-component-part="step-number"] > * {
+  background: var(--uni-ramp-chip);
+  color: var(--uni-ramp-ink);
+  font-size: 0.6875rem;
+  font-weight: 400;
+}
+
+[data-component-part="step-title"] {
+  color: var(--uni-ramp-ink);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+/**
+ * The API reference, which is where the pane treatment earns most of its keep.
+ *
+ * An endpoint page is already a set of sections — Authorizations, the request
+ * body, the response — and giving each one a pane is what turns a long scroll
+ * into the instrument panel the dashboard is. Inside a pane, a parameter is a
+ * row: a mono name, a dim mono type beside it, and a hairline under it.
+ */
+.api-section {
+  padding: 1.25rem;
+}
+
+.api-section + .api-section {
+  margin-top: 0.75rem;
+}
+
+.api-section-heading-title {
+  color: var(--uni-ramp-ink);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+.api-section-heading-subtitle {
+  color: var(--uni-ramp-dim);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+/* One hairline per row, and none under the last, which is the dashboard's
+   `ShareList` rule: a trailing rule under the final row draws a box. */
+.param-head {
+  border-bottom: 1px solid var(--uni-ramp-line);
+  padding-bottom: 0.5rem;
+}
+
+.primitive-param-field:last-child > .param-head,
+.array-param-field:last-child > .param-head,
+.object-param-field:last-child > .param-head {
+  border-bottom: 0;
+}
+
+/**
+ * A parameter name is a VALUE, so it is mono `ink` rather than the primary
+ * teal Mintlify gives it. `--uni-live` is the one colour in this system that
+ * means "live, this will actually be sent", and a name in the schema is not
+ * that. The name is still a click target; hover is where that shows.
+ */
+[data-component-part="field-name"] {
+  color: var(--uni-ramp-ink);
+  font-weight: 500;
+}
+
+[data-component-part="field-name"]:hover {
+  color: var(--uni-ramp-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--uni-ramp-line-strong);
+  text-underline-offset: 3px;
+}
+
+[data-component-part="field-meta"] {
+  color: var(--uni-ramp-dim);
+  font-size: 0.75rem;
+}
+
+/**
+ * `required` and the info pills, as the dashboard's `Chip`: 6% of ink on the
+ * plate, ink type, fully rounded. Mintlify draws `required` in red, and red in
+ * this design means a failure class. A parameter you have to send has not
+ * failed; it is a constraint, and a constraint that shouts turns every schema
+ * into a wall of alarm.
+ */
+[data-component-part="field-required-pill"],
+[data-component-part="field-info-pill"] {
+  background: var(--uni-ramp-chip);
+  border-radius: 9999px;
+  color: var(--uni-ramp-ink);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  padding: 0.0625rem 0.5rem;
+}
+
+[data-component-part="field-info-pill"] {
+  color: var(--uni-ramp-dim);
+}
+
+/**
+ * The verb pill, given the `StageTag` form: square, tight, small, uppercase.
+ *
+ * The HUE is left as Mintlify computed it, and that is a deliberate stop rather
+ * than an omission. A verb is closer to a failure class than to decoration, so
+ * it is allowed a colour under the design's own rule, but nothing in the DOM
+ * says WHICH verb a given pill is — the word is text, and CSS cannot match on
+ * text. Mapping GET to blue and POST to teal would mean keying off the Tailwind
+ * colour utilities Mintlify puts on the element, which is exactly the class of
+ * selector this file refuses. The form is the product's; the hue stays
+ * Mintlify's until there is a data attribute to hang it on.
+ */
+.method-pill,
+.method-nav-pill {
+  border-radius: 0;
+  font-size: 0.625rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  padding: 0.125rem 0.375rem;
+  text-transform: uppercase;
+}
+
+/**
+ * `Try it`, which is a `PrimaryButton`.
+ *
+ * Mintlify hard-codes this one green, `#2AB673`, as an arbitrary-value utility
+ * rather than reading `colors.primary` — so on this site the single most
+ * prominent control in the API reference is currently drawn in Mintlify's brand
+ * colour rather than in ours. The dashboard's answer for the one filled commit
+ * on a screen is an `ink` plate with a `bg` label, no glow and no outlined twin,
+ * and that is what it gets. `--uni-ramp-bg` for the label is the ink ramp's far
+ * end used as type on a filled control, which is the same pairing the dashboard
+ * uses and the reason `ink-hover` exists.
+ */
+.tryit-button {
+  background: var(--uni-ramp-ink);
+  border-radius: 10px;
+  color: var(--uni-ramp-bg);
+  font-weight: 400;
+  transition: background 200ms var(--uni-ease-snap);
+}
+
+.tryit-button:hover {
+  background: var(--uni-ramp-ink);
+  filter: none;
+  opacity: 1;
+}
+
+.tryit-button svg {
+  fill: var(--uni-ramp-bg);
+  color: var(--uni-ramp-bg);
+}
+
+/* Expandable rows inside a schema are furniture: a quiet label and a hairline,
+   nothing that competes with the parameter names beside them. */
+[data-component-part="expandable-button"] {
+  color: var(--uni-ramp-dim);
+  font-size: 0.75rem;
+}
+
+[data-component-part="expandable-button"]:hover {
+  color: var(--uni-ramp-ink);
+}
+
+[data-component-part="expandable-content"] {
+  border-left: 1px solid var(--uni-ramp-line);
+  padding-left: 1rem;
+}
+
+/* ==========================================================================
+   The eight identity accents
+   ==========================================================================
+
+   Ported from `apps/dashboard/src/lib/accents.ts` in Gateway-LLM, which is the
+   single vendor mapping in the product and says so: the design reference had
+   three copies and two of them disagreed about Anthropic. This is a fourth
+   copy, made for the same reason the token block at the top of this file is a
+   third one — a change should be brought over by reading two files side by
+   side. If a vendor is added there, add it here.
+
+   ## How a writer uses this
+
+   In MDX, tag the vendor's name:
+
+       <span data-provider="openai">OpenAI</span>
+
+   That renders the name in the prose colour with the vendor's own two-pixel
+   mark in front of it, which is exactly what `ProviderDot` draws in the
+   dashboard. `--uni-accent` is set on the element, so a one-off style in an
+   MDX page can read it instead of pasting a hex.
+
+   ## Why the NAME is not coloured
+
+   The obvious reading of "a provider carries the same colour in the docs that
+   it carries in the product" is to colour the word. That was measured and
+   rejected. The eight accents are chosen to work as fills and marks in both
+   themes, not as type: `--uni-blue` on the light ground `#f1f0ea` is about
+   2.3:1, well under the 4.5:1 text is held to, and four of the eight are worse.
+   The product does not colour the word either — `ProviderDot` colours a dot and
+   `PROVIDER_LABELS` supplies the text — so drawing the mark and leaving the
+   name in the ink ramp is the more faithful port as well as the legible one.
+
+   Where a page genuinely wants the vendor's colour as a FILL, add
+   `data-mark="tag"` and it is drawn as a `StageTag`: the accent as the plate,
+   `void` as the type. `void` is charcoal in both themes on purpose — it is the
+   one token that does not move, because the light ink on cyan loses the word.
+   ========================================================================== */
+
+[data-provider] {
+  --uni-accent: var(--uni-ramp-mute);
+}
+
+/* The inline form is scoped away from `.card`, because a Card can carry
+   `data-provider` too and turning a Card into an inline-flex row with a dot in
+   front of it is not what that means. */
+[data-provider]:not(.card) {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.375rem;
+}
+
+/* Two pixels of vendor colour, which is the size it is in the product. Square,
+   not round: a dot is `rounded-full` in some systems and this one draws it as
+   two pixels, and at this size the difference is visible. */
+[data-provider]:not(.card)::before {
+  background: var(--uni-accent);
+  content: "";
+  display: inline-block;
+  flex: none;
+  height: 6px;
+  width: 6px;
+}
+
+/* The tag form: the accent as a plate, `void` as the type. */
+[data-provider][data-mark="tag"] {
+  background: var(--uni-accent);
+  border-radius: 0;
+  color: #111110;
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+  padding: 0.125rem 0.25rem;
+  text-transform: uppercase;
+}
+
+[data-provider][data-mark="tag"]::before {
+  content: none;
+}
+
+/* The mapping. Grouped by tone rather than listed alphabetically, so that the
+   pairs the source file argues for stay visibly paired. */
+
+/* Orange. Anthropic and Mistral share it, which the source file calls out:
+   Mistral has no entry under any name and orange is its own published colour,
+   `#FA500F` and `#FFAF00` being two of the five in its mark. `alibaba` and
+   `qwen` are both here because `qwen` is the model family and `alibaba` is the
+   slug the catalog answers with, and a vendor whose colour depends on which of
+   the two reached the lookup is a vendor with no colour half the time. */
+[data-provider="alibaba"],
+[data-provider="anthropic"],
+[data-provider="mistral"],
+[data-provider="qwen"] {
+  --uni-accent: var(--uni-orange);
+}
+
+/* Blue. */
+[data-provider="openai"] {
+  --uni-accent: var(--uni-blue);
+}
+
+/* Cyan. */
+[data-provider="fireworks"],
+[data-provider="moonshot"] {
+  --uni-accent: var(--uni-cyan);
+}
+
+/* Teal. Shared with `--uni-live`, which is the one state colour; they are the
+   same hex and different jobs, and the state colour moves between themes while
+   this one does not. */
+[data-provider="deepseek"] {
+  --uni-accent: var(--uni-teal);
+}
+
+/* Indigo. */
+[data-provider="deepinfra"] {
+  --uni-accent: var(--uni-indigo);
+}
+
+/* Violet. Three spellings of one vendor, because the things that name it
+   disagree: a model id from the design reference says `zai`, the platform's own
+   provider registry says `z-ai`, and the catalog answers with `zhipu`, the
+   maker's name rather than the brand's. */
+[data-provider="google"],
+[data-provider="z-ai"],
+[data-provider="zai"],
+[data-provider="zhipu"] {
+  --uni-accent: var(--uni-violet);
+}
+
+/* Pink. */
+[data-provider="groq"] {
+  --uni-accent: var(--uni-pink);
+}
+
+/* Lime. */
+[data-provider="meta"],
+[data-provider="together"] {
+  --uni-accent: var(--uni-lime);
+}
+
+/* A Card that names a provider takes the vendor's colour on its icon, which is
+   the one place a decorative-looking mark is allowed to be an accent: it is not
+   decoration there, it is the vendor. */
+.card[data-provider] [data-component-part="card-icon"] {
+  color: var(--uni-accent);
+  fill: var(--uni-accent);
 }
