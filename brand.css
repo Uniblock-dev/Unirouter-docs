@@ -36,7 +36,7 @@
  *   1. `[data-component-part="..."]` attributes. Mintlify's own CSS guidance
  *      names these as the supported way to reach inside a component, and they
  *      are the safest hook on the page.
- *   2. Mintlify's SEMANTIC class names — `card`, `accordion`, `callout`,
+ *   2. Mintlify's SEMANTIC class names: `card`, `accordion`, `callout`,
  *      `api-section`, `param-head`, `tryit-button`. These are hand-written
  *      names that sit alongside the utility classes on the same element, and
  *      Mintlify's CSS guidance points at them too. They are a step less safe
@@ -55,7 +55,7 @@
  * `@layer utilities`. This file is unlayered. Unlayered CSS beats layered CSS
  * outright, whatever the specificity on either side, which is why a plain
  * `[data-component-part="card-title"]` here overrides a `dark:text-white` that
- * resolves to `.dark .dark\:text-white` — a selector twice as specific. Nothing
+ * resolves to `.dark .dark\:text-white`, a selector twice as specific. Nothing
  * below needs a specificity ladder, and adding one would only make the file
  * harder to read.
  *
@@ -64,8 +64,8 @@
  *
  * Where a value has to react to light or dark mode, the earlier sections mix
  * against `currentColor` so they never need to know how the mode is signalled.
- * The component-part section cannot do that — a surface fill is not a shade of
- * the text on it — so it resolves the ramp once, in one place, under
+ * The component-part section cannot do that, because a surface fill is not a
+ * shade of the text on it, so it resolves the ramp once, in one place, under
  * "The resolved ramp" below. That one block is the only thing in this file that
  * knows Mintlify writes `class="dark"` on `<html>`.
  */
@@ -296,7 +296,7 @@ body {
    The shape of the whole section is one idea: the dashboard draws a screen as
    soft panes on a ground, with a hairline edge, no drop shadow, and an ink ramp
    doing the work that colour does in most admin templates. A Card, an Accordion
-   and an API section are all the same object in that language — a pane — so
+   and an API section are all the same object in that language, a pane, so
    they get the same three declarations and differ only in radius.
    ========================================================================== */
 
@@ -312,7 +312,7 @@ body {
  * and the inversion is worth stating: the dashboard declares dark on `:root`
  * and overrides eleven tokens under `html.light`, because dark is what its
  * Tailwind `@theme` block emits. Mintlify does the conventional Tailwind thing
- * instead — light is the base and `class="dark"` lands on `<html>` — so here
+ * instead (light is the base and `class="dark"` lands on `<html>`), so here
  * light is the base and the override block is the dark one. Same eleven values,
  * same two ramps, cascade the other way round.
  *
@@ -423,7 +423,7 @@ details.accordion,
  * `mute`, not an accent. The dashboard spends colour on exactly two things, a
  * vendor and a failure class, and a decorative icon is neither. A card that
  * genuinely names a provider can opt into the accent by carrying
- * `data-provider` — see the identity accents at the bottom of this file.
+ * `data-provider`; see the identity accents at the bottom of this file.
  */
 [data-component-part="card-icon"] {
   color: var(--uni-ramp-mute);
@@ -431,7 +431,7 @@ details.accordion,
 }
 
 /* `section-title`: 0.875rem, weight 400, line-height 1.3. The weight is the
-   token's and not a slip — see the ink-ramp note above. */
+   token's and not a slip; see the ink-ramp note above. */
 [data-component-part="card-title"] {
   color: var(--uni-ramp-ink);
   font-size: 0.875rem;
@@ -503,13 +503,13 @@ details.accordion,
 /**
  * Callouts.
  *
- * Mintlify gives each callout kind a tinted plate and a tinted edge — blue for
+ * Mintlify gives each callout kind a tinted plate and a tinted edge: blue for
  * Note, amber for Warning, and so on. That is the pattern the dashboard rules
  * out by name: colour marks a vendor or a failure class, and a Note is neither.
  * So the plate becomes an ordinary pane and the whole signal moves to the icon,
  * which keeps whatever colour Mintlify computed for it. The result is the
- * dashboard's own convention — one mark carries the meaning, the surface stays
- * quiet — and a Note stops competing with the prose around it.
+ * dashboard's own convention, where one mark carries the meaning and the
+ * surface stays quiet, and a Note stops competing with the prose around it.
  *
  * The tint lives on the same element as the semantic class, as a pair of
  * utility classes, so the fill and the edge above have to be reasserted here
@@ -595,8 +595,8 @@ details.accordion,
 /**
  * The API reference, which is where the pane treatment earns most of its keep.
  *
- * An endpoint page is already a set of sections — Authorizations, the request
- * body, the response — and giving each one a pane is what turns a long scroll
+ * An endpoint page is already a set of sections (Authorizations, the request
+ * body, the response), and giving each one a pane is what turns a long scroll
  * into the instrument panel the dashboard is. Inside a pane, a parameter is a
  * row: a mono name, a dim mono type beside it, and a hairline under it.
  */
@@ -684,7 +684,7 @@ details.accordion,
  * The HUE is left as Mintlify computed it, and that is a deliberate stop rather
  * than an omission. A verb is closer to a failure class than to decoration, so
  * it is allowed a colour under the design's own rule, but nothing in the DOM
- * says WHICH verb a given pill is — the word is text, and CSS cannot match on
+ * says WHICH verb a given pill is: the word is text, and CSS cannot match on
  * text. Mapping GET to blue and POST to teal would mean keying off the Tailwind
  * colour utilities Mintlify puts on the element, which is exactly the class of
  * selector this file refuses. The form is the product's; the hue stays
@@ -704,7 +704,7 @@ details.accordion,
  * `Try it`, which is a `PrimaryButton`.
  *
  * Mintlify hard-codes this one green, `#2AB673`, as an arbitrary-value utility
- * rather than reading `colors.primary` — so on this site the single most
+ * rather than reading `colors.primary`, so on this site the single most
  * prominent control in the API reference is currently drawn in Mintlify's brand
  * colour rather than in ours. The dashboard's answer for the one filled commit
  * on a screen is an `ink` plate with a `bg` label, no glow and no outlined twin,
@@ -755,7 +755,7 @@ details.accordion,
    single vendor mapping in the product and says so: the design reference had
    three copies and two of them disagreed about Anthropic. This is a fourth
    copy, made for the same reason the token block at the top of this file is a
-   third one — a change should be brought over by reading two files side by
+   third one: a change should be brought over by reading two files side by
    side. If a vendor is added there, add it here.
 
    ## How a writer uses this
@@ -776,13 +776,13 @@ details.accordion,
    rejected. The eight accents are chosen to work as fills and marks in both
    themes, not as type: `--uni-blue` on the light ground `#f1f0ea` is about
    2.3:1, well under the 4.5:1 text is held to, and four of the eight are worse.
-   The product does not colour the word either — `ProviderDot` colours a dot and
-   `PROVIDER_LABELS` supplies the text — so drawing the mark and leaving the
+   The product does not colour the word either (`ProviderDot` colours a dot and
+   `PROVIDER_LABELS` supplies the text), so drawing the mark and leaving the
    name in the ink ramp is the more faithful port as well as the legible one.
 
    Where a page genuinely wants the vendor's colour as a FILL, add
    `data-mark="tag"` and it is drawn as a `StageTag`: the accent as the plate,
-   `void` as the type. `void` is charcoal in both themes on purpose — it is the
+   `void` as the type. `void` is charcoal in both themes on purpose: it is the
    one token that does not move, because the light ink on cyan loses the word.
    ========================================================================== */
 

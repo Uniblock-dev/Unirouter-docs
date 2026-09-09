@@ -48,7 +48,7 @@ to the twice-as-specific `.dark .dark\:text-white`, and it is why nothing in
 
 The exception is an `!important` utility, which beats an unlayered normal
 declaration. Mintlify uses a few. The known one is on the API panels' code
-blocks — see the last row of the table.
+blocks; see the last row of the table.
 
 ## The table
 
@@ -68,7 +68,7 @@ blocks — see the last row of the table.
 | `[data-component-part="accordion-title-container"]` | part | Observed, not currently styled | `/resources/faq` |
 | `.callout` | class | Note / Warning / Info / Tip plate | `/api-reference/introduction` |
 | `[data-component-part="callout-content"]` | part | The prose inside a callout | `/api-reference/introduction` |
-| `[data-component-part="callout-icon"]` | part | The kind mark. Deliberately left Mintlify's colour — it is the whole signal once the plate goes neutral | `/api-reference/introduction` |
+| `[data-component-part="callout-icon"]` | part | The kind mark. Deliberately left Mintlify's colour, which is the whole signal once the plate goes neutral | `/api-reference/introduction` |
 | `[data-component-part="code-block-root"]` | part | One code block's frame | everywhere |
 | `[data-component-part="code-block-header"]` | part | The header strip | `/get-started/quickstart` |
 | `[data-component-part="code-block-header-filename"]` | part | The filename in it | `/get-started/quickstart` |
@@ -96,7 +96,7 @@ blocks — see the last row of the table.
 ## Things found and deliberately not styled
 
 - **`.method-pill`'s hue.** A verb is arguably a failure class, so under the
-  design's own rule it may carry colour — but nothing in the DOM says *which*
+  design's own rule it may carry colour, but nothing in the DOM says *which*
   verb a pill is. The word is text, and CSS cannot match on text. Mapping GET to
   blue would mean keying off the Tailwind colour utilities Mintlify puts on the
   element, which is the one kind of selector this file refuses. The pill gets
@@ -126,13 +126,13 @@ Usage in MDX:
 ```
 
 That renders the name in the prose colour with the vendor's own two-pixel mark
-in front of it — which is what `ProviderDot` draws in the dashboard. The word
+in front of it, which is what `ProviderDot` draws in the dashboard. The word
 itself is **not** coloured, and that is measured rather than squeamish: the
 accents are built to work as fills and marks in both themes, not as type.
 `--uni-blue` on the light ground `#f1f0ea` is about 2.3:1, well under the 4.5:1
 text is held to, and four of the eight are worse. The product does not colour
-the word either — `ProviderDot` colours a dot and `PROVIDER_LABELS` supplies the
-text — so the mark is both the legible port and the faithful one.
+the word either (`ProviderDot` colours a dot and `PROVIDER_LABELS` supplies
+the text), so the mark is both the legible port and the faithful one.
 
 Where a page wants the vendor's colour as a fill, add `data-mark="tag"` and it
 draws as a `StageTag`: the accent as the plate, `#111110` (`void`) as the type,
