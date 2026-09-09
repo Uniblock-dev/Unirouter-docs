@@ -185,7 +185,7 @@ claims:
 
   - id: usage-value-version
     value: "1"
-    means: "The `v` field of the x-hopscotch-usage value."
+    means: "The `v` field of the x-uniblock-usage value."
     source: "services/gateway/src/uniblockUsage.ts (UNIBLOCK_USAGE_VERSION)"
     status: shipped
 

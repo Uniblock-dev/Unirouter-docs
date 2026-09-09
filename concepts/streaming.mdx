@@ -42,7 +42,7 @@ their own shapes rather than the chat completion chunks shown below, and those
 frames are the provider's, forwarded as they arrive. Read them against the
 Responses format rather than against the transcript in the next section. The
 one place the two are identical is the ending: the counts arrive on the same
-`:x-hopscotch-usage` comment line, and the codes that can cut a stream short are
+`:x-uniblock-usage` comment line, and the codes that can cut a stream short are
 the same codes.
 
 ## What the transcript looks like
@@ -56,12 +56,12 @@ data: {"id":"chatcmpl-EXAMPLE","object":"chat.completion.chunk","model":"openai/
 
 data: {"id":"chatcmpl-EXAMPLE","object":"chat.completion.chunk","model":"openai/gpt-4o-mini","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
 
-:x-hopscotch-usage {"v":1,"reported":true,"prompt_tokens":12,"completion_tokens":8,"total_tokens":20}
+:x-uniblock-usage {"v":1,"reported":true,"prompt_tokens":12,"completion_tokens":8,"total_tokens":20}
 
 data: [DONE]
 ```
 
-Everything except the `:x-hopscotch-usage` line is the standard format. That line
+Everything except the `:x-uniblock-usage` line is the standard format. That line
 is a comment: the server-sent events specification requires a parser to ignore
 any line beginning with a colon, so SDKs and browsers skip it and your streaming
 loop never sees it. It sits immediately before `data: [DONE]` and never after,

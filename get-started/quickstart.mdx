@@ -112,7 +112,7 @@ value:
 
 | Header | What it carries |
 |---|---|
-| `x-hopscotch-request-id` | Our name for the id. |
+| `x-uniblock-request-id` | Our name for the id. |
 | `x-request-id` | The same value on the header the OpenAI SDKs read and surface on their error objects, so your client holds it without being taught to. |
 
 <RequestIdNote />
@@ -176,7 +176,7 @@ The raw stream ends like this. The comment line is the one starting with a colon
 ```text Annotated SSE tail
 data: {"id":"...","object":"chat.completion.chunk","choices":[{"delta":{},"finish_reason":"stop","index":0}]}
 
-:x-hopscotch-usage {"v":1,...}
+:x-uniblock-usage {"v":1,...}
 
 data: [DONE]
 ```

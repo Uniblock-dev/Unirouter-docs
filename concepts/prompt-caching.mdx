@@ -36,11 +36,11 @@ places.
 **In the reply body**, on a response that is not streamed, inside the provider's
 own `usage` object, in whatever spelling that provider uses.
 
-**On the stream**, as two fields on the `:x-hopscotch-usage` comment line written
+**On the stream**, as two fields on the `:x-uniblock-usage` comment line written
 immediately before `data: [DONE]`:
 
 ```text
-:x-hopscotch-usage {"v":1,"reported":true,"prompt_tokens":1200,"completion_tokens":80,"total_tokens":1280,"cache_read_input_tokens":1024,"cache_write_input_tokens":0}
+:x-uniblock-usage {"v":1,"reported":true,"prompt_tokens":1200,"completion_tokens":80,"total_tokens":1280,"cache_read_input_tokens":1024,"cache_write_input_tokens":0}
 ```
 
 | Field | What it counts |
@@ -88,7 +88,7 @@ what a model charges now.
 
 ## The cache status header is not this
 
-A served response can carry `x-hopscotch-cache-status`. It is a diagnostic about
+A served response can carry `x-uniblock-cache-status`. It is a diagnostic about
 how the answer was produced on our side, it is not a report of provider prompt
 caching, and the two answer different questions. Do not read it to find out
 whether your prompt cache was hit: read the token counts above, which are the

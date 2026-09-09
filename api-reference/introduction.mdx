@@ -72,7 +72,7 @@ extra comment line we add and the events that end a stream early.
 ## Every response carries a request id
 
 Each request gets an id, returned on two response headers with the same value:
-`x-hopscotch-request-id`, which is ours, and `x-request-id`, which is the one the
+`x-uniblock-request-id`, which is ours, and `x-request-id`, which is the one the
 official OpenAI SDKs surface on their error objects. Error bodies also carry it
 as `request_id` inside `error`.
 

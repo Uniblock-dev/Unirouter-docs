@@ -88,7 +88,7 @@ rather than as either working or refused. See
 **Headers you send.** Only `Authorization` and `Content-Type` are read. Nothing
 else you send reaches the provider, because the upstream request is built from
 your body and our own credential with a fresh header set. Organisation and
-project headers, and anything in the `x-hopscotch-*` namespace, do not travel.
+project headers, and anything in the `x-uniblock-*` namespace, do not travel.
 
 **Headers you receive.** Provider rate-limit headers are not forwarded, so if you
 currently read remaining-requests and reset headers to pace yourself, that input
@@ -97,7 +97,7 @@ on, and the per-key one carries `Retry-After`. See
 [Rate limits and spend controls](/concepts/rate-limits-and-spend-controls).
 
 **One extra line on a stream.** A streamed reply carries a
-`:x-hopscotch-usage` comment line immediately before `data: [DONE]`. The
+`:x-uniblock-usage` comment line immediately before `data: [DONE]`. The
 server-sent events specification requires a parser to ignore a line starting
 with a colon, so a conforming client never sees it. See
 [Streaming](/concepts/streaming).
