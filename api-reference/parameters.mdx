@@ -69,6 +69,15 @@ So a `400` on a chat completion has two possible authors. Ours name a `param` an
 come from the short list below. Everything else on that status came from the
 provider and reads like the provider.
 
+The same is true of a request on `POST /v1/responses`, with one addition. That
+endpoint reads one field of your body before forwarding it: `store`. This
+platform stores no response, so `store: true` is refused with `400`, the code
+`unsupported_value` and `param` set to `store`, before anything is held and
+before any provider is called. Sending `store: false`, or leaving the field out
+entirely, is served. Every other field of a Responses body, including the
+reasoning and verbosity parameters a client may send, travels to the provider
+untouched and is answered by the provider.
+
 ## The refusals that are ours
 
 Each of these is decided before any provider is called, and none of them charges

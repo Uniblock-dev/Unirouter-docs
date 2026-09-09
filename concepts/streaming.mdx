@@ -31,6 +31,20 @@ The response has `Content-Type: text/event-stream`. The body is relayed as it
 arrives: nothing is buffered on our side, so the first token reaches you as soon
 as the model produces it.
 
+### On the Responses API
+
+`POST /v1/responses` streams too, and everything on this page about how a stream
+is relayed, where the counts ride and how a stream can end early applies to it
+unchanged, because it is the same request path.
+
+What differs is the transcript. A Responses stream carries named events with
+their own shapes rather than the chat completion chunks shown below, and those
+frames are the provider's, forwarded as they arrive. Read them against the
+Responses format rather than against the transcript in the next section. The
+one place the two are identical is the ending: the counts arrive on the same
+`:x-uniblock-usage` comment line, and the codes that can cut a stream short are
+the same codes.
+
 ## What the transcript looks like
 
 Annotated. Ids and content are illustrative; the framing is exact.
