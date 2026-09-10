@@ -37,20 +37,24 @@ Three protocols turn up in coding harnesses, and a base URL is only useful if
 this site publishes the one your harness sends.
 
 **OpenAI chat completions** is what most of them speak and what this site is
-mostly about. Cline, Continue, Aider, Zed, OpenCode and Cursor are all here.
+mostly about. Cline, Continue, Aider, Zed, OpenCode, Cursor, Hermes Agent, Pi
+and DeepSeek Harness are all here.
 
 **The OpenAI Responses API** is what Codex CLI speaks, and Codex speaks nothing
 else: the release that could use chat completions is several behind, and its
 own project removed the setting. This API serves that endpoint too, so
-Codex has a surface here to talk to, and its page is the one to read.
+Codex has a surface here to talk to, and its page is the one to read. Three of
+the harnesses here let you pick the wire per provider rather than shipping one:
+Hermes Agent, Pi and DeepSeek Harness each take a protocol field beside the base
+URL, and each of their pages says which value to give it.
 
 **The Anthropic Messages API** is what Claude Code speaks, and it has no
 OpenAI-compatible mode. This site publishes nothing about a Messages endpoint,
 so Claude Code cannot be pointed here yet. Its page says what would have to
 change.
 
-A harness that only orchestrates other harnesses, like T3 Code, speaks none of
-them itself and inherits whichever its child does.
+A harness that only orchestrates other harnesses, like T3 Code or Gas Town,
+speaks none of them itself and inherits whichever its child does.
 
 ## Pin the model id before anything else
 
@@ -226,7 +230,11 @@ config that is designed to be checked in.
 
 **Do not assume `OPENAI_API_KEY` and `OPENAI_BASE_URL` work.** Those are the
 names the official OpenAI SDKs read, and a harness is not an SDK. Not one of the
-harnesses documented here takes its base URL from `OPENAI_BASE_URL`, and how
+harnesses documented here takes its base URL from `OPENAI_BASE_URL` on the path
+these pages document. One of them, Hermes Agent, does read that variable, but
+only for its own direct OpenAI provider rather than for the custom endpoint you
+would configure here, which is a worse trap than ignoring it: the setting has an
+effect somewhere else. How
 each takes its key differs about as much as it can: some read no shell
 environment at all and hold the key in their own settings, one CLI reads a
 similarly named but different variable, several read a variable whose name you
@@ -311,13 +319,38 @@ shared facts are above.
     A CLI, and the only one here on the Responses API. One provider block, a
     base URL that wants `/v1`, and no output ceiling to set.
   </Card>
+  <Card title="Hermes Agent" icon="terminal" href="/integrations/hermes-agent">
+    A CLI, a desktop app and a set of gateways. One YAML block, a wire you
+    choose, and no output ceiling it will send.
+  </Card>
+  <Card title="Pi" icon="terminal" href="/integrations/pi">
+    A CLI. One JSON entry, models you list yourself, and a real maximum output
+    per model.
+  </Card>
+  <Card title="DeepSeek Harness" icon="terminal" href="/integrations/deepseek-harness">
+    A plugin runtime with a settings screen. A protocol field, a permanent
+    provider id, and compatibility switches behind the form.
+  </Card>
   <Card title="Cursor" icon="pen-to-square" href="/integrations/cursor">
     An editor. A global override that captures its own models too, and a
     request path that keeps Cursor's servers in it.
   </Card>
+</CardGroup>
+
+### Orchestrators
+
+Neither of these talks to a model. Each runs one of the harnesses above for
+you, so the child you pick decides everything and its page is the one that
+carries the settings.
+
+<CardGroup cols={2}>
   <Card title="T3 Code" icon="layer-group" href="/integrations/t3-code">
-    Not a harness. It runs one of the others for you, so which child you pick
-    decides everything.
+    One control surface over several agents, with environment variables it
+    injects into whichever child it launches.
+  </Card>
+  <Card title="Gas Town and Gas City" icon="layer-group" href="/integrations/gas-town">
+    Many agents at once, in terminal sessions. Gas City can name the endpoint
+    once for all of them.
   </Card>
 </CardGroup>
 
@@ -329,3 +362,33 @@ shared facts are above.
     page says what it needs and what would have to change.
   </Card>
 </CardGroup>
+
+## Harnesses we looked at and did not write up
+
+Naming these is more useful than leaving them out, because the question we are
+asked is whether a harness is missing on purpose. These are, and each line says
+why. None of them has been checked to the standard the pages above are held to,
+so read this as a survey rather than as a verdict.
+
+**Named as presets by the orchestrators, not checked by us.** Gas Town ships
+presets for Gemini's CLI, Kiro, Auggie, Amp, GitHub Copilot's CLI and Omp, and
+T3 Code drives Grok's agent. We have established nothing about whether any of
+them accepts a custom endpoint, so this site says nothing about them either
+way.
+
+**Antigravity.** Google's agent, which T3 Code can also drive. The evidence we
+found on whether it accepts an OpenAI-compatible endpoint contradicts itself,
+and the projects that make it reachable from other tools are third-party
+proxies rather than a setting in the product. `unknown` is the honest answer,
+and it stays that until somebody reads the current release rather than a forum
+thread.
+
+**Editor extensions we have not reached.** Kilo Code and Roo Code are in the
+same family as [Cline](/integrations/cline) and take the same kind of
+OpenAI-compatible provider block, which makes them likely to work and does not
+make them documented.
+
+If yours is on this list and you need it to be a page, the shared facts above
+are the ones that would carry over unchanged, and what a page would add is the
+name of the setting and the surprise.
+

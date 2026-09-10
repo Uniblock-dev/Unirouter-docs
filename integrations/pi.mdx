@@ -1,0 +1,167 @@
+---
+title: "Pi"
+description: "Add Hopscotch to Pi as a provider in models.json: the base URL, the API type that picks the wire, the models you list, and the output cap you should set."
+status: partial
+gates: ["2.3", "2.11"]
+---
+
+import { FeatureStatus } from '/snippets/feature-status.mdx';
+
+[Pi](https://pi.dev) is a terminal coding agent with a small tool surface and a
+JSON file for models. Adding this API is one provider entry, and Pi is unusual
+among the harnesses here in that it gives you a real output ceiling to set. Read
+[coding harnesses](/integrations/coding-harnesses) first.
+
+<FeatureStatus
+  missing="a proof run of Pi against the production hostname"
+  instead="The configuration below was read from the earendil-works/pi repository's own provider, custom-model and custom-provider documentation on 2026-09-10. No Pi session has been run against this API."
+/>
+
+## The configuration surface
+
+The file is `~/.pi/agent/models.json`, and providers are keyed by a name you
+choose:
+
+```json ~/.pi/agent/models.json
+{
+  "providers": {
+    "hopscotch": {
+      "baseUrl": "https://api.hopscotchlabs.ai/v1",
+      "api": "openai-completions",
+      "apiKey": "$HOPSCOTCH_API_KEY",
+      "models": [
+        {
+          "id": "unirouter/auto",
+          "name": "Default route via Hopscotch",
+          "contextWindow": 200000,
+          "maxTokens": 8192
+        }
+      ]
+    }
+  }
+}
+```
+
+```bash
+export HOPSCOTCH_API_KEY=ub_live_YOUR_KEY_HERE
+```
+
+**Pi does not append `/v1`.** Its examples carry the version prefix on the
+`baseUrl`, so include it.
+
+The file is re-read every time you open `/model`, so you can edit it during a
+session without restarting.
+
+## `api` picks the wire, and picks it per provider
+
+`api` takes `openai-completions`, `openai-responses`, `anthropic-messages` or
+`google-generative-ai`, and it can be set on the provider or overridden on a
+single model. `openai-completions` is chat completions, which is what this site
+is mostly about. `openai-responses` is the other surface this API serves and
+[Codex CLI](/integrations/codex-cli) documents. The other two leave the surface
+this site publishes, so nothing on these pages tells you what comes back.
+
+Getting this wrong is not a soft failure. A provider speaks one protocol per
+entry, so a mistake here sends a differently shaped request to a real endpoint
+rather than producing a configuration error.
+
+## The key, and the two forms that keep it out of the file
+
+`apiKey` resolves three ways, and only one of them puts the secret in the file.
+
+- `"$HOPSCOTCH_API_KEY"` reads an environment variable. Interpolation works
+  inside a longer string, and a missing variable leaves the value unresolved
+  rather than empty.
+- `"!command"` runs the whole value as a command and uses its output, which is
+  the form for a password manager or a keychain.
+- Anything else is a literal, so a plain uppercase word is the key itself and
+  not a variable name.
+
+`models.json` lives under your home directory rather than in your repository,
+which is a smaller exposure than several harnesses here, but the environment
+form costs nothing and is the one to use.
+
+Pi resolves a `!command` at request time and applies no caching or retry of its
+own, on the stated grounds that it cannot know the right policy for an arbitrary
+command. Wrap a slow or rate-limited helper in your own script.
+
+You can also skip `apiKey` entirely and store the credential with `/login`, in
+`~/.pi/agent/auth.json`, or pass `--api-key`. Models with no auth configured
+anywhere still load, but stay unselectable in `/model` and `--list-models`,
+which is the shape that failure takes.
+
+## List the models yourself
+
+A provider entry in `models.json` has no discovery step, so the models Pi offers
+are the ones you write down, and each `id` is a pinned id. Adding one means
+editing the file.
+
+Ask [`GET /v1/models`](/features/models) for the strings your key can call.
+`unirouter/auto` is the entry worth having in a file nobody edits twice.
+
+If you would rather not maintain the list by hand, Pi's extension API can
+register a provider from an async factory that fetches a catalog at startup,
+which is more machinery than most people want and is the documented way to do
+it.
+
+## Set `maxTokens`, because here you can
+
+This is the setting the shared page asks for and most harnesses do not have.
+
+`maxTokens` on a model is the output ceiling, and Pi applies its own default
+when you leave it out. A request that names a realistic ceiling holds less
+against your account spend rate cap and is charged exactly what it would have
+been anyway, because the charge has always been for what was actually produced.
+Set it, and set `contextWindow` from the same catalog entry so Pi's own context
+accounting is not guessing. [Rate limits and spend
+controls](/manage/rate-limits-and-spend-controls) covers the cap.
+
+## `cost` is Pi's arithmetic, not ours
+
+A model entry takes a `cost` block of per-million-token rates, with optional
+tiers. Pi uses it to show you what a session cost. It has no effect on what you
+are charged, and nothing reconciles it against this platform.
+
+Leave it at zero and read [Activity](/manage/view-activity), or fill it in from
+the catalog and treat the number Pi prints as an estimate that will drift the
+moment a routing profile sends a turn to a different model.
+[Models](/features/models) covers where a charge's prices actually come from.
+
+## When a request shape needs correcting
+
+Pi has a `compat` block, on the provider or on a single model, for endpoints
+that are OpenAI-compatible in most respects. Two of its switches are the ones
+that come up first anywhere: `supportsDeveloperRole`, which decides whether the
+system prompt travels as `developer` or as `system`, and `maxTokensField`, which
+picks between `max_completion_tokens` and `max_tokens`.
+
+We have not run Pi here, so we cannot tell you that you need either of them.
+What we can tell you is where to look if a reasoning model fails while an
+ordinary one works, which is the signature of the first switch.
+
+## No embeddings feature found
+
+Pi's documented tool surface reads files, writes them, edits them and runs your
+shell, and its provider documentation names no embedding model and no index of
+your repository built by meaning. We did not audit its source to confirm the
+absence. If some feature of yours fails against this API, [no embeddings
+endpoint](/integrations/coding-harnesses) is the first thing to check.
+
+Subagents are an optional companion package rather than part of the core agent.
+If you install one, every child it runs is its own conversation against the same
+key and its own rows in Activity.
+
+## What we did not verify
+
+- That a Pi session against this API succeeds. Nothing was run.
+- Whether a model `id` from `models.json` is sent as the `model` field byte for
+  byte. It is what the shape requires, and a mismatch would show as a `400` with
+  `model_id_not_pinned` or a `404` with `model_not_found`, neither of which
+  costs anything.
+- Which `compat` switches, if any, this API needs. None is set in the block
+  above, on the grounds that guessing at one is worse than leaving it out.
+- What Pi's own default output cap is on the wire when `maxTokens` is omitted,
+  or whether it sends one at all.
+- Anything about prompt caching from Pi. Its `compat` vocabulary includes cache
+  and session-affinity controls that are provider-specific, and we did not
+  establish which of them apply here.

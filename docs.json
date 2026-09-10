@@ -209,7 +209,11 @@
               "integrations/zed",
               "integrations/opencode",
               "integrations/codex-cli",
-              "integrations/t3-code"
+              "integrations/hermes-agent",
+              "integrations/pi",
+              "integrations/deepseek-harness",
+              "integrations/t3-code",
+              "integrations/gas-town"
             ]
           }
         ]
