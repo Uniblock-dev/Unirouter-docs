@@ -18,7 +18,7 @@ what the shipped screen shows today.
 | When | When the request started, in UTC. |
 | Door | `api` or `playground`. |
 | Model | The model that was asked for. |
-| Served by | The provider that answered, or **nothing** if none did. |
+| Served by | The provider that answered, or **nothing** if none did. A **backup** mark beside it means this request came back through a backup route; the provider named is still the one you asked for. |
 | Outcome | A plain word: **served**, **provider error**, **refused**, or **other** for anything newer than the list the screen knows. The exact code is kept on the single request view. |
 | Tokens | The total token count, or **unknown** if none was ever reported. |
 | Charge | What the request cost, as dollars to as many places as the figure needs and never fewer than two, or **unpriced** if the request was never priced. |
@@ -26,6 +26,13 @@ what the shipped screen shows today.
 | Request id | The first eight characters, linking to the single request view. |
 
 ## Reading a row
+
+**A `backup` mark beside the provider.** It appears on a row, on that row's expanded
+facts and on the single request view, and it says one thing: this answer came back
+through a backup route rather than the ordinary one. The model you asked for is still
+the model that answered, and the same fact reaches an API caller as the
+`x-uniblock-served-via` response header, described under
+[Headers](/api-reference/headers).
 
 **Outcome reads as a word, and the code is still there.** A row says **served**,
 **provider error** or **refused**, and a row that is not served is drawn in a distinct

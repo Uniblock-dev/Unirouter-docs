@@ -37,10 +37,24 @@ Two rules about everything else you send:
 | `x-uniblock-retry-attempt-count` | On a served response | How many attempts it took to get this answer. A reply that took longer than usual may have taken more than one. |
 | `x-uniblock-cache-status` | On a served response | Whether the answer came from cache rather than from the model. |
 | `x-uniblock-trace-id` | On a served response | A secondary diagnostic id. Support asks for `x-uniblock-request-id`. |
+| `x-uniblock-served-via` | Only when a backup route served the request | The single value `backup`. Absent on every other response. |
 
-The four diagnostic headers are set when there is something to say and are absent
+The diagnostic headers are set when there is something to say and are absent
 otherwise. Treat them as diagnostics: read them in logs, do not build behaviour
 on them, and expect the set to grow.
+
+### `x-uniblock-served-via`
+
+Most requests never carry this header. When one does, its value is `backup` and
+it says one thing: this particular answer came back through a backup route
+rather than the ordinary one. The model you asked for is still the model that
+answered, and the `model` field in the body is unchanged.
+
+It is never sent with any other value, and never sent to say that a request went
+the ordinary way, so a client that has never read it sees nothing change. Treat
+it as a diagnostic like the others: read it in logs, do not branch on it. The
+same fact appears on the request's row in [Activity](/manage/view-activity), marked
+`backup` beside the provider.
 
 Nothing else from upstream reaches you. In particular, **provider rate-limit
 headers are not forwarded**: the limits you are subject to are ours, so a
