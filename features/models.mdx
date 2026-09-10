@@ -11,15 +11,24 @@ serves it, so one key and one endpoint reach models from more than one place.
 
 ## Model ids
 
-A model id is written as a provider and that provider's own model id, separated by a slash:
+A model id is written as a provider and a model name, separated by a slash:
 
 ```json
 { "model": "openai/gpt-4o-mini" }
 ```
 
 It is split once on the **first** slash. The part before it names the provider that serves the
-request. Everything after it is that provider's own id for the model, exactly as the provider spells
-it, slashes included, so an id can carry more than one slash and only the first one is a boundary.
+request. Everything after it is our name for that model on that provider: the provider's own id with
+the maker's namespace taken off. So a model a provider publishes as `openai/gpt-oss-120b` is called
+`groq/gpt-oss-120b` here, and one published as `Qwen/Qwen2.5-72B-Instruct` is called
+`deepinfra/Qwen2.5-72B-Instruct`. An id the provider publishes with no namespace is unchanged, which
+is most of them: `anthropic/claude-opus-4-5` is exactly what you would send anywhere else.
+
+You never send the provider's own spelling. We send it for you, and the maker is published beside
+the id on the models list rather than buried inside it.
+
+Each name is fixed the first time we publish that model on that provider and never recomputed, so an
+id you paste into your code does not change under you.
 
 The half after the slash may also be a shorter name we hold for the model, such as
 `anthropic/opus`. A name we recognise is served, charged and answered as the pinned id that
@@ -37,7 +46,7 @@ The `model` field accepts these three forms and nothing else:
 
 | Form | What it does |
 |---|---|
-| `provider/model` | That model, from that provider. If that provider cannot serve it, the request fails rather than moving to another host. The half after the slash is the provider's own id, or a shorter name we hold for it. |
+| `provider/model` | That model, from that provider. If that provider cannot serve it, the request fails rather than moving to another host. The half after the slash is our name for the model on that provider, or a shorter name we hold for it. |
 | `profile/{identifier}` | A [routing profile](/features/routing-profiles) you built: your own `provider/model` lines, tried in your order. |
 | `unirouter/auto` | A fixed id that means [whichever route you made your default](/features/routing-profiles), and a list we publish for your cost tier until you have one. |
 
@@ -47,6 +56,11 @@ names both forms and points you at `GET /v1/models`.
 Ask for the ids rather than constructing them by hand. The set of callable
 models is a live fact, it changes without a release on our side, and an id you
 assembled from a provider's own naming may not be an id we serve.
+
+That applies to the `model` field only. The single-model lookup,
+`GET /v1/models/{id}`, is deliberately more forgiving: it also accepts the provider's own spelling
+of the id, so a link or an old usage record still opens the right model. The request path does not,
+so an id that works in a lookup is not necessarily an id you can call.
 
 This site publishes no list of models and no list of families. Any list written
 here would be wrong the first time the set changed, and a stale list of what you

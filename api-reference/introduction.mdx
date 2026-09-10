@@ -57,9 +57,12 @@ schema of ours, so a parameter your client sends works as soon as the model
 behind it supports it.
 
 Model ids are `provider/model`, for example `openai/gpt-4o-mini`. The part before the first slash
-names the provider that serves the request, and everything after it is that provider's own id for
-the model, passed on as you sent it. A bare id with no provider is refused with `400` and the code
-`model_id_not_pinned`. Call `GET /v1/models` for the exact strings you can use.
+names the provider that serves the request, and everything after it is our name for that model on
+that provider: the provider's own id with the maker's namespace taken off, so a model a provider
+publishes as `openai/gpt-oss-120b` is called `groq/gpt-oss-120b` here. We send the provider its own
+spelling on your behalf. A bare id with no provider is refused with `400` and the code
+`model_id_not_pinned`. Call `GET /v1/models` for the exact strings you can use, and see
+[Models](/features/models) for the whole rule.
 
 ## Streaming
 
