@@ -515,6 +515,16 @@
       "schema": {
         "type": "string"
       }
+    },
+    "ServedVia": {
+      "description": "Present, with the value `backup`, when a backup route served this request. Absent on every other response, and never sent with any other value, so a client that has never read it sees nothing change about an ordinary request. The provider named on x-uniblock-provider and in the body is still the one you asked for.",
+      "schema": {
+        "type": "string",
+        "enum": [
+          "backup"
+        ],
+        "example": "backup"
+      }
     }
   },
   "paths": {
@@ -572,6 +582,9 @@
               },
               "x-uniblock-trace-id": {
                 "$ref": "#/responseHeaders/TraceId"
+              },
+              "x-uniblock-served-via": {
+                "$ref": "#/responseHeaders/ServedVia"
               }
             },
             "content": {
@@ -1616,6 +1629,9 @@
               },
               "x-uniblock-trace-id": {
                 "$ref": "#/responseHeaders/TraceId"
+              },
+              "x-uniblock-served-via": {
+                "$ref": "#/responseHeaders/ServedVia"
               }
             }
           },

@@ -90,6 +90,17 @@
                   "example": "openai/gpt-4o-mini"
                 }
               },
+              "x-uniblock-served-via": {
+                "description": "`backup` when the reseller of last resort answered in place of every credential of the named provider, because every one of them had refused (Story 23.5, decision 0023 clause 5). Absent on every other served reply, and never `direct`: a client that has never read this header sees nothing change about a request an ordinary key served.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "backup"
+                  ],
+                  "example": "backup"
+                },
+                "$ref": "#/components/headers/ServedVia"
+              },
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
               },
@@ -1171,6 +1182,17 @@
                   "example": "openai/gpt-4o-mini"
                 }
               },
+              "x-uniblock-served-via": {
+                "description": "`backup` when the reseller of last resort answered in place of every credential of the named provider, because every one of them had refused (Story 23.5, decision 0023 clause 5). Absent on every other served reply, and never `direct`: a client that has never read this header sees nothing change about a request an ordinary key served.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "backup"
+                  ],
+                  "example": "backup"
+                },
+                "$ref": "#/components/headers/ServedVia"
+              },
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
               },
@@ -2059,6 +2081,16 @@
         "description": "A trace id for this request.",
         "schema": {
           "type": "string"
+        }
+      },
+      "ServedVia": {
+        "description": "Present, with the value `backup`, when a backup route served this request. Absent on every other response, and never sent with any other value, so a client that has never read it sees nothing change about an ordinary request. The provider named on x-uniblock-provider and in the body is still the one you asked for.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "backup"
+          ],
+          "example": "backup"
         }
       }
     },
