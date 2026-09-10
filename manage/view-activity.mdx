@@ -21,7 +21,7 @@ what the shipped screen shows today.
 | Served by | The provider that answered, or **nothing** if none did. A **backup** mark beside it means this request came back through a backup route; the provider named is still the one you asked for. |
 | Outcome | A plain word: **served**, **provider error**, **refused**, or **other** for anything newer than the list the screen knows. The exact code is kept on the single request view. |
 | Tokens | The total token count, or **unknown** if none was ever reported. |
-| Charge | What the request cost, as dollars to as many places as the figure needs and never fewer than two, or **unpriced** if the request was never priced. |
+| Charge | What the request cost, as dollars to as many places as the figure needs and never fewer than two, or **unpriced** on an older row that carries no charge figure at all. |
 | Took | How long the request took, in milliseconds. |
 | Request id | The first eight characters, linking to the single request view. |
 
@@ -46,15 +46,20 @@ count of zero is printed as `0`. Those are different facts: a provider that neve
 told us how many tokens it used is not the same as a request that genuinely used
 none, and collapsing them would turn an outage into a page of free requests.
 
-**`unpriced` is not free.** A request with no charge figure reads `unpriced`; a
-charge of `0` is printed as money. Only a request that was actually priced at zero
-shows a zero.
+**`unpriced` is not free, and no new row reads it.** A row with no charge figure at
+all reads `unpriced`; a charge of `0` is printed as money, and only a request that was
+actually priced at zero shows a zero. Since 2026-09-10 the platform does not write a
+row without a charge figure: a request that was served is always charged, from the
+amount you accepted when it was admitted where nothing better can be worked out, and a
+request that was refused carries a real `0` rather than a blank. So `unpriced` now
+describes rows recorded before that change, and the column keeps the word so an older
+row still reads honestly rather than turning into a zero it never was.
 
 **A failed or refused request is an ordinary row.** It is not hidden, not grouped
 separately, and not given its own table. It carries the same nine columns as every
 other row, colored to stand out by its outcome, with its tokens and its charge
-following the same rules above: a refusal you were not charged for shows `unpriced`
-or a real `0` depending on what actually happened, never a blank.
+following the same rules above: a refusal you were not charged for shows a real `0`,
+which is the fact that nothing was taken, and never a blank.
 
 ## Filter by model, outcome and date
 
