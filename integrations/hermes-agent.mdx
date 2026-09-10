@@ -1,0 +1,186 @@
+---
+title: "Hermes Agent"
+description: "Point Hermes Agent here with a custom endpoint in config.yaml: the provider block, the base URL that wants /v1, and the output ceiling it will not send."
+status: partial
+gates: ["2.3", "2.11"]
+---
+
+import { FeatureStatus } from '/snippets/feature-status.mdx';
+
+[Hermes Agent](https://hermes-agent.nousresearch.com) is Nous Research's agent:
+one core behind a CLI, a terminal UI, a desktop app and a set of messaging
+gateways. It reads and writes files, runs your terminal and delegates to
+subagents, so in a repository it behaves like the coding harnesses on these
+pages and spends like one. Read [coding
+harnesses](/integrations/coding-harnesses) first.
+
+<FeatureStatus
+  missing="a proof run of Hermes Agent against the production hostname"
+  instead="The configuration below was read from the NousResearch/hermes-agent repository's own provider, model and memory documentation on 2026-09-10. No Hermes session has been run against this API."
+/>
+
+## The configuration surface
+
+Hermes has a first-class notion of a custom OpenAI-compatible endpoint, so
+nothing here needs a plugin. The file is `~/.hermes/config.yaml`, and the short
+form points the whole agent at one endpoint:
+
+```yaml ~/.hermes/config.yaml
+model:
+  provider: custom
+  default: openai/gpt-4o-mini
+  base_url: https://api.hopscotchlabs.ai/v1
+  api_key: ub_live_XXXXXXXXXXXX
+```
+
+`hermes model`, run in your terminal outside a session, walks the same fields
+interactively and writes them to the same file. Its own documentation is firm
+that `config.yaml` is the source of truth for the model, the provider and the
+base URL, so the two paths agree.
+
+**Hermes does not append `/v1`.** Every custom endpoint example in its
+documentation carries the version prefix, so include it.
+
+`model.default` and `model.model` are the same key. Either spelling works, which
+matters only when you are reading somebody else's config file and wondering
+whether there are two settings.
+
+## Prefer the named form
+
+The block above is one endpoint for the whole agent. The named form is better
+here for a reason that has nothing to do with tidiness: it can read the key from
+your environment rather than holding it.
+
+```yaml ~/.hermes/config.yaml
+providers:
+  hopscotch:
+    api: https://api.hopscotchlabs.ai/v1
+    key_env: HOPSCOTCH_API_KEY
+    transport: chat_completions
+    default_model: unirouter/auto
+```
+
+```bash
+export HOPSCOTCH_API_KEY=ub_live_YOUR_KEY_HERE
+```
+
+`api` is the base URL, and `base_url` and `url` are accepted spellings of the
+same field. `transport` picks the wire: `chat_completions` is the one this site
+is about, and the wizard sets it explicitly rather than leaving it to be
+detected. An entry also takes `default_model`, `models`, `context_length`,
+`discover_models`, `extra_headers`, `extra_body` and `enabled`, and switching to
+it inside a session is `/model custom:hopscotch:<model id>`.
+
+There is a third credential form, `key_cmd`, which names a command that prints a
+token and caches the result. It exists for gateways that issue short-lived
+bearers. A Hopscotch key does not expire on a clock, so `key_env` is the simpler
+answer here, and `key_cmd` is the one to reach for if your organisation keeps
+the key in a password manager or a vault rather than in a shell profile.
+
+## `OPENAI_BASE_URL` is honoured, and not for this
+
+Hermes is the exception the shared page warns you not to generalise from. It
+does read `OPENAI_BASE_URL`, but only for its `openai-api` provider, which is
+its direct OpenAI path. Set it while your provider is `custom` and nothing
+happens; set it while your provider is `openai-api` and you have configured a
+second route by accident. Its documentation also says `LLM_MODEL` in `.env` was
+removed and that stale entries there are cleared on the next setup or config
+migration, so a value you remember putting in `.env` is not necessarily still
+being read.
+
+## Pin the model id, in more places than one
+
+The pinned-id rule from the shared page applies to `default_model`, and
+`unirouter/auto` is the value worth putting there, because a config file is
+exactly the kind of thing nobody edits twice.
+
+It is not the only model setting that spends. Hermes routes a set of auxiliary
+tasks, including vision, web summarisation and the compression that shortens a
+long session, to your main chat model by default, and each of those is its own
+request. They can be pointed at a different model per task. Whatever you point
+them at needs to be a pinned id too, or those tasks fail while the main loop
+keeps working, which is a confusing shape of failure.
+
+`discover_models` asks the endpoint what it serves. This API answers
+[`GET /v1/models`](/features/models) with every string your key can call, so
+discovery has something true to read; we did not verify what Hermes does with
+the reply.
+
+## There is no output ceiling to set
+
+This is the one to know before a session, and it is the opposite of the advice
+on most of these pages.
+
+Hermes deliberately stopped reading an output cap. Its documentation states that
+`model.max_tokens`, the `HERMES_MAX_TOKENS` variable and the per-model output
+overrides are gone, that these settings should be removed, and that a custom
+OpenAI-compatible endpoint receives no automatic output cap at all, so the
+server's own default decides.
+
+So a Hermes request arrives here naming no `max_tokens`, and a request that
+names none holds the model's whole published maximum against your account spend
+rate cap. There is no setting on the harness side to improve that. What is left
+is the account side: [rate limits and spend
+controls](/manage/rate-limits-and-spend-controls) covers the cap, its default,
+and which limits are yours to raise. `context_length` on the provider entry is
+not this lever. It sizes the whole conversation window and decides when Hermes
+compresses history, which changes how much you send rather than how much is
+held.
+
+## One instruction can be many sessions
+
+Every coding harness turns one instruction into several billed requests. Hermes
+has two multipliers on top of the ordinary tool-calling loop, and both are worth
+knowing before you read [Activity](/manage/view-activity).
+
+**Delegation.** Hermes can dispatch subagents to run workstreams in parallel.
+Each subagent is its own conversation against the same key, so a delegated fan
+out multiplies rows rather than lengthening one.
+
+**Its own task board.** Hermes ships a kanban feature with worker lanes, which
+is the same idea run continuously: several agents drawing work without a person
+in the loop for each turn. That is the traffic shape the spend rate cap was
+written for, and combined with no output ceiling it is the configuration most
+likely to meet a `429` with the code `spend_rate_exceeded`.
+
+## Memory is where the embeddings are, and it is already separate
+
+Hermes has long-term memory providers, and some of them embed. Its documented
+memory backends configure their own embedder, and the choices its documentation
+names for the open-source path are OpenAI and Ollama, set in the memory
+provider's own config file rather than in `model` or `providers`.
+
+That is the good case: the setting you would have to leave alone is already
+somewhere else. Point the chat model here and change nothing about memory. This
+site publishes nothing about an embeddings endpoint, which the shared page
+explains, so there is no answer here for what a memory backend pointed at this
+API would do.
+
+## Keys, and the file that gets committed
+
+The key belongs in your environment or in `~/.hermes/.env`, both of which sit
+outside your repository. `AGENTS.md`, which Hermes reads as its project
+instructions, is inside the repository and is meant to be committed; it carries
+instructions rather than credentials, so this is only a trap if you put one
+there.
+
+Mint a key for Hermes rather than reusing one.
+[Authentication](/get-started/authentication) covers minting and revoking, and a
+key is shown once.
+
+## What we did not verify
+
+- That a Hermes session against this API succeeds. Nothing was run.
+- What `transport: codex_responses` sends. This API serves a Responses endpoint
+  and [Codex CLI](/integrations/codex-cli) documents it, but the name suggests
+  a Codex-shaped request rather than a generic one, and we did not trace it.
+- What Hermes does with the reply to `discover_models`, or whether an id it
+  discovers is sent as the `model` field byte for byte. A mismatch would show as
+  a `400` with `model_id_not_pinned` or a `404` with `model_not_found`, neither
+  of which costs anything.
+- Whether any auxiliary task sends an output cap of its own when the main loop
+  does not. Its documentation calls internal bounded tasks an implementation
+  detail.
+- Anything about prompt caching from Hermes. Provider caching passes through
+  this API either way; whether Hermes sends what a provider needs is a question
+  about Hermes.

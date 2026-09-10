@@ -1,0 +1,165 @@
+---
+title: "Gas Town and Gas City"
+description: "Gas Town orchestrates other coding agents, so pointing it here is per child agent. Gas City adds one place to name the endpoint for all of them."
+status: partial
+gates: ["2.3"]
+---
+
+import { FeatureStatus } from '/snippets/feature-status.mdx';
+
+[Gas Town](https://github.com/gastownhall/gastown) is a multi-agent workspace
+manager. It runs other people's coding agents in terminal sessions, gives each
+one a role and a piece of work, and merges what comes back. [Gas
+City](https://github.com/gastownhall/gascity) is the same machinery taken apart
+into an SDK for building your own arrangement of it. Neither is a coding agent,
+so almost none of the configuration on this page is theirs. Read [coding
+harnesses](/integrations/coding-harnesses) first.
+
+<FeatureStatus
+  missing="a proof run of Gas Town or Gas City against the production hostname"
+  instead="The configuration below was read from the gastownhall/gastown and gastownhall/gascity repositories, their in-repo documentation and their generated configuration reference, on 2026-09-10. No Gas Town or Gas City session has been run against this API."
+/>
+
+## No wire, no base URL, no key
+
+Gas Town talks to no model. It has no base URL setting and no API key field of
+its own, and its stated design principle is that it orchestrates agents through
+terminal sessions and environment variables rather than by linking against
+them. Its own words for it are that integration is configuration rather than
+compilation.
+
+So the whole of pointing Gas Town here is: pick a child agent this API serves,
+configure that agent the way its own page on this site says to, and use Gas
+Town's environment injection to deliver the pieces that belong in the
+environment.
+
+Every question about the endpoint therefore belongs to the child, including the
+one that catches people out. Whether the base URL wants `/v1` on the end differs
+between them, and a town running two kinds of agent needs both answers.
+
+## Which child agent
+
+Gas Town ships presets for `claude`, `gemini`, `codex`, `kiro`, `cursor`,
+`auggie`, `amp`, `opencode`, `copilot`, `pi` and `omp`. Four of those have pages
+here.
+
+<CardGroup cols={2}>
+  <Card title="OpenCode" icon="terminal" href="/integrations/opencode">
+    Chat completions. Documented here, and the shortest path to a working rig.
+  </Card>
+  <Card title="Pi" icon="terminal" href="/integrations/pi">
+    Chat completions, and the one child with an output ceiling you can set.
+  </Card>
+  <Card title="Codex CLI" icon="terminal" href="/integrations/codex-cli">
+    The Responses API. Documented here.
+  </Card>
+  <Card title="Cursor" icon="pen-to-square" href="/integrations/cursor">
+    An editor with a CLI. Documented here.
+  </Card>
+</CardGroup>
+
+[Claude Code](/integrations/claude-code) is the `claude` preset and needs an
+endpoint this site does not publish, so a rig running it will not reach this
+API. That is worth knowing because it is the preset most of Gas Town's own
+documentation is written around. We have said nothing about the rest.
+
+## Registering an agent, and where the environment goes
+
+A preset is JSON, and for an agent Gas Town does not ship you write it yourself
+at `~/gt/settings/agents.json`. The field that matters here is `env`, a map
+merged into the child's environment when Gas Town launches it:
+
+```json ~/gt/settings/agents.json
+{
+  "version": 1,
+  "agents": {
+    "opencode-hopscotch": {
+      "name": "opencode-hopscotch",
+      "command": "opencode",
+      "args": [],
+      "env": {
+        "HOPSCOTCH_API_KEY": "ub_live_XXXXXXXXXXXX"
+      },
+      "instructions_file": "AGENTS.md"
+    }
+  }
+}
+```
+
+That variable is the one [OpenCode](/integrations/opencode) reads through the
+`{env:HOPSCOTCH_API_KEY}` interpolation in its own `opencode.json`, so the
+provider block stays where it belongs and only the secret is delivered here.
+
+`~/gt` is outside your repository, which makes this a smaller exposure than the
+config files the shared page warns about. It is still a plain file holding a
+key. Reading it from your own environment instead, and leaving `env` out, works
+wherever your child agent supports it.
+
+There is a lighter path if the only thing you are changing is the command:
+
+```bash
+gt config agent set opencode-hopscotch "opencode"
+gt config default-agent opencode-hopscotch
+```
+
+## Gas City names the endpoint once
+
+Gas City has something Gas Town does not, and if you are pointing many agents at
+one endpoint it is the reason to look at it.
+
+Its `city.toml` carries an `[upstreams]` table: named endpoint presets, selected
+per agent, that answer the question of who serves the model separately from the
+question of which agent does the work. An upstream carries a `base_url`, a
+credential as `api_key` or `auth_token`, and, where it needs to, the name of the
+environment variable each harness expects those to arrive in.
+
+That last part is the useful bit. A base URL variable is called something
+different in every harness, which is exactly the mess the shared page describes,
+and `base_url_env` and `api_key_env` let one upstream render itself into
+whichever names the child wants. A credential may be written as a `$VAR`
+reference so the secret stays out of the file, and `env` on the upstream is a
+raw escape hatch merged after the rest.
+
+Set the base URL there in the form the child agent wants, which for most of the
+children documented here means with `/v1` on the end, and use the `$VAR` form
+for the key.
+
+## What this does to Activity
+
+Both of these exist to run agents in parallel without a person in the loop for
+each turn, which is the traffic shape the shared page's warnings are about, at
+the scale they were written for.
+
+Every turn of every child is its own billed request against the same key. A town
+with several agents working at once, each looping, produces rows in
+[Activity](/manage/view-activity) faster than anything else on these pages, and
+the account spend rate cap counts money reserved rather than money spent, so
+concurrency is the dimension that reaches it. Where a child agent lets you set a
+maximum output, setting it is worth more here than anywhere. [Rate limits and
+spend controls](/manage/rate-limits-and-spend-controls) covers the cap.
+
+**Take `402` off any retry list you control.** An orchestrator's job is to keep
+work moving, and a `402` with the code `insufficient_credit` is a balance rather
+than a transient fault, so a supervisor that restarts a failed agent will
+rediscover that as fast as it can.
+
+## Beads is not in the way
+
+Gas Town tracks work in Beads, a version-controlled issue database the agents
+read and write. It calls no model and needs no key, so it is not a second thing
+to configure here. The same is true of the merge queue and the health patrol:
+they are shell and git, and the model calls are all inside the child.
+
+## What we did not verify
+
+- That a Gas Town or Gas City session against this API succeeds. Nothing was
+  run.
+- Whether an `env` entry reaches every child unchanged. We read the field and
+  its worked examples rather than tracing each preset's launch.
+- Whether any part of `gt` or `gc` itself calls a model. We found none in their
+  configuration surfaces, and neither carries a base URL or a credential of its
+  own, but we did not audit either codebase for one.
+- Anything about the `gemini`, `kiro`, `auggie`, `amp`, `copilot` or `omp`
+  presets, including whether they can be pointed at a custom endpoint at all.
+- How stable this is. Both projects are moving quickly and Gas City describes
+  its upstream layer as a phase of work rather than a settled surface.

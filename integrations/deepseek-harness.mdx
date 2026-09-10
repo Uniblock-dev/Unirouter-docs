@@ -1,0 +1,182 @@
+---
+title: "DeepSeek Harness"
+description: "Add Hopscotch to dsh as a custom provider: the Models page, the protocol field that picks the wire, and the settings file behind the form."
+status: partial
+gates: ["2.3", "2.11"]
+---
+
+import { FeatureStatus } from '/snippets/feature-status.mdx';
+
+[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness), whose
+command is `dsh`, is DeepSeek's open agent runtime: a plugin tree where the
+model adapter, the tools and the agent loop are all swappable, shipped with a
+web interface, a headless mode and an ACP server. Read [coding
+harnesses](/integrations/coding-harnesses) first.
+
+The name is a coincidence you should set aside. The harness is DeepSeek's; the
+provider you add to it here is this one, and which models you reach is decided
+by the ids you pin rather than by whose harness it is.
+
+<FeatureStatus
+  missing="a proof run of dsh against the production hostname"
+  instead="The configuration below was read from the deepseek-ai/deepseek-harness repository's own model-configuration guide and its generated configuration catalog on 2026-09-10. No dsh session has been run against this API. The project describes itself as a developer preview and says compatibility-breaking changes are expected, so treat the shape of the config as likelier to move than most pages here."
+/>
+
+## The configuration surface is a form
+
+Unlike every other harness on these pages, the first-class path is a settings
+screen rather than a file. In the web interface, open **Settings** then
+**Models**, and choose **Add a custom provider**. It asks for five things: a
+lowercase provider id, a display name, a base URL, an API protocol, and a
+credential. Then it asks for at least one model.
+
+```text Base URL
+https://api.hopscotchlabs.ai/v1
+```
+
+**Pick `openai-completions` as the protocol.** The form offers three, and the
+other two are `openai-responses`, which is the other surface this API serves and
+[Codex CLI](/integrations/codex-cli) documents, and `anthropic-messages`, which
+this site publishes nothing about. A provider speaks one protocol, so a gateway
+serving two needs two provider entries.
+
+**The provider id is permanent.** Requests, saved sessions, model defaults and
+credential references all use it, and renaming means adding a new provider and
+deleting the old one. Pick the name you want to live with.
+
+Model changes take effect on the next request. Nothing here needs a restart.
+
+## The file behind the form
+
+The form writes `$DSH_HOME/settings.yaml`, and the section is `llm-pi-ai`. You
+can edit it directly, and you have to for anything the form leaves out:
+
+```yaml $DSH_HOME/settings.yaml
+llm-pi-ai:
+  providers:
+    hopscotch:
+      api: openai-completions
+      baseURL: https://api.hopscotchlabs.ai/v1
+      apiKeyEnv: HOPSCOTCH_API_KEY
+      models:
+        - id: unirouter/auto
+```
+
+```bash
+export HOPSCOTCH_API_KEY=ub_live_YOUR_KEY_HERE
+```
+
+The form is deliberately small: the key, the display name, the base URL, the
+protocol, and per model an id, a context window and a maximum output. Reasoning
+levels, image input, request-compatibility switches, headers, timeouts and retry
+policy are all in the same file and not on the screen.
+
+A key entered through the form is stored in `$DSH_HOME/.credentials.yaml` and
+settings keep only a reference to it. The page is write-only: after saving it
+receives a redacted descriptor and never the secret again. `apiKeyEnv` is the
+alternative and keeps the value in your environment instead. Either way the
+credential is outside your repository.
+
+## Pin the model id, and expect to type it
+
+**Fetch available models** asks your endpoint what it serves, using the base
+URL, protocol and key currently in the form, and opens a picker. This API
+answers [`GET /v1/models`](/features/models) with every string your key can
+call, so there is something true to read; whether dsh's discovery reads this
+particular listing shape is something we did not verify, and its own
+documentation calls discovery a convenience rather than a guarantee. When it
+returns nothing, type the ids and they work the same.
+
+Whichever way they arrive, the ids are pinned ids, and `unirouter/auto` is the
+one worth making the default.
+
+One trap the project names itself: a built-in provider is always answered from
+the installed catalog even when its base URL points somewhere else, so a model
+list fetched through a built-in entry tells you nothing about what your endpoint
+really serves. Add this API as a custom provider, not as a built-in one with the
+URL changed.
+
+## Set the maximum output
+
+The per-model form has a maximum output field, which makes dsh one of the
+harnesses where the shared page's advice is actionable. A request that names a
+realistic ceiling holds less against your account spend rate cap and is charged
+exactly what it would have been anyway. See [rate limits and spend
+controls](/manage/rate-limits-and-spend-controls).
+
+## Images have to be declared
+
+A model you type by hand is treated as text-only, because nothing can ask an
+endpoint which modalities it accepts. Attaching an image to such a model is
+refused before it is sent, naming the model. The form has no field for it, so it
+goes in the file:
+
+```yaml $DSH_HOME/settings.yaml
+llm-pi-ai:
+  providers:
+    hopscotch:
+      api: openai-completions
+      baseURL: https://api.hopscotchlabs.ai/v1
+      apiKeyEnv: HOPSCOTCH_API_KEY
+      models:
+        - id: unirouter/auto
+          input: [text, image]
+```
+
+`defaultInput` on the provider does the same for every model under it. Both
+state a claim about the endpoint rather than checking it, so declaring images
+on a model this API routes to a text-only model is not caught here; the request
+is refused further along. Check `vision` in the model's `capabilities` block
+first. [Image inputs](/features/image-inputs) covers what this API accepts.
+
+## If the gateway refuses everything
+
+Worth reading before you conclude something is broken, because the project
+documents this failure precisely.
+
+The adapter decides the shape of a request partly from the endpoint's address,
+and an address it does not recognise is addressed as though it were OpenAI
+itself. Two consequences account for most of the resulting refusals: a model
+that declares reasoning has its system prompt sent with the `developer` role,
+and the output cap is sent as `max_completion_tokens`. A server that wants
+`system` and `max_tokens` refuses both.
+
+The switches are on the route, and a model's own value wins field by field:
+
+```yaml $DSH_HOME/settings.yaml
+llm-pi-ai:
+  providers:
+    hopscotch:
+      compat:
+        supportsDeveloperRole: false
+        maxTokensField: max_tokens
+```
+
+We are not telling you to set these. We have not run dsh here, so we do not know
+that this API needs either, and setting a switch you do not need simply sends a
+different request. What this section is for is the case where only reasoning
+models fail, or where every request is refused while the key and the URL are
+demonstrably right. Those two symptoms have this cause more often than not.
+
+## It shares its adapter with Pi
+
+The `llm-pi-ai` plugin is named after the library it wraps, which is the same
+one [Pi](/integrations/pi) uses. The compatibility vocabulary, the protocol
+names and the per-model fields are recognisably the same, so a setting you
+worked out on one is usually the same setting on the other, under a slightly
+different key. That is a convenience, not a guarantee: the two projects pin
+their own versions and the plugin adds fields of its own.
+
+## What we did not verify
+
+- That a dsh session against this API succeeds. Nothing was run.
+- Whether model discovery reads this API's listing shape.
+- Whether a model id from the form or the file is sent as the `model` field byte
+  for byte. A mismatch would show as a `400` with `model_id_not_pinned` or a
+  `404` with `model_not_found`, neither of which costs anything.
+- Which `compat` switches this API needs, if any.
+- Whether any plugin in a default profile calls an embeddings endpoint. The
+  project ships optional overlays including memory servers, which is the kind of
+  feature that usually does, and we did not audit them.
+- How stable any of this is. The project is a developer preview iterating
+  quickly and says so.
