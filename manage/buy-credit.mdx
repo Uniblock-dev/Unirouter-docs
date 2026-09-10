@@ -21,7 +21,7 @@ statement, and cannot buy. A member who calls a purchase route gets HTTP 403 car
 the sentence above, so nobody starts a purchase that was never going to complete.
 
 You also need the smallest purchase we accept, which is **30.00 of credit**. That is
-the credit you receive; our fee is added on top at the checkout.
+the credit you receive; our fee, currently 0%, is added on top at the checkout.
 
 ## Buy credit
 
@@ -44,8 +44,8 @@ the credit you receive; our fee is added on top at the checkout.
     | Line | Example at 100.00 |
     |---|---|
     | Credit you receive | 100.00 |
-    | Our fee, 2.5% | 2.50 |
-    | You pay | 102.50 |
+    | Our fee, 0% | 0.00 |
+    | You pay | 100.00 |
 
     The rate is read live from the dashboard rather than written into the screen, so
     what you see is the rate your checkout session will use. Where a card is already
@@ -93,7 +93,7 @@ your statement.
 
 The Statement tab lists every movement, newest first, fifty lines to a page, with
 date filters. A purchase line carries the amount charged, the credit granted and the
-fee, as three sub-fields of the one line, which is what explains the gap between your
+fee, as three sub-fields of the one line, which is what explains any gap between your
 card statement and your balance.
 
 The running total on each page is the sum of your movements up to that line. It is

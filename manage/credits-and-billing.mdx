@@ -18,26 +18,27 @@ invoice at the end of the month. Two rules cover almost everything on this page:
 ## Buying credit: what you choose and what you pay
 
 You choose the **credit you receive**. Our fee is added on top of that figure, and
-the total is what your card is charged. At the current rate of 2.5%:
+the total is what your card is charged. At the current rate of 0%:
 
 | Line | Amount |
 |---|---|
 | Credit you receive | 100.00 |
-| Our fee, 2.5% | 2.50 |
-| You pay | 102.50 |
+| Our fee, 0% | 0.00 |
+| You pay | 100.00 |
 
-The balance then reads 100.00 and your card statement reads 102.50. That gap is the
-fee, and the purchase line on your statement carries both figures so it can be
-checked (see [Every movement is on your statement](#every-movement-is-on-your-statement)).
+The balance then reads 100.00 and your card statement reads 100.00. While the rate is
+0% there is nothing between the two, and the purchase line on your statement still
+carries both figures so it can be checked (see [Every movement is on your statement](#every-movement-is-on-your-statement)).
 
 The smallest purchase is 30.00 of credit. The minimum is stated in the credit you
 receive rather than in the amount charged, so the figure you type is the figure any
 refusal names back to you.
 
 <Note>
-  The rate is currently 2.5%. It is a setting rather than a constant, so the
-  dashboard reads it live and this page states the rate in force at the time of
-  writing. The Billing screen is the authority for what your next purchase costs.
+  The rate is currently 0%, our opening promotion. It is a setting rather than a
+  constant, so the dashboard reads it live and this page states the rate in force at
+  the time of writing. The Billing screen is the authority for what your next
+  purchase costs.
 </Note>
 
 ### The rate is fixed when checkout starts
@@ -151,7 +152,7 @@ id on a purchase, and the request id on a charge.
 
 A **purchase line** carries three sub-fields rather than a separate fee line: the
 amount charged, the credit granted, and the fee between them. That is what explains
-the gap between your card statement and your balance, inside the line that caused it.
+any gap between your card statement and your balance, inside the line that caused it.
 It is also what keeps the statement honest: the statement adds up to your settled
 balance exactly, and a fee line that never became balance would break that.
 
