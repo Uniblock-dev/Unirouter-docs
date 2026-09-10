@@ -56,15 +56,18 @@ allow_patterns:
 
 claims:
   - id: fee-rate-percent
-    value: "2.5%"
-    means: "The platform fee added at credit purchase, at the launch rate."
-    source: "_bmad-output/product/decisions/the-platform-fee-is-taken-at-purchase.md; PRD FR-15, FR-18"
+    value: "0%"
+    means: "The platform fee added at credit purchase, at the current opening promotion rate."
+    source: "The FR-33 staff-changeable fee rate row, currently set to zero for the opening promotion; mechanism in _bmad-output/product/decisions/the-platform-fee-is-taken-at-purchase.md, PRD FR-15, FR-18"
     status: shipped
     note: >-
-      Write it as "currently 2.5%". The rate is a staff-changeable row (FR-33)
-      and the checkout session fixes it at the moment checkout starts. Never
-      source fee copy from the whitepaper, which says the fee is on spend and
-      is wrong (DOCS_PLAN.md section 14 item 4).
+      Write it as "currently 0%" and name it as the opening promotion. The rate
+      is a staff-changeable row (FR-33) and the checkout session fixes it at the
+      moment checkout starts, so a page states the rate in force at the time of
+      writing and points at the Billing screen for the next purchase. The launch
+      rate was 2.5%; the mechanism is unchanged and only the row moved. Never
+      source fee copy from the whitepaper, which says the fee is on spend and is
+      wrong (DOCS_PLAN.md section 14 item 4).
 
   - id: fee-worked-example-credit
     value: "100"
@@ -74,10 +77,13 @@ claims:
     note: "Use the decision record's own numbers so docs and product explain money identically."
 
   - id: fee-worked-example-charge
-    value: "102.50"
-    means: "What the card is charged to grant 100 credits at 2.5%."
-    source: "_bmad-output/product/decisions/the-platform-fee-is-taken-at-purchase.md"
+    value: "100.00"
+    means: "What the card is charged to grant 100 credits at the current rate of 0%."
+    source: "_bmad-output/product/decisions/the-platform-fee-is-taken-at-purchase.md; the FR-33 fee rate row"
     status: shipped
+    note: >-
+      At 0% this is the same figure as fee-worked-example-credit-decimal. Both
+      entries stay, because a rate above zero parts them again.
 
   - id: minimum-purchase
     value: "$30"
@@ -218,15 +224,15 @@ claims:
       - manage/view-activity
 
   - id: fee-basis-points
-    value: "250"
+    value: "0"
     means: "The platform fee in basis points, which is how the product stores it."
-    source: "_bmad-output/product/decisions/the-platform-fee-is-taken-at-purchase.md"
+    source: "_bmad-output/product/decisions/the-platform-fee-is-taken-at-purchase.md; the FR-33 fee rate row"
     status: gated
     gate: owner-review
     used_by: []
     note: >-
       Registered so the checker can name it. Basis points are the product's
-      internal unit; a customer reads a percentage. Prefer 2.5% in prose.
+      internal unit; a customer reads a percentage. Prefer 0% in prose.
 
   - id: spend-cap-minimum
     value: "100"
@@ -346,9 +352,9 @@ claims:
     note: "The same figure as fee-worked-example-credit, spelled the way the pages write money."
 
   - id: fee-worked-example-fee-amount
-    value: "2.50"
-    means: "The fee added to a 100.00 credit purchase at the launch rate of 2.5%."
-    source: "_bmad-output/product/decisions/the-platform-fee-is-taken-at-purchase.md; PRD FR-15, FR-18"
+    value: "0.00"
+    means: "The fee added to a 100.00 credit purchase at the current rate of 0%."
+    source: "_bmad-output/product/decisions/the-platform-fee-is-taken-at-purchase.md; PRD FR-15, FR-18; the FR-33 fee rate row"
     status: shipped
 
   - id: minimum-purchase-decimal

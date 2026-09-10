@@ -10,7 +10,7 @@ This is a plan for **customer-facing documentation**, not internal repository do
 
 ## 1. Executive summary
 
-Hopscotch Gateway is an OpenAI-compatible LLM router. A developer changes one base URL (`https://api.hopscotchlabs.ai`) and one API key, keeps their existing OpenAI SDK, and calls models across providers on one prepaid balance. The fee is 2.5% (250 basis points), taken **at credit purchase**; a served request deducts the provider's rate at face value with no markup (`SRC/_bmad-output/product/decisions/the-platform-fee-is-taken-at-purchase.md`).
+Hopscotch Gateway is an OpenAI-compatible LLM router. A developer changes one base URL (`https://api.hopscotchlabs.ai`) and one API key, keeps their existing OpenAI SDK, and calls models across providers on one prepaid balance. The fee is currently 0% (0 basis points), our opening promotion, taken **at credit purchase**; a served request deducts the provider's rate at face value with no markup (`SRC/_bmad-output/product/decisions/the-platform-fee-is-taken-at-purchase.md`).
 
 The docs site has three jobs:
 
@@ -48,7 +48,7 @@ Facts safe to state publicly, each with its source of truth:
 | Keys per workspace | up to 5, shown once, hashed at rest, last four retained | PRD FR-11, FR-13 |
 | Error envelope | OpenAI shape, one top-level `error` with exactly `message`, `type`, `param`, `code`, `request_id`; `type` closed set of 8 | AD-9; `SRC/services/control-plane/src/errors/openai.ts` |
 | Usage on the wire | `x-uniblock-usage` header (non-streamed) / `:x-uniblock-usage {...}` SSE comment before `data: [DONE]` (streamed) | AD-14; `SRC/services/gateway/src/uniblockUsage.ts`; `src/usage/emitter.ts` |
-| Fee model | 2.5% added at credit purchase; buying 100 credits charges 102.50 and grants 100; a served request deducts provider cost at face value, no markup; rate fixed at checkout-session creation | Decisions `the-platform-fee-is-taken-at-purchase.md`, `the-checkout-session-fixes-the-fee-rate.md`; FR-15, FR-18 |
+| Fee model | The fee is added at credit purchase and is currently 0% (the opening promotion), so buying 100 credits charges 100.00 and grants 100; a served request deducts provider cost at face value, no markup; rate fixed at checkout-session creation | Decisions `the-platform-fee-is-taken-at-purchase.md`, `the-checkout-session-fixes-the-fee-rate.md`; FR-15, FR-18 |
 | Minimum purchase | $30, expressed in credit granted | Decision `epic-4-open-questions-resolved-2026-08-18.md`; FR-14 |
 | Roles | owner, admin, developer, viewer; exactly one owner; owner alone touches money | FR-39; decisions `the-workspace-is-the-unit.md`, `money-actions-are-the-owners.md` |
 | Invitations | email-bound, valid 7 days, may carry a key reservation | FR-40 |
@@ -68,7 +68,7 @@ Facts safe to state publicly, each with its source of truth:
 
 **A1. The migrating developer (primary).** Modeled on the PRD's "Priya": already calls OpenAI directly, evaluates on price and effort. Journey: land on Overview → Quickstart (swap base URL + key, first request in under five minutes) → OpenAI compatibility page (what works, what differs, what is not supported) → Errors and streaming when something surprises them. Success: first 200 from `POST /v1/chat/completions` with their existing SDK.
 
-**A2. The evaluating stranger (signed-out).** PRD FR-43 and Epic 8: evaluates on the model catalog and price without an account. Journey: Overview → Models and pricing concept page → Credits page (the 2.5%-at-purchase story) → sign-up. Note: the in-app public catalog (Epic 8.1-8.8) is unbuilt, so the docs describe the pricing *model* and defer live prices to the product (§14, OQ-13).
+**A2. The evaluating stranger (signed-out).** PRD FR-43 and Epic 8: evaluates on the model catalog and price without an account. Journey: Overview → Models and pricing concept page → Credits page (the fee-at-purchase story, currently 0%) → sign-up. Note: the in-app public catalog (Epic 8.1-8.8) is unbuilt, so the docs describe the pricing *model* and defer live prices to the product (§14, OQ-13).
 
 **A3. The workspace operator.** The person who runs the account day to day: buys credit, invites members, sets spend controls, reads Activity. Journey: dashboard guides (keys, billing, members, spend controls, usage). Often the workspace **owner**, the only role that touches money.
 
@@ -270,7 +270,7 @@ differently, §5 wins.
 - Purpose: what Hopscotch is in one screen; the two-line migration promise; where to go next (cards: Quickstart, API Reference, Dashboard guides). Tone per `EXPERIENCE.md`: plain, specific, never cheerful about money; no exclamation marks.
 - Source of truth: `SRC/README.md` lines 1-5; whitepaper masthead ("One key, one endpoint, every model."); PRD §1.
 - Examples: the before/after two-line diff (base URL + key) as the hero code block.
-- Acceptance: no availability, latency, or provider-count claims; no "78 providers"; does not name the gateway fork or any internal service; links resolve; the fee is stated as "2.5% when you buy credit, nothing on requests" with no competitor comparison (the OpenRouter comparison is positioning, not documentation).
+- Acceptance: no availability, latency, or provider-count claims; no "78 providers"; does not name the gateway fork or any internal service; links resolve; the fee is stated as "currently 0% when you buy credit, nothing on requests" with no competitor comparison (the OpenRouter comparison is positioning, not documentation).
 
 **`get-started/quickstart.mdx`** · PARTIAL (write against shipped `/v1/chat/completions`; the "works with the official SDKs" claim is a promise pending Story 2.11's proof, so phrase as instructions, not certification)
 - Purpose: from key in hand to first response in under five minutes: get a key in the dashboard, set base URL, send a chat completion, read the response and the `x-uniblock-request-id`.
@@ -311,10 +311,10 @@ differently, §5 wins.
 - Acceptance: no concurrency-count promises; the usage line's JSON matches the emitter exactly (`v`, `reported`, token fields omitted-not-zeroed); distinguishes `balance_exhausted` (cut mid-stream) from `balance_exhausted_at_admission` / `insufficient_credit` (never started).
 
 **`manage/credits-and-billing.mdx`** · WRITE-NOW (with one legal fence)
-- Purpose: the money model: prepaid credit; you choose the credit received, the fee is added on top (worked example: 100 credits charges 102.50 at the launch rate of 2.5%); the rate is fixed when checkout starts; minimum purchase $30 of credit; credit granted only on payment confirmation, never on a browser redirect (closing the tab cannot lose your credit, FR-16/FR-17); requests deduct provider cost at face value with no markup; the balance is spendable in full; zero balance refuses new requests and ends in-flight ones (FR-20); every balance change is recorded and explainable (FR-21); statement shows amount charged and credit granted per purchase.
+- Purpose: the money model: prepaid credit; you choose the credit received, the fee is added on top (worked example: 100 credits charges 100.00 at the current rate of 0%); the rate is fixed when checkout starts; minimum purchase $30 of credit; credit granted only on payment confirmation, never on a browser redirect (closing the tab cannot lose your credit, FR-16/FR-17); requests deduct provider cost at face value with no markup; the balance is spendable in full; zero balance refuses new requests and ends in-flight ones (FR-20); every balance change is recorded and explainable (FR-21); statement shows amount charged and credit granted per purchase.
 - Source of truth: FR-14 through FR-21; decisions `the-platform-fee-is-taken-at-purchase.md`, `the-checkout-session-fixes-the-fee-rate.md`, `epic-4-open-questions-resolved-2026-08-18.md`, AD-8, AD-13.
-- Required examples: the 100 → 102.50 worked example; the rounding rule stated once (half-up, once).
-- Acceptance: **no refund language of any kind** until counsel answers OQ-5; the settled commercial position ("credit is non-refundable once bought") is NOT published because its enforceability is open and the PRD bans hedged renderings; the fee rate is written as "currently 2.5%" sourced from FR-33's staff-changeable row, never hard-coded as permanent; no trial-credit mention (Story 4.17 backlog); no negotiated-rate mention (internal, decision `epic-4-per-customer-negotiated-rates-2026-08-18.md`).
+- Required examples: the 100 → 100.00 worked example at the current 0% rate; the rounding rule stated once (half-up, once).
+- Acceptance: **no refund language of any kind** until counsel answers OQ-5; the settled commercial position ("credit is non-refundable once bought") is NOT published because its enforceability is open and the PRD bans hedged renderings; the fee rate is written as "currently 0%" sourced from FR-33's staff-changeable row, never hard-coded as permanent; no trial-credit mention (Story 4.17 backlog); no negotiated-rate mention (internal, decision `epic-4-per-customer-negotiated-rates-2026-08-18.md`).
 
 **`manage/usage-and-metering.mdx`** · PARTIAL (Epic 5 at review; verify shipped fields before publishing)
 - Purpose: what is recorded per request (timestamp, model, provider, token counts, cost, latency, outcome; never the prompt or reply, FR-24); usage appears within 60 seconds; usage reconciles exactly with balance (FR-23); the customer-visible field set is fenced (Story 5.3; internal figures like added latency and attempt count never cross); retention window as shown on the Data screen (90 days configured over a 62-day floor); charges are explained by the model-rate revision in force.
@@ -456,7 +456,7 @@ Mintlify wiring: `docs.json` `api.openapi` points at the artifact; endpoint MDX 
 
 - **Languages, in priority order**: curl (canonical, every endpoint), Python (official OpenAI SDK), TypeScript/Node (official OpenAI SDK). FR-1's acceptance names the official OpenAI Python and Node SDKs, so those two are the supported story. No other language until asked.
 - Every code block on Get-started and API pages uses Mintlify `<CodeGroup>` with the three tabs, sourced from shared snippets (§12) so the base URL and header appear in exactly one place per language.
-- **Example values policy**: model ids only from spec examples (`openai/gpt-4o-mini`, `anthropic/claude-sonnet-5`); keys always `ub_live_` + obvious placeholder (e.g. `ub_live_XXXXXXXX...`), never 43 plausible chars; money examples reuse the decision records' own worked numbers (100 → 102.50) so docs and product explain money identically.
+- **Example values policy**: model ids only from spec examples (`openai/gpt-4o-mini`, `anthropic/claude-sonnet-5`); keys always `ub_live_` + obvious placeholder (e.g. `ub_live_XXXXXXXX...`), never 43 plausible chars; money examples reuse the decision records' own worked numbers, repriced at the rate in force (100 → 100.00 at 0%), so docs and product explain money identically.
 - **Runnability rule**: an example ships only after being executed against a real environment (locally via `SRC/scripts/apidocs/serve.py` proxying to `wrangler dev` services, or the deployed dev Worker) with the transcript attached to the PR. "It should work" is banned here for the same reason the source repo bans it.
 - Streaming examples show the raw SSE transcript including the `:x-uniblock-usage` comment line, annotated.
 - Error-handling examples catch on `type` and `code`, never on message text (messages are prose and may change; the envelope fields are the contract).
@@ -739,7 +739,7 @@ Global acceptance (every page, every release), then plan-level checks.
 - [ ] Live-call verification of: `POST /v1/chat/completions` (200, 401, 402, 429, streamed with usage line), `GET /v1/models`, one unsupported `/v1` path (404 `unknown_url` envelope).
 - [ ] Header page matches `FORWARDED_DIAGNOSTIC_HEADERS` as of the pinned source-spec sync commit.
 - [ ] Error page's codes each located in `openai.ts` or a handler at the sync commit; unsettled strings absent.
-- [ ] Fee copy matches `the-platform-fee-is-taken-at-purchase.md` (at purchase, 102.50 example) and NOT the whitepaper's "on spend".
+- [ ] Fee copy matches `the-platform-fee-is-taken-at-purchase.md` (at purchase, 100.00 example at the current 0% rate) and NOT the whitepaper's "on spend".
 - [ ] No refund, terms, SLA, latency, concurrency, provider-count, or OAuth-works claims anywhere.
 - [ ] Docs hostname decided by owner and configured; dashboard rail docs link target confirmed (or explicitly deferred).
 - [ ] Owner sign-off obtained on: index positioning copy, credits page, security page (the three pages that make promises).
