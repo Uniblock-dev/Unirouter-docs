@@ -57,12 +57,13 @@ allow_patterns:
 claims:
   - id: fee-rate-percent
     value: "0%"
-    means: "The platform fee added at credit purchase, at the current opening promotion rate."
-    source: "The FR-33 staff-changeable fee rate row, currently set to zero for the opening promotion; mechanism in _bmad-output/product/decisions/the-platform-fee-is-taken-at-purchase.md, PRD FR-15, FR-18"
+    means: "The platform fee added at credit purchase, at the current rate."
+    source: "The FR-33 staff-changeable fee rate row, currently set to zero; mechanism in _bmad-output/product/decisions/the-platform-fee-is-taken-at-purchase.md, PRD FR-15, FR-18"
     status: shipped
     note: >-
-      Write it as "currently 0%" and name it as the opening promotion. The rate
-      is a staff-changeable row (FR-33) and the checkout session fixes it at the
+      Write it as "currently 0%". Do not call it temporary or a promotion: the
+      rate holds for the long term, not a limited window. The rate is a
+      staff-changeable row (FR-33) and the checkout session fixes it at the
       moment checkout starts, so a page states the rate in force at the time of
       writing and points at the Billing screen for the next purchase. The launch
       rate was 2.5%; the mechanism is unchanged and only the row moved. Never
