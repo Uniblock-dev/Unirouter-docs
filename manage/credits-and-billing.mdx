@@ -178,7 +178,9 @@ If a line you are looking at carries none of these, nothing unusual happened to 
 <OwnerOnlyNote />
 
 Any member of a workspace may read the balance and the statement. Buying credit,
-managing the card, and setting the low credit notice are the owner's alone. A
+managing the card, and setting the low credit notice are the owner's alone, and the
+card controls are off the Billing screen at the moment (see
+[Buy credit](/manage/buy-credit)). A
 non-owner calling a billing route gets HTTP 403 with the sentence above, rather than
 a screen that lets them start something that will fail.
 
@@ -188,11 +190,10 @@ figures.
 
 ## Two things this product does not do
 
-**There is no automatic top up, not even as a disabled control.** Charging a card
-while nobody is at the keyboard is the highest trust action this product could take,
-and we are not taking it yet. The Billing screen says so in words where the other
-billing facts live, rather than leaving you to discover it when your card is never
-charged.
+**There is no automatic top up.** Charging a card while nobody is at the keyboard is
+the highest trust action this product could take, and we are not taking it yet.
+Nothing charges your card unless you buy credit yourself, and there is no setting
+that turns that on.
 
 **We never see your card number.** Our payment provider holds it. When a card is
 saved, the brand and the last four digits are read from them at the moment the screen
