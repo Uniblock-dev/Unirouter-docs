@@ -568,22 +568,40 @@
               "x-uniblock-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               },
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
               "x-request-id": {
                 "$ref": "#/responseHeaders/SdkRequestId"
               },
               "x-uniblock-provider": {
                 "$ref": "#/responseHeaders/Provider"
               },
+              "x-hopscotch-provider": {
+                "$ref": "#/responseHeaders/Provider"
+              },
               "x-uniblock-retry-attempt-count": {
+                "$ref": "#/responseHeaders/RetryAttemptCount"
+              },
+              "x-hopscotch-retry-attempt-count": {
                 "$ref": "#/responseHeaders/RetryAttemptCount"
               },
               "x-uniblock-cache-status": {
                 "$ref": "#/responseHeaders/CacheStatus"
               },
+              "x-hopscotch-cache-status": {
+                "$ref": "#/responseHeaders/CacheStatus"
+              },
               "x-uniblock-trace-id": {
                 "$ref": "#/responseHeaders/TraceId"
               },
+              "x-hopscotch-trace-id": {
+                "$ref": "#/responseHeaders/TraceId"
+              },
               "x-uniblock-served-via": {
+                "$ref": "#/responseHeaders/ServedVia"
+              },
+              "x-hopscotch-served-via": {
                 "$ref": "#/responseHeaders/ServedVia"
               }
             },
@@ -620,6 +638,9 @@
             "description": "The request cannot be served as sent. `code` is null for a missing parameter, with `param` naming it, `context_length_exceeded` for a request too large to price or serve in one call, and `provider_key_refused` when the request ran on your own key for a provider that rejected it or refused this particular call under it.",
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
             },
@@ -674,6 +695,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
               }
             },
             "content": {
@@ -697,6 +721,9 @@
             "description": "The request will not be paid for, and nothing was charged. Code `insufficient_credit` is the workspace being out of credit, which stops every key on it. Code `key_limit_exceeded` is the sending key reaching its own credit limit, which leaves every other key in the workspace serving normally; it is refused before any credit is held, and the message names what that key has settled and holds inside its current window.",
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
             },
@@ -739,6 +766,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
               }
             },
             "content": {
@@ -779,6 +809,9 @@
             "description": "The model cannot be served, and the two cases are told apart by `code`. `model_not_found` means the id is in no catalog at all, which is what a typo produces, so check the spelling or list what this key can call with `GET /v1/models`. `model_not_available` means the id is catalogued and is not being served right now, either on this endpoint or at all, so retrying later is worth more than changing the request. No provider was called either way.",
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
             },
@@ -833,6 +866,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
               }
             },
             "content": {
@@ -861,6 +897,9 @@
             "description": "A limit refused the request. `rate_limit_exceeded` is this key's own request rate and carries `Retry-After`. `spend_rate_exceeded` is the account spend rate cap, which counts the credit held for requests rather than the credit they settle at; send `max_tokens` to hold less. `provider_key_refused` is your own key for a provider being over its limit there; it clears on its own and carries no `Retry-After`. `upstream_rate_limited` is the model's provider rate-limiting the call: nothing about the request is wrong, nothing is charged, and it carries `Retry-After`.",
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               },
               "Retry-After": {
@@ -936,6 +975,9 @@
               "x-uniblock-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               },
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
               "Retry-After": {
                 "description": "Seconds to wait. Present the same way as on the 429 `upstream_rate_limited`.",
                 "schema": {
@@ -972,6 +1014,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
               }
             },
             "content": {
@@ -995,6 +1040,9 @@
             "description": "Ours rather than yours, and `code` names the condition. `paused_by_owner` clears only when somebody lifts the pause, so retrying on a timer will not help. `balance_unavailable` (we could not read the balance, so the request was refused rather than served unmetered), `model_not_priceable` and `model_pricing_unreadable` (a model we list could not be priced for this call) and `no_provider_configured` (we are not currently configured to serve this) all clear without you doing anything.",
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
             },
@@ -1036,6 +1084,9 @@
             "description": "The request ran past the request deadline and was terminated.",
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
             },
@@ -1095,6 +1146,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
               }
             },
             "content": {
@@ -1144,6 +1198,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
               }
             },
             "content": {
@@ -1167,6 +1224,9 @@
             "description": "A method other than GET on a path that exists. The route boundary answers this before any key is looked at, so it costs nothing and reveals nothing.",
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               },
               "Allow": {
@@ -1203,6 +1263,9 @@
               "x-uniblock-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               },
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
               "Retry-After": {
                 "description": "Seconds to wait.",
                 "schema": {
@@ -1234,6 +1297,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
               }
             },
             "content": {
@@ -1257,6 +1323,9 @@
             "description": "We are not currently configured to serve a model list. Retry later.",
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
             },
@@ -1318,6 +1387,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
               }
             },
             "content": {
@@ -1378,6 +1450,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
               }
             },
             "content": {
@@ -1402,6 +1477,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
               }
             },
             "content": {
@@ -1425,6 +1503,9 @@
             "description": "A method other than GET on a path that exists. The route boundary answers this before any key is looked at, so it costs nothing and reveals nothing.",
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               },
               "Allow": {
@@ -1461,6 +1542,9 @@
               "x-uniblock-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               },
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
               "Retry-After": {
                 "description": "Seconds to wait.",
                 "schema": {
@@ -1492,6 +1576,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
               }
             },
             "content": {
@@ -1515,6 +1602,9 @@
             "description": "The catalog could not be served. Nothing is wrong with the request; retry later.",
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
             },
@@ -1571,7 +1661,7 @@
                 "properties": {
                   "model": {
                     "type": "string",
-                    "description": "The model to call, which the live catalog has to offer for the responses family. A provider-pinned id, `{provider}/{that provider's own id}`, is split once on the first slash. A routing-profile slug, `profile/{identifier}`, tries that profile's models in your own order. `unirouter/auto` names whichever route your workspace made its default. A bare model id is refused with 400 and the code `model_id_not_pinned`. `GET /v1/models` lists the exact strings this key can call.",
+                    "description": "The model to call, which the live catalog has to offer for the responses family. A provider-pinned id, `{provider}/{that provider's own id}`, is split once on the first slash. A routing-profile slug, `profile/{identifier}`, tries that profile's models in your own order. `unirouter/auto`, or its second spelling `hopscotch/auto`, names whichever route your workspace made its default. A bare model id is refused with 400 and the code `model_id_not_pinned`. `GET /v1/models` lists the exact strings this key can call.",
                     "example": "openai/gpt-4o-mini"
                   },
                   "input": {
@@ -1615,22 +1705,40 @@
               "x-uniblock-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               },
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
               "x-request-id": {
                 "$ref": "#/responseHeaders/SdkRequestId"
               },
               "x-uniblock-provider": {
                 "$ref": "#/responseHeaders/Provider"
               },
+              "x-hopscotch-provider": {
+                "$ref": "#/responseHeaders/Provider"
+              },
               "x-uniblock-retry-attempt-count": {
+                "$ref": "#/responseHeaders/RetryAttemptCount"
+              },
+              "x-hopscotch-retry-attempt-count": {
                 "$ref": "#/responseHeaders/RetryAttemptCount"
               },
               "x-uniblock-cache-status": {
                 "$ref": "#/responseHeaders/CacheStatus"
               },
+              "x-hopscotch-cache-status": {
+                "$ref": "#/responseHeaders/CacheStatus"
+              },
               "x-uniblock-trace-id": {
                 "$ref": "#/responseHeaders/TraceId"
               },
+              "x-hopscotch-trace-id": {
+                "$ref": "#/responseHeaders/TraceId"
+              },
               "x-uniblock-served-via": {
+                "$ref": "#/responseHeaders/ServedVia"
+              },
+              "x-hopscotch-served-via": {
                 "$ref": "#/responseHeaders/ServedVia"
               }
             }
@@ -1639,6 +1747,9 @@
             "description": "The request cannot be served as sent. `unsupported_value` with `param` set to `store` is this endpoint's own refusal and is answered before admission, so nothing is held and no provider is called. `code` is null for a missing parameter, with `param` naming it. A refusal the provider made about this request is relayed with the provider's own status and its own sentence, quoted after the provider's name, so a parameter it does not accept reads as what it is rather than as a fault on this platform.",
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
             },
@@ -1693,6 +1804,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
               }
             },
             "content": {
@@ -1716,6 +1830,9 @@
             "description": "The request will not be paid for, and nothing was charged. Code `insufficient_credit` is the workspace being out of credit, which stops every key on it. Code `key_limit_exceeded` is the sending key reaching its own credit limit, which leaves every other key in the workspace serving normally; it is refused before any credit is held, and the message names what that key has settled and holds inside its current window.",
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
             },
@@ -1758,6 +1875,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
               }
             },
             "content": {
@@ -1798,6 +1918,9 @@
             "description": "The model cannot be served, and the two cases are told apart by `code`. `model_not_found` means the id is in no catalog at all, which is what a typo produces, so check the spelling or list what this key can call with `GET /v1/models`. `model_not_available` means the id is catalogued and is not being served right now, either on this endpoint or at all, so retrying later is worth more than changing the request. No provider was called either way.",
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
             },
@@ -1852,6 +1975,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
               }
             },
             "content": {
@@ -1880,6 +2006,9 @@
             "description": "A limit refused the request. `rate_limit_exceeded` is this key's own request rate and carries `Retry-After`. `spend_rate_exceeded` is the account spend rate cap, which counts the credit held for requests rather than the credit they settle at; send `max_tokens` to hold less. `provider_key_refused` is your own key for a provider being over its limit there; it clears on its own and carries no `Retry-After`.",
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               },
               "Retry-After": {
@@ -1942,6 +2071,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
               }
             },
             "content": {
@@ -1965,6 +2097,9 @@
             "description": "Ours rather than yours, and `code` names the condition. `paused_by_owner` clears only when somebody lifts the pause, so retrying on a timer will not help. `balance_unavailable` (we could not read the balance, so the request was refused rather than served unmetered), `model_not_priceable` and `model_pricing_unreadable` (a model we list could not be priced for this call) and `no_provider_configured` (we are not currently configured to serve this) all clear without you doing anything.",
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
             },
@@ -2006,6 +2141,9 @@
             "description": "The request ran past the request deadline and was terminated.",
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
             },

@@ -48,7 +48,7 @@ The `model` field accepts these three forms and nothing else:
 |---|---|
 | `provider/model` | That model, from that provider. If that provider cannot serve it, the request fails rather than moving to another host. The half after the slash is our name for the model on that provider, or a shorter name we hold for it. |
 | `profile/{identifier}` | A [routing profile](/features/routing-profiles) you built: your own `provider/model` lines, tried in your order. |
-| `unirouter/auto` | A fixed id that means [whichever route you made your default](/features/routing-profiles), and a list we publish for your cost tier until you have one. |
+| `unirouter/auto` | A fixed id that means [whichever route you made your default](/features/routing-profiles), and a list we publish for your cost tier until you have one. `hopscotch/auto` is accepted as a second spelling of it. |
 
 A bare id such as `gpt-4o-mini` is refused with `400` and the code `model_id_not_pinned`. The message
 names both forms and points you at `GET /v1/models`.
