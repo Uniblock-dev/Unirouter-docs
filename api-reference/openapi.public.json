@@ -42,7 +42,7 @@
                 "properties": {
                   "model": {
                     "type": "string",
-                    "description": "The model to call, in one of exactly two forms. A provider-pinned id, \"{provider}/{model}\", is split once on the FIRST slash: the part before it names one of the provider accounts this platform serves, and everything after it is this platform's public name for that model on that provider. That name is the provider's own id with the maker's namespace taken off, so Groq's \"openai/gpt-oss-120b\" is called as \"groq/gpt-oss-120b\"; the provider is still sent its own id, and the maker is published beside the id rather than inside it. A workspace routing-profile slug, \"profile/{identifier}\", is the other form: the platform then tries that profile's models in the customer's own order, and the usage record and the charge name whichever model actually served. A bare model id is refused with 400 and the code \"model_id_not_pinned\". GET /v1/models lists the exact strings this key can call, one per model and provider that serves it. A third string is accepted alongside them: \"unirouter/auto\", which names whichever routing profile the workspace made its default. It is a fixed id every workspace can send, so a client is configured once and the route behind it is changed later on the Routing screen without touching the calling code. It resolves through the same path a profile slug takes, so the usage record and the charge name whichever model actually served, and a workspace with no default route set is refused 404 \"model_not_available\" saying exactly that.",
+                    "description": "The model to call, in one of exactly two forms. A provider-pinned id, \"{provider}/{model}\", is split once on the FIRST slash: the part before it names one of the provider accounts this platform serves, and everything after it is this platform's public name for that model on that provider. That name is the provider's own id with the maker's namespace taken off, so Groq's \"openai/gpt-oss-120b\" is called as \"groq/gpt-oss-120b\"; the provider is still sent its own id, and the maker is published beside the id rather than inside it. A workspace routing-profile slug, \"profile/{identifier}\", is the other form: the platform then tries that profile's models in the customer's own order, and the usage record and the charge name whichever model actually served. A bare model id is refused with 400 and the code \"model_id_not_pinned\". GET /v1/models lists the exact strings this key can call, one per model and provider that serves it. A third string is accepted alongside them: \"unirouter/auto\" or \"hopscotch/auto\", which names whichever routing profile the workspace made its default. It is a fixed id every workspace can send, so a client is configured once and the route behind it is changed later on the Routing screen without touching the calling code. It resolves through the same path a profile slug takes, so the usage record and the charge name whichever model actually served, and a workspace with no default route set is refused 404 \"model_not_available\" saying exactly that.",
                     "example": "openai/gpt-4o-mini"
                   },
                   "messages": {
@@ -90,8 +90,26 @@
                   "example": "openai/gpt-4o-mini"
                 }
               },
+              "x-hopscotch-served-by": {
+                "description": "The current-brand spelling of x-uniblock-served-by.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/gpt-4o-mini"
+                }
+              },
               "x-uniblock-served-via": {
                 "description": "`backup` when the reseller of last resort answered in place of every credential of the named provider, because every one of them had refused (Story 23.5, decision 0023 clause 5). Absent on every other served reply, and never `direct`: a client that has never read this header sees nothing change about a request an ordinary key served.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "backup"
+                  ],
+                  "example": "backup"
+                },
+                "$ref": "#/components/headers/ServedVia"
+              },
+              "x-hopscotch-served-via": {
+                "description": "The current-brand spelling of x-uniblock-served-via.",
                 "schema": {
                   "type": "string",
                   "enum": [
@@ -104,19 +122,34 @@
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
               },
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              },
               "x-request-id": {
                 "$ref": "#/components/headers/SdkRequestId"
               },
               "x-uniblock-provider": {
                 "$ref": "#/components/headers/Provider"
               },
+              "x-hopscotch-provider": {
+                "$ref": "#/components/headers/Provider"
+              },
               "x-uniblock-retry-attempt-count": {
+                "$ref": "#/components/headers/RetryAttemptCount"
+              },
+              "x-hopscotch-retry-attempt-count": {
                 "$ref": "#/components/headers/RetryAttemptCount"
               },
               "x-uniblock-cache-status": {
                 "$ref": "#/components/headers/CacheStatus"
               },
+              "x-hopscotch-cache-status": {
+                "$ref": "#/components/headers/CacheStatus"
+              },
               "x-uniblock-trace-id": {
+                "$ref": "#/components/headers/TraceId"
+              },
+              "x-hopscotch-trace-id": {
                 "$ref": "#/components/headers/TraceId"
               }
             },
@@ -199,6 +232,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -222,6 +258,9 @@
             },
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
             }
@@ -264,6 +303,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -304,6 +346,9 @@
             },
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
             }
@@ -358,6 +403,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -387,6 +435,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -402,6 +453,9 @@
                 "example": 17
               },
               "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
             },
@@ -484,6 +538,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -525,6 +582,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -549,6 +609,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -556,6 +619,9 @@
             "description": "The model's provider answered `529` rather than `429`. Carries the same `upstream_rate_limited` code as the 429 case, with `type` `api_error` as the status class requires: nothing about the request is wrong, nothing is charged, and it carries `Retry-After`.",
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               },
               "Retry-After": {
@@ -659,6 +725,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -683,6 +752,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -700,6 +772,9 @@
                 "example": "GET"
               },
               "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
             },
@@ -733,6 +808,9 @@
               },
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
               }
             },
             "content": {
@@ -756,6 +834,9 @@
             "description": "A fault on our side. The request id is the one thing worth keeping.",
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
             },
@@ -796,6 +877,9 @@
             },
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
             }
@@ -935,6 +1019,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -958,6 +1045,9 @@
             },
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
             }
@@ -983,6 +1073,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -1000,6 +1093,9 @@
                 "example": "GET"
               },
               "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
             },
@@ -1033,6 +1129,9 @@
               },
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
               }
             },
             "content": {
@@ -1056,6 +1155,9 @@
             "description": "A fault on our side. The request id is the one thing worth keeping.",
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
             },
@@ -1097,6 +1199,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           }
@@ -1129,7 +1234,7 @@
                 "properties": {
                   "model": {
                     "type": "string",
-                    "description": "The model to call, which the live catalog has to offer for the responses family. A provider-pinned id, `{provider}/{that provider's own id}`, is split once on the first slash. A routing-profile slug, `profile/{identifier}`, tries that profile's models in your own order. `unirouter/auto` names whichever route your workspace made its default. A bare model id is refused with 400 and the code `model_id_not_pinned`. `GET /v1/models` lists the exact strings this key can call.",
+                    "description": "The model to call, which the live catalog has to offer for the responses family. A provider-pinned id, `{provider}/{that provider's own id}`, is split once on the first slash. A routing-profile slug, `profile/{identifier}`, tries that profile's models in your own order. `unirouter/auto`, or its second spelling `hopscotch/auto`, names whichever route your workspace made its default. A bare model id is refused with 400 and the code `model_id_not_pinned`. `GET /v1/models` lists the exact strings this key can call.",
                     "example": "openai/gpt-4o-mini"
                   },
                   "input": {
@@ -1182,8 +1287,26 @@
                   "example": "openai/gpt-4o-mini"
                 }
               },
+              "x-hopscotch-served-by": {
+                "description": "The current-brand spelling of x-uniblock-served-by.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/gpt-4o-mini"
+                }
+              },
               "x-uniblock-served-via": {
                 "description": "`backup` when the reseller of last resort answered in place of every credential of the named provider, because every one of them had refused (Story 23.5, decision 0023 clause 5). Absent on every other served reply, and never `direct`: a client that has never read this header sees nothing change about a request an ordinary key served.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "backup"
+                  ],
+                  "example": "backup"
+                },
+                "$ref": "#/components/headers/ServedVia"
+              },
+              "x-hopscotch-served-via": {
+                "description": "The current-brand spelling of x-uniblock-served-via.",
                 "schema": {
                   "type": "string",
                   "enum": [
@@ -1196,19 +1319,34 @@
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
               },
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              },
               "x-request-id": {
                 "$ref": "#/components/headers/SdkRequestId"
               },
               "x-uniblock-provider": {
                 "$ref": "#/components/headers/Provider"
               },
+              "x-hopscotch-provider": {
+                "$ref": "#/components/headers/Provider"
+              },
               "x-uniblock-retry-attempt-count": {
+                "$ref": "#/components/headers/RetryAttemptCount"
+              },
+              "x-hopscotch-retry-attempt-count": {
                 "$ref": "#/components/headers/RetryAttemptCount"
               },
               "x-uniblock-cache-status": {
                 "$ref": "#/components/headers/CacheStatus"
               },
+              "x-hopscotch-cache-status": {
+                "$ref": "#/components/headers/CacheStatus"
+              },
               "x-uniblock-trace-id": {
+                "$ref": "#/components/headers/TraceId"
+              },
+              "x-hopscotch-trace-id": {
                 "$ref": "#/components/headers/TraceId"
               }
             }
@@ -1263,6 +1401,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -1286,6 +1427,9 @@
             },
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
             }
@@ -1328,6 +1472,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -1368,6 +1515,9 @@
             },
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
             }
@@ -1422,6 +1572,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -1451,6 +1604,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -1466,6 +1622,9 @@
                 "example": 17
               },
               "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
             },
@@ -1536,6 +1695,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -1577,6 +1739,9 @@
             "headers": {
               "x-uniblock-request-id": {
                 "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -1600,6 +1765,9 @@
             },
             "headers": {
               "x-uniblock-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
             }

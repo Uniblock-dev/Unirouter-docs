@@ -18,9 +18,10 @@ import RequestIdNote from '/snippets/request-id-note.mdx';
 
 Two rules about everything else you send:
 
-- **`x-uniblock-*` request headers are reserved.** We remove every inbound header
-  in that namespace before doing anything with your request. Sending one has no
-  effect, and no header you send can change how a request is routed or served.
+- **`x-uniblock-*` and `x-hopscotch-*` request headers are reserved.** We remove
+  every inbound header in either namespace before doing anything with your
+  request. Sending one has no effect, and no header you send can change how a
+  request is routed or served.
 - **Your headers do not reach the model provider.** The upstream request is built
   from your body, and from nothing else you sent. If a parameter matters to a
   provider, send it in the body, which is forwarded as you wrote it.
@@ -38,6 +39,12 @@ Two rules about everything else you send:
 | `x-uniblock-cache-status` | On a served response | Whether the answer came from cache rather than from the model. |
 | `x-uniblock-trace-id` | On a served response | A secondary diagnostic id. Support asks for `x-uniblock-request-id`. |
 | `x-uniblock-served-via` | Only when a backup route served the request | The single value `backup`. Absent on every other response. |
+
+**Every response header above that begins `x-uniblock-` is also sent under
+`x-hopscotch-`**, with the same value, on the same responses. The two spellings
+are the same header: read whichever you prefer, and read only one. The
+`x-uniblock-` spelling is not going away, so nothing you already parse has to
+change.
 
 The diagnostic headers are set when there is something to say and are absent
 otherwise. Treat them as diagnostics: read them in logs, do not build behaviour
