@@ -87,9 +87,9 @@ claims:
       entries stay, because a rate above zero parts them again.
 
   - id: minimum-purchase
-    value: "$30"
+    value: "$5"
     means: "The smallest credit purchase, expressed in credit granted."
-    source: "_bmad-output/product/decisions/epic-4-open-questions-resolved-2026-08-18.md; PRD FR-14"
+    source: "services/control-plane/src/money/checkout.ts (MINIMUM_CREDIT_MINOR = 500); _bmad-output/product/decisions/epic-4-open-questions-resolved-2026-08-18.md, amended 2026-09-14; PRD FR-14"
     status: shipped
 
   - id: keys-per-workspace
@@ -359,11 +359,11 @@ claims:
     status: shipped
 
   - id: minimum-purchase-decimal
-    value: "30.00"
+    value: "5.00"
     means: "The smallest credit purchase, written with cents."
-    source: "_bmad-output/product/decisions/epic-4-open-questions-resolved-2026-08-18.md; PRD FR-14"
+    source: "services/control-plane/src/money/checkout.ts (MINIMUM_CREDIT_MINOR = 500); _bmad-output/product/decisions/epic-4-open-questions-resolved-2026-08-18.md, amended 2026-09-14; PRD FR-14"
     status: shipped
-    note: "The same figure as minimum-purchase, which is registered as $30."
+    note: "The same figure as minimum-purchase, which is registered as $5. It fell from 30.00 on 2026-09-14 (#897), on the owner's instruction and with the loss per top-up accepted knowingly."
 
   - id: minor-unit-dollar-example
     value: "1.00"
