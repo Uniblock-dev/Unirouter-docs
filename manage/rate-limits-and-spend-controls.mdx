@@ -20,7 +20,7 @@ attempted too quickly" from "this key is done" without asking us.
 | Status | `code` | What ran out | What to do |
 |---|---|---|---|
 | 429 | `rate_limit_exceeded` | This key's request rate. | Wait the number of seconds in `Retry-After`. |
-| 429 | `spend_rate_exceeded` | Your spend rate cap, which counts money reserved rather than money spent. | Wait up to 60 seconds, or send `max_tokens`. See below. |
+| 429 | `spend_rate_exceeded` | Your spend rate cap, which counts money reserved rather than money spent. | Wait `Retry-After` seconds, up to 60, or send `max_tokens`. See below. |
 | 429 | `upstream_rate_limited` | Nothing of yours. The model's provider rate-limited the call. | Wait the number of seconds in `Retry-After`. Nothing about the request is wrong and nothing is charged. |
 | 413 | `payload_too_large` | Nothing. The request body is over the 8388608 byte maximum this API accepts. | Send fewer messages, a shorter prompt, or fewer inputs. |
 | 402 | `insufficient_credit` | Available credit at admission. | Buy credit. |
@@ -85,6 +85,10 @@ refused with HTTP 429 and code `spend_rate_exceeded`:
 
 It clears itself. Sixty seconds after the earliest reservation counted, requests are
 admitted again, with nothing for you to do in the meantime and nothing to reset.
+
+The refusal carries `Retry-After` in whole seconds, computed from that same earliest
+reservation, so the header and the sentence in the message name the same wait. A
+client that backs off on `Retry-After` needs no special case for this code.
 
 ### What it counts, which is not what you spent
 

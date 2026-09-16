@@ -70,7 +70,7 @@ were.
 The spend rate cap limits how much money may be **reserved** per rolling 60 seconds.
 The default is 5000 minor units. Over it, requests are refused with HTTP 429 and code
 `spend_rate_exceeded`, and they are admitted again within 60 seconds with nothing for
-you to do.
+you to do. The refusal carries `Retry-After` in whole seconds.
 
 Read [Rate limits and spend controls](/manage/rate-limits-and-spend-controls) first
 if you have not: the cap counts estimated maximums rather than money spent, and

@@ -33,7 +33,7 @@ Two rules about everything else you send:
 | `content-type` | Always | `application/json`, or `text/event-stream` for a streamed response. |
 | `x-uniblock-request-id` | Always | The id of this request. Quote it to support. |
 | `x-request-id` | Always | The same value, on the header the official OpenAI SDKs surface on their error objects. |
-| `Retry-After` | On a `429` with code `rate_limit_exceeded` | Seconds to wait before retrying. Not sent on other refusals. |
+| `Retry-After` | On a `429` with code `rate_limit_exceeded`, `spend_rate_exceeded` or `upstream_rate_limited` | Whole seconds to wait before retrying. Not sent on other refusals, and not sent on `provider_key_refused`. |
 | `x-uniblock-provider` | On a served response | Which provider family answered. |
 | `x-uniblock-retry-attempt-count` | On a served response | How many attempts it took to get this answer. A reply that took longer than usual may have taken more than one. |
 | `x-uniblock-cache-status` | On a served response | Whether the answer came from cache rather than from the model. |
