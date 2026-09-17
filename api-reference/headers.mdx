@@ -31,26 +31,34 @@ Two rules about everything else you send:
 | Header | When | What it is |
 |---|---|---|
 | `content-type` | Always | `application/json`, or `text/event-stream` for a streamed response. |
-| `x-uniblock-request-id` | Always | The id of this request. Quote it to support. |
+| `x-hopscotch-request-id` | Always | The id of this request. Quote it to support. |
 | `x-request-id` | Always | The same value, on the header the official OpenAI SDKs surface on their error objects. |
 | `Retry-After` | On a `429` with code `rate_limit_exceeded`, `spend_rate_exceeded` or `upstream_rate_limited` | Whole seconds to wait before retrying. Not sent on other refusals, and not sent on `provider_key_refused`. |
-| `x-uniblock-provider` | On a served response | Which provider family answered. |
-| `x-uniblock-retry-attempt-count` | On a served response | How many attempts it took to get this answer. A reply that took longer than usual may have taken more than one. |
-| `x-uniblock-cache-status` | On a served response | Whether the answer came from cache rather than from the model. |
-| `x-uniblock-trace-id` | On a served response | A secondary diagnostic id. Support asks for `x-uniblock-request-id`. |
-| `x-uniblock-served-via` | Only when a backup route served the request | The single value `backup`. Absent on every other response. |
+| `x-hopscotch-provider` | On a served response | Which provider family answered. |
+| `x-hopscotch-retry-attempt-count` | On a served response | How many attempts it took to get this answer. A reply that took longer than usual may have taken more than one. |
+| `x-hopscotch-cache-status` | On a served response | Whether the answer came from cache rather than from the model. |
+| `x-hopscotch-trace-id` | On a served response | A secondary diagnostic id. Support asks for `x-hopscotch-request-id`. |
+| `x-hopscotch-served-by` | On a served response | The full id, `{provider}/{model}`, of the model that actually answered: the id you pinned, or the member of the routing profile that served. On a stream it is the only place that id appears. |
+| `x-hopscotch-served-via` | Only when a backup route served the request | The single value `backup`. Absent on every other response. |
 
-**Every response header above that begins `x-uniblock-` is also sent under
-`x-hopscotch-`**, with the same value, on the same responses. The two spellings
-are the same header: read whichever you prefer, and read only one. The
-`x-uniblock-` spelling is not going away, so nothing you already parse has to
-change.
+<Warning>
+  **The `x-uniblock-` spelling of every response header above was retired on
+  2026-09-14, and is no longer sent.** Each of these headers went out under both
+  an `x-uniblock-` and an `x-hopscotch-` name for a time. Only the
+  `x-hopscotch-` name is written now. If your code reads `x-uniblock-request-id`
+  or any other `x-uniblock-` response header, read the `x-hopscotch-` name
+  instead. For the request id there is a second option that never moved and
+  never will: `x-request-id`, which the official OpenAI SDKs already surface.
+
+  This does not change what you **send**. Request headers in either namespace
+  are still reserved and still stripped, exactly as described above.
+</Warning>
 
 The diagnostic headers are set when there is something to say and are absent
 otherwise. Treat them as diagnostics: read them in logs, do not build behaviour
 on them, and expect the set to grow.
 
-### `x-uniblock-served-via`
+### `x-hopscotch-served-via`
 
 Most requests never carry this header. When one does, its value is `backup` and
 it says one thing: this particular answer came back through a backup route

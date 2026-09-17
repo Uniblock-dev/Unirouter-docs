@@ -23,7 +23,7 @@ Three properties of this body are worth stating because clients depend on them:
   `null` rather than omitted, so a missing field never has to be told apart from
   a null one.
 - `request_id` is stamped on every error body, whatever produced the error. It is
-  the same value as the `x-uniblock-request-id` and `x-request-id` response
+  the same value as the `x-hopscotch-request-id` and `x-request-id` response
   headers.
 - No other field appears inside `error`. Nothing about our internals travels in
   an error body, and a body that would carry anything else is replaced before it
@@ -178,7 +178,7 @@ client can always tell "never started" from "cut off part way".
 
 The `request_deadline_exceeded` line is the one error body on this API without a
 `request_id`: it is written after the response has left the point that stamps the
-id. Read the id from the `x-uniblock-request-id` response header instead.
+id. Read the id from the `x-hopscotch-request-id` response header instead.
 
 A non-streamed response that we terminate part way through does not receive an
 error body. There is nowhere to put one, so the connection errors instead. Treat a
