@@ -236,13 +236,18 @@ claims:
       internal unit; a customer reads a percentage. Prefer 0% in prose.
 
   - id: spend-cap-minimum
-    value: "100"
+    value: "1"
     means: "The smallest spend rate cap a customer may set, in minor units."
     source: "services/control-plane/src/money/balance.ts (MIN_SPEND_CAP_MINOR)"
     status: shipped
     note: >-
       A cap of zero is refused and the refusal says why: stopping requests
-      entirely is what the pause is for, and it has its own control.
+      entirely is what the pause is for, and it has its own control. The floor
+      fell from 100 to 1 on 2026-09-18 (#1106, Story 4.40), on the owner's
+      ruling that a spend limit is any amount from $0.01. The figure a customer
+      types is still a whole number of minor units: only the refusal sentences
+      moved to dollars in that change, and the rename of the field itself is
+      Story 4.38, which has not merged.
 
   - id: spend-cap-maximum
     value: "100000"
@@ -376,6 +381,17 @@ claims:
     means: "The default spend rate cap expressed in dollars rather than minor units."
     source: "services/control-plane/src/money/spendCap.ts; the same figure as spend-cap-default, which is 5000 minor units"
     status: shipped
+
+  - id: spend-cap-minimum-decimal
+    value: "0.01"
+    means: "The smallest spend rate cap a customer may set, expressed in dollars rather than minor units."
+    source: "services/control-plane/src/money/balance.ts (MIN_SPEND_CAP_MINOR = 1); the same figure as spend-cap-minimum, which is 1 minor unit"
+    status: shipped
+    note: >-
+      The floor fell from 100 minor units to 1 on 2026-09-18 (#1106, Story
+      4.40), on the owner's ruling that a spend limit is any amount from one
+      cent. The refusal sentences the control plane sends now quote the dollar
+      form, which is why this figure is registered beside the minor-unit one.
 
   - id: key-secret-hidden-chars
     value: "39"
