@@ -97,7 +97,7 @@ on, and the per-key one carries `Retry-After`. See
 [Rate limits and spend controls](/manage/rate-limits-and-spend-controls).
 
 **One extra line on a stream.** A streamed reply carries a
-`:x-uniblock-usage` comment line immediately before `data: [DONE]`. The
+`:x-hopscotch-usage` comment line immediately before `data: [DONE]`. The
 server-sent events specification requires a parser to ignore a line starting
 with a colon, so a conforming client never sees it. See
 [Streaming](/features/streaming).

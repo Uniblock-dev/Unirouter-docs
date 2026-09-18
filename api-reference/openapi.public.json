@@ -81,7 +81,7 @@
         },
         "responses": {
           "200": {
-            "description": "The completion. A response that is not streamed carries the provider's token counts in its own `usage` object. Its `model` field echoes the slug you asked for rather than the provider's internal name, except in three cases that are returned as the provider sent them: a streamed reply, whose frames are passed through unchanged; a request naming a routing profile, which names a chain rather than one model; and a successful body carrying no string `model` field at all.\n\nWhen `stream` is true the body is `text/event-stream` instead, and the counts arrive on a `:x-uniblock-usage` comment line immediately before `data: [DONE]`; the server-sent events specification requires parsers to ignore comment lines, so an SDK never sees it.",
+            "description": "The completion. A response that is not streamed carries the provider's token counts in its own `usage` object. Its `model` field echoes the slug you asked for rather than the provider's internal name, except in three cases that are returned as the provider sent them: a streamed reply, whose frames are passed through unchanged; a request naming a routing profile, which names a chain rather than one model; and a successful body carrying no string `model` field at all.\n\nWhen `stream` is true the body is `text/event-stream` instead, and the counts arrive on a `:x-hopscotch-usage` comment line immediately before `data: [DONE]`; the server-sent events specification requires parsers to ignore comment lines, so an SDK never sees it.",
             "headers": {
               "x-hopscotch-served-by": {
                 "description": "The full id, \"{provider}/{model}\", of the model that actually answered: the pinned id when the request named one directly, or the routing-profile chain member that served when the request named a profile.",
@@ -1174,7 +1174,7 @@
         },
         "responses": {
           "200": {
-            "description": "The model response, in the Responses format, forwarded as the provider sent it.\n\nWhen `stream` is true the body is `text/event-stream` instead, and the token counts arrive on a `:x-uniblock-usage` comment line immediately before the stream ends; the server-sent events specification requires parsers to ignore comment lines, so an SDK never sees it.",
+            "description": "The model response, in the Responses format, forwarded as the provider sent it.\n\nWhen `stream` is true the body is `text/event-stream` instead, and the token counts arrive on a `:x-hopscotch-usage` comment line immediately before the stream ends; the server-sent events specification requires parsers to ignore comment lines, so an SDK never sees it.",
             "headers": {
               "x-hopscotch-served-by": {
                 "description": "The full id, \"{provider}/{model}\", of the model that actually answered: the pinned id when the request named one directly, or the routing-profile chain member that served when the request named a profile.",
@@ -1708,7 +1708,7 @@
           "stream_options": {
             "type": "object",
             "additionalProperties": true,
-            "description": "OpenAI stream options. Set `include_usage` to receive OpenAI's own usage chunk in the stream. Hopscotch's own counts arrive separately on the :x-uniblock-usage comment line either way.",
+            "description": "OpenAI stream options. Set `include_usage` to receive OpenAI's own usage chunk in the stream. Hopscotch's own counts arrive separately on the :x-hopscotch-usage comment line either way.",
             "properties": {
               "include_usage": {
                 "type": "boolean"

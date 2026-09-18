@@ -36,11 +36,11 @@ places.
 **In the reply body**, on a response that is not streamed, inside the provider's
 own `usage` object, in whatever spelling that provider uses.
 
-**On the stream**, as two fields on the `:x-uniblock-usage` comment line written
+**On the stream**, as two fields on the `:x-hopscotch-usage` comment line written
 immediately before `data: [DONE]`:
 
 ```text
-:x-uniblock-usage {"v":1,"reported":true,"prompt_tokens":1200,"completion_tokens":80,"total_tokens":1280,"cache_read_input_tokens":1024,"cache_write_input_tokens":0}
+:x-hopscotch-usage {"v":1,"reported":true,"prompt_tokens":1200,"completion_tokens":80,"total_tokens":1280,"cache_read_input_tokens":1024,"cache_write_input_tokens":0}
 ```
 
 | Field | What it counts |

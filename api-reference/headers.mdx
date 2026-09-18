@@ -90,7 +90,7 @@ the counts are only final at the end. So a streamed response carries one extra
 line, immediately before its terminating `data: [DONE]`:
 
 ```
-:x-uniblock-usage {"v":1,"reported":true,"prompt_tokens":12,"completion_tokens":8,"total_tokens":20}
+:x-hopscotch-usage {"v":1,"reported":true,"prompt_tokens":12,"completion_tokens":8,"total_tokens":20}
 
 data: [DONE]
 ```
@@ -101,6 +101,18 @@ to any conforming client. It is there for anybody who wants the counts without
 waiting for them to appear in the dashboard.
 
 <UsageHeader />
+
+<Warning>
+  **The usage comment line was `:x-uniblock-usage` until 2026-09-18 and is now
+  `:x-hopscotch-usage`.** The line's position, its JSON value and every field in
+  it are unchanged; only the name after the colon moved, completing the
+  retirement the response headers went through on 2026-09-14. There is no
+  transition period on this one: a stream carries the new name alone. If you
+  match the line by prefix, match `:x-hopscotch-usage`. Most readers are
+  unaffected, because the specification requires a conforming client to ignore
+  any line beginning with a colon.
+</Warning>
+
 
 Where to read the counts, stated once so there is no doubt: on a streamed
 response, the comment line above. On a response that is not streamed, the `usage`
