@@ -293,10 +293,13 @@ function auditArtifact(artifact, report) {
         if (json && !hasExample(json)) {
           report.fail(`${where} ${status}`, 'response has content with no example.');
         }
-        if (!response.headers?.['x-uniblock-request-id']) {
+        // The legacy x-uniblock-request-id spelling was retired on 2026-09-14, full
+        // retirement with breaking changes accepted, so this gate names the header the
+        // platform actually writes. See DOCS_PLAN section 14 item 39.
+        if (!response.headers?.['x-hopscotch-request-id']) {
           report.fail(
             `${where} ${status}`,
-            'does not document x-uniblock-request-id. It is on every response, errors included, and it is the one thing support needs.'
+            'does not document x-hopscotch-request-id. It is on every response, errors included, and it is the one thing support needs.'
           );
         }
       }

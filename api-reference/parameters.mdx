@@ -65,6 +65,13 @@ This cuts both ways, and the second half is the half worth planning for:
   refusal relayed with its own status and its own sentence. We do not pre-empt it
   with a refusal of our own, and we do not translate it.
 
+  There is one exception, and it is a single value rather than a field: an empty
+  or whitespace-only `reasoning_effort` is refused here with a `400`, `code`
+  `invalid_value` and `param` set to `reasoning_effort`. It is the one value no
+  provider accepts, so relaying it would spend a round trip to be told the same
+  thing. Any other `reasoning_effort` you send, string or otherwise, is
+  forwarded. See [Reasoning models](/features/reasoning).
+
 So a `400` on a chat completion has two possible authors. Ours name a `param` and
 come from the short list below. Everything else on that status came from the
 provider and reads like the provider.

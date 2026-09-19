@@ -73,8 +73,7 @@ provider rate-limiting the call. Back off for the first. For the second, sending
 `max_tokens` lowers what each request reserves; see
 [Rate limits and spend controls](/manage/rate-limits-and-spend-controls). The
 third is not your allowance and not your cap: nothing about the request is wrong
-and nothing is charged for it. `rate_limit_exceeded` and `upstream_rate_limited`
-both carry `Retry-After` in whole seconds.
+and nothing is charged for it. All three carry `Retry-After` in whole seconds.
 
 **The body was too large.** `413` with `payload_too_large`. The maximum request
 body this API accepts is 8388608 bytes, eight mebibytes, and a larger one is
@@ -118,8 +117,10 @@ from it rather than from a description of what the screen said.
 - `401`, `402`, `400`: do not retry unchanged. Change the key, the credit, or the
   request.
 - `429` with `rate_limit_exceeded`: retry after `Retry-After` seconds.
-- `429` with `spend_rate_exceeded`: retry, and consider sending `max_tokens` so
-  each request reserves less.
+- `429` with `spend_rate_exceeded`: retry after `Retry-After` seconds, and
+  consider sending `max_tokens` so each request reserves less. The figure is the
+  wait until the window has no counted reservation left, so it agrees with the
+  wait the message names.
 - `429` with `upstream_rate_limited`: retry after `Retry-After` seconds. The
   figure is one we compute rather than the provider's header passed through:
   their number where they sent one, held between one and sixty seconds, and five

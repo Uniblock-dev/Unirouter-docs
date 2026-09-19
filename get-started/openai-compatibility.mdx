@@ -126,7 +126,7 @@ All three differences are additions to an otherwise unchanged OpenAI response.
 
 ### The request id
 
-Every response, success or error, carries `x-uniblock-request-id`, and the same
+Every response, success or error, carries `x-hopscotch-request-id`, and the same
 value on `x-request-id`, which is the header the OpenAI SDKs already read. On an
 error, the id also appears as `request_id` inside the `error` object. That fifth
 field inside `error` is the one shape difference from OpenAI's envelope, and it
@@ -140,10 +140,16 @@ These are the ones that ship today:
 
 | Header | What it says |
 |---|---|
-| `x-uniblock-provider` | Which provider family answered. |
-| `x-uniblock-retry-attempt-count` | How many attempts it took, so a slow success has a visible reason. |
-| `x-uniblock-cache-status` | Whether the reply came from cache rather than from the provider. |
-| `x-uniblock-trace-id` | A second internal id, distinct from your request id. |
+| `x-hopscotch-provider` | Which provider family answered. |
+| `x-hopscotch-retry-attempt-count` | How many attempts it took, so a slow success has a visible reason. |
+| `x-hopscotch-cache-status` | Whether the reply came from cache rather than from the provider. |
+| `x-hopscotch-trace-id` | A second internal id, distinct from your request id. |
+| `x-hopscotch-served-by` | The full id, `{provider}/{model}`, of the model that actually answered. |
+
+Each of these, and the request id above, was also sent under an `x-uniblock-`
+name until 2026-09-14. That spelling was retired and is no longer written, so
+read the `x-hopscotch-` name, or `x-request-id` for the id. See
+[Headers](/api-reference/headers).
 
 Nothing else the provider sets travels onward. That is deliberate rather than
 incidental, and it has one consequence you will notice: **provider rate limit
@@ -159,7 +165,7 @@ A streamed reply carries one extra line immediately before `data: [DONE]`,
 starting with a colon:
 
 ```text
-:x-uniblock-usage {"v":1,...}
+:x-hopscotch-usage {"v":1,...}
 ```
 
 The SSE specification requires a parser to ignore a line starting with a colon,

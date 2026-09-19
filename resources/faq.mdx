@@ -118,7 +118,8 @@ refusal. See [Errors](/api-reference/errors).
 
 <Accordion title="What is the difference between the 429 codes?">
 `rate_limit_exceeded` is your key's request rate, and it carries `Retry-After`.
-`spend_rate_exceeded` is your account spend rate cap, and the lever for it is
+`spend_rate_exceeded` is your account spend rate cap, which also carries
+`Retry-After`, and the lever for it is
 sending `max_tokens`. See
 [Rate limits and spend controls](/manage/rate-limits-and-spend-controls).
 </Accordion>
@@ -166,7 +167,7 @@ that applies to you. Your own limits arrive as `429` codes you can branch on. Se
 </Accordion>
 
 <Accordion title="What should I include when I ask about a request?">
-The request id. It is on every response on `x-uniblock-request-id` and on
+The request id. It is on every response on `x-hopscotch-request-id` and on
 `x-request-id`, and inside every error body as `request_id`. Quote it rather than
 describing the symptom.
 </Accordion>

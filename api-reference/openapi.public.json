@@ -81,23 +81,17 @@
         },
         "responses": {
           "200": {
-            "description": "The completion. A response that is not streamed carries the provider's token counts in its own `usage` object. Its `model` field echoes the slug you asked for rather than the provider's internal name, except in three cases that are returned as the provider sent them: a streamed reply, whose frames are passed through unchanged; a request naming a routing profile, which names a chain rather than one model; and a successful body carrying no string `model` field at all.\n\nWhen `stream` is true the body is `text/event-stream` instead, and the counts arrive on a `:x-uniblock-usage` comment line immediately before `data: [DONE]`; the server-sent events specification requires parsers to ignore comment lines, so an SDK never sees it.",
+            "description": "The completion. A response that is not streamed carries the provider's token counts in its own `usage` object. Its `model` field echoes the slug you asked for rather than the provider's internal name, except in three cases that are returned as the provider sent them: a streamed reply, whose frames are passed through unchanged; a request naming a routing profile, which names a chain rather than one model; and a successful body carrying no string `model` field at all.\n\nWhen `stream` is true the body is `text/event-stream` instead, and the counts arrive on a `:x-hopscotch-usage` comment line immediately before `data: [DONE]`; the server-sent events specification requires parsers to ignore comment lines, so an SDK never sees it.",
             "headers": {
-              "x-uniblock-served-by": {
+              "x-hopscotch-served-by": {
                 "description": "The full id, \"{provider}/{model}\", of the model that actually answered: the pinned id when the request named one directly, or the routing-profile chain member that served when the request named a profile.",
                 "schema": {
                   "type": "string",
                   "example": "openai/gpt-4o-mini"
-                }
+                },
+                "$ref": "#/components/headers/ServedBy"
               },
-              "x-hopscotch-served-by": {
-                "description": "The current-brand spelling of x-uniblock-served-by.",
-                "schema": {
-                  "type": "string",
-                  "example": "openai/gpt-4o-mini"
-                }
-              },
-              "x-uniblock-served-via": {
+              "x-hopscotch-served-via": {
                 "description": "`backup` when the reseller of last resort answered in place of every credential of the named provider, because every one of them had refused (Story 23.5, decision 0023 clause 5). Absent on every other served reply, and never `direct`: a client that has never read this header sees nothing change about a request an ordinary key served.",
                 "schema": {
                   "type": "string",
@@ -108,46 +102,20 @@
                 },
                 "$ref": "#/components/headers/ServedVia"
               },
-              "x-hopscotch-served-via": {
-                "description": "The current-brand spelling of x-uniblock-served-via.",
-                "schema": {
-                  "type": "string",
-                  "enum": [
-                    "backup"
-                  ],
-                  "example": "backup"
-                },
-                "$ref": "#/components/headers/ServedVia"
-              },
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               },
               "x-request-id": {
                 "$ref": "#/components/headers/SdkRequestId"
               },
-              "x-uniblock-provider": {
-                "$ref": "#/components/headers/Provider"
-              },
               "x-hopscotch-provider": {
                 "$ref": "#/components/headers/Provider"
-              },
-              "x-uniblock-retry-attempt-count": {
-                "$ref": "#/components/headers/RetryAttemptCount"
               },
               "x-hopscotch-retry-attempt-count": {
                 "$ref": "#/components/headers/RetryAttemptCount"
               },
-              "x-uniblock-cache-status": {
-                "$ref": "#/components/headers/CacheStatus"
-              },
               "x-hopscotch-cache-status": {
                 "$ref": "#/components/headers/CacheStatus"
-              },
-              "x-uniblock-trace-id": {
-                "$ref": "#/components/headers/TraceId"
               },
               "x-hopscotch-trace-id": {
                 "$ref": "#/components/headers/TraceId"
@@ -230,9 +198,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -257,9 +222,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -301,9 +263,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -345,9 +304,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -401,9 +357,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -433,9 +386,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -451,9 +401,6 @@
                 },
                 "description": "Seconds to wait. Present on `rate_limit_exceeded` and on `upstream_rate_limited`.",
                 "example": 17
-              },
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
               },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
@@ -536,9 +483,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -580,9 +524,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -607,9 +548,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -618,9 +556,6 @@
           "529": {
             "description": "The model's provider answered `529` rather than `429`. Carries the same `upstream_rate_limited` code as the 429 case, with `type` `api_error` as the status class requires: nothing about the request is wrong, nothing is charged, and it carries `Retry-After`.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               },
@@ -723,9 +658,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -750,9 +682,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -770,9 +699,6 @@
                 },
                 "description": "The methods this path accepts.",
                 "example": "GET"
-              },
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
               },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
@@ -806,9 +732,6 @@
                 "example": 17,
                 "description": "Seconds to wait."
               },
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -833,9 +756,6 @@
           "500": {
             "description": "A fault on our side. The request id is the one thing worth keeping.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -876,9 +796,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -1017,9 +934,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -1044,9 +958,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -1071,9 +982,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -1091,9 +999,6 @@
                 },
                 "description": "The methods this path accepts.",
                 "example": "GET"
-              },
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
               },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
@@ -1127,9 +1032,6 @@
                 "example": 17,
                 "description": "Seconds to wait."
               },
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -1154,9 +1056,6 @@
           "500": {
             "description": "A fault on our side. The request id is the one thing worth keeping.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -1197,9 +1096,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -1278,23 +1174,17 @@
         },
         "responses": {
           "200": {
-            "description": "The model response, in the Responses format, forwarded as the provider sent it.\n\nWhen `stream` is true the body is `text/event-stream` instead, and the token counts arrive on a `:x-uniblock-usage` comment line immediately before the stream ends; the server-sent events specification requires parsers to ignore comment lines, so an SDK never sees it.",
+            "description": "The model response, in the Responses format, forwarded as the provider sent it.\n\nWhen `stream` is true the body is `text/event-stream` instead, and the token counts arrive on a `:x-hopscotch-usage` comment line immediately before the stream ends; the server-sent events specification requires parsers to ignore comment lines, so an SDK never sees it.",
             "headers": {
-              "x-uniblock-served-by": {
+              "x-hopscotch-served-by": {
                 "description": "The full id, \"{provider}/{model}\", of the model that actually answered: the pinned id when the request named one directly, or the routing-profile chain member that served when the request named a profile.",
                 "schema": {
                   "type": "string",
                   "example": "openai/gpt-4o-mini"
-                }
+                },
+                "$ref": "#/components/headers/ServedBy"
               },
-              "x-hopscotch-served-by": {
-                "description": "The current-brand spelling of x-uniblock-served-by.",
-                "schema": {
-                  "type": "string",
-                  "example": "openai/gpt-4o-mini"
-                }
-              },
-              "x-uniblock-served-via": {
+              "x-hopscotch-served-via": {
                 "description": "`backup` when the reseller of last resort answered in place of every credential of the named provider, because every one of them had refused (Story 23.5, decision 0023 clause 5). Absent on every other served reply, and never `direct`: a client that has never read this header sees nothing change about a request an ordinary key served.",
                 "schema": {
                   "type": "string",
@@ -1305,46 +1195,20 @@
                 },
                 "$ref": "#/components/headers/ServedVia"
               },
-              "x-hopscotch-served-via": {
-                "description": "The current-brand spelling of x-uniblock-served-via.",
-                "schema": {
-                  "type": "string",
-                  "enum": [
-                    "backup"
-                  ],
-                  "example": "backup"
-                },
-                "$ref": "#/components/headers/ServedVia"
-              },
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               },
               "x-request-id": {
                 "$ref": "#/components/headers/SdkRequestId"
               },
-              "x-uniblock-provider": {
-                "$ref": "#/components/headers/Provider"
-              },
               "x-hopscotch-provider": {
                 "$ref": "#/components/headers/Provider"
-              },
-              "x-uniblock-retry-attempt-count": {
-                "$ref": "#/components/headers/RetryAttemptCount"
               },
               "x-hopscotch-retry-attempt-count": {
                 "$ref": "#/components/headers/RetryAttemptCount"
               },
-              "x-uniblock-cache-status": {
-                "$ref": "#/components/headers/CacheStatus"
-              },
               "x-hopscotch-cache-status": {
                 "$ref": "#/components/headers/CacheStatus"
-              },
-              "x-uniblock-trace-id": {
-                "$ref": "#/components/headers/TraceId"
               },
               "x-hopscotch-trace-id": {
                 "$ref": "#/components/headers/TraceId"
@@ -1399,9 +1263,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -1426,9 +1287,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -1470,9 +1328,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -1514,9 +1369,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -1570,9 +1422,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -1602,9 +1451,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -1620,9 +1466,6 @@
                 },
                 "description": "Seconds to wait. Present on `rate_limit_exceeded`.",
                 "example": 17
-              },
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
               },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
@@ -1693,9 +1536,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -1737,9 +1577,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -1764,9 +1601,6 @@
               }
             },
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/components/headers/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -1833,7 +1667,7 @@
               },
               "request_id": {
                 "type": "string",
-                "description": "Our id for this request, the same value as the x-uniblock-request-id header. Quote it when you contact support."
+                "description": "Our id for this request, the same value as the x-hopscotch-request-id header. Quote it when you contact support."
               }
             }
           }
@@ -1874,7 +1708,7 @@
           "stream_options": {
             "type": "object",
             "additionalProperties": true,
-            "description": "OpenAI stream options. Set `include_usage` to receive OpenAI's own usage chunk in the stream. Hopscotch's own counts arrive separately on the :x-uniblock-usage comment line either way.",
+            "description": "OpenAI stream options. Set `include_usage` to receive OpenAI's own usage chunk in the stream. Hopscotch's own counts arrive separately on the :x-hopscotch-usage comment line either way.",
             "properties": {
               "include_usage": {
                 "type": "boolean"
@@ -2222,7 +2056,7 @@
         }
       },
       "SdkRequestId": {
-        "description": "The same value as x-uniblock-request-id, on the header the official OpenAI SDKs surface on their error objects.",
+        "description": "The same value as x-hopscotch-request-id, on the header the official OpenAI SDKs surface on their error objects.",
         "schema": {
           "type": "string"
         }
@@ -2251,8 +2085,15 @@
           "type": "string"
         }
       },
+      "ServedBy": {
+        "description": "The full id, \"{provider}/{model}\", of the model that actually answered: the id you pinned, or the member of the routing profile that served. Present on every served reply, streamed or not, which is the only place a streamed request can read it.",
+        "schema": {
+          "type": "string",
+          "example": "openai/gpt-4o-mini"
+        }
+      },
       "ServedVia": {
-        "description": "Present, with the value `backup`, when a backup route served this request. Absent on every other response, and never sent with any other value, so a client that has never read it sees nothing change about an ordinary request. The provider named on x-uniblock-provider and in the body is still the one you asked for.",
+        "description": "Present, with the value `backup`, when a backup route served this request. Absent on every other response, and never sent with any other value, so a client that has never read it sees nothing change about an ordinary request. The provider named on x-hopscotch-provider and in the body is still the one you asked for.",
         "schema": {
           "type": "string",
           "enum": [

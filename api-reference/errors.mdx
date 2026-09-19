@@ -23,7 +23,7 @@ Three properties of this body are worth stating because clients depend on them:
   `null` rather than omitted, so a missing field never has to be told apart from
   a null one.
 - `request_id` is stamped on every error body, whatever produced the error. It is
-  the same value as the `x-uniblock-request-id` and `x-request-id` response
+  the same value as the `x-hopscotch-request-id` and `x-request-id` response
   headers.
 - No other field appears inside `error`. Nothing about our internals travels in
   an error body, and a body that would carry anything else is replaced before it
@@ -79,7 +79,7 @@ separates causes sharing a status.
 | 405 | `invalid_request_error` | `method_not_allowed` | A method other than GET on a path that exists. Carries an `Allow` header. Answered before any key is looked at, so it costs nothing and reveals nothing. |
 | 413 | `invalid_request_error` | `payload_too_large` | The request body is larger than the 8388608 byte maximum this API accepts, and it was refused at the door. A body that declares its length is refused without a byte being read; one that declares none is read only as far as the ceiling and then abandoned. Nothing was parsed, no credit was held, no model was called and nothing was charged. The message names the figure and what to change: fewer messages, a shorter prompt, or fewer inputs. |
 | 429 | `rate_limit_error` | `rate_limit_exceeded` | This key's request rate limit. Carries `Retry-After`. |
-| 429 | `rate_limit_error` | `spend_rate_exceeded` | The account's spend rate cap. Nothing to fix; requests are admitted again as the window rolls forward. |
+| 429 | `rate_limit_error` | `spend_rate_exceeded` | The account's spend rate cap. Nothing to fix; requests are admitted again as the window rolls forward. Carries `Retry-After` in whole seconds: the wait until the window has no counted reservation left, computed from the earliest reservation still counted, and never less than one second. |
 | 429 | `rate_limit_error` | `upstream_rate_limited` | The model's provider rate-limited the call. Nothing about the request is wrong and nothing is charged for it. Carries `Retry-After` in whole seconds: the provider's own figure where it sent one, and five seconds where it sent none. Back off and retry. |
 | 429 | `rate_limit_error` | `provider_key_refused` | The request ran on your own key for that provider, and the provider says that key is over its limit there. Nothing to fix on our side; it clears on its own. |
 | 500 | `api_error` | `null` | An unhandled fault on our side. Quote the request id. |
@@ -104,15 +104,20 @@ the status alone does not tell you which of the three you met.
   carries `Retry-After` in seconds. Back off and retry.
 - `spend_rate_exceeded` is the account's spend rate cap, which counts the
   estimated maximum cost reserved in a rolling window rather than settled spend.
-  There is no `Retry-After`. Sending `max_tokens` on your requests lowers the
+  It carries `Retry-After` in whole seconds, computed from the earliest
+  reservation still counted in the window, so the header and the wait named in
+  the message cannot disagree. Sending `max_tokens` on your requests lowers the
   estimated maximum each one reserves. See
   [Rate limits and spend controls](/manage/rate-limits-and-spend-controls).
 - `upstream_rate_limited` is the model's provider rate-limiting the call. It is
   not your key's allowance and not your account's cap, nothing about the request
   is wrong, and nothing is charged. It carries `Retry-After` in whole seconds.
 
-`Retry-After` is present on `rate_limit_exceeded` and on `upstream_rate_limited`,
-and is not sent on other statuses. Do not infer a retry delay from its absence.
+`Retry-After` is present on all three `429` codes and is not sent on other
+statuses. Do not infer a retry delay from its absence. It was **not** sent on
+`spend_rate_exceeded` until 2026-09-16, when the wait moved out of the English
+message and into a header; a client written against the older behaviour, which
+read the sentence or backed off on a fixed timer, keeps working unchanged.
 
 The `Retry-After` on `upstream_rate_limited` is a figure we compute rather than
 the provider's header passed through: their number where they sent one, held
@@ -173,7 +178,7 @@ client can always tell "never started" from "cut off part way".
 
 The `request_deadline_exceeded` line is the one error body on this API without a
 `request_id`: it is written after the response has left the point that stamps the
-id. Read the id from the `x-uniblock-request-id` response header instead.
+id. Read the id from the `x-hopscotch-request-id` response header instead.
 
 A non-streamed response that we terminate part way through does not receive an
 error body. There is nowhere to put one, so the connection errors instead. Treat a
