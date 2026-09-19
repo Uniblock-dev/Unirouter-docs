@@ -1078,12 +1078,12 @@
     "/v1/completions": {
       "classification": "blocked",
       "gate": "2.10",
-      "reason": "The route exists in the source spec, and Story 2.10 (completions and embeddings serve real responses) is in the backlog. Nothing is published for it until the tracker says it ships."
+      "reason": "The route exists in the source spec, and Story 2.10 (completions and embeddings serve real responses) moved from `backlog` to `done` on 2026-09-19 (4ff00eb6d, #1192). So the gate this entry carries has been MET, and it stays `blocked` for the reason /v1/messages is blocked rather than for the reason it used to be: publishing it is a decision rather than a reclassification. It needs its request and response schemas transcribed from the handler, its refusals transcribed with them (including the encoding_format 400 that Story 2.10 added at the door, and the embeddings 413 whose published shape is the open question of SF-31), and a page in the navigation. Note also that both paths have been REACHABLE since Story 2.11 registered them in src/public/routes.ts, so the absence here has never meant a 404; five integration pages on this site say otherwise and are recorded as SF-214, with the owner. Not a sync pass's call."
     },
     "/v1/embeddings": {
       "classification": "blocked",
       "gate": "2.10",
-      "reason": "The route exists in the source spec, and Story 2.10 (completions and embeddings serve real responses) is in the backlog. Nothing is published for it until the tracker says it ships."
+      "reason": "The route exists in the source spec, and Story 2.10 (completions and embeddings serve real responses) moved from `backlog` to `done` on 2026-09-19 (4ff00eb6d, #1192). So the gate this entry carries has been MET, and it stays `blocked` for the reason /v1/messages is blocked rather than for the reason it used to be: publishing it is a decision rather than a reclassification. It needs its request and response schemas transcribed from the handler, its refusals transcribed with them (including the encoding_format 400 that Story 2.10 added at the door, and the embeddings 413 whose published shape is the open question of SF-31), and a page in the navigation. Note also that both paths have been REACHABLE since Story 2.11 registered them in src/public/routes.ts, so the absence here has never meant a 404; five integration pages on this site say otherwise and are recorded as SF-214, with the owner. Not a sync pass's call."
     },
     "/v1/models": {
       "classification": "public",
