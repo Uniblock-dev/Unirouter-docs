@@ -2,13 +2,13 @@
   "$comment": "The reviewed sync point for the public /v1 surface. Written by scripts/sync-source-spec.mjs. It holds no request or response content: only which public operations exist and a hash of each, so a change to the public contract shows up in a diff without the private spec entering this repository.",
   "syncedFrom": "services/control-plane/openapi.json",
   "operations": {
-    "GET /v1/models": "188c32930c3419e0",
-    "GET /v1/models/{id}": "1ebe7d629beed10a",
-    "GET /v1/usage/{id}": "da111220431d4f91",
-    "POST /v1/chat/completions": "974b44323b50c7ef",
-    "POST /v1/completions": "ab1081baf6d17010",
-    "POST /v1/embeddings": "c4a64fdb0568169a",
-    "POST /v1/messages": "430d872ad237d31c",
-    "POST /v1/responses": "0dcacc2e6cc1c66b"
+    "GET /v1/models": "f9f8c6267616a609",
+    "GET /v1/models/{id}": "8941e800f428af30",
+    "GET /v1/usage/{id}": "014d8a1b3b2205e8",
+    "POST /v1/chat/completions": "1612b78e343e9ffe",
+    "POST /v1/completions": "6ed9a5f5d53d6a44",
+    "POST /v1/embeddings": "4e0e2676213de29c",
+    "POST /v1/messages": "a27d0ed3948af555",
+    "POST /v1/responses": "cabfa3229641c3a4"
   }
 }

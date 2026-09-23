@@ -149,6 +149,11 @@ published `max_output_tokens`.
 | `max_tokens` above the model's maximum | The model's maximum, because the model cannot exceed it. |
 | Neither field | The model's published maximum output. |
 
+A body asking for more than one completion, with `n` or `best_of`, holds that many
+output ceilings (the larger of the two when both are sent), because the provider bills each completion its own output. The
+prompt is held once. A balance that cannot cover the larger hold is refused with the
+ordinary `402`.
+
 The hold is returned in full at settlement and you are charged for what the
 request actually produced, so sending `max_tokens` never costs you the
 difference. What it changes is how much of your account spend rate cap one

@@ -269,7 +269,7 @@
             }
           },
           "403": {
-            "description": "This workspace is not permitted to call what the request named, and code is `model_not_permitted`. For a model the message names that model. For a routing profile the message names the slug and no member, and it is answered when the permitted set excludes every member that could otherwise have been served, including a profile that also holds a member we could not serve ourselves. The permitted set is unrestricted by default, so this is reachable only on a workspace somebody has restricted. No provider was called and retrying will not change the answer: a workspace owner has to widen the set.",
+            "description": "This workspace is not permitted to call what the request named, and code is `model_not_permitted`. For a model the message names that model. For a routing profile the message names the slug and no member, and it is answered when the permitted set excludes every member that could otherwise have been served, including a profile that also holds a member we could not serve ourselves. The permitted set is unrestricted by default, so this is reachable only on a workspace somebody has restricted. No provider was called and retrying will not change the answer: a workspace owner has to widen the set. A key whose account staff have suspended is refused here too, with code `account_suspended`, before any credit is held or any provider is called; contact support, because retrying will not change the answer.",
             "content": {
               "application/json": {
                 "schema": {
@@ -296,6 +296,18 @@
                         "type": "permission_error",
                         "param": null,
                         "code": "model_not_permitted",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "account_suspended": {
+                    "summary": "The key's account is suspended",
+                    "value": {
+                      "error": {
+                        "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
+                        "type": "permission_error",
+                        "param": null,
+                        "code": "account_suspended",
                         "request_id": "REQUEST_ID"
                       }
                     }
@@ -687,6 +699,30 @@
               }
             }
           },
+          "403": {
+            "description": "The key belongs to an account staff have suspended, and code is `account_suspended`. The key itself is not revoked: it authenticates again when the account is reinstated. Retrying will not change the answer; contact support.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
+                    "type": "permission_error",
+                    "param": null,
+                    "code": "account_suspended",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
           "405": {
             "description": "A method other than GET on a path that exists. The route boundary answers this before any key is looked at, so it costs nothing and reveals nothing.",
             "headers": {
@@ -952,6 +988,30 @@
                     "type": "authentication_error",
                     "param": null,
                     "code": "invalid_api_key",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "403": {
+            "description": "The key belongs to an account staff have suspended, and code is `account_suspended`. The key itself is not revoked: it authenticates again when the account is reinstated. Retrying will not change the answer; contact support.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
+                    "type": "permission_error",
+                    "param": null,
+                    "code": "account_suspended",
                     "request_id": "REQUEST_ID"
                   }
                 }
@@ -1334,7 +1394,7 @@
             }
           },
           "403": {
-            "description": "This workspace is not permitted to call what the request named, and code is `model_not_permitted`. For a model the message names that model. For a routing profile the message names the slug and no member, and it is answered when the permitted set excludes every member that could otherwise have been served, including a profile that also holds a member we could not serve ourselves. The permitted set is unrestricted by default, so this is reachable only on a workspace somebody has restricted. No provider was called and retrying will not change the answer: a workspace owner has to widen the set.",
+            "description": "This workspace is not permitted to call what the request named, and code is `model_not_permitted`. For a model the message names that model. For a routing profile the message names the slug and no member, and it is answered when the permitted set excludes every member that could otherwise have been served, including a profile that also holds a member we could not serve ourselves. The permitted set is unrestricted by default, so this is reachable only on a workspace somebody has restricted. No provider was called and retrying will not change the answer: a workspace owner has to widen the set. A key whose account staff have suspended is refused here too, with code `account_suspended`, before any credit is held or any provider is called; contact support, because retrying will not change the answer.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1361,6 +1421,18 @@
                         "type": "permission_error",
                         "param": null,
                         "code": "model_not_permitted",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "account_suspended": {
+                    "summary": "The key's account is suspended",
+                    "value": {
+                      "error": {
+                        "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
+                        "type": "permission_error",
+                        "param": null,
+                        "code": "account_suspended",
                         "request_id": "REQUEST_ID"
                       }
                     }

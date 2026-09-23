@@ -24,7 +24,8 @@
     "catalogResponses": "services/control-plane/src/models/catalogResponses.ts, services/control-plane/src/models/catalogRates.ts, packages/wire/src/models.ts",
     "publishedRouteBoundary": "services/control-plane/src/public/routes.ts",
     "keyExpiry": "services/control-plane/src/middleware/customerAuth.ts (KEY_EXPIRED_CODE, keyExpiredMessage)",
-    "keyCreditLimit": "services/control-plane/src/money/balance.ts (keyLimitMessage), services/control-plane/src/money/reservation.ts"
+    "keyCreditLimit": "services/control-plane/src/money/balance.ts (keyLimitMessage), services/control-plane/src/money/reservation.ts",
+    "accountSuspension": "services/control-plane/src/middleware/customerAuth.ts (ACCOUNT_SUSPENDED_CODE, ACCOUNT_SUSPENDED_MESSAGE)"
   },
   "info": {
     "title": "Hopscotch",
@@ -745,7 +746,7 @@
             }
           },
           "403": {
-            "description": "This workspace is not permitted to call what the request named, and code is `model_not_permitted`. For a model the message names that model. For a routing profile the message names the slug and no member, and it is answered when the permitted set excludes every member that could otherwise have been served, including a profile that also holds a member we could not serve ourselves. The permitted set is unrestricted by default, so this is reachable only on a workspace somebody has restricted. No provider was called and retrying will not change the answer: a workspace owner has to widen the set.",
+            "description": "This workspace is not permitted to call what the request named, and code is `model_not_permitted`. For a model the message names that model. For a routing profile the message names the slug and no member, and it is answered when the permitted set excludes every member that could otherwise have been served, including a profile that also holds a member we could not serve ourselves. The permitted set is unrestricted by default, so this is reachable only on a workspace somebody has restricted. No provider was called and retrying will not change the answer: a workspace owner has to widen the set. A key whose account staff have suspended is refused here too, with code `account_suspended`, before any credit is held or any provider is called; contact support, because retrying will not change the answer.",
             "headers": {
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
@@ -777,6 +778,18 @@
                         "type": "permission_error",
                         "param": null,
                         "code": "model_not_permitted",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "account_suspended": {
+                    "summary": "The key's account is suspended",
+                    "value": {
+                      "error": {
+                        "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
+                        "type": "permission_error",
+                        "param": null,
+                        "code": "account_suspended",
                         "request_id": "REQUEST_ID"
                       }
                     }
@@ -1173,6 +1186,30 @@
               }
             }
           },
+          "403": {
+            "description": "The key belongs to an account staff have suspended, and code is `account_suspended`. The key itself is not revoked: it authenticates again when the account is reinstated. Retrying will not change the answer; contact support.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
+                    "type": "permission_error",
+                    "param": null,
+                    "code": "account_suspended",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
           "405": {
             "description": "A method other than GET on a path that exists. The route boundary answers this before any key is looked at, so it costs nothing and reveals nothing.",
             "headers": {
@@ -1401,6 +1438,30 @@
                     "type": "authentication_error",
                     "param": null,
                     "code": "invalid_api_key",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The key belongs to an account staff have suspended, and code is `account_suspended`. The key itself is not revoked: it authenticates again when the account is reinstated. Retrying will not change the answer; contact support.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
+                    "type": "permission_error",
+                    "param": null,
+                    "code": "account_suspended",
                     "request_id": "REQUEST_ID"
                   }
                 }
@@ -1767,7 +1828,7 @@
             }
           },
           "403": {
-            "description": "This workspace is not permitted to call what the request named, and code is `model_not_permitted`. For a model the message names that model. For a routing profile the message names the slug and no member, and it is answered when the permitted set excludes every member that could otherwise have been served, including a profile that also holds a member we could not serve ourselves. The permitted set is unrestricted by default, so this is reachable only on a workspace somebody has restricted. No provider was called and retrying will not change the answer: a workspace owner has to widen the set.",
+            "description": "This workspace is not permitted to call what the request named, and code is `model_not_permitted`. For a model the message names that model. For a routing profile the message names the slug and no member, and it is answered when the permitted set excludes every member that could otherwise have been served, including a profile that also holds a member we could not serve ourselves. The permitted set is unrestricted by default, so this is reachable only on a workspace somebody has restricted. No provider was called and retrying will not change the answer: a workspace owner has to widen the set. A key whose account staff have suspended is refused here too, with code `account_suspended`, before any credit is held or any provider is called; contact support, because retrying will not change the answer.",
             "headers": {
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
@@ -1799,6 +1860,18 @@
                         "type": "permission_error",
                         "param": null,
                         "code": "model_not_permitted",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "account_suspended": {
+                    "summary": "The key's account is suspended",
+                    "value": {
+                      "error": {
+                        "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
+                        "type": "permission_error",
+                        "param": null,
+                        "code": "account_suspended",
                         "request_id": "REQUEST_ID"
                       }
                     }
@@ -2137,6 +2210,11 @@
         "example": "POST /v1/responses 413 payload_too_large",
         "shapeFrom": "The same PAYLOAD_TOO_LARGE_SENTENCE constant in services/control-plane/src/inference/requestBody.ts that the chat-completions 413 is transcribed from, and the same byte ceiling: the source spec carries an identical 413 description on both doors.",
         "note": "Copied from the chat-completions block rather than written fresh, because one constant answers both doors. Needs a live transcript, which for this one is cheap: any body over the ceiling produces it."
+      },
+      {
+        "example": "GET /v1/models 403, GET /v1/models/{id} 403, POST /v1/chat/completions 403 account_suspended, POST /v1/responses 403 account_suspended",
+        "shapeFrom": "Message transcribed verbatim from ACCOUNT_SUSPENDED_MESSAGE in services/control-plane/src/middleware/customerAuth.ts; the request id is a runtime value.",
+        "note": "Needs a live transcript against a suspended account's key. Story 6.13 reads in-progress."
       }
     ]
   }
