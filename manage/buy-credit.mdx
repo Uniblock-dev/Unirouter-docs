@@ -16,8 +16,9 @@ page.
 
 <OwnerOnlyNote />
 
-You need to be the **owner** of the workspace. Members can read the balance and the
-statement, and cannot buy. A member who calls a purchase route gets HTTP 403 carrying
+You need to be the **owner** or an **admin** of the workspace. Developers and viewers
+can read the balance and the statement, and cannot buy. One who calls a purchase
+route gets HTTP 403 carrying
 the sentence above, so nobody starts a purchase that was never going to complete.
 
 You also need the smallest purchase we accept, which is **5.00 of credit**. That is

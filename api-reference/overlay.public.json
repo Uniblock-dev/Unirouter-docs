@@ -222,7 +222,7 @@
             "type": "integer",
             "description": "When the model stops serving, in unix seconds. Absent when there is none, rather than null."
           },
-          "hopscotch": {
+          "uniblock": {
             "$ref": "#/components/schemas/ModelExtension"
           }
         }
@@ -283,7 +283,7 @@
       },
       "ModelExtension": {
         "type": "object",
-        "description": "Our own facts about a model, under the `hopscotch` key. Everything OpenAI's own model object defines stays at the top level; everything it does not define lives here.",
+        "description": "Our own facts about a model, under the `uniblock` key, which keeps the platform's original name because it is protocol a deployed client reads. Everything OpenAI's own model object defines stays at the top level; everything it does not define lives here.",
         "additionalProperties": true,
         "required": [
           "model_id",
@@ -453,7 +453,7 @@
       },
       "ModelDetail": {
         "type": "object",
-        "description": "One model, in the same envelope the list uses, with the detail-only fields under `hopscotch`.",
+        "description": "One model, in the same envelope the list uses, with the detail-only fields under `uniblock`.",
         "additionalProperties": true,
         "properties": {
           "id": {
@@ -474,7 +474,7 @@
             "type": "integer",
             "description": "Absent when the model has no announced end."
           },
-          "hopscotch": {
+          "uniblock": {
             "$ref": "#/components/schemas/ModelDetailExtension"
           }
         }
@@ -1080,7 +1080,7 @@
       "get": {
         "operationId": "listModels",
         "summary": "List models",
-        "description": "List the models you can call. The `id` of each entry is what you send as `model`.\n\nEach entry is the OpenAI model object with a `hopscotch` block beside it, carrying what OpenAI's own object has no field for: who serves the model, what it can do, its context window, and the provider's list price.",
+        "description": "List the models you can call. The `id` of each entry is what you send as `model`.\n\nEach entry is the OpenAI model object with a `uniblock` block beside it, carrying what OpenAI's own object has no field for: who serves the model, what it can do, its context window, and the provider's list price.",
         "tags": [
           "Models"
         ],
@@ -1110,7 +1110,7 @@
                       "object": "model",
                       "created": 1756080000,
                       "owned_by": "openai",
-                      "hopscotch": {
+                      "uniblock": {
                         "model_id": "openai/gpt-4o-mini",
                         "display_name": "GPT-4o mini",
                         "author": "openai",
@@ -1354,10 +1354,12 @@
                   "object": "model",
                   "created": 1756080000,
                   "owned_by": "openai",
-                  "hopscotch": {
+                  "uniblock": {
                     "model_id": "openai/gpt-4o-mini",
                     "display_name": "GPT-4o mini",
                     "author": "openai",
+                    "author_slug": "openai",
+                    "author_source": "recorded",
                     "context_window_tokens": 128000,
                     "max_output_tokens": 16384,
                     "input_rate_thousandths": 150,
@@ -1368,6 +1370,9 @@
                     ],
                     "provider_display_names": [
                       "OpenAI"
+                    ],
+                    "provider_families": [
+                      "openai"
                     ],
                     "capabilities": {
                       "audio": "no",
@@ -2080,6 +2085,11 @@
       "classification": "blocked",
       "gate": "2.30",
       "reason": "POST /v1/messages (the Anthropic Messages API) reached the source tree on 2026-08-31 and is the fifth served inference path there. It now HAS a tracker entry: sprint-status.yaml filed Story 2.30 retroactively on 2026-09-09 at `review`, because the owner has not accepted the merge (PR #317), and four findings from its freeform build spec stay open in build/deferred-work.md. So the gate that blocked it has moved from \"no story exists\" to \"the story is not accepted\", and publishing it is still a decision rather than a reclassification: it needs its request and response schemas transcribed from the handler, a page in the navigation, and the two deliberate departures from Anthropic's own API documented (the credential goes in Authorization as a Bearer token rather than x-api-key, and refusals wear the OpenAI error envelope). Nothing is published until the owner accepts Story 2.30. Recorded in the internal site's unresolved-findings.md as SF-91."
+    },
+    "/v1/systemone": {
+      "classification": "blocked",
+      "gate": "2.31",
+      "reason": "POST /v1/systemone (TypeSafe's Jev, typed judgments about a state) reached the source tree on 2026-09-24 (90ec76a67, #1274) as the sixth served inference path, under decision 0052 and the correct-course proposal of 2026-09-21. Its story, 2.31, is `in-progress` in sprint-status.yaml: the row was filed while three build lanes worked against the spec, and nothing has been accepted. So this is blocked on an unaccepted story, as /v1/messages is on 2.30, and publishing it is a decision rather than a reclassification: it needs its request and response schemas transcribed from the handler, its refusals (including model_id_not_pinned for TypeSafe's own bare model id) transcribed with them, and a page in the navigation. Recorded in the internal site's unresolved-findings.md as SF-258. Not a sync pass's call."
     }
   },
   "tags": [

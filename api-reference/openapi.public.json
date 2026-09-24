@@ -600,7 +600,7 @@
           "Models"
         ],
         "summary": "List models",
-        "description": "List the models you can call. The `id` of each entry is what you send as `model`.\n\nEach entry is the OpenAI model object with a `hopscotch` block beside it, carrying what OpenAI's own object has no field for: who serves the model, what it can do, its context window, and the provider's list price.",
+        "description": "List the models you can call. The `id` of each entry is what you send as `model`.\n\nEach entry is the OpenAI model object with a `uniblock` block beside it, carrying what OpenAI's own object has no field for: who serves the model, what it can do, its context window, and the provider's list price.",
         "responses": {
           "200": {
             "description": "The models available to your key.",
@@ -617,7 +617,7 @@
                       "object": "model",
                       "created": 1756080000,
                       "owned_by": "openai",
-                      "hopscotch": {
+                      "uniblock": {
                         "model_id": "openai/gpt-4o-mini",
                         "display_name": "GPT-4o mini",
                         "author": "openai",
@@ -861,52 +861,11 @@
                   "created": 1756080000,
                   "owned_by": "openai",
                   "uniblock": {
-                    "model_id": "meta-llama/llama-3.1-70b-instruct/fp-8",
-                    "display_name": "Llama 3.1 70B Instruct FP8",
-                    "author": "Meta",
-                    "author_slug": "meta",
-                    "author_source": "recorded",
-                    "context_window_tokens": 128000,
-                    "max_output_tokens": 32768,
-                    "input_rate_thousandths": 150,
-                    "output_rate_thousandths": 600,
-                    "currency_code": "USD",
-                    "endpoint_families": [
-                      "chat_completions"
-                    ],
-                    "provider_display_names": [
-                      "Groq"
-                    ],
-                    "provider_families": [
-                      "groq"
-                    ],
-                    "capabilities": {
-                      "streaming": "yes",
-                      "tools": "unknown",
-                      "json_mode": "yes",
-                      "vision": "no",
-                      "audio": "no"
-                    },
-                    "parameters": [
-                      {
-                        "name": "temperature",
-                        "type": "number",
-                        "minMilli": 0,
-                        "maxMilli": 2000,
-                        "defaultMilli": 700,
-                        "enumValues": null,
-                        "sentByDefault": true,
-                        "note": "0 repeats itself, 2 wanders."
-                      }
-                    ],
-                    "deprecated_at": null,
-                    "sunset_at": null,
-                    "replacement_model_id": null
-                  },
-                  "hopscotch": {
                     "model_id": "openai/gpt-4o-mini",
                     "display_name": "GPT-4o mini",
                     "author": "openai",
+                    "author_slug": "openai",
+                    "author_source": "recorded",
                     "context_window_tokens": 128000,
                     "max_output_tokens": 16384,
                     "input_rate_thousandths": 150,
@@ -918,14 +877,16 @@
                     "provider_display_names": [
                       "OpenAI"
                     ],
+                    "provider_families": [
+                      "openai"
+                    ],
                     "capabilities": {
-                      "audio": "no",
-                      "json_mode": "yes",
                       "streaming": "yes",
                       "tools": "yes",
-                      "vision": "yes"
+                      "json_mode": "yes",
+                      "vision": "yes",
+                      "audio": "no"
                     },
-                    "description": "A small, fast model for everyday chat and extraction work.",
                     "parameters": [
                       {
                         "name": "temperature",
@@ -940,7 +901,8 @@
                     ],
                     "deprecated_at": null,
                     "sunset_at": null,
-                    "replacement_model_id": null
+                    "replacement_model_id": null,
+                    "description": "A small, fast model for everyday chat and extraction work."
                   }
                 }
               }
@@ -1811,7 +1773,7 @@
             "type": "integer",
             "description": "When the model stops serving, in unix seconds. Absent when there is none, rather than null."
           },
-          "hopscotch": {
+          "uniblock": {
             "$ref": "#/components/schemas/ModelExtension"
           }
         }
@@ -1872,7 +1834,7 @@
       },
       "ModelExtension": {
         "type": "object",
-        "description": "Our own facts about a model, under the `hopscotch` key. Everything OpenAI's own model object defines stays at the top level; everything it does not define lives here.",
+        "description": "Our own facts about a model, under the `uniblock` key, which keeps the platform's original name because it is protocol a deployed client reads. Everything OpenAI's own model object defines stays at the top level; everything it does not define lives here.",
         "additionalProperties": true,
         "required": [
           "model_id",
@@ -2042,7 +2004,7 @@
       },
       "ModelDetail": {
         "type": "object",
-        "description": "One model, in the same envelope the list uses, with the detail-only fields under `hopscotch`.",
+        "description": "One model, in the same envelope the list uses, with the detail-only fields under `uniblock`.",
         "additionalProperties": true,
         "properties": {
           "id": {
@@ -2063,7 +2025,7 @@
             "type": "integer",
             "description": "Absent when the model has no announced end."
           },
-          "hopscotch": {
+          "uniblock": {
             "$ref": "#/components/schemas/ModelDetailExtension"
           }
         }

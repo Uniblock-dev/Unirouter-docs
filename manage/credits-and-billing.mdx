@@ -177,11 +177,12 @@ If a line you are looking at carries none of these, nothing unusual happened to 
 
 <OwnerOnlyNote />
 
-Any member of a workspace may read the balance and the statement. Buying credit,
-managing the card, and setting the low credit notice are the owner's alone, and the
+Any member of a workspace may read the balance and the statement. Buying credit and
+managing the card are the owner's and every admin's; setting the low credit notice is
+the owner's alone. The
 card controls are off the Billing screen at the moment (see
 [Buy credit](/manage/buy-credit)). A
-non-owner calling a billing route gets HTTP 403 with the sentence above, rather than
+developer or a viewer calling a billing route gets HTTP 403 with the sentence above, rather than
 a screen that lets them start something that will fail.
 
 Balance, the saved card and the low credit setting belong to the workspace's billing
