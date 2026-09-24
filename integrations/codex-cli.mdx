@@ -1,8 +1,8 @@
 ---
 title: "Codex CLI"
-description: "Point Codex at this API: the provider block, the wire protocol it is now the only client for, and the one body field this door reads."
+description: "Point Codex at this API: the provider block, the wire protocol it is now the only client for, and the body fields refused on the platform's own keys."
 status: partial
-gates: ["2.3"]
+gates: ["2.3", "36.17", "38.42"]
 ---
 
 import { FeatureStatus } from '/snippets/feature-status.mdx';
@@ -102,23 +102,30 @@ defaults to the session model. If you set it, pin it the same way.
   instead="Codex sends the literal string codex-auto-review as the model for the review it runs after certain sandboxed commands. That string names no provider, so this API refuses it with 400 and the code model_id_not_pinned, and the review does not run. The rest of the session is unaffected. This is reported upstream in Codex's own issue tracker, unresolved, and there is no setting on our side that changes it."
 />
 
-## `store` is the one field this door reads
+## `store` is refused on the platform's own provider keys
 
-The Responses API defaults to storing the response at the provider. This
-platform stores none, so `store: true` is refused before admission, with `400`,
-the code `unsupported_value`, and `param` set to `store`. Nothing is held
-against your balance and nothing reaches a provider.
+The Responses API defaults to storing the response at the provider. On the
+platform's own provider keys this platform stores none, so `store: true` is
+refused before admission, with `400`, `code` `null`, and `param` set to `store`,
+and an omitted `store` is sent as `false`. Nothing is held against your balance
+and nothing reaches a provider. On your own provider key `store` is forwarded as
+you sent it.
 
-**Codex sends `store: false`, so this does not bite.** The field is documented
-here because it is the only part of a Responses body this API inspects, and
-because a wrapper or a script of your own that sets it will be refused.
+**Codex sends `store: false`, so this does not bite.** It is documented here
+because a wrapper or a script of your own that sets it will be refused, and
+because `store` is one of a short list of fields this door refuses on the
+platform's keys. The list is on [Request parameters](/api-reference/parameters#the-fields-refused-on-the-platforms-own-provider-keys).
 
 ## Codex sends parameters this API forwards without opinion
 
 A Codex request carries `reasoning`, `verbosity`, `service_tier`,
 `prompt_cache_key`, `include` and `parallel_tool_calls`. Your body is forwarded
 as you sent it, so all of those travel to whichever provider serves the request,
-and none of them is read, rewritten or removed on the way.
+and none of them is rewritten or removed on the way. The one caveat is
+`service_tier`: on the platform's own provider keys a tier other than `auto` or
+`default` is refused with `400` and `param` set to `service_tier`, because a
+priority or flex tier is priced differently and this platform does not meter it
+yet. On your own provider key any tier is forwarded.
 
 The consequence is that a provider which does not accept one of them answers
 with its own refusal, and you get that refusal relayed with the provider's own

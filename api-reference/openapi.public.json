@@ -151,7 +151,7 @@
             }
           },
           "400": {
-            "description": "The request cannot be served as sent. `code` is null for a missing parameter, with `param` naming it, `context_length_exceeded` for a request too large to price or serve in one call, and `provider_key_refused` when the request ran on your own key for a provider that rejected it or refused this particular call under it.",
+            "description": "The request cannot be served as sent. `code` is null for a missing parameter, with `param` naming it, `context_length_exceeded` for a request too large to price or serve in one call, and `provider_key_refused` when the request ran on your own key for a provider that rejected it or refused this particular call under it. On the platform's own provider keys this route also refuses, with `code` null and `param` naming the field and never its value, a field that buys something this platform cannot bill yet or keeps the conversation at the provider: a `service_tier` other than `auto`, `default` or `on_demand`, `web_search_options`, a hosted tool the provider charges for per call, audio in or out, a `cache_control` marker with a `1h` ttl, and `store: true`. A request served on your own provider key keeps every one of them. See Request parameters.",
             "content": {
               "application/json": {
                 "schema": {
@@ -269,37 +269,13 @@
             }
           },
           "403": {
-            "description": "This workspace is not permitted to call what the request named, and code is `model_not_permitted`. For a model the message names that model. For a routing profile the message names the slug and no member, and it is answered when the permitted set excludes every member that could otherwise have been served, including a profile that also holds a member we could not serve ourselves. The permitted set is unrestricted by default, so this is reachable only on a workspace somebody has restricted. No provider was called and retrying will not change the answer: a workspace owner has to widen the set. A key whose account staff have suspended is refused here too, with code `account_suspended`, before any credit is held or any provider is called; contact support, because retrying will not change the answer.",
+            "description": "Refused for a setting the caller owns rather than anything about the model, and `code` names which. A key whose account staff have suspended is refused with code `account_suspended`, before any credit is held or any provider is called; contact support, because retrying will not change the answer.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 },
                 "examples": {
-                  "model_not_permitted": {
-                    "summary": "The model is outside this workspace's permitted set",
-                    "value": {
-                      "error": {
-                        "message": "This workspace is not permitted to use the model \"MODEL_ID\". Its access is limited to a named set of models; a workspace owner can say which.",
-                        "type": "permission_error",
-                        "param": null,
-                        "code": "model_not_permitted",
-                        "request_id": "REQUEST_ID"
-                      }
-                    }
-                  },
-                  "model_not_permitted_profile": {
-                    "summary": "A routing profile has no permitted member left to try",
-                    "value": {
-                      "error": {
-                        "message": "Every model in \"PROFILE_SLUG\" that could be served is outside this workspace's permitted set, so the profile has nothing left to try. Its access is limited to a named set of models; a workspace owner can say which.",
-                        "type": "permission_error",
-                        "param": null,
-                        "code": "model_not_permitted",
-                        "request_id": "REQUEST_ID"
-                      }
-                    }
-                  },
                   "account_suspended": {
                     "summary": "The key's account is suspended",
                     "value": {
@@ -1213,10 +1189,7 @@
                   },
                   "store": {
                     "type": "boolean",
-                    "description": "This platform stores no response, so only `false` is accepted. Omitting the field is served and nothing is forwarded in its place, so the provider applies its own default. An explicit `true` is refused before admission, naming this field.",
-                    "enum": [
-                      false
-                    ]
+                    "description": "On the platform's own provider keys this platform stores no response: an explicit `true` is refused with `400` naming this field in `param`, and an omitted `store` is sent to the provider as `false`. On your own provider key the provider keeps the response under your account if you ask it to, so `true` is forwarded and an omitted `store` is left for the provider's own default."
                   }
                 },
                 "required": [
@@ -1276,7 +1249,7 @@
             }
           },
           "400": {
-            "description": "The request cannot be served as sent. `unsupported_value` with `param` set to `store` is this endpoint's own refusal and is answered before admission, so nothing is held and no provider is called. `code` is null for a missing parameter, with `param` naming it. A refusal the provider made about this request is relayed with the provider's own status and its own sentence, quoted after the provider's name, so a parameter it does not accept reads as what it is rather than as a fault on this platform.",
+            "description": "The request cannot be served as sent. On the platform's own provider keys this endpoint refuses, before admission and with `code` null and `param` naming the field, a field that asks the provider to keep or reuse a stored conversation (`store: true`, `previous_response_id`, `conversation`, an `item_reference` input, `background: true`) or buys something this platform cannot bill yet (see Request parameters); nothing is held and no provider is called. A request served on your own provider key keeps every one of them. `code` is null for a missing parameter too, with `param` naming it. A refusal the provider made about this request is relayed with the provider's own status and its own sentence, quoted after the provider's name, so a parameter it does not accept reads as what it is rather than as a fault on this platform.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1284,13 +1257,13 @@
                 },
                 "examples": {
                   "store_true": {
-                    "summary": "Asked us to store the response",
+                    "summary": "Asked the platform to store the response",
                     "value": {
                       "error": {
-                        "message": "This platform does not store responses, so `store: true` cannot be honoured. Send `store: false`, or omit the field.",
+                        "message": "\"store\" asks the provider to keep or reuse a stored conversation, and this platform stores none. Remove it, or send the request on your own provider key.",
                         "type": "invalid_request_error",
                         "param": "store",
-                        "code": "unsupported_value",
+                        "code": null,
                         "request_id": "REQUEST_ID"
                       }
                     }
@@ -1394,37 +1367,13 @@
             }
           },
           "403": {
-            "description": "This workspace is not permitted to call what the request named, and code is `model_not_permitted`. For a model the message names that model. For a routing profile the message names the slug and no member, and it is answered when the permitted set excludes every member that could otherwise have been served, including a profile that also holds a member we could not serve ourselves. The permitted set is unrestricted by default, so this is reachable only on a workspace somebody has restricted. No provider was called and retrying will not change the answer: a workspace owner has to widen the set. A key whose account staff have suspended is refused here too, with code `account_suspended`, before any credit is held or any provider is called; contact support, because retrying will not change the answer.",
+            "description": "Refused for a setting the caller owns rather than anything about the model, and `code` names which. A key whose account staff have suspended is refused with code `account_suspended`, before any credit is held or any provider is called; contact support, because retrying will not change the answer.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 },
                 "examples": {
-                  "model_not_permitted": {
-                    "summary": "The model is outside this workspace's permitted set",
-                    "value": {
-                      "error": {
-                        "message": "This workspace is not permitted to use the model \"MODEL_ID\". Its access is limited to a named set of models; a workspace owner can say which.",
-                        "type": "permission_error",
-                        "param": null,
-                        "code": "model_not_permitted",
-                        "request_id": "REQUEST_ID"
-                      }
-                    }
-                  },
-                  "model_not_permitted_profile": {
-                    "summary": "A routing profile has no permitted member left to try",
-                    "value": {
-                      "error": {
-                        "message": "Every model in \"PROFILE_SLUG\" that could be served is outside this workspace's permitted set, so the profile has nothing left to try. Its access is limited to a named set of models; a workspace owner can say which.",
-                        "type": "permission_error",
-                        "param": null,
-                        "code": "model_not_permitted",
-                        "request_id": "REQUEST_ID"
-                      }
-                    }
-                  },
                   "account_suspended": {
                     "summary": "The key's account is suspended",
                     "value": {
