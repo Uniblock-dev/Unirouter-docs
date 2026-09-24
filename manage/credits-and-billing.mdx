@@ -30,7 +30,7 @@ The balance then reads 100.00 and your card statement reads 100.00. While the ra
 0% there is nothing between the two, and the purchase line on your statement still
 carries both figures so it can be checked (see [Every movement is on your statement](#every-movement-is-on-your-statement)).
 
-The smallest purchase is 30.00 of credit. The minimum is stated in the credit you
+The smallest purchase is 5.00 of credit. The minimum is stated in the credit you
 receive rather than in the amount charged, so the figure you type is the figure any
 refusal names back to you.
 
@@ -177,11 +177,12 @@ If a line you are looking at carries none of these, nothing unusual happened to 
 
 <OwnerOnlyNote />
 
-Any member of a workspace may read the balance and the statement. Buying credit,
-managing the card, and setting the low credit notice are the owner's alone, and the
+Any member of a workspace may read the balance and the statement. Buying credit and
+managing the card are the owner's and every admin's; setting the low credit notice is
+the owner's alone. The
 card controls are off the Billing screen at the moment (see
 [Buy credit](/manage/buy-credit)). A
-non-owner calling a billing route gets HTTP 403 with the sentence above, rather than
+developer or a viewer calling a billing route gets HTTP 403 with the sentence above, rather than
 a screen that lets them start something that will fail.
 
 Balance, the saved card and the low credit setting belong to the workspace's billing

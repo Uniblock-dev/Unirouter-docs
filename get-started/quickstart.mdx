@@ -27,7 +27,7 @@ them is missing:
   </Step>
   <Step title="A workspace with credit">
     Credit is prepaid, so a workspace with a zero balance refuses requests
-    before they reach a provider. The workspace owner buys credit on the Billing
+    before they reach a provider. The workspace owner or an admin buys credit on the Billing
     screen. See [buying credit](/manage/buy-credit).
   </Step>
   <Step title="An API key">
@@ -112,7 +112,7 @@ value:
 
 | Header | What it carries |
 |---|---|
-| `x-uniblock-request-id` | Our name for the id. |
+| `x-hopscotch-request-id` | Our name for the id. |
 | `x-request-id` | The same value on the header the OpenAI SDKs read and surface on their error objects, so your client holds it without being taught to. |
 
 <RequestIdNote />
@@ -176,7 +176,7 @@ The raw stream ends like this. The comment line is the one starting with a colon
 ```text Annotated SSE tail
 data: {"id":"...","object":"chat.completion.chunk","choices":[{"delta":{},"finish_reason":"stop","index":0}]}
 
-:x-uniblock-usage {"v":1,...}
+:x-hopscotch-usage {"v":1,...}
 
 data: [DONE]
 ```

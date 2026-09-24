@@ -1,8 +1,8 @@
 ---
 title: "Request parameters"
-description: "What this API reads out of a request body, the two fields it ever rewrites, and how to find the parameters a given model accepts."
+description: "What this API reads from a request body, what it rewrites, what it refuses on the platform's own keys, and how to find the parameters a model accepts."
 status: partial
-gates: ["13.9", "18.67"]
+gates: ["13.9", "18.67", "36.17", "38.2", "38.42"]
 ---
 
 The body of a chat completion is OpenAI's, and it travels to the provider as you
@@ -32,7 +32,10 @@ below, and both name a `param`, which is how you tell them from the provider's.
 
 ## What is rewritten
 
-Two rewrites exist. Both are named here because a body that arrives different
+Two rewrites exist on every key, and two more on the platform's own provider
+keys, [listed below](#the-fields-refused-on-the-platforms-own-provider-keys): an
+omitted `store` on Responses is sent as `false`, and three routing fields a
+reseller provider reads are removed from a chat body. All are named here because a body that arrives different
 from the one you sent should never be something you discover from a provider's
 error message.
 
@@ -51,8 +54,8 @@ provider is sent your body without the field, exactly as you wrote it.
 
 ## What happens to everything else
 
-Nothing. There is no request schema of ours in front of the provider's, no
-allowlist of parameters, and no list of fields to strip. `temperature`,
+Almost nothing. There is no request schema of ours in front of the provider's
+and no allowlist of parameters. `temperature`,
 `top_p`, `stop`, `seed`, `logprobs`, `tools`, `tool_choice`, `response_format`,
 and any parameter a provider adds next month all reach the provider as sent.
 
@@ -65,18 +68,51 @@ This cuts both ways, and the second half is the half worth planning for:
   refusal relayed with its own status and its own sentence. We do not pre-empt it
   with a refusal of our own, and we do not translate it.
 
+  There is one exception, and it is a single value rather than a field: an empty
+  or whitespace-only `reasoning_effort` is refused here with a `400`, `code`
+  `invalid_value` and `param` set to `reasoning_effort`. It is the one value no
+  provider accepts, so relaying it would spend a round trip to be told the same
+  thing. Any other `reasoning_effort` you send, string or otherwise, is
+  forwarded. See [Reasoning models](/features/reasoning).
+
+  The other is a short list of fields refused on the platform's own provider
+  keys and forwarded on yours, in
+  [the next section](#the-fields-refused-on-the-platforms-own-provider-keys).
+
 So a `400` on a chat completion has two possible authors. Ours name a `param` and
 come from the short list below. Everything else on that status came from the
 provider and reads like the provider.
 
-The same is true of a request on `POST /v1/responses`, with one addition. That
-endpoint reads one field of your body before forwarding it: `store`. This
-platform stores no response, so `store: true` is refused with `400`, the code
-`unsupported_value` and `param` set to `store`, before anything is held and
-before any provider is called. Sending `store: false`, or leaving the field out
-entirely, is served. Every other field of a Responses body, including the
-reasoning and verbosity parameters a client may send, travels to the provider
-untouched and is answered by the provider.
+## The fields refused on the platform's own provider keys
+
+A request served on the platform's own provider keys is refused, before
+anything is held and before any provider is called, when it carries a field
+that buys something this platform cannot bill yet or asks the provider to keep
+the conversation under our account:
+
+- a `service_tier` other than the provider's standard one (`auto`, `default` or
+  `on_demand` on chat completions, `auto` or `default` on Responses),
+- `web_search_options`, or a hosted tool the provider charges for per call (web
+  search, web fetch, code execution, and on a Gemini model a grounding tool such
+  as `google_search`),
+- audio in (an `input_audio` part) or out (`audio`, or audio in `modalities`),
+- a `cache_control` marker with a `1h` ttl,
+- `store: true`, and on `POST /v1/responses` also `previous_response_id`,
+  `conversation`, an `item_reference` input item and `background: true`.
+
+Each is a `400` with `code` `null` and `param` naming the field, never its value,
+and the message says to remove it or send the request on your own provider key.
+On `POST /v1/responses` an omitted `store` is sent to the provider as `false`.
+
+**A request served on your own provider key keeps every one of them** and goes
+out as you sent it, because the provider bills and stores it against your own
+account. See [Bring your own key](/features/bring-your-own-key).
+
+On chat completions, the routing fields `provider`, `models` and `transforms`,
+which a reseller provider reads, are removed from the body rather than refused, so a client that
+sends them keeps working and the model you named is the one you are charged for.
+Every other field, including the reasoning and verbosity parameters a client may
+send, travels to the provider untouched and is answered by the provider.
 
 ## The refusals that are ours
 
@@ -141,6 +177,11 @@ published `max_output_tokens`.
 | `max_tokens` below the model's maximum | Your figure. |
 | `max_tokens` above the model's maximum | The model's maximum, because the model cannot exceed it. |
 | Neither field | The model's published maximum output. |
+
+A body asking for more than one completion, with `n` or `best_of`, holds that many
+output ceilings (the larger of the two when both are sent), because the provider bills each completion its own output. The
+prompt is held once. A balance that cannot cover the larger hold is refused with the
+ordinary `402`.
 
 The hold is returned in full at settlement and you are charged for what the
 request actually produced, so sending `max_tokens` never costs you the

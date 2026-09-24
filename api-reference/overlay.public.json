@@ -24,7 +24,9 @@
     "catalogResponses": "services/control-plane/src/models/catalogResponses.ts, services/control-plane/src/models/catalogRates.ts, packages/wire/src/models.ts",
     "publishedRouteBoundary": "services/control-plane/src/public/routes.ts",
     "keyExpiry": "services/control-plane/src/middleware/customerAuth.ts (KEY_EXPIRED_CODE, keyExpiredMessage)",
-    "keyCreditLimit": "services/control-plane/src/money/balance.ts (keyLimitMessage), services/control-plane/src/money/reservation.ts"
+    "keyCreditLimit": "services/control-plane/src/money/balance.ts (keyLimitMessage), services/control-plane/src/money/reservation.ts",
+    "accountSuspension": "services/control-plane/src/middleware/customerAuth.ts (ACCOUNT_SUSPENDED_CODE, ACCOUNT_SUSPENDED_MESSAGE)",
+    "doorRules": "services/control-plane/src/inference/doorRules.ts (applyDoorRules, refusal)"
   },
   "info": {
     "title": "Hopscotch",
@@ -97,7 +99,7 @@
               },
               "request_id": {
                 "type": "string",
-                "description": "Our id for this request, the same value as the x-uniblock-request-id header. Quote it when you contact support."
+                "description": "Our id for this request, the same value as the x-hopscotch-request-id header. Quote it when you contact support."
               }
             }
           }
@@ -138,7 +140,7 @@
           "stream_options": {
             "type": "object",
             "additionalProperties": true,
-            "description": "OpenAI stream options. Set `include_usage` to receive OpenAI's own usage chunk in the stream. Hopscotch's own counts arrive separately on the :x-uniblock-usage comment line either way.",
+            "description": "OpenAI stream options. Set `include_usage` to receive OpenAI's own usage chunk in the stream. Hopscotch's own counts arrive separately on the :x-hopscotch-usage comment line either way.",
             "properties": {
               "include_usage": {
                 "type": "boolean"
@@ -220,7 +222,7 @@
             "type": "integer",
             "description": "When the model stops serving, in unix seconds. Absent when there is none, rather than null."
           },
-          "hopscotch": {
+          "uniblock": {
             "$ref": "#/components/schemas/ModelExtension"
           }
         }
@@ -281,7 +283,7 @@
       },
       "ModelExtension": {
         "type": "object",
-        "description": "Our own facts about a model, under the `hopscotch` key. Everything OpenAI's own model object defines stays at the top level; everything it does not define lives here.",
+        "description": "Our own facts about a model, under the `uniblock` key, which keeps the platform's original name because it is protocol a deployed client reads. Everything OpenAI's own model object defines stays at the top level; everything it does not define lives here.",
         "additionalProperties": true,
         "required": [
           "model_id",
@@ -451,7 +453,7 @@
       },
       "ModelDetail": {
         "type": "object",
-        "description": "One model, in the same envelope the list uses, with the detail-only fields under `hopscotch`.",
+        "description": "One model, in the same envelope the list uses, with the detail-only fields under `uniblock`.",
         "additionalProperties": true,
         "properties": {
           "id": {
@@ -472,7 +474,7 @@
             "type": "integer",
             "description": "Absent when the model has no announced end."
           },
-          "hopscotch": {
+          "uniblock": {
             "$ref": "#/components/schemas/ModelDetailExtension"
           }
         }
@@ -487,7 +489,7 @@
       }
     },
     "SdkRequestId": {
-      "description": "The same value as x-uniblock-request-id, on the header the official OpenAI SDKs surface on their error objects.",
+      "description": "The same value as x-hopscotch-request-id, on the header the official OpenAI SDKs surface on their error objects.",
       "schema": {
         "type": "string"
       }
@@ -516,8 +518,15 @@
         "type": "string"
       }
     },
+    "ServedBy": {
+      "description": "The full id, \"{provider}/{model}\", of the model that actually answered: the id you pinned, or the member of the routing profile that served. Present on every served reply, streamed or not, which is the only place a streamed request can read it.",
+      "schema": {
+        "type": "string",
+        "example": "openai/gpt-4o-mini"
+      }
+    },
     "ServedVia": {
-      "description": "Present, with the value `backup`, when a backup route served this request. Absent on every other response, and never sent with any other value, so a client that has never read it sees nothing change about an ordinary request. The provider named on x-uniblock-provider and in the body is still the one you asked for.",
+      "description": "Present, with the value `backup`, when a backup route served this request. Absent on every other response, and never sent with any other value, so a client that has never read it sees nothing change about an ordinary request. The provider named on x-hopscotch-provider and in the body is still the one you asked for.",
       "schema": {
         "type": "string",
         "enum": [
@@ -563,43 +572,28 @@
         },
         "responses": {
           "200": {
-            "description": "The completion. A response that is not streamed carries the provider's token counts in its own `usage` object. Its `model` field echoes the slug you asked for rather than the provider's internal name, except in three cases that are returned as the provider sent them: a streamed reply, whose frames are passed through unchanged; a request naming a routing profile, which names a chain rather than one model; and a successful body carrying no string `model` field at all.\n\nWhen `stream` is true the body is `text/event-stream` instead, and the counts arrive on a `:x-uniblock-usage` comment line immediately before `data: [DONE]`; the server-sent events specification requires parsers to ignore comment lines, so an SDK never sees it.",
+            "description": "The completion. A response that is not streamed carries the provider's token counts in its own `usage` object. Its `model` field echoes the slug you asked for rather than the provider's internal name, except in three cases that are returned as the provider sent them: a streamed reply, whose frames are passed through unchanged; a request naming a routing profile, which names a chain rather than one model; and a successful body carrying no string `model` field at all.\n\nWhen `stream` is true the body is `text/event-stream` instead, and the counts arrive on a `:x-hopscotch-usage` comment line immediately before `data: [DONE]`; the server-sent events specification requires parsers to ignore comment lines, so an SDK never sees it.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               },
               "x-request-id": {
                 "$ref": "#/responseHeaders/SdkRequestId"
               },
-              "x-uniblock-provider": {
-                "$ref": "#/responseHeaders/Provider"
-              },
               "x-hopscotch-provider": {
                 "$ref": "#/responseHeaders/Provider"
-              },
-              "x-uniblock-retry-attempt-count": {
-                "$ref": "#/responseHeaders/RetryAttemptCount"
               },
               "x-hopscotch-retry-attempt-count": {
                 "$ref": "#/responseHeaders/RetryAttemptCount"
               },
-              "x-uniblock-cache-status": {
-                "$ref": "#/responseHeaders/CacheStatus"
-              },
               "x-hopscotch-cache-status": {
                 "$ref": "#/responseHeaders/CacheStatus"
-              },
-              "x-uniblock-trace-id": {
-                "$ref": "#/responseHeaders/TraceId"
               },
               "x-hopscotch-trace-id": {
                 "$ref": "#/responseHeaders/TraceId"
               },
-              "x-uniblock-served-via": {
-                "$ref": "#/responseHeaders/ServedVia"
+              "x-hopscotch-served-by": {
+                "$ref": "#/responseHeaders/ServedBy"
               },
               "x-hopscotch-served-via": {
                 "$ref": "#/responseHeaders/ServedVia"
@@ -635,11 +629,8 @@
             }
           },
           "400": {
-            "description": "The request cannot be served as sent. `code` is null for a missing parameter, with `param` naming it, `context_length_exceeded` for a request too large to price or serve in one call, and `provider_key_refused` when the request ran on your own key for a provider that rejected it or refused this particular call under it.",
+            "description": "The request cannot be served as sent. `code` is null for a missing parameter, with `param` naming it, `context_length_exceeded` for a request too large to price or serve in one call, and `provider_key_refused` when the request ran on your own key for a provider that rejected it or refused this particular call under it. On the platform's own provider keys this route also refuses, with `code` null and `param` naming the field and never its value, a field that buys something this platform cannot bill yet or keeps the conversation at the provider: a `service_tier` other than `auto`, `default` or `on_demand`, `web_search_options`, a hosted tool the provider charges for per call, audio in or out, a `cache_control` marker with a `1h` ttl, and `store: true`. A request served on your own provider key keeps every one of them. See Request parameters.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -693,9 +684,6 @@
           "401": {
             "description": "No key, a scheme other than Bearer, a key of the wrong shape, or a key we reject. An unknown key and a revoked key are answered with one identical message on purpose.\n\nA key past its own expiry date is refused here too, with code `key_expired` and a message naming the date. It is checked before the per-minute rate limiter, so an expired key never consumes that allowance. Expired keys are not renewed: create a new one.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -720,9 +708,6 @@
           "402": {
             "description": "The request will not be paid for, and nothing was charged. Code `insufficient_credit` is the workspace being out of credit, which stops every key on it. Code `key_limit_exceeded` is the sending key reaching its own credit limit, which leaves every other key in the workspace serving normally; it is refused before any credit is held, and the message names what that key has settled and holds inside its current window.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -762,11 +747,8 @@
             }
           },
           "403": {
-            "description": "This workspace is not permitted to call what the request named, and code is `model_not_permitted`. For a model the message names that model. For a routing profile the message names the slug and no member, and it is answered when the permitted set excludes every member that could otherwise have been served, including a profile that also holds a member we could not serve ourselves. The permitted set is unrestricted by default, so this is reachable only on a workspace somebody has restricted. No provider was called and retrying will not change the answer: a workspace owner has to widen the set.",
+            "description": "Refused for a setting the caller owns rather than anything about the model, and `code` names which. A key whose account staff have suspended is refused with code `account_suspended`, before any credit is held or any provider is called; contact support, because retrying will not change the answer.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -777,26 +759,14 @@
                   "$ref": "#/components/schemas/Error"
                 },
                 "examples": {
-                  "model_not_permitted": {
-                    "summary": "The model is outside this workspace's permitted set",
+                  "account_suspended": {
+                    "summary": "The key's account is suspended",
                     "value": {
                       "error": {
-                        "message": "This workspace is not permitted to use the model \"MODEL_ID\". Its access is limited to a named set of models; a workspace owner can say which.",
+                        "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
                         "type": "permission_error",
                         "param": null,
-                        "code": "model_not_permitted",
-                        "request_id": "REQUEST_ID"
-                      }
-                    }
-                  },
-                  "model_not_permitted_profile": {
-                    "summary": "A routing profile has no permitted member left to try",
-                    "value": {
-                      "error": {
-                        "message": "Every model in \"PROFILE_SLUG\" that could be served is outside this workspace's permitted set, so the profile has nothing left to try. Its access is limited to a named set of models; a workspace owner can say which.",
-                        "type": "permission_error",
-                        "param": null,
-                        "code": "model_not_permitted",
+                        "code": "account_suspended",
                         "request_id": "REQUEST_ID"
                       }
                     }
@@ -808,9 +778,6 @@
           "404": {
             "description": "The model cannot be served, and the two cases are told apart by `code`. `model_not_found` means the id is in no catalog at all, which is what a typo produces, so check the spelling or list what this key can call with `GET /v1/models`. `model_not_available` means the id is catalogued and is not being served right now, either on this endpoint or at all, so retrying later is worth more than changing the request. No provider was called either way.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -864,9 +831,6 @@
           "413": {
             "description": "The request body is larger than the 8388608 byte maximum this API accepts, so it was refused at the door. A body that declares its length is refused without a byte being read; one that declares none is read only as far as the ceiling and then abandoned. Nothing was parsed, no credit was held, no model was called and nothing was charged.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -896,9 +860,6 @@
           "429": {
             "description": "A limit refused the request. `rate_limit_exceeded` is this key's own request rate and carries `Retry-After`. `spend_rate_exceeded` is the account spend rate cap, which counts the credit held for requests rather than the credit they settle at; send `max_tokens` to hold less. `provider_key_refused` is your own key for a provider being over its limit there; it clears on its own and carries no `Retry-After`. `upstream_rate_limited` is the model's provider rate-limiting the call: nothing about the request is wrong, nothing is charged, and it carries `Retry-After`.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               },
@@ -972,9 +933,6 @@
           "529": {
             "description": "The model's provider answered `529` rather than `429`. Carries the same `upstream_rate_limited` code as the 429 case, with `type` `api_error` as the status class requires: nothing about the request is wrong, nothing is charged, and it carries `Retry-After`.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               },
@@ -1012,9 +970,6 @@
           "500": {
             "description": "A fault on our side. The request id is the one thing worth keeping.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -1039,9 +994,6 @@
           "503": {
             "description": "Ours rather than yours, and `code` names the condition. `paused_by_owner` clears only when somebody lifts the pause, so retrying on a timer will not help. `balance_unavailable` (we could not read the balance, so the request was refused rather than served unmetered), `model_not_priceable` and `model_pricing_unreadable` (a model we list could not be priced for this call) and `no_provider_configured` (we are not currently configured to serve this) all clear without you doing anything.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -1083,9 +1035,6 @@
           "504": {
             "description": "The request ran past the request deadline and was terminated.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -1119,19 +1068,19 @@
     "/v1/completions": {
       "classification": "blocked",
       "gate": "2.10",
-      "reason": "The route exists in the source spec, and Story 2.10 (completions and embeddings serve real responses) is in the backlog. Nothing is published for it until the tracker says it ships."
+      "reason": "The route exists in the source spec, and Story 2.10 (completions and embeddings serve real responses) moved from `backlog` to `done` on 2026-09-19 (4ff00eb6d, #1192). So the gate this entry carries has been MET, and it stays `blocked` for the reason /v1/messages is blocked rather than for the reason it used to be: publishing it is a decision rather than a reclassification. It needs its request and response schemas transcribed from the handler, its refusals transcribed with them (including the encoding_format 400 that Story 2.10 added at the door, and the embeddings 413 whose published shape is the open question of SF-31), and a page in the navigation. Note also that both paths have been REACHABLE since Story 2.11 registered them in src/public/routes.ts, so the absence here has never meant a 404; five integration pages on this site say otherwise and are recorded as SF-214, with the owner. Not a sync pass's call."
     },
     "/v1/embeddings": {
       "classification": "blocked",
       "gate": "2.10",
-      "reason": "The route exists in the source spec, and Story 2.10 (completions and embeddings serve real responses) is in the backlog. Nothing is published for it until the tracker says it ships."
+      "reason": "The route exists in the source spec, and Story 2.10 (completions and embeddings serve real responses) moved from `backlog` to `done` on 2026-09-19 (4ff00eb6d, #1192). So the gate this entry carries has been MET, and it stays `blocked` for the reason /v1/messages is blocked rather than for the reason it used to be: publishing it is a decision rather than a reclassification. It needs its request and response schemas transcribed from the handler, its refusals transcribed with them (including the encoding_format 400 that Story 2.10 added at the door, and the embeddings 413 whose published shape is the open question of SF-31), and a page in the navigation. Note also that both paths have been REACHABLE since Story 2.11 registered them in src/public/routes.ts, so the absence here has never meant a 404; five integration pages on this site say otherwise and are recorded as SF-214, with the owner. Not a sync pass's call."
     },
     "/v1/models": {
       "classification": "public",
       "get": {
         "operationId": "listModels",
         "summary": "List models",
-        "description": "List the models you can call. The `id` of each entry is what you send as `model`.\n\nEach entry is the OpenAI model object with a `hopscotch` block beside it, carrying what OpenAI's own object has no field for: who serves the model, what it can do, its context window, and the provider's list price.",
+        "description": "List the models you can call. The `id` of each entry is what you send as `model`.\n\nEach entry is the OpenAI model object with a `uniblock` block beside it, carrying what OpenAI's own object has no field for: who serves the model, what it can do, its context window, and the provider's list price.",
         "tags": [
           "Models"
         ],
@@ -1144,9 +1093,6 @@
           "200": {
             "description": "The models available to your key.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -1164,7 +1110,7 @@
                       "object": "model",
                       "created": 1756080000,
                       "owned_by": "openai",
-                      "hopscotch": {
+                      "uniblock": {
                         "model_id": "openai/gpt-4o-mini",
                         "display_name": "GPT-4o mini",
                         "author": "openai",
@@ -1196,9 +1142,6 @@
           "401": {
             "description": "No key, a scheme other than Bearer, a key of the wrong shape, a key we reject, or a key past its own expiry date, which carries code `key_expired` and names the date it expired on.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -1220,12 +1163,33 @@
               }
             }
           },
+          "403": {
+            "description": "The key belongs to an account staff have suspended, and code is `account_suspended`. The key itself is not revoked: it authenticates again when the account is reinstated. Retrying will not change the answer; contact support.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
+                    "type": "permission_error",
+                    "param": null,
+                    "code": "account_suspended",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
           "405": {
             "description": "A method other than GET on a path that exists. The route boundary answers this before any key is looked at, so it costs nothing and reveals nothing.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               },
@@ -1260,9 +1224,6 @@
           "429": {
             "description": "This key's own request rate limit. Every route on this API is subject to it.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               },
@@ -1295,9 +1256,6 @@
           "500": {
             "description": "A fault on our side. The request id is the one thing worth keeping.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -1322,9 +1280,6 @@
           "503": {
             "description": "We are not currently configured to serve a model list. Retry later.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -1385,9 +1340,6 @@
           "200": {
             "description": "The model.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -1402,10 +1354,12 @@
                   "object": "model",
                   "created": 1756080000,
                   "owned_by": "openai",
-                  "hopscotch": {
+                  "uniblock": {
                     "model_id": "openai/gpt-4o-mini",
                     "display_name": "GPT-4o mini",
                     "author": "openai",
+                    "author_slug": "openai",
+                    "author_source": "recorded",
                     "context_window_tokens": 128000,
                     "max_output_tokens": 16384,
                     "input_rate_thousandths": 150,
@@ -1416,6 +1370,9 @@
                     ],
                     "provider_display_names": [
                       "OpenAI"
+                    ],
+                    "provider_families": [
+                      "openai"
                     ],
                     "capabilities": {
                       "audio": "no",
@@ -1448,9 +1405,6 @@
           "401": {
             "description": "No key, a scheme other than Bearer, a key of the wrong shape, a key we reject, or a key past its own expiry date, which carries code `key_expired` and names the date it expired on.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -1472,12 +1426,33 @@
               }
             }
           },
+          "403": {
+            "description": "The key belongs to an account staff have suspended, and code is `account_suspended`. The key itself is not revoked: it authenticates again when the account is reinstated. Retrying will not change the answer; contact support.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
+                    "type": "permission_error",
+                    "param": null,
+                    "code": "account_suspended",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
           "404": {
             "description": "No model of that id is in the live catalog. A model we hold but do not publish answers the same way as one we have never heard of, on purpose.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -1502,9 +1477,6 @@
           "405": {
             "description": "A method other than GET on a path that exists. The route boundary answers this before any key is looked at, so it costs nothing and reveals nothing.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               },
@@ -1539,9 +1511,6 @@
           "429": {
             "description": "This key's own request rate limit. Every route on this API is subject to it.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               },
@@ -1574,9 +1543,6 @@
           "500": {
             "description": "A fault on our side. The request id is the one thing worth keeping.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -1601,9 +1567,6 @@
           "503": {
             "description": "The catalog could not be served. Nothing is wrong with the request; retry later.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -1684,10 +1647,7 @@
                   },
                   "store": {
                     "type": "boolean",
-                    "enum": [
-                      false
-                    ],
-                    "description": "This platform stores no response, so only `false` is accepted. Omitting the field is served and nothing is forwarded in its place, so the provider applies its own default. An explicit `true` is refused before admission, naming this field."
+                    "description": "On the platform's own provider keys this platform stores no response: an explicit `true` is refused with `400` naming this field in `param`, and an omitted `store` is sent to the provider as `false`. On your own provider key the provider keeps the response under your account if you ask it to, so `true` is forwarded and an omitted `store` is left for the provider's own default."
                   }
                 }
               },
@@ -1700,43 +1660,28 @@
         },
         "responses": {
           "200": {
-            "description": "The model response, in the Responses format, forwarded as the provider sent it.\n\nWhen `stream` is true the body is `text/event-stream` instead, and the token counts arrive on a `:x-uniblock-usage` comment line immediately before the stream ends; the server-sent events specification requires parsers to ignore comment lines, so an SDK never sees it.",
+            "description": "The model response, in the Responses format, forwarded as the provider sent it.\n\nWhen `stream` is true the body is `text/event-stream` instead, and the token counts arrive on a `:x-hopscotch-usage` comment line immediately before the stream ends; the server-sent events specification requires parsers to ignore comment lines, so an SDK never sees it.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               },
               "x-request-id": {
                 "$ref": "#/responseHeaders/SdkRequestId"
               },
-              "x-uniblock-provider": {
-                "$ref": "#/responseHeaders/Provider"
-              },
               "x-hopscotch-provider": {
                 "$ref": "#/responseHeaders/Provider"
-              },
-              "x-uniblock-retry-attempt-count": {
-                "$ref": "#/responseHeaders/RetryAttemptCount"
               },
               "x-hopscotch-retry-attempt-count": {
                 "$ref": "#/responseHeaders/RetryAttemptCount"
               },
-              "x-uniblock-cache-status": {
-                "$ref": "#/responseHeaders/CacheStatus"
-              },
               "x-hopscotch-cache-status": {
                 "$ref": "#/responseHeaders/CacheStatus"
-              },
-              "x-uniblock-trace-id": {
-                "$ref": "#/responseHeaders/TraceId"
               },
               "x-hopscotch-trace-id": {
                 "$ref": "#/responseHeaders/TraceId"
               },
-              "x-uniblock-served-via": {
-                "$ref": "#/responseHeaders/ServedVia"
+              "x-hopscotch-served-by": {
+                "$ref": "#/responseHeaders/ServedBy"
               },
               "x-hopscotch-served-via": {
                 "$ref": "#/responseHeaders/ServedVia"
@@ -1744,11 +1689,8 @@
             }
           },
           "400": {
-            "description": "The request cannot be served as sent. `unsupported_value` with `param` set to `store` is this endpoint's own refusal and is answered before admission, so nothing is held and no provider is called. `code` is null for a missing parameter, with `param` naming it. A refusal the provider made about this request is relayed with the provider's own status and its own sentence, quoted after the provider's name, so a parameter it does not accept reads as what it is rather than as a fault on this platform.",
+            "description": "The request cannot be served as sent. On the platform's own provider keys this endpoint refuses, before admission and with `code` null and `param` naming the field, a field that asks the provider to keep or reuse a stored conversation (`store: true`, `previous_response_id`, `conversation`, an `item_reference` input, `background: true`) or buys something this platform cannot bill yet (see Request parameters); nothing is held and no provider is called. A request served on your own provider key keeps every one of them. `code` is null for a missing parameter too, with `param` naming it. A refusal the provider made about this request is relayed with the provider's own status and its own sentence, quoted after the provider's name, so a parameter it does not accept reads as what it is rather than as a fault on this platform.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -1760,13 +1702,13 @@
                 },
                 "examples": {
                   "store_true": {
-                    "summary": "Asked us to store the response",
+                    "summary": "Asked the platform to store the response",
                     "value": {
                       "error": {
-                        "message": "This platform does not store responses, so `store: true` cannot be honoured. Send `store: false`, or omit the field.",
+                        "message": "\"store\" asks the provider to keep or reuse a stored conversation, and this platform stores none. Remove it, or send the request on your own provider key.",
                         "type": "invalid_request_error",
                         "param": "store",
-                        "code": "unsupported_value",
+                        "code": null,
                         "request_id": "REQUEST_ID"
                       }
                     }
@@ -1802,9 +1744,6 @@
           "401": {
             "description": "No key, a scheme other than Bearer, a key of the wrong shape, or a key we reject. An unknown key and a revoked key are answered with one identical message on purpose.\n\nA key past its own expiry date is refused here too, with code `key_expired` and a message naming the date. It is checked before the per-minute rate limiter, so an expired key never consumes that allowance. Expired keys are not renewed: create a new one.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -1829,9 +1768,6 @@
           "402": {
             "description": "The request will not be paid for, and nothing was charged. Code `insufficient_credit` is the workspace being out of credit, which stops every key on it. Code `key_limit_exceeded` is the sending key reaching its own credit limit, which leaves every other key in the workspace serving normally; it is refused before any credit is held, and the message names what that key has settled and holds inside its current window.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -1871,11 +1807,8 @@
             }
           },
           "403": {
-            "description": "This workspace is not permitted to call what the request named, and code is `model_not_permitted`. For a model the message names that model. For a routing profile the message names the slug and no member, and it is answered when the permitted set excludes every member that could otherwise have been served, including a profile that also holds a member we could not serve ourselves. The permitted set is unrestricted by default, so this is reachable only on a workspace somebody has restricted. No provider was called and retrying will not change the answer: a workspace owner has to widen the set.",
+            "description": "Refused for a setting the caller owns rather than anything about the model, and `code` names which. A key whose account staff have suspended is refused with code `account_suspended`, before any credit is held or any provider is called; contact support, because retrying will not change the answer.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -1886,26 +1819,14 @@
                   "$ref": "#/components/schemas/Error"
                 },
                 "examples": {
-                  "model_not_permitted": {
-                    "summary": "The model is outside this workspace's permitted set",
+                  "account_suspended": {
+                    "summary": "The key's account is suspended",
                     "value": {
                       "error": {
-                        "message": "This workspace is not permitted to use the model \"MODEL_ID\". Its access is limited to a named set of models; a workspace owner can say which.",
+                        "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
                         "type": "permission_error",
                         "param": null,
-                        "code": "model_not_permitted",
-                        "request_id": "REQUEST_ID"
-                      }
-                    }
-                  },
-                  "model_not_permitted_profile": {
-                    "summary": "A routing profile has no permitted member left to try",
-                    "value": {
-                      "error": {
-                        "message": "Every model in \"PROFILE_SLUG\" that could be served is outside this workspace's permitted set, so the profile has nothing left to try. Its access is limited to a named set of models; a workspace owner can say which.",
-                        "type": "permission_error",
-                        "param": null,
-                        "code": "model_not_permitted",
+                        "code": "account_suspended",
                         "request_id": "REQUEST_ID"
                       }
                     }
@@ -1917,9 +1838,6 @@
           "404": {
             "description": "The model cannot be served, and the two cases are told apart by `code`. `model_not_found` means the id is in no catalog at all, which is what a typo produces, so check the spelling or list what this key can call with `GET /v1/models`. `model_not_available` means the id is catalogued and is not being served right now, either on this endpoint or at all, so retrying later is worth more than changing the request. No provider was called either way.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -1973,9 +1891,6 @@
           "413": {
             "description": "The request body is larger than the 8388608 byte maximum this API accepts, so it was refused at the door. A body that declares its length is refused without a byte being read; one that declares none is read only as far as the ceiling and then abandoned. Nothing was parsed, no credit was held, no model was called and nothing was charged.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -2005,9 +1920,6 @@
           "429": {
             "description": "A limit refused the request. `rate_limit_exceeded` is this key's own request rate and carries `Retry-After`. `spend_rate_exceeded` is the account spend rate cap, which counts the credit held for requests rather than the credit they settle at; send `max_tokens` to hold less. `provider_key_refused` is your own key for a provider being over its limit there; it clears on its own and carries no `Retry-After`.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               },
@@ -2069,9 +1981,6 @@
           "500": {
             "description": "A fault on our side. The request id is the one thing worth keeping.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -2096,9 +2005,6 @@
           "503": {
             "description": "Ours rather than yours, and `code` names the condition. `paused_by_owner` clears only when somebody lifts the pause, so retrying on a timer will not help. `balance_unavailable` (we could not read the balance, so the request was refused rather than served unmetered), `model_not_priceable` and `model_pricing_unreadable` (a model we list could not be priced for this call) and `no_provider_configured` (we are not currently configured to serve this) all clear without you doing anything.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -2140,9 +2046,6 @@
           "504": {
             "description": "The request ran past the request deadline and was terminated.",
             "headers": {
-              "x-uniblock-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              },
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
               }
@@ -2182,6 +2085,11 @@
       "classification": "blocked",
       "gate": "2.30",
       "reason": "POST /v1/messages (the Anthropic Messages API) reached the source tree on 2026-08-31 and is the fifth served inference path there. It now HAS a tracker entry: sprint-status.yaml filed Story 2.30 retroactively on 2026-09-09 at `review`, because the owner has not accepted the merge (PR #317), and four findings from its freeform build spec stay open in build/deferred-work.md. So the gate that blocked it has moved from \"no story exists\" to \"the story is not accepted\", and publishing it is still a decision rather than a reclassification: it needs its request and response schemas transcribed from the handler, a page in the navigation, and the two deliberate departures from Anthropic's own API documented (the credential goes in Authorization as a Bearer token rather than x-api-key, and refusals wear the OpenAI error envelope). Nothing is published until the owner accepts Story 2.30. Recorded in the internal site's unresolved-findings.md as SF-91."
+    },
+    "/v1/systemone": {
+      "classification": "blocked",
+      "gate": "2.31",
+      "reason": "POST /v1/systemone (TypeSafe's Jev, typed judgments about a state) reached the source tree on 2026-09-24 (90ec76a67, #1274) as the sixth served inference path, under decision 0052 and the correct-course proposal of 2026-09-21. Its story, 2.31, is `in-progress` in sprint-status.yaml: the row was filed while three build lanes worked against the spec, and nothing has been accepted. So this is blocked on an unaccepted story, as /v1/messages is on 2.30, and publishing it is a decision rather than a reclassification: it needs its request and response schemas transcribed from the handler, its refusals (including model_id_not_pinned for TypeSafe's own bare model id) transcribed with them, and a page in the navigation. Recorded in the internal site's unresolved-findings.md as SF-258. Not a sync pass's call."
     }
   },
   "tags": [
@@ -2255,13 +2163,18 @@
       },
       {
         "example": "POST /v1/responses 400 store_true",
-        "shapeFrom": "services/control-plane/src/inference/responsesStore.ts (storeRefusal), enveloped by services/control-plane/src/errors/openai.ts",
-        "note": "Message string transcribed verbatim from storeRefusal. Needs a live transcript."
+        "shapeFrom": "services/control-plane/src/inference/doorRules.ts (refusal, reason stored), enveloped by services/control-plane/src/errors/openai.ts",
+        "note": "Message string transcribed verbatim from the stored branch of refusal in doorRules.ts (Stories 36.17, 38.42); code is null. Needs a live transcript on a platform key."
       },
       {
         "example": "POST /v1/responses 413 payload_too_large",
         "shapeFrom": "The same PAYLOAD_TOO_LARGE_SENTENCE constant in services/control-plane/src/inference/requestBody.ts that the chat-completions 413 is transcribed from, and the same byte ceiling: the source spec carries an identical 413 description on both doors.",
         "note": "Copied from the chat-completions block rather than written fresh, because one constant answers both doors. Needs a live transcript, which for this one is cheap: any body over the ceiling produces it."
+      },
+      {
+        "example": "GET /v1/models 403, GET /v1/models/{id} 403, POST /v1/chat/completions 403 account_suspended, POST /v1/responses 403 account_suspended",
+        "shapeFrom": "Message transcribed verbatim from ACCOUNT_SUSPENDED_MESSAGE in services/control-plane/src/middleware/customerAuth.ts; the request id is a runtime value.",
+        "note": "Needs a live transcript against a suspended account's key. Story 6.13 reads in-progress."
       }
     ]
   }

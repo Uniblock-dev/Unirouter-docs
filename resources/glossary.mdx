@@ -76,8 +76,8 @@ model separated by a slash, for example `openai/gpt-4o-mini`.
 
 ### Owner
 
-The one member of a workspace who holds the money: the card, the buying of
-credit, and pausing requests. A workspace has exactly one owner, always.
+The one member of a workspace who can pause its requests and set its spend
+limits, and who shares the card and the buying of credit with its admins. A workspace has exactly one owner, always.
 Ownership moves only by transfer, never by being granted, and the transfer
 demotes the outgoing owner in the same action. The owner is also the only member
 who can make somebody an admin.
@@ -135,7 +135,7 @@ window. It is the one limit you may raise yourself. See
 
 The line-by-line record of every change to a workspace's balance: what was
 bought, what was charged, and what each request took. Any member may read it;
-only the owner may act on money.
+only the owner or an admin may buy credit.
 
 ### Sunset
 

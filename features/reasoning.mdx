@@ -19,8 +19,12 @@ provider takes to control how much thinking it does. There is no Hopscotch contr
 for reasoning and nothing of ours is added to your body.
 
 Which values a model accepts is the model's business, and a value it will not
-take comes back as the provider's own refusal rather than as one of ours. See
-[Request parameters](/api-reference/parameters).
+take comes back as the provider's own refusal rather than as one of ours, with
+one exception. An empty or whitespace-only `reasoning_effort` is the one value no
+provider accepts, and it is refused here with a `400`, `code` `invalid_value` and
+`param` set to `reasoning_effort`, rather than sent on to be refused a second
+later. Everything else, including the booleans and integers some providers take,
+travels as you wrote it. See [Request parameters](/api-reference/parameters).
 
 ## Reasoning tokens are inside the completion count
 
@@ -35,7 +39,7 @@ a provider reports them, the count arrives separately as well, as a second view
 of tokens already counted:
 
 ```text
-:x-uniblock-usage {"v":1,"reported":true,"prompt_tokens":40,"completion_tokens":900,"total_tokens":940,"reasoning_tokens":768}
+:x-hopscotch-usage {"v":1,"reported":true,"prompt_tokens":40,"completion_tokens":900,"total_tokens":940,"reasoning_tokens":768}
 ```
 
 In that line the model produced nine hundred completion tokens, of which the

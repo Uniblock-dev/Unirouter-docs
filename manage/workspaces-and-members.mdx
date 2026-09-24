@@ -1,6 +1,6 @@
 ---
 title: "Workspaces and members"
-description: "A workspace holds your keys, usage, playground and billing. Roles decide who may do what, and the owner alone touches money."
+description: "A workspace holds your keys, usage, playground and billing. Roles decide who may do what: the owner and admins buy credit, and the owner alone pauses."
 status: partial
 gates: ["9.4", "9.5", "9.11", "9.12", "9.16", "9.17", "9.18", "9.19", "9.20", "9.24"]
 ---
@@ -37,7 +37,8 @@ one below it.
 | Add, replace or remove the workspace's own provider key | Yes | Yes | No | No |
 | Transfer the workspace to somebody else | Yes | No | No | No |
 | Read the balance, the statement and whether requests are paused | Yes | Yes | Yes | Yes |
-| Buy credit, manage the card, pause or resume requests | Yes | No | No | No |
+| Buy credit and manage the saved cards | Yes | Yes | No | No |
+| Pause or resume requests, and set the low credit notice | Yes | No | No | No |
 
 A developer may create a key because a developer who cannot get a credential
 cannot use the product. A viewer holds the read permissions and their own key
@@ -69,23 +70,26 @@ no owner is refused, and the refusal names transfer as the way through.
 
 ## The owner and money
 
-Money reads are the workspace's. Money writes are the owner's.
+Money reads are the workspace's. Buying credit and managing the card belong to the
+owner and admins; pausing belongs to the owner alone.
 
 Any member, whatever their role, may read the balance, read the statement, and
 see whether the owner has paused requests. Those three facts govern whether a
 member's own requests will be served, and a member who cannot see the balance
 discovers it by having a request refused.
 
-Buying credit, managing the card, and pausing or resuming requests are the
-owner's alone. Every billing control answers a non-owner with one sentence:
+Buying credit and managing the saved cards are the owner's and every admin's.
+Every billing control answers a developer or a viewer with one sentence:
 
-> Only the workspace owner can manage its billing: the card and the buying of
-> credit are the owner's own. Members may read the balance and the statement of
-> the workspace they are in.
+> Only the workspace owner or an admin can manage its billing: its saved cards and
+> the buying of credit. Every member may read the balance and the statement of the
+> workspace they are in.
 
-Pause has its own sentence, because the fact it refuses is not billing:
+Pausing or resuming requests and changing the low credit notice are the owner's
+alone, and have their own sentence, because the fact they refuse is not billing:
 
-> Only the workspace owner can pause or resume its requests.
+> Only the workspace owner can pause or resume its requests, or change when it is
+> emailed about low credit.
 
 Both are HTTP 403. The refusal names what your role does not cover rather than
 pretending the control is not there, because the screen offered it and an
