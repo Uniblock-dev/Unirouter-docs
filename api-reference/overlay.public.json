@@ -1139,6 +1139,13 @@
               }
             }
           },
+          "304": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            }
+          },
           "401": {
             "description": "No key, a scheme other than Bearer, a key of the wrong shape, a key we reject, or a key past its own expiry date, which carries code `key_expired` and names the date it expired on.",
             "headers": {
