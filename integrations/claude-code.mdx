@@ -46,10 +46,10 @@ the value from another page would be wrong twice over.
 
 **The credential goes in `ANTHROPIC_AUTH_TOKEN`, not `ANTHROPIC_API_KEY`.**
 The two are not aliases: `ANTHROPIC_AUTH_TOKEN` sends `Authorization: Bearer`,
-and `ANTHROPIC_API_KEY` sends `x-api-key`. This API reads `Authorization:
-Bearer` and nothing else, so `ANTHROPIC_AUTH_TOKEN` is the one that would be
-read here, and it is also the one Anthropic recommends for a third-party
-gateway. [Authentication](/get-started/authentication) covers the header.
+and `ANTHROPIC_API_KEY` sends `x-api-key`. Every path this site publishes reads
+`Authorization: Bearer`, so `ANTHROPIC_AUTH_TOKEN` is the setting that matches
+the rest of this API, and it is also the one Anthropic recommends for a
+third-party gateway. [Authentication](/get-started/authentication) covers the header.
 
 **Model ids would not be a problem.** Anthropic states that Claude Code's model
 id check runs only against Anthropic's own API, and that behind a custom base

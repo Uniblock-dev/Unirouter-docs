@@ -1139,6 +1139,13 @@
               }
             }
           },
+          "304": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            }
+          },
           "401": {
             "description": "No key, a scheme other than Bearer, a key of the wrong shape, a key we reject, or a key past its own expiry date, which carries code `key_expired` and names the date it expired on.",
             "headers": {
@@ -2084,7 +2091,7 @@
     "/v1/messages": {
       "classification": "blocked",
       "gate": "2.30",
-      "reason": "POST /v1/messages (the Anthropic Messages API) reached the source tree on 2026-08-31 and is the fifth served inference path there. It now HAS a tracker entry: sprint-status.yaml filed Story 2.30 retroactively on 2026-09-09 at `review`, because the owner has not accepted the merge (PR #317), and four findings from its freeform build spec stay open in build/deferred-work.md. So the gate that blocked it has moved from \"no story exists\" to \"the story is not accepted\", and publishing it is still a decision rather than a reclassification: it needs its request and response schemas transcribed from the handler, a page in the navigation, and the two deliberate departures from Anthropic's own API documented (the credential goes in Authorization as a Bearer token rather than x-api-key, and refusals wear the OpenAI error envelope). Nothing is published until the owner accepts Story 2.30. Recorded in the internal site's unresolved-findings.md as SF-91."
+      "reason": "POST /v1/messages (the Anthropic Messages API) reached the source tree on 2026-08-31 and is the fifth served inference path there. Its gate has closed: sprint-status.yaml moved Story 2.30 to `done` on the 2026-09-25 tracker reconcile (PR #317 merged to develop). Publishing it is still a decision rather than a reclassification: it needs its request and response schemas transcribed from the handler, a page in the navigation, and its one remaining deliberate departure from Anthropic's own API documented (refusals wear the OpenAI error envelope). Since source commit 22e07125c the credential is read from either Authorization as a Bearer token or Anthropic's own x-api-key, where two different values are refused, so the header is no longer a departure. It stays blocked until the owner decides to publish it. Recorded in the internal site's unresolved-findings.md as SF-91 and SF-282."
     },
     "/v1/systemone": {
       "classification": "blocked",
