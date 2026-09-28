@@ -921,6 +921,14 @@ Tracked here so writers meet them where the work is; each names its unblock cond
 
     **`SF-214`, `SF-215`, `SF-231`, `SF-261`, `SF-272`, `SF-273`, `SF-274`, `SF-280` and `SF-281` are still open with the owner and nothing in this range settles them.**
 
+54. **The Models screen has no switch back to provider rows, and nothing under `/v1` moved** (2026-09-28 pm sync, `25e80357..4118b067`, forty commits). `sync-source-spec`, run against a clean extract of `origin/develop`, reports the public surface unchanged, so `overlay.public.json` classifies nothing new and the lock's hashes stay as they were.
+
+    **The fold is no longer a default.** `a668b2f73` (#2062) amends decision 0021 on the owner's authority: there is no switch that splits the Models list back into provider rows and no `rows` URL state, and `RowSplit.tsx` is deleted. `features/models.mdx` said the screen folds providers "by default", which implied the switch; it now says it always does. That one sentence was corrected without re-reading the page, and its gates are unchanged. Recorded internally as SF-292.
+
+    **What else moved and stayed off this site.** The control plane gained one staff operation, `GET /admin/ops/artificial-analysis/quota`, and one migration, the Artificial Analysis call ledger (SF-290). Five superseded decisions moved to `_bmad-output/archive/` and eight change proposals to `_bmad-output/log/` (SF-291); no public page cites any of them. No tracker status changed (SF-293).
+
+    **`SF-214`, `SF-215`, `SF-231`, `SF-261`, `SF-272`, `SF-273`, `SF-274`, `SF-280`, `SF-281` and `SF-282` are still open with the owner and nothing in this range settles them.**
+
 ## 15. Redirects, SEO, accessibility
 
 **Redirects**: none at launch (greenfield site). Standing rule: once published, a path is permanent; moves ship with a `redirects` entry in docs.json in the same PR (CI check, §16). Reserve stable prefixes now (`/api-reference/*`, `/features/*`, `/manage/*`, `/get-started/*`, `/resources/*`) so growth never forces a move. `/integrations/*` joined that list on 2026-09-08 with the pages in §7.6. **`/concepts/*` and `/guides/*` were retired on 2026-09-09** for the five-tab structure in §5, so that a path names its tab: `concepts/` split into `features/` and `manage/`, `guides/` split into `get-started/`, `features/` and `manage/`, and `resources/security` and `resources/migrate-from-openai` moved to `manage/` and `get-started/`. That move shipped **no redirects**, which was only legitimate because no page had been published yet and no external link could exist; the permanence rule binds every prefix above from that date on. `scripts/check-docs-json.mjs` holds the same list and fails any path outside it, so the two are changed together or not at all.
