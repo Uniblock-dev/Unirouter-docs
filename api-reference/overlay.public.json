@@ -1139,6 +1139,13 @@
               }
             }
           },
+          "304": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            }
+          },
           "401": {
             "description": "No key, a scheme other than Bearer, a key of the wrong shape, a key we reject, or a key past its own expiry date, which carries code `key_expired` and names the date it expired on.",
             "headers": {
@@ -2084,12 +2091,157 @@
     "/v1/messages": {
       "classification": "blocked",
       "gate": "2.30",
-      "reason": "POST /v1/messages (the Anthropic Messages API) reached the source tree on 2026-08-31 and is the fifth served inference path there. It now HAS a tracker entry: sprint-status.yaml filed Story 2.30 retroactively on 2026-09-09 at `review`, because the owner has not accepted the merge (PR #317), and four findings from its freeform build spec stay open in build/deferred-work.md. So the gate that blocked it has moved from \"no story exists\" to \"the story is not accepted\", and publishing it is still a decision rather than a reclassification: it needs its request and response schemas transcribed from the handler, a page in the navigation, and the two deliberate departures from Anthropic's own API documented (the credential goes in Authorization as a Bearer token rather than x-api-key, and refusals wear the OpenAI error envelope). Nothing is published until the owner accepts Story 2.30. Recorded in the internal site's unresolved-findings.md as SF-91."
+      "reason": "POST /v1/messages (the Anthropic Messages API) reached the source tree on 2026-08-31 and is the fifth served inference path there. Its gate has closed: sprint-status.yaml moved Story 2.30 to `done` on the 2026-09-25 tracker reconcile (PR #317 merged to develop). Publishing it is still a decision rather than a reclassification: it needs its request and response schemas transcribed from the handler, a page in the navigation, and its one remaining deliberate departure from Anthropic's own API documented (refusals wear the OpenAI error envelope). Since source commit 22e07125c the credential is read from either Authorization as a Bearer token or Anthropic's own x-api-key, where two different values are refused, so the header is no longer a departure. It stays blocked until the owner decides to publish it. Recorded in the internal site's unresolved-findings.md as SF-91 and SF-282."
     },
     "/v1/systemone": {
       "classification": "blocked",
       "gate": "2.31",
       "reason": "POST /v1/systemone (TypeSafe's Jev, typed judgments about a state) reached the source tree on 2026-09-24 (90ec76a67, #1274) as the sixth served inference path, under decision 0052 and the correct-course proposal of 2026-09-21. Its story, 2.31, is `in-progress` in sprint-status.yaml: the row was filed while three build lanes worked against the spec, and nothing has been accepted. So this is blocked on an unaccepted story, as /v1/messages is on 2.30, and publishing it is a decision rather than a reclassification: it needs its request and response schemas transcribed from the handler, its refusals (including model_id_not_pinned for TypeSafe's own bare model id) transcribed with them, and a page in the navigation. Recorded in the internal site's unresolved-findings.md as SF-258. Not a sync pass's call."
+    },
+    "/v1/organization/usage": {
+      "classification": "blocked",
+      "gate": "47.5",
+      "reason": "Part of Epic 47's customer management API (usage and cost buckets), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.5 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.5 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/usage/completions": {
+      "classification": "blocked",
+      "gate": "47.5",
+      "reason": "Part of Epic 47's customer management API (usage and cost buckets), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.5 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.5 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/usage/embeddings": {
+      "classification": "blocked",
+      "gate": "47.5",
+      "reason": "Part of Epic 47's customer management API (usage and cost buckets), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.5 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.5 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/usage/systemone": {
+      "classification": "blocked",
+      "gate": "47.5",
+      "reason": "Part of Epic 47's customer management API (usage and cost buckets), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.5 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.5 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/costs": {
+      "classification": "blocked",
+      "gate": "47.5",
+      "reason": "Part of Epic 47's customer management API (usage and cost buckets), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.5 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.5 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/projects": {
+      "classification": "blocked",
+      "gate": "47.3",
+      "reason": "Part of Epic 47's customer management API (members, invitations and the bound workspace project), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.3 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Archive with key revocation answers 503 on purpose until the owner approves the cross-store outbox. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.3 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/projects/{project_id}": {
+      "classification": "blocked",
+      "gate": "47.3",
+      "reason": "Part of Epic 47's customer management API (members, invitations and the bound workspace project), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.3 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Archive with key revocation answers 503 on purpose until the owner approves the cross-store outbox. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.3 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/projects/{project_id}/archive": {
+      "classification": "blocked",
+      "gate": "47.3",
+      "reason": "Part of Epic 47's customer management API (members, invitations and the bound workspace project), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.3 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Archive with key revocation answers 503 on purpose until the owner approves the cross-store outbox. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.3 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/projects/{project_id}/restore": {
+      "classification": "blocked",
+      "gate": "47.3",
+      "reason": "Part of Epic 47's customer management API (members, invitations and the bound workspace project), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.3 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Archive with key revocation answers 503 on purpose until the owner approves the cross-store outbox. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.3 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/users": {
+      "classification": "blocked",
+      "gate": "47.3",
+      "reason": "Part of Epic 47's customer management API (members, invitations and the bound workspace project), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.3 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Archive with key revocation answers 503 on purpose until the owner approves the cross-store outbox. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.3 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/users/{user_id}": {
+      "classification": "blocked",
+      "gate": "47.3",
+      "reason": "Part of Epic 47's customer management API (members, invitations and the bound workspace project), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.3 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Archive with key revocation answers 503 on purpose until the owner approves the cross-store outbox. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.3 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/invites": {
+      "classification": "blocked",
+      "gate": "47.3",
+      "reason": "Part of Epic 47's customer management API (members, invitations and the bound workspace project), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.3 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Archive with key revocation answers 503 on purpose until the owner approves the cross-store outbox. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.3 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/invites/{invite_id}": {
+      "classification": "blocked",
+      "gate": "47.3",
+      "reason": "Part of Epic 47's customer management API (members, invitations and the bound workspace project), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.3 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Archive with key revocation answers 503 on purpose until the owner approves the cross-store outbox. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.3 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/projects/{project_id}/users": {
+      "classification": "blocked",
+      "gate": "47.3",
+      "reason": "Part of Epic 47's customer management API (members, invitations and the bound workspace project), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.3 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Archive with key revocation answers 503 on purpose until the owner approves the cross-store outbox. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.3 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/projects/{project_id}/users/{user_id}": {
+      "classification": "blocked",
+      "gate": "47.3",
+      "reason": "Part of Epic 47's customer management API (members, invitations and the bound workspace project), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.3 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Archive with key revocation answers 503 on purpose until the owner approves the cross-store outbox. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.3 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/projects/{project_id}/users/{user_id}/transfer_ownership": {
+      "classification": "blocked",
+      "gate": "47.3",
+      "reason": "Part of Epic 47's customer management API (members, invitations and the bound workspace project), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.3 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Archive with key revocation answers 503 on purpose until the owner approves the cross-store outbox. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.3 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/credit/balance": {
+      "classification": "blocked",
+      "gate": "47.6",
+      "reason": "Part of Epic 47's customer management API (balance, automatic top-up, pause and spend controls), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.6 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Top-up, spend-rate and pause writes answer 503 until the outbox and top-up idempotency are approved. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.6 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/credit/automatic_top_up": {
+      "classification": "blocked",
+      "gate": "47.6",
+      "reason": "Part of Epic 47's customer management API (balance, automatic top-up, pause and spend controls), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.6 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Top-up, spend-rate and pause writes answer 503 until the outbox and top-up idempotency are approved. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.6 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/credit/automatic_top_up/amount": {
+      "classification": "blocked",
+      "gate": "47.6",
+      "reason": "Part of Epic 47's customer management API (balance, automatic top-up, pause and spend controls), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.6 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Top-up, spend-rate and pause writes answer 503 until the outbox and top-up idempotency are approved. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.6 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/credit/automatic_top_up/threshold": {
+      "classification": "blocked",
+      "gate": "47.6",
+      "reason": "Part of Epic 47's customer management API (balance, automatic top-up, pause and spend controls), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.6 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Top-up, spend-rate and pause writes answer 503 until the outbox and top-up idempotency are approved. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.6 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/pause": {
+      "classification": "blocked",
+      "gate": "47.6",
+      "reason": "Part of Epic 47's customer management API (balance, automatic top-up, pause and spend controls), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.6 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Top-up, spend-rate and pause writes answer 503 until the outbox and top-up idempotency are approved. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.6 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/projects/{project_id}/spend_caps": {
+      "classification": "blocked",
+      "gate": "47.6",
+      "reason": "Part of Epic 47's customer management API (balance, automatic top-up, pause and spend controls), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.6 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Top-up, spend-rate and pause writes answer 503 until the outbox and top-up idempotency are approved. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.6 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/projects/{project_id}/spend_caps/members/{user_id}": {
+      "classification": "blocked",
+      "gate": "47.6",
+      "reason": "Part of Epic 47's customer management API (balance, automatic top-up, pause and spend controls), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.6 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Top-up, spend-rate and pause writes answer 503 until the outbox and top-up idempotency are approved. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.6 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/projects/{project_id}/spend_limit": {
+      "classification": "blocked",
+      "gate": "47.6",
+      "reason": "Part of Epic 47's customer management API (balance, automatic top-up, pause and spend controls), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.6 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Top-up, spend-rate and pause writes answer 503 until the outbox and top-up idempotency are approved. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.6 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/spend_rate_cap": {
+      "classification": "blocked",
+      "gate": "47.6",
+      "reason": "Part of Epic 47's customer management API (balance, automatic top-up, pause and spend controls), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.6 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Top-up, spend-rate and pause writes answer 503 until the outbox and top-up idempotency are approved. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.6 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/projects/{project_id}/api_keys": {
+      "classification": "blocked",
+      "gate": "47.4",
+      "reason": "Part of Epic 47's customer management API (inference keys on the bound project), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.4 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Every write stays off (mutationWritesEnabled false) and answers 503 until the owner approves the cross-store outbox. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.4 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/projects/{project_id}/api_keys/{api_key_id}": {
+      "classification": "blocked",
+      "gate": "47.4",
+      "reason": "Part of Epic 47's customer management API (inference keys on the bound project), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.4 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Every write stays off (mutationWritesEnabled false) and answers 503 until the owner approves the cross-store outbox. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.4 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/projects/{project_id}/api_keys/{api_key_id}/rotate": {
+      "classification": "blocked",
+      "gate": "47.4",
+      "reason": "Part of Epic 47's customer management API (inference keys on the bound project), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.4 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Every write stays off (mutationWritesEnabled false) and answers 503 until the owner approves the cross-store outbox. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.4 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/projects/{project_id}/api_keys/{api_key_id}/limits": {
+      "classification": "blocked",
+      "gate": "47.4",
+      "reason": "Part of Epic 47's customer management API (inference keys on the bound project), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.4 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Every write stays off (mutationWritesEnabled false) and answers 503 until the owner approves the cross-store outbox. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.4 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
     }
   },
   "tags": [

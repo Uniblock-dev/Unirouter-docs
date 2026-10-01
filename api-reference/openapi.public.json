@@ -646,6 +646,32 @@
               }
             },
             "headers": {
+              "Cache-Control": {
+                "description": "The catalog's freshness: `private, max-age=<seconds>` behind a key, and `no-store` once the pricing window has closed.",
+                "schema": {
+                  "type": "string",
+                  "pattern": "^(private|public), max-age=\\d+$|^no-store$"
+                }
+              },
+              "ETag": {
+                "description": "A strong validator over the rendered body. Send it back as `If-None-Match` to conditionally revalidate.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "x-hopscotch-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "304": {
+            "description": "Not Modified: `If-None-Match` already named this ETag. Empty body.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               }

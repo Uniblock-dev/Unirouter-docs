@@ -22,6 +22,7 @@ streaming loop needs to change. Read it only if you want it.
 | `total_tokens` | integer | The sum. |
 | `cache_read_input_tokens` | integer | Input tokens served from cache. Omitted when the provider did not report it. |
 | `cache_write_input_tokens` | integer | Input tokens written to cache. Omitted when the provider did not report it. |
+| `cache_write_1h_input_tokens` | integer | The part of `cache_write_input_tokens` written with a one-hour lifetime. Part of that figure, never added to it. Omitted when the provider did not split its cache writes by lifetime. |
 | `reasoning_tokens` | integer | Reasoning tokens, already counted inside `completion_tokens`. Omitted when the provider did not report it. |
 
 Fields are omitted rather than set to zero when a provider did not report them,

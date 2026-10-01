@@ -36,7 +36,7 @@ places.
 **In the reply body**, on a response that is not streamed, inside the provider's
 own `usage` object, in whatever spelling that provider uses.
 
-**On the stream**, as two fields on the `:x-hopscotch-usage` comment line written
+**On the stream**, as fields on the `:x-hopscotch-usage` comment line written
 immediately before `data: [DONE]`:
 
 ```text
@@ -47,6 +47,7 @@ immediately before `data: [DONE]`:
 |---|---|
 | `cache_read_input_tokens` | Input tokens served from the provider's cache. |
 | `cache_write_input_tokens` | Input tokens written into it. |
+| `cache_write_1h_input_tokens` | The part of those writes made with a one-hour lifetime. Already counted inside `cache_write_input_tokens`, and present only when the provider split its writes by lifetime, as Anthropic does. |
 
 **On your usage record**, and so on the Activity screen, as the cache read and
 cache write figures for that request. See
@@ -54,8 +55,8 @@ cache write figures for that request. See
 
 ### Absent is not zero
 
-Both fields are omitted rather than sent as `0` when the provider did not report
-them. A provider that does no cache accounting produces a usage line with neither
+Each field is omitted rather than sent as `0` when the provider did not report
+it. A provider that does no cache accounting produces a usage line with neither
 field, which is a different fact from a request that used no cache, and the two
 stay distinguishable on purpose.
 
