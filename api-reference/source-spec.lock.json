@@ -6,8 +6,8 @@
     "DELETE /v1/organization/projects/{project_id}/api_keys/{api_key_id}": "06db9ace9dda8f7e",
     "DELETE /v1/organization/projects/{project_id}/spend_limit": "165f803fc3478526",
     "DELETE /v1/organization/projects/{project_id}/users/{user_id}": "083b60bcee2fe45a",
-    "GET /v1/models": "043be279b02fd57b",
-    "GET /v1/models/{id}": "8941e800f428af30",
+    "GET /v1/models": "a186f4cbbd153f34",
+    "GET /v1/models/{id}": "ce76d40d9c82feb5",
     "GET /v1/organization/costs": "4fb120a29aaf9cdb",
     "GET /v1/organization/credit/automatic_top_up": "71a67f61e7d3b212",
     "GET /v1/organization/credit/balance": "f1d7a317cb840ce6",
@@ -37,10 +37,10 @@
     "PARAMETERS /v1/organization/projects/{project_id}/users/{user_id}": "f0a174c1308f1f23",
     "PARAMETERS /v1/organization/projects/{project_id}/users/{user_id}/transfer_ownership": "f0a174c1308f1f23",
     "PARAMETERS /v1/organization/users/{user_id}": "d8460f8ba3b94a47",
-    "POST /v1/chat/completions": "42e65b44c0152cb8",
-    "POST /v1/completions": "732e51b059ee2b61",
-    "POST /v1/embeddings": "b128381748dc151f",
-    "POST /v1/messages": "a7f648b353d71a07",
+    "POST /v1/chat/completions": "bfd16f8da306a107",
+    "POST /v1/completions": "2cb0ea3a54afdca8",
+    "POST /v1/embeddings": "fa5bc3837759d22c",
+    "POST /v1/messages": "049864455185828d",
     "POST /v1/organization/credit/automatic_top_up/amount": "85ddbc1f1424da70",
     "POST /v1/organization/credit/automatic_top_up/threshold": "21f622c1c08afcd5",
     "POST /v1/organization/invites": "301eae33989dee2f",
@@ -58,7 +58,7 @@
     "POST /v1/organization/projects/{project_id}/users/{user_id}": "b7347dfb3988e5c9",
     "POST /v1/organization/projects/{project_id}/users/{user_id}/transfer_ownership": "daf7e81e99438ce3",
     "POST /v1/organization/spend_rate_cap": "9914f7fcf24fea3b",
-    "POST /v1/responses": "a9911223e76baf84",
-    "POST /v1/systemone": "f6fc09502231ee3f"
+    "POST /v1/responses": "fc5cdf1881fa407e",
+    "POST /v1/systemone": "d68eb445b8d4b703"
   }
 }
