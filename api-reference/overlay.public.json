@@ -918,7 +918,7 @@
                     "summary": "The model's provider rate-limited the call",
                     "value": {
                       "error": {
-                        "message": "The server had an error while processing your request. Sorry about that! Quote the request id if you contact support.",
+                        "message": "The provider serving this model is rate-limiting requests right now. Nothing was charged. Retry after the number of seconds in the Retry-After header. Quote the request id if you contact support.",
                         "type": "rate_limit_error",
                         "param": null,
                         "code": "upstream_rate_limited",
@@ -955,7 +955,7 @@
                     "summary": "The model's provider rate-limited the call, at 529",
                     "value": {
                       "error": {
-                        "message": "The server had an error while processing your request. Sorry about that! Quote the request id if you contact support.",
+                        "message": "The provider serving this model is rate-limiting requests right now. Nothing was charged. Retry after the number of seconds in the Retry-After header. Quote the request id if you contact support.",
                         "type": "api_error",
                         "param": null,
                         "code": "upstream_rate_limited",
@@ -2305,8 +2305,8 @@
       },
       {
         "example": "POST /v1/chat/completions 429 upstream_rate_limited",
-        "shapeFrom": "INTERNAL_MESSAGE and the upstream_rate_limited branch of sanitizePlatformProviderRefusal in services/control-plane/src/errors/openai.ts",
-        "note": "Message transcribed verbatim from the generic sentence a 429 on a platform credential carries, since 429 is deliberately not in CUSTOMER_ACTIONABLE_STATUSES. Needs a live transcript, which requires a provider actually rate-limiting us."
+        "shapeFrom": "UPSTREAM_RATE_LIMITED_MESSAGE and the upstream_rate_limited branch of sanitizePlatformProviderRefusal in services/control-plane/src/errors/openai.ts",
+        "note": "Message transcribed verbatim from the fixed rate-limit sentence a 429 or 529 on a platform credential carries since PR #2561; it names the throttle and the retry action and never the provider. Needs a live transcript, which requires a provider actually rate-limiting us."
       },
       {
         "example": "POST /v1/responses 200",
