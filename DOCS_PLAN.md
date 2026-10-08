@@ -1037,6 +1037,14 @@ Tracked here so writers meet them where the work is; each names its unblock cond
 
     **`SF-145`, `SF-214`, `SF-215`, `SF-231`, `SF-261`, `SF-272`, `SF-273`, `SF-274`, `SF-280`, `SF-281`, `SF-282`, `SF-299` and `SF-304` are still open with the owner and nothing in this range settles them. SF-360 joins them.**
 
+71. **Nothing under `/v1` moved and nothing a customer reads moved** (2026-10-08 am sync, `468d7427..defd8c68`, one hundred four commits, mostly dashboard label capitals, gateway GCS path hardening, Stape conversion tag reuse and CI work). `sync-source-spec`, run against a clean extract of `origin/develop`, reports the public surface unchanged at seventy-five `/v1` operations; the lock is rewritten with identical hashes. The one control-plane spec change is `POST /internal/conversion-receipt` (internal SF-364), which is not a public door. The gateway spec did not change, and the published artifact is unchanged.
+
+    **What changed on this site.** Nothing a customer reads. No page is edited.
+
+    **What moved and stayed off this site.** The tracker closed Stories 6.3, 17.6, 26.9 and 46.1 to 46.7 and moved 47.7 to `in-progress` with every CAP-5 write still disabled, so the seven paths blocked on `47.7` in entry 70 stay blocked (internal SF-366). Story 26.9's off-peak pass-through reaching `done` names no public page: no page here quotes an off-peak price. Two repo-wide test policies joined the manifest (internal SF-365).
+
+    **The open owner findings listed in entry 70 are unchanged; nothing in this range settles any of them.**
+
 ## 15. Redirects, SEO, accessibility
 
 **Redirects**: none at launch (greenfield site). Standing rule: once published, a path is permanent; moves ship with a `redirects` entry in docs.json in the same PR (CI check, §16). Reserve stable prefixes now (`/api-reference/*`, `/features/*`, `/manage/*`, `/get-started/*`, `/resources/*`) so growth never forces a move. `/integrations/*` joined that list on 2026-09-08 with the pages in §7.6. **`/concepts/*` and `/guides/*` were retired on 2026-09-09** for the five-tab structure in §5, so that a path names its tab: `concepts/` split into `features/` and `manage/`, `guides/` split into `get-started/`, `features/` and `manage/`, and `resources/security` and `resources/migrate-from-openai` moved to `manage/` and `get-started/`. That move shipped **no redirects**, which was only legitimate because no page had been published yet and no external link could exist; the permanence rule binds every prefix above from that date on. `scripts/check-docs-json.mjs` holds the same list and fails any path outside it, so the two are changed together or not at all.
