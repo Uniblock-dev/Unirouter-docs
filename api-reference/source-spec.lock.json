@@ -53,6 +53,7 @@
     "POST /v1/completions": "d07bd0f939349c30",
     "POST /v1/embeddings": "11efeaf727710e28",
     "POST /v1/messages": "4452653f72e077c1",
+    "POST /v1/organization/admin_api_keys": "17861b66c8a33fce",
     "POST /v1/organization/credit/automatic_top_up/amount": "85ddbc1f1424da70",
     "POST /v1/organization/credit/automatic_top_up/threshold": "21f622c1c08afcd5",
     "POST /v1/organization/invites": "6edbeb32d7fe0814",
