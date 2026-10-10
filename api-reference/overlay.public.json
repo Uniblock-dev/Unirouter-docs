@@ -918,7 +918,7 @@
                     "summary": "The model's provider rate-limited the call",
                     "value": {
                       "error": {
-                        "message": "The server had an error while processing your request. Sorry about that! Quote the request id if you contact support.",
+                        "message": "The provider serving this model is rate-limiting requests right now. Nothing was charged. Retry after the number of seconds in the Retry-After header. Quote the request id if you contact support.",
                         "type": "rate_limit_error",
                         "param": null,
                         "code": "upstream_rate_limited",
@@ -955,7 +955,7 @@
                     "summary": "The model's provider rate-limited the call, at 529",
                     "value": {
                       "error": {
-                        "message": "The server had an error while processing your request. Sorry about that! Quote the request id if you contact support.",
+                        "message": "The provider serving this model is rate-limiting requests right now. Nothing was charged. Retry after the number of seconds in the Retry-After header. Quote the request id if you contact support.",
                         "type": "api_error",
                         "param": null,
                         "code": "upstream_rate_limited",
@@ -2242,6 +2242,51 @@
       "classification": "blocked",
       "gate": "47.4",
       "reason": "Part of Epic 47's customer management API (inference keys on the bound project), which reached the source tree on 2026-09-30 under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.4 reads `review` in sprint-status.yaml, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Every write stays off (mutationWritesEnabled false) and answers 503 until the owner approves the cross-store outbox. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.4 are done. Recorded in the internal site's unresolved-findings.md as SF-305."
+    },
+    "/v1/organization/admin_api_keys": {
+      "classification": "blocked",
+      "gate": "47.1",
+      "reason": "Part of Epic 47's customer management API (the delegated workspace admin key), which reached the source tree in the 2026-10-09 pm sync range (001a545c7, cadb33123, 1fa3bbfda) under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. The route is mounted, but it declares the capability admin_key.manage, which services/control-plane/src/members/can.ts reserves pending owner approval and no role is granted, so every caller is refused; the source spec itself says the route remains unavailable until admin_key.manage is owner-approved. Story 47.1 reads `in-progress` in sprint-status.yaml. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from services/control-plane/src/organization/adminKeyRoutes.ts, and the security scheme has to join keepSecuritySchemes. Nothing is published until the owner grants admin_key.manage and 47.1 is done. Recorded in the internal site's unresolved-findings.md as SF-378."
+    },
+    "/v1/organization/audit_logs": {
+      "classification": "blocked",
+      "gate": "47.2",
+      "reason": "Part of Epic 47's customer management API (the customer audit trail), which reached the source tree in the 2026-10-10 am sync range (19d8b19a5) under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. The route is mounted from services/control-plane/src/organization/auditRoutes.ts with capability audit.read, which services/control-plane/src/members/can.ts now grants to owner and admin. Story 47.2 reads `review` in sprint-status.yaml, and its tracker note still says the route stays unmounted, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress`. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.2 are done. Recorded in the internal site's unresolved-findings.md as SF-382."
+    },
+    "/v1/organization/projects/{project_id}/guardrails": {
+      "classification": "blocked",
+      "gate": "47.7",
+      "reason": "Part of Epic 47's customer management API (guardrails and workspace provider keys, the CAP-5 organization resources), which reached the source tree in the 2026-10-07 sync range (89ed02023, 1c920a04b) under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.7 reads `backlog` in sprint-status.yaml, every write on these paths is summarised in the source spec as currently unavailable, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.7 are done. Recorded in the internal site's unresolved-findings.md as SF-359."
+    },
+    "/v1/organization/projects/{project_id}/guardrails/{guardrail_id}": {
+      "classification": "blocked",
+      "gate": "47.7",
+      "reason": "Part of Epic 47's customer management API (guardrails and workspace provider keys, the CAP-5 organization resources), which reached the source tree in the 2026-10-07 sync range (89ed02023, 1c920a04b) under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.7 reads `backlog` in sprint-status.yaml, every write on these paths is summarised in the source spec as currently unavailable, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.7 are done. Recorded in the internal site's unresolved-findings.md as SF-359."
+    },
+    "/v1/organization/projects/{project_id}/guardrails/{guardrail_id}/keys": {
+      "classification": "blocked",
+      "gate": "47.7",
+      "reason": "Part of Epic 47's customer management API (guardrails and workspace provider keys, the CAP-5 organization resources), which reached the source tree in the 2026-10-07 sync range (89ed02023, 1c920a04b) under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.7 reads `backlog` in sprint-status.yaml, every write on these paths is summarised in the source spec as currently unavailable, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.7 are done. Recorded in the internal site's unresolved-findings.md as SF-359."
+    },
+    "/v1/organization/projects/{project_id}/guardrails/{guardrail_id}/keys/{api_key_id}": {
+      "classification": "blocked",
+      "gate": "47.7",
+      "reason": "Part of Epic 47's customer management API (guardrails and workspace provider keys, the CAP-5 organization resources), which reached the source tree in the 2026-10-07 sync range (89ed02023, 1c920a04b) under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.7 reads `backlog` in sprint-status.yaml, every write on these paths is summarised in the source spec as currently unavailable, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.7 are done. Recorded in the internal site's unresolved-findings.md as SF-359."
+    },
+    "/v1/organization/projects/{project_id}/provider_keys": {
+      "classification": "blocked",
+      "gate": "47.7",
+      "reason": "Part of Epic 47's customer management API (guardrails and workspace provider keys, the CAP-5 organization resources), which reached the source tree in the 2026-10-07 sync range (89ed02023, 1c920a04b) under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.7 reads `backlog` in sprint-status.yaml, every write on these paths is summarised in the source spec as currently unavailable, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.7 are done. Recorded in the internal site's unresolved-findings.md as SF-359."
+    },
+    "/v1/organization/projects/{project_id}/provider_keys/{provider_key_id}": {
+      "classification": "blocked",
+      "gate": "47.7",
+      "reason": "Part of Epic 47's customer management API (guardrails and workspace provider keys, the CAP-5 organization resources), which reached the source tree in the 2026-10-07 sync range (89ed02023, 1c920a04b) under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.7 reads `backlog` in sprint-status.yaml, every write on these paths is summarised in the source spec as currently unavailable, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.7 are done. Recorded in the internal site's unresolved-findings.md as SF-359."
+    },
+    "/v1/organization/projects/{project_id}/provider_keys/{provider_key_id}/replace": {
+      "classification": "blocked",
+      "gate": "47.7",
+      "reason": "Part of Epic 47's customer management API (guardrails and workspace provider keys, the CAP-5 organization resources), which reached the source tree in the 2026-10-07 sync range (89ed02023, 1c920a04b) under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. Story 47.7 reads `backlog` in sprint-status.yaml, every write on these paths is summarised in the source spec as currently unavailable, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress` with no route yet that mints a child key. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the schemas and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 47.7 are done. Recorded in the internal site's unresolved-findings.md as SF-359."
     }
   },
   "tags": [
@@ -2305,8 +2350,8 @@
       },
       {
         "example": "POST /v1/chat/completions 429 upstream_rate_limited",
-        "shapeFrom": "INTERNAL_MESSAGE and the upstream_rate_limited branch of sanitizePlatformProviderRefusal in services/control-plane/src/errors/openai.ts",
-        "note": "Message transcribed verbatim from the generic sentence a 429 on a platform credential carries, since 429 is deliberately not in CUSTOMER_ACTIONABLE_STATUSES. Needs a live transcript, which requires a provider actually rate-limiting us."
+        "shapeFrom": "UPSTREAM_RATE_LIMITED_MESSAGE and the upstream_rate_limited branch of sanitizePlatformProviderRefusal in services/control-plane/src/errors/openai.ts",
+        "note": "Message transcribed verbatim from the fixed rate-limit sentence a 429 or 529 on a platform credential carries since PR #2561; it names the throttle and the retry action and never the provider. Needs a live transcript, which requires a provider actually rate-limiting us."
       },
       {
         "example": "POST /v1/responses 200",

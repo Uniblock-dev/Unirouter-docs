@@ -127,11 +127,13 @@ A provider that answers `529` rather than `429` carries the same
 `upstream_rate_limited` code, with `type` `api_error` as the status class
 requires. The code is the part to branch on.
 
-The **message** on `upstream_rate_limited` is our generic one, the same sentence
-every fault on our side carries, and that is deliberate rather than an oversight:
-a throttle on a credential of ours is not a fact about your request, and the
-provider's own words about it name our account. The `code` and the `Retry-After`
-are the actionable half, which is why the code is what to read.
+The **message** on `upstream_rate_limited` is a fixed sentence of ours, not the
+provider's: it says the provider serving this model is rate-limiting requests
+right now, that nothing was charged, and to retry after the number of seconds in
+`Retry-After`. It never names the provider or repeats its words, because the
+provider is already in `x-hopscotch-provider` and its own sentence is about our
+account rather than your request. The `code` and the `Retry-After` are still the
+half to branch on.
 
 ### Provider key refusals
 

@@ -71,6 +71,7 @@ when a feature ships that needs a new value. These are the values you may see to
 | `refused_not_permitted` | The caller was not allowed to make this request. Charged nothing. |
 | `refused_invalid_request` | The request could not be served as sent. Charged nothing. |
 | `refused_platform_unavailable` | We could not serve it and no provider was attempted. Charged nothing. |
+| `customer_disconnected` | You closed the connection before the provider had answered, so the request was cancelled. Charged nothing. |
 | `provider_failed` | A provider answered with a failure. |
 | `provider_rate_limited` | A provider refused us for rate. |
 | `terminated_zero_balance` | A stream was cut off when the credit ran out. |
