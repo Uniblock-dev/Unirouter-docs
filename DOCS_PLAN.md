@@ -1083,6 +1083,14 @@ Tracked here so writers meet them where the work is; each names its unblock cond
 
     **The open owner findings listed in entries 70 and 73 are unchanged; nothing in this range settles any of them.**
 
+76. **Nothing under `/v1` moved, and nothing a customer reads moved** (2026-10-10 pm sync, `c220d4cd..52bd4007`, fifty-two commits, mostly fleet test PRs closing import-scanner gaps, model-page heading parsing fixes, harness cleanup fixes, Story 51.8's floating alias targets and Story 49.13's Aider and tau2-bench result readers). `sync-source-spec`, run against a clean extract of `origin/develop`, reports the public surface unchanged at seventy-seven `/v1` operations; the lock is rewritten with identical hashes. Neither source spec changed, and the published artifact is unchanged.
+
+    **What changed on this site.** Nothing a customer reads. No page is edited.
+
+    **What moved and stayed off this site.** The tracker moved Story 51.8, which owns floating aliases, to `review` (internal SF-388). Item 61's rule stands: no page here describes `moving_alias` until 51.8 is `done`. The speed board now leaves out hidden or archived providers and disabled models (internal SF-389); no page here names the speed board. The harness manifest gained the provider family touch-point contract (internal SF-389), an engineering concern with no customer surface.
+
+    **The open owner findings listed in entries 70 and 73, and widened in 75, are unchanged; nothing in this range settles any of them.**
+
 ## 15. Redirects, SEO, accessibility
 
 **Redirects**: none at launch (greenfield site). Standing rule: once published, a path is permanent; moves ship with a `redirects` entry in docs.json in the same PR (CI check, §16). Reserve stable prefixes now (`/api-reference/*`, `/features/*`, `/manage/*`, `/get-started/*`, `/resources/*`) so growth never forces a move. `/integrations/*` joined that list on 2026-09-08 with the pages in §7.6. **`/concepts/*` and `/guides/*` were retired on 2026-09-09** for the five-tab structure in §5, so that a path names its tab: `concepts/` split into `features/` and `manage/`, `guides/` split into `get-started/`, `features/` and `manage/`, and `resources/security` and `resources/migrate-from-openai` moved to `manage/` and `get-started/`. That move shipped **no redirects**, which was only legitimate because no page had been published yet and no external link could exist; the permanence rule binds every prefix above from that date on. `scripts/check-docs-json.mjs` holds the same list and fails any path outside it, so the two are changed together or not at all.
