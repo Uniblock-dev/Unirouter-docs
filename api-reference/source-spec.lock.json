@@ -11,6 +11,7 @@
     "DELETE /v1/organization/projects/{project_id}/users/{user_id}": "87331dafaa280eb5",
     "GET /v1/models": "a186f4cbbd153f34",
     "GET /v1/models/{id}": "ce76d40d9c82feb5",
+    "GET /v1/organization/audit_logs": "2474b43c513c1c78",
     "GET /v1/organization/costs": "4fb120a29aaf9cdb",
     "GET /v1/organization/credit/automatic_top_up": "71a67f61e7d3b212",
     "GET /v1/organization/credit/balance": "f1d7a317cb840ce6",
