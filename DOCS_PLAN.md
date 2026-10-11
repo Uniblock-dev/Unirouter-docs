@@ -1099,6 +1099,14 @@ Tracked here so writers meet them where the work is; each names its unblock cond
 
     **The open owner findings listed in entries 70 and 73, and widened in 75, are unchanged; nothing in this range settles any of them.**
 
+78. **Nothing under `/v1` moved, and nothing a customer reads on this site moved** (2026-10-11 pm sync, `2cbddf9c..6046b9cd`, a hundred and eighteen commits, mostly fleet test PRs, price-cut proposal fixes, Bun typecheck shadow jobs, the gateway's move from Jest to Vitest, and Stories 50.3 and 50.4). `sync-source-spec`, run against a clean extract of `origin/develop`, reports the public surface unchanged at seventy-seven `/v1` operations; the lock is rewritten with identical hashes. The control-plane spec gained `POST /admin/models/{model}/unit-rates`, a staff route, and documented a generic `500` on `GET /public/models` and `GET /public/models/{id}`, neither under `/v1`; the published artifact is unchanged.
+
+    **What changed on this site.** Nothing a customer reads. No page is edited.
+
+    **What moved and stayed off this site.** Story 50.3 lets staff price an image or audio model per image, per million characters or per minute of audio, and Story 50.4 sizes a hold from the request's own unit with a per-model image count cap; both moved to `review` (internal SF-394, SF-395, SF-397). Every image and audio door stays closed until Story 50.6, still `backlog`, so no page here describes per-unit pricing or image and audio holds, and none should until a door opens. The pricing pages' per-million-token framing stays true of every door a customer can reach.
+
+    **The open owner findings listed in entries 70 and 73, and widened in 75, are unchanged; nothing in this range settles any of them.**
+
 ## 15. Redirects, SEO, accessibility
 
 **Redirects**: none at launch (greenfield site). Standing rule: once published, a path is permanent; moves ship with a `redirects` entry in docs.json in the same PR (CI check, §16). Reserve stable prefixes now (`/api-reference/*`, `/features/*`, `/manage/*`, `/get-started/*`, `/resources/*`) so growth never forces a move. `/integrations/*` joined that list on 2026-09-08 with the pages in §7.6. **`/concepts/*` and `/guides/*` were retired on 2026-09-09** for the five-tab structure in §5, so that a path names its tab: `concepts/` split into `features/` and `manage/`, `guides/` split into `get-started/`, `features/` and `manage/`, and `resources/security` and `resources/migrate-from-openai` moved to `manage/` and `get-started/`. That move shipped **no redirects**, which was only legitimate because no page had been published yet and no external link could exist; the permanence rule binds every prefix above from that date on. `scripts/check-docs-json.mjs` holds the same list and fails any path outside it, so the two are changed together or not at all.
