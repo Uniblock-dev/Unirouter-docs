@@ -45,17 +45,34 @@ request, not the catalog.
 
 ## What this platform checks
 
-Nothing, and the sentence is worth stating flatly rather than leaving you to
-infer it.
+Nothing about your schema or the reply, and the sentence is worth stating flatly
+rather than leaving you to infer it. The one exception is the shape of the field
+itself when Anthropic serves the request, below.
 
-- **Your schema is not validated here.** It is forwarded as written. A schema a
-  provider will not accept is refused by the provider, in the provider's own
-  words and on its own status.
+- **Your schema is not validated here.** It is forwarded as written to every
+  provider that reads `response_format`. A schema a provider will not accept
+  is refused by the provider, in the provider's own words and on its own status.
 - **The reply is not validated against your schema either.** What arrives is what
   the model produced. If it is not the shape you asked for, that is what you get.
 - **Nothing is repaired.** There is no retry on a malformed body, no second call
   to fix the JSON, and no post-processing of the reply. A model that returns
   prose where you asked for an object returns prose to you.
+
+**Anthropic is the one translation.** Anthropic does not read `response_format`,
+so when Anthropic serves the request the field is rewritten into Anthropic's own
+structured output setting:
+
+- A `json_schema` is sent with its `schema` alone. The `name` and `strict` fields
+  are not forwarded.
+- A `json_schema` with no usable `schema` inside it is refused here with a `400`,
+  `param: response_format`, `code: invalid_value`, before anything is sent.
+- `json_object` is refused here with a `400`, `param: response_format`,
+  `code: unsupported_value`, because Anthropic has no equivalent. Send a
+  `json_schema` with a schema instead.
+- `{"type": "text"}` sends nothing.
+
+The schema itself is still not validated here, and the reply is still not
+checked against it.
 
 So the guarantee behind a structured output is entirely the provider's. Where a
 provider offers a strict mode that constrains generation, using it is worth more
