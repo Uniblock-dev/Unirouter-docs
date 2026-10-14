@@ -9,6 +9,7 @@
     "DELETE /v1/organization/projects/{project_id}/provider_keys/{provider_key_id}": "a6f4cf00dbe98fd1",
     "DELETE /v1/organization/projects/{project_id}/spend_limit": "165f803fc3478526",
     "DELETE /v1/organization/projects/{project_id}/users/{user_id}": "87331dafaa280eb5",
+    "DELETE /v1/videos/{id}": "c1f0ef1122b0f74f",
     "GET /v1/models": "a186f4cbbd153f34",
     "GET /v1/models/{id}": "ce76d40d9c82feb5",
     "GET /v1/organization/audit_logs": "c6675a964ca85027",
@@ -35,6 +36,8 @@
     "GET /v1/organization/users": "334301b3e07bbd52",
     "GET /v1/organization/users/{user_id}": "cd3ca84fc07b0e6d",
     "GET /v1/usage/{id}": "014d8a1b3b2205e8",
+    "GET /v1/videos/{id}": "5c40523076f04d29",
+    "GET /v1/videos/{id}/content": "5cc0a66d424a69ce",
     "PARAMETERS /v1/organization/invites/{invite_id}": "472a1d2115412a6c",
     "PARAMETERS /v1/organization/projects/{project_id}": "612369ead47d5dc1",
     "PARAMETERS /v1/organization/projects/{project_id}/archive": "612369ead47d5dc1",
@@ -51,8 +54,8 @@
     "PARAMETERS /v1/organization/projects/{project_id}/users/{user_id}/transfer_ownership": "f0a174c1308f1f23",
     "PARAMETERS /v1/organization/users/{user_id}": "d8460f8ba3b94a47",
     "POST /v1/audio/speech": "a50a32903445b004",
-    "POST /v1/audio/transcriptions": "85cca3f1aa9433b9",
-    "POST /v1/audio/translations": "146cd612b4723a7c",
+    "POST /v1/audio/transcriptions": "b37c44c38ef7748a",
+    "POST /v1/audio/translations": "2e6fac270956d484",
     "POST /v1/chat/completions": "20bd4079c04f7dcf",
     "POST /v1/completions": "d07bd0f939349c30",
     "POST /v1/embeddings": "11efeaf727710e28",
@@ -84,6 +87,7 @@
     "POST /v1/organization/spend_rate_cap": "c51e647b6ce37896",
     "POST /v1/organization/storage/byoc": "8436a17a68641470",
     "POST /v1/responses": "4b8e2b1bd4443003",
-    "POST /v1/systemone": "a11a0d1b546dafe8"
+    "POST /v1/systemone": "a11a0d1b546dafe8",
+    "POST /v1/videos": "976c219fec4cb7a1"
   }
 }
