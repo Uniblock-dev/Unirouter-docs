@@ -9,6 +9,7 @@
     "DELETE /v1/organization/projects/{project_id}/provider_keys/{provider_key_id}": "a6f4cf00dbe98fd1",
     "DELETE /v1/organization/projects/{project_id}/spend_limit": "165f803fc3478526",
     "DELETE /v1/organization/projects/{project_id}/users/{user_id}": "87331dafaa280eb5",
+    "DELETE /v1/organization/storage/byoc": "00f12338945c8ccc",
     "DELETE /v1/videos/{id}": "c1f0ef1122b0f74f",
     "GET /v1/models": "7bfc108800a25f4b",
     "GET /v1/models/{id}": "ce76d40d9c82feb5",
@@ -29,6 +30,7 @@
     "GET /v1/organization/projects/{project_id}/spend_limit": "0bac81dec09cc8e7",
     "GET /v1/organization/projects/{project_id}/users": "2c1911e4bac16b8e",
     "GET /v1/organization/projects/{project_id}/users/{user_id}": "4516d9ad339551c7",
+    "GET /v1/organization/storage/byoc/audit": "f2dc28da4e058218",
     "GET /v1/organization/usage": "b93c834968844275",
     "GET /v1/organization/usage/completions": "c56bb054c52f14ec",
     "GET /v1/organization/usage/embeddings": "1d36feedb1c40fb3",
@@ -89,9 +91,10 @@
     "POST /v1/organization/projects/{project_id}/users/{user_id}/transfer_ownership": "daf7e81e99438ce3",
     "POST /v1/organization/spend_rate_cap": "c51e647b6ce37896",
     "POST /v1/organization/storage/byoc": "8436a17a68641470",
+    "POST /v1/organization/storage/byoc/audit": "b0fee6ac2551cd56",
     "POST /v1/organization/workload-insights/workflows": "b1b8d09a5c45b5d0",
     "POST /v1/responses": "4b8e2b1bd4443003",
     "POST /v1/systemone": "a11a0d1b546dafe8",
-    "POST /v1/videos": "870ca36c4846cfd2"
+    "POST /v1/videos": "3f322d23d969b9e4"
   }
 }
