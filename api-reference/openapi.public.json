@@ -440,7 +440,7 @@
                     "summary": "The model's provider rate-limited the call",
                     "value": {
                       "error": {
-                        "message": "The server had an error while processing your request. Sorry about that! Quote the request id if you contact support.",
+                        "message": "The provider serving this model is rate-limiting requests right now. Nothing was charged. Retry after the number of seconds in the Retry-After header. Quote the request id if you contact support.",
                         "type": "rate_limit_error",
                         "param": null,
                         "code": "upstream_rate_limited",
@@ -566,7 +566,7 @@
                     "summary": "The model's provider rate-limited the call, at 529",
                     "value": {
                       "error": {
-                        "message": "The server had an error while processing your request. Sorry about that! Quote the request id if you contact support.",
+                        "message": "The provider serving this model is rate-limiting requests right now. Nothing was charged. Retry after the number of seconds in the Retry-After header. Quote the request id if you contact support.",
                         "type": "api_error",
                         "param": null,
                         "code": "upstream_rate_limited",
@@ -927,6 +927,7 @@
                     ],
                     "deprecated_at": null,
                     "sunset_at": null,
+                    "moving_alias": null,
                     "replacement_model_id": null,
                     "description": "A small, fast model for everyday chat and extraction work."
                   }

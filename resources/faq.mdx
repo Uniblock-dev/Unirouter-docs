@@ -59,8 +59,10 @@ back all travel unchanged, streamed and not. Nothing is executed on our side. Se
 </Accordion>
 
 <Accordion title="Does response_format work?">
-Yes, both forms, forwarded as written. Nothing here validates your schema or the
-reply against it. See [Structured outputs](/features/structured-outputs).
+Yes, both forms, forwarded as written, except that an Anthropic model takes only
+`json_schema`, translated into Anthropic's own setting, and refuses `json_object`
+with a `400`. Nothing here validates your schema or the reply against it. See
+[Structured outputs](/features/structured-outputs).
 </Accordion>
 
 <Accordion title="Can I send images?">
