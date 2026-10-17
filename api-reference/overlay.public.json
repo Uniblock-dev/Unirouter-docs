@@ -2083,6 +2083,11 @@
         ]
       }
     },
+    "/v1/realtime": {
+      "classification": "blocked",
+      "gate": "72.5",
+      "reason": "Story 72.5's realtime door, which reached the source tree in the 2026-10-16 late pm sync range (ade1426ac, PR #5456) under customerApiKey: GET /v1/realtime?model= upgraded to a WebSocket in the OpenAI Realtime event shape, with an opening hold before the upgrade and each response held and settled on its own. realtimeDoorEnabled in services/control-plane/src/public/routes.ts reads REALTIME_DOOR_ENABLED === 'true', services/control-plane/wrangler.toml says it stays unset in every environment until the realtime proof passes, and with the flag closed the path answers the pre-publication 404 endpoint_not_supported before the key is read. Story 72.5 reads `review`, and Story 72.8, which owns the docs, the API reference and the dashboard naming the realtime door, reads `backlog`. Publishing it is a writer pass rather than a reclassification: a WebSocket upgrade does not render as an ordinary operation, and the subprotocol refusal, the 4402 close when the next hold is refused, the 60 minute session limit and the per-response usage rows each need a page, with every example transcribed from services/control-plane/src/realtime/door.ts. Nothing is published until the flag opens in production and 72.8 is done. Recorded in the internal site's unresolved-findings.md as SF-481."
+    },
     "/v1/usage/{id}": {
       "classification": "blocked",
       "gate": "5.26",
