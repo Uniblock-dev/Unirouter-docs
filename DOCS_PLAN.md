@@ -1173,6 +1173,14 @@ Tracked here so writers meet them where the work is; each names its unblock cond
 
     **The open owner findings listed in entries 70 and 73, and widened in 75, are unchanged; nothing in this range settles any of them.**
 
+88. **Nothing a customer reads moved** (2026-10-17 am sync, `a5ba45f4..490bc1f9`, twenty-three first-parent merges, most of them fleet PRs: Reddit taking over conversion dispatch with Pixel UUID matching, conversions reporting filters, staff review batch writers reporting refusals and closing orphaned questions as `not_applicable`, adapter-less candidate evidence for Story 64.6, `scripts/new-migration.mjs`, catalog reader and pairing fixes, and Artificial Analysis customer surfaces switched on in staging). `sync-source-spec`, run against a clean extract of `origin/develop`, reports the public surface unchanged: still one hundred and two `/v1` operations, none changed. The lock is unchanged.
+
+    **What changed on this site.** Nothing. No page is edited, and no page's `gates:` names the one row that moved, Story 52.5 (`backlog` to `review`).
+
+    **What moved and stayed off this site.** Every operation that changed is a staff or browser door, among them `POST /api/me/credit/checkout` losing `rdtClickId` (internal SF-484, SF-488). `AA_CUSTOMER_SURFACES` is `on` in staging and still `off` in production, so no Artificial Analysis figure reaches a customer (internal SF-487).
+
+    **The open owner findings listed in entries 70 and 73, and widened in 75, are unchanged; nothing in this range settles any of them.**
+
 ## 15. Redirects, SEO, accessibility
 
 **Redirects**: none at launch (greenfield site). Standing rule: once published, a path is permanent; moves ship with a `redirects` entry in docs.json in the same PR (CI check, §16). Reserve stable prefixes now (`/api-reference/*`, `/features/*`, `/manage/*`, `/get-started/*`, `/resources/*`) so growth never forces a move. `/integrations/*` joined that list on 2026-09-08 with the pages in §7.6. **`/concepts/*` and `/guides/*` were retired on 2026-09-09** for the five-tab structure in §5, so that a path names its tab: `concepts/` split into `features/` and `manage/`, `guides/` split into `get-started/`, `features/` and `manage/`, and `resources/security` and `resources/migrate-from-openai` moved to `manage/` and `get-started/`. That move shipped **no redirects**, which was only legitimate because no page had been published yet and no external link could exist; the permanence rule binds every prefix above from that date on. `scripts/check-docs-json.mjs` holds the same list and fails any path outside it, so the two are changed together or not at all.
