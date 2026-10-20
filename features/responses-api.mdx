@@ -1,0 +1,144 @@
+---
+title: "Responses API"
+description: "POST /v1/responses for clients that speak OpenAI's Responses format: what is forwarded, which stored-state fields we refuse and why, and the pattern that works."
+status: write-now
+gates: []
+---
+
+import RequestIdNote from '/snippets/request-id-note.mdx';
+
+`POST /v1/responses` serves OpenAI's Responses format. It is the same door as
+chat completions: the same key, the same catalog, the same hold against your
+balance and the same usage record, under its own endpoint family so a charge
+is recognisable. The `input` is forwarded as you sent it, whether a string or
+the array of typed input items, and `stream: true` gives server-sent events.
+
+<CodeGroup>
+
+```bash curl
+curl https://api.hopscotchlabs.ai/v1/responses \
+  -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "openai/gpt-4o-mini",
+    "input": "Say hi in five words."
+  }'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://api.hopscotchlabs.ai/v1",
+    api_key="ub_live_YOUR_KEY_HERE",
+)
+
+response = client.responses.create(
+    model="openai/gpt-4o-mini",
+    input="Say hi in five words.",
+)
+print(response.output_text)
+```
+
+```typescript Node
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "https://api.hopscotchlabs.ai/v1",
+  apiKey: "ub_live_YOUR_KEY_HERE",
+});
+
+const response = await client.responses.create({
+  model: "openai/gpt-4o-mini",
+  input: "Say hi in five words.",
+});
+console.log(response.output_text);
+```
+
+</CodeGroup>
+
+## This platform stores no response
+
+The Responses API was designed around a server that keeps your conversation:
+a response has an id, a follow-up can name it as `previous_response_id`, and
+`store` defaults to keeping it. Hopscotch keeps no prompts and no responses,
+so on our own provider credentials the stored-state parts of the format are
+refused rather than quietly accepted and lost.
+
+| Field | On our credentials | On your own provider key |
+|---|---|---|
+| `store` | An explicit `true` is refused. An omitted `store` is sent to the provider as `false`. | Forwarded as sent, and left to the provider's default when omitted. |
+| `previous_response_id`, `conversation` | Refused: there is no stored conversation to continue. | Forwarded as sent. |
+| `background: true` | Refused: there is no stored response to collect later. | Forwarded as sent. |
+| `item_reference` input items | Refused anywhere in the body. | Forwarded as sent. |
+
+Each refusal is an HTTP 400 in the OpenAI envelope with the field in `param`,
+and it says what to do:
+
+```json 400
+{
+  "error": {
+    "message": "\"previous_response_id\" asks the provider to keep or reuse a stored conversation, and this platform stores none. Remove it, or send the request on your own provider key.",
+    "type": "invalid_request_error",
+    "param": "previous_response_id",
+    "code": null,
+    "request_id": "REQUEST_ID"
+  }
+}
+```
+
+The pattern that works without stored state is the one chat completions has
+always used: carry the conversation yourself and send it whole each time. The
+output items of one response become input items of the next.
+
+Three routes to the stored-state endpoints are not served and answer the usual
+404 `endpoint_not_supported`: reading a response by id, deleting one, and
+listing its input items. There is nothing behind them to read.
+
+## Tools
+
+Tools you define yourself are forwarded and work as they do on chat. Hosted
+tools that the provider bills for separately are refused on our credentials
+because we do not meter them: web search, web fetch, code execution and the
+code interpreter, file search, image generation, and remote MCP servers. The
+refusal names the tool:
+
+```json 400
+{
+  "error": {
+    "message": "\"tools\" includes the paid tool \"web_search_preview\", which this platform does not meter. Remove it, or send the request on your own provider key.",
+    "type": "invalid_request_error",
+    "param": "tools",
+    "code": null,
+    "request_id": "REQUEST_ID"
+  }
+}
+```
+
+On your own provider key the provider bills you for the tool directly and the
+request is forwarded untouched.
+
+## Everything else
+
+`service_tier` is accepted as `auto` or `default`. The small set of fields no
+endpoint meters on our credentials, a priority or fast mode, regional
+processing, audio input and output, and a one-hour cache write, is refused
+with the same shape of 400 here as on chat. See
+[OpenAI compatibility](/get-started/openai-compatibility#request-parameters).
+
+Streaming, the response headers, the request id, and the money path are the
+ones every endpoint shares. Read the usage and charge of a request back with
+[Usage lookup](/features/usage-lookup).
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Streaming" href="/features/streaming">
+    What a stream carries, and what happens when credit runs out mid-stream.
+  </Card>
+  <Card title="Tool calling" href="/features/tool-calling">
+    Your own tools, which are forwarded on every endpoint.
+  </Card>
+</CardGroup>
+
+<RequestIdNote />

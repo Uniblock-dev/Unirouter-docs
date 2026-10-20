@@ -62,13 +62,16 @@ request rather than at startup. The SDK never asks `GET /v1/models` on its own
 either. It reaches an endpoint only when your code calls the method for it.
 
 **A resource we do not serve raises rather than hangs.** Calling
-`client.embeddings.create(...)` against this base URL reaches a path this API
-does not serve for you, and the SDK turns the `404` into `openai.NotFoundError`.
-That is worth knowing because it is the one shape of failure that looks like a
-configuration mistake and is not: the base URL is right and the endpoint is
-absent. See [OpenAI compatibility](/get-started/openai-compatibility). A `404` is
-not in the SDK's retry set, so it fails on the first attempt rather than after a
-backoff.
+`client.images.generate(...)` or `client.audio.speech.create(...)` against this
+base URL reaches a path this API does not serve yet, and the SDK turns the
+`404` into `openai.NotFoundError`. That is worth knowing because it is the one
+shape of failure that looks like a configuration mistake and is not: the base
+URL is right and the endpoint is absent. See
+[OpenAI compatibility](/get-started/openai-compatibility) for the list that
+serves, which includes `client.embeddings.create(...)`,
+`client.completions.create(...)` and `client.responses.create(...)`. A `404` is
+not in the SDK's retry set, so it fails on the first attempt rather than after
+a backoff.
 
 **The streamed usage line is skipped for you.** A streamed reply carries one SSE
 comment line before `data: [DONE]`. This SDK's stream decoder discards a line

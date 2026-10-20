@@ -159,15 +159,27 @@ replacement, and a removal in which somebody chose revoke for that key. A role
 change never revokes a key. Hopscotch staff can also revoke a key from our side,
 recorded against a named member of staff.
 
-<Warning>
-There is no self-service revoke or replace control yet. The permission exists
-and the closed list above is what will ever end a key, but the screen that lets
-you press revoke has not shipped, so this guide does not describe one. The one
-place a revoke choice is offered today is
-[removing a member](/manage/invite-and-manage-members), where every key that
-person is accountable for needs a choice of revoke or keep. Until the control
-ships, treat a leaked key as something you cannot end yourself.
-</Warning>
+Both of the first two are controls on the key's row of the Keys screen, offered
+to anyone who may revoke that key, which is an owner, an admin, or the
+developer it is accountable to.
+
+**Revoke** asks "Stop this key from working?" and ends the key on
+**Revoke it**. Nothing replaces it, and its slot is freed.
+
+**Regenerate** asks "Replace this key with a fresh one? The old one stops
+working." and, on **Regenerate it**, ends the old key and shows the new one
+once, the way a new key is shown. Regenerating needs the permission to create
+a key as well as to revoke one, because it does both, and the old key is
+confirmed ended before the new one is shown, so you are never told a key was
+replaced while it still works somewhere.
+
+Revoking and regenerating share an account-wide churn allowance: an account
+that ends keys too quickly is refused with HTTP 429 and the code
+`too_many_key_operations`, carrying `Retry-After`, until the window passes.
+
+The third way is [removing a member](/manage/invite-and-manage-members),
+where every key that person is accountable for needs a choice of revoke or
+keep.
 
 We do not publish how quickly a revocation takes effect everywhere. There is a
 target for it, and until it is measured on a deployed environment there is no

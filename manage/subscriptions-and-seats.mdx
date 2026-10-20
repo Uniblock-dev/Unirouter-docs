@@ -1,0 +1,94 @@
+---
+title: "Subscriptions and seats"
+description: "Coming soon: a per-seat plan with a monthly or yearly allowance of model use beside prepaid credit. How a seat, its key, its allowance and its overage cap work."
+status: partial
+gates: ["spec-subscription-plans"]
+---
+
+import FeatureStatus from '/snippets/feature-status.mdx';
+
+<FeatureStatus
+  missing="subscriptions in production"
+  instead="The Subscription screen and everything on this page are built and are being tested on our development environment. Nothing here is reachable in production, no plan is on sale, and prepaid credit remains the only way to pay for requests. This page says what is coming so a team can plan for it."
+/>
+
+Prepaid credit pays for requests at the provider's rate, with nothing added.
+A subscription will sit beside it: a plan that gives each seat a fixed
+allowance of model use per period for a fixed price, so a team can give every
+member a budget without watching a balance.
+
+## What a plan is
+
+A plan is defined by us, not chosen from a fixed list, and the Subscription
+screen shows the plans on sale when there are any. Each plan carries:
+
+- a **price per seat per period**, monthly or yearly;
+- an **allowance** of model use per seat per period, counted at provider cost,
+  the same figure a request would have taken from your balance;
+- whether a seat may spend past its allowance (**overage**), and if so only up
+  to a cap the workspace sets per seat;
+- optionally, a **model allow list**, so a plan can cover a named set of models
+  rather than everything on sale;
+- optionally, up to four **usage windows**, such as a smaller amount per few
+  hours or per few days inside the period.
+
+A workspace holds one subscription, of up to 100 seats, and buys it through the
+same hosted checkout as credit, on a saved card where one exists. Buying,
+changing and cancelling take owner or admin.
+
+## What a seat is
+
+A seat belongs to one member, of any role, and a member holds at most one seat
+in a workspace. The seat holder creates their own **seat key**, shown once like
+any key, and that key is the one that draws on the allowance. A seat key sits
+outside the five-key ceiling and cannot be revoked or limited from the Keys
+screen; it ends when the seat does, and reassigning the seat replaces it.
+
+A request on a seat key draws the seat's allowance first. When the allowance is
+spent, the request is refused unless the plan allows overage and the workspace
+has set a cap for that seat, in which case the workspace balance pays up to
+the cap. Nothing is charged for a request that is refused, and the balance is
+never used in place of a window or an allowance that has run out.
+
+The refusals a seat key will see, all in the OpenAI envelope:
+
+| Case | Status | `code` |
+|---|---|---|
+| Seat not paid for, unpaid, disputed or ended | 402 | `seat_inactive` |
+| A usage window on the plan is full | 429 | `seat_window_exceeded`, with `Retry-After` |
+| Allowance spent, no overage | 402 | `seat_allowance_exhausted` |
+| Overage would pass the seat's cap | 402 | `seat_overage_cap_exceeded` |
+
+Each message names the Subscription screen as the place an owner or admin
+changes it. The seat holder sees how much of the allowance is used and when it
+resets on the Usage screen; owners and admins see every seat's share and
+overage on the Subscription screen.
+
+## Renewal, changes and cancellation
+
+- The full allowance is granted on each paid renewal.
+- A renewal that fails stops every seat on the subscription at once, and the
+  subscription ends a day later if it stays unpaid. The screen says so and
+  points at the card.
+- Adding seats or upgrading one seat's plan is charged now, prorated for what
+  is left of the period, and applies once that payment clears. Downgrading a
+  seat moves it at the next renewal and charges nothing now.
+- Cancelling a seat lets it serve to the end of the period, with an undo until
+  then. Cancelling the last seat is done by cancelling the subscription, which
+  also runs to the end of the period.
+
+What a seat's usage looks like in your records: a request paid from an
+allowance carries no charge in Activity or in
+[usage lookup](/features/usage-lookup), where `paid_from_allowance` is true,
+and it does not count as workspace spend.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Credits and billing" href="/manage/credits-and-billing">
+    The prepaid model a subscription sits beside.
+  </Card>
+  <Card title="Workspaces and members" href="/manage/workspaces-and-members">
+    The roles that will buy a subscription and hold a seat.
+  </Card>
+</CardGroup>

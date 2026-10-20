@@ -25,8 +25,9 @@ attempted too quickly" from "this key is done" without asking us.
 | 413 | `payload_too_large` | Nothing. The request body is over the 8388608 byte maximum this API accepts. | Send fewer messages, a shorter prompt, or fewer inputs. |
 | 402 | `insufficient_credit` | Available credit at admission. | Buy credit. |
 | 402 | `key_limit_exceeded` | This key's own credit limit, for its current window. | Wait for the window to roll, raise the limit, or send on another key. |
-| 402 | `member_limit_exceeded` | Your own monthly spend limit, for the current calendar month. | Ask the workspace owner to raise or clear it. Your colleagues are unaffected. |
-| 402 | `workspace_limit_exceeded` | The workspace's monthly spend limit, for the current calendar month. | Ask the workspace owner, whose control for it is not built into the dashboard yet, or ask us. |
+| 402 | `member_limit_exceeded` | Your own monthly spend limit, for the current UTC calendar month. | Ask the workspace owner to raise or clear it on the Team screen's Spend tab. Your colleagues are unaffected. |
+| 402 | `workspace_limit_exceeded` | The workspace's monthly spend limit, for the current UTC calendar month. | Ask the workspace owner, who sets it on the Settings screen under Limits. |
+| 402 | `key_limit_exceeded` with a guardrail named | A spend cap set by a [guardrail](/features/guardrails) on this key. | Ask an owner or admin to change or detach the guardrail. |
 | 401 | `key_expired` | Nothing. The key's own expiry date has passed. | Create a new key. Expired keys are never renewed. |
 | 503 | `paused_by_owner` | Nothing. The workspace owner has paused requests. | Lift the pause in Settings. |
 

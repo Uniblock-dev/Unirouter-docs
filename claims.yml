@@ -39,8 +39,10 @@ allow_patterns:
     reason: "An ISO date."
   - pattern: "^gpt-[0-9a-z.-]+$|^claude-[0-9a-z.-]+$|^o[0-9]$"
     reason: "A model identifier, which comes from the catalog rather than from us."
-  - pattern: "^utf-8$|^base64$|^base64url$|^sha-?256$"
+  - pattern: "^utf-8$|^base64$|^base64url$|^sha-?256$|^hmac-sha-?256$"
     reason: "The name of an encoding or algorithm."
+  - pattern: "^(S3|R2)$"
+    reason: "AWS S3 and Cloudflare R2, the two storage products a customer may register a bucket of their own on. Product names, not figures."
   - pattern: "^(https?://)?t3(\\.codes)?$|t3code"
     reason: >-
       The product name "T3 Code", its repository (pingdotgg/t3code) and its
@@ -467,3 +469,86 @@ claims:
     source: "PRD NFR-1"
     status: blocked
     reason: "An internal figure from an unfinished measurement. Not a customer promise."
+
+  # Guardrails (features/guardrails.mdx, manage/set-up-guardrails.mdx), 2026-10-20.
+  - id: guardrail-name-length
+    value: "120"
+    means: "The longest guardrail name, in characters."
+    source: "services/control-plane/src/guardrails/vocabulary.ts (name rule); store.ts refusal 'A guardrail name must be 120 characters or fewer.'"
+    status: gated
+    gate: "47.7"
+    used_by:
+      - features/guardrails
+      - manage/set-up-guardrails
+
+  - id: guardrail-list-entries
+    value: "100"
+    means: "How many entries a provider or model allow list on a guardrail may hold."
+    source: "services/control-plane/src/guardrails/vocabulary.ts; store.ts refusal 'The {kind} rule holds at most 100 entries.'"
+    status: gated
+    gate: "47.7"
+    used_by:
+      - features/guardrails
+
+  - id: guardrail-list-entry-length
+    value: "200"
+    means: "The longest entry in a guardrail allow list, in characters."
+    source: "services/control-plane/src/guardrails/store.ts refusal 'An entry in the {kind} rule is at most 200 characters.'"
+    status: gated
+    gate: "47.7"
+    used_by:
+      - features/guardrails
+
+  - id: guardrail-injection-patterns
+    value: "32"
+    means: "How many regular expressions an injection rule may carry."
+    source: "services/control-plane/src/guardrails/injection.ts refusal 'An injection_regex rule may carry at most 32 patterns.'"
+    status: gated
+    gate: "47.7"
+    used_by:
+      - features/guardrails
+
+  - id: guardrail-injection-pattern-length
+    value: "512"
+    means: "The longest injection pattern, in characters."
+    source: "services/control-plane/src/guardrails/injection.ts refusal 'An injection_regex pattern may be at most 512 characters long.'"
+    status: gated
+    gate: "47.7"
+    used_by:
+      - features/guardrails
+
+  # Zero data retention (manage/zero-data-retention.mdx), 2026-10-20.
+  - id: zdr-eligibility-batch
+    value: "40"
+    means: "How many model ids one eligibility check may ask about."
+    source: "packages/wire/src/zdr.ts; services/control-plane/src/zdr/eligibilityRoutes.ts refusal 'Send between 1 and 40 distinct model ids.'"
+    status: shipped
+
+  # Workload insights (manage/workload-insights.mdx), 2026-10-20.
+  - id: workflow-name-length
+    value: "80"
+    means: "The longest workflow name, in code points."
+    source: "services/control-plane/src/workloadInsights/workflows.ts (name rule)"
+    status: gated
+    gate: "53.1"
+    used_by:
+      - manage/workload-insights
+
+  - id: workflow-quota
+    value: "100"
+    means: "How many active workflows a workspace may hold."
+    source: "services/control-plane/src/workloadInsights/runtime.ts (workflow_quota)"
+    status: gated
+    gate: "53.1"
+    used_by:
+      - manage/workload-insights
+
+  # Subscriptions (manage/subscriptions-and-seats.mdx), 2026-10-20.
+  - id: subscription-seat-cap
+    value: "100"
+    means: "How many seats one subscription may hold."
+    source: "services/control-plane/src/subscriptions/vocabulary.ts"
+    status: gated
+    gate: "spec-subscription-plans"
+    used_by:
+      - manage/subscriptions-and-seats

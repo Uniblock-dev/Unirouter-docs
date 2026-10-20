@@ -2,20 +2,26 @@
 title: "Spend controls"
 description: "Pause every request, set your own spend rate cap, and choose when we email you about a falling balance."
 status: write-now
-gates: []
+gates: ["9.6", "9.25"]
 ---
 
 import OwnerOnlyNote from '/snippets/owner-only-note.mdx';
 import RequestIdNote from '/snippets/request-id-note.mdx';
 
-Three controls decide how fast this workspace can spend, and when it stops. They live
-on the **Settings** screen in the dashboard, in its **Limits** section.
+Five controls decide how fast this workspace can spend, and when it stops. Four
+live on the **Settings** screen in the dashboard, in its **Limits** section; the
+per-member limit lives on the **Team** screen's **Spend** tab.
 
 | Control | What it does | Who may read it | Who may change it |
 |---|---|---|---|
 | Pause | Refuses every request straight away, revoking nothing. | Any member | Owner |
 | Spend rate cap | Limits how much money may be reserved per rolling 60 seconds. | Any member | Owner |
+| Monthly workspace limit | Caps what the whole workspace may spend in a UTC calendar month. | Any member | Owner |
+| Monthly member limit | Caps what one member's keys may spend in a UTC calendar month. | Any member | Owner |
 | Low credit notice | Emails you once when your available balance falls below a figure. | Any member | Owner |
+
+A sixth control, the [guardrail](/features/guardrails), belongs to one key
+rather than to the workspace, and has its own page.
 
 <OwnerOnlyNote />
 
@@ -125,6 +131,31 @@ figure means nobody is checking, not that you have no room.
 The Limits section and the self service cap control are shipped. Every row reads the
 same live data the platform enforces against, and changing your spend rate cap here
 takes effect exactly the way the steps above describe.
+
+## Cap a month, for the workspace or for one member
+
+Both monthly limits count what has been spent from your balance in the current
+UTC calendar month, and both refuse at admission, before credit is held, so a
+request they stop costs nothing.
+
+**The workspace limit** is the row "Monthly spend limit for this workspace" in
+the Limits section, with its unit printed beside it: "Per UTC calendar month".
+The row says what a caller gets when it trips: requests beyond it return 402
+with the code `workspace_limit_exceeded`, never charged. The control to change
+it is the owner's alone, and setting it to zero clears it. The dashboard row
+shipped ahead of the tracker's own row for it, which is why this page carries
+the gate it does; the control on the screen is the one to trust.
+
+**A member's limit** is set on the Team screen's Spend tab, where each member
+has a "Monthly limit" with "Set limit" or "Edit limit", or "No limit". It binds
+through every key that answers to that member in this workspace, and a request
+it stops returns 402 with the code `member_limit_exceeded`. Only the owner may
+set it. The member's colleagues are unaffected, and so is the workspace limit.
+
+Neither limit counts a request served on your own provider key, because that
+request spends nothing from your balance. See
+[Rate limits and spend controls](/manage/rate-limits-and-spend-controls) for
+the full refusal table.
 
 ## Choose when we warn you
 

@@ -49,9 +49,10 @@ Hermes Agent, Pi and DeepSeek Harness each take a protocol field beside the base
 URL, and each of their pages says which value to give it.
 
 **The Anthropic Messages API** is what Claude Code speaks, and it has no
-OpenAI-compatible mode. This site publishes nothing about a Messages endpoint,
-so Claude Code cannot be pointed here yet. Its page says what would have to
-change.
+OpenAI-compatible mode. This API serves that wire at
+[`POST /v1/messages`](/features/anthropic-messages), so Claude Code is pointed
+here with a base URL that is an origin rather than an origin plus `/v1`. Its
+page has the settings.
 
 A harness that only orchestrates other harnesses, like T3 Code or Gas Town,
 speaks none of them itself and inherits whichever its child does.
@@ -354,12 +355,12 @@ carries the settings.
   </Card>
 </CardGroup>
 
-### Not yet
+### The Anthropic wire
 
 <CardGroup cols={2}>
-  <Card title="Claude Code" icon="triangle-exclamation" href="/integrations/claude-code">
-    Speaks the Anthropic Messages API, which this site does not publish. The
-    page says what it needs and what would have to change.
+  <Card title="Claude Code" icon="terminal" href="/integrations/claude-code">
+    Speaks the Anthropic Messages API, which this API serves. Two variables and
+    a pinned model id.
   </Card>
 </CardGroup>
 
