@@ -87,12 +87,14 @@ depend on which default the OpenAI provider currently holds.
 and cannot send a bare id you did not write. The pinned-id rule still applies to
 the id you pass.
 
-**`embed` and `embedMany` reach a path this API does not serve.** The OpenAI
-embedding model in these packages posts to `/embeddings` under whatever base URL
-you configured. Nothing in `generateText` or `streamText` touches it, so this
-costs you nothing until you add a retrieval or memory step, and then it fails at
-that step rather than at configuration. Keep embeddings on a provider that serves
-them and leave the language model here.
+**`embed` and `embedMany` work, with a pinned id.** The OpenAI embedding model
+in these packages posts to `/embeddings` under whatever base URL you
+configured, and this API serves
+[`POST /v1/embeddings`](/features/completions-and-embeddings). The id you pass
+to `openai.embedding(...)` or `openai.textEmbeddingModel(...)` is under the same
+pinned-id rule as a language model: `openai/text-embedding-3-small` is
+accepted, and a bare `text-embedding-3-small` is refused with
+`model_id_not_pinned` before anything is sent.
 
 **Nothing calls the catalog.** Neither provider asks `GET /v1/models` to validate
 a model name or discover one, so an id that is wrong is wrong at request time,

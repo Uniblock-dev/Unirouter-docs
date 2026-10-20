@@ -117,10 +117,20 @@
             ]
           },
           {
+            "group": "More endpoints",
+            "pages": [
+              "features/responses-api",
+              "features/completions-and-embeddings",
+              "features/anthropic-messages",
+              "features/usage-lookup"
+            ]
+          },
+          {
             "group": "Routing and reliability",
             "pages": [
               "features/routing-profiles",
               "features/bring-your-own-key",
+              "features/guardrails",
               "features/errors"
             ]
           },
@@ -128,6 +138,12 @@
             "group": "Try it",
             "pages": [
               "features/playground"
+            ]
+          },
+          {
+            "group": "Coming soon",
+            "pages": [
+              "features/images-audio-and-video"
             ]
           }
         ]
@@ -168,10 +184,25 @@
             ]
           },
           {
+            "group": "Controls",
+            "pages": [
+              "manage/set-up-guardrails"
+            ]
+          },
+          {
             "group": "Trust",
             "pages": [
               "manage/data-and-privacy",
+              "manage/zero-data-retention",
               "manage/security"
+            ]
+          },
+          {
+            "group": "Coming soon",
+            "pages": [
+              "manage/management-api",
+              "manage/subscriptions-and-seats",
+              "manage/workload-insights"
             ]
           }
         ]

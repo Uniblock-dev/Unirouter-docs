@@ -430,6 +430,35 @@ Added 2026-09-08, after the catalog above was first written. A reader arriving f
 
 ---
 
+### 7.7 Feature gap pass, 2026-10-20
+
+Added 2026-10-20 after a sweep of the source tree against this site, with production read as `origin/main` of the source repository (its deploy workflow maps `main` to production, `staging` to staging and `develop` to development; the tracker and the sync point both read `develop`, which was 1,345 commits ahead of `main` that day). The sweep asked one question per feature: is it on `main`, is it behind a flag that production sets, and does this site say so. Eleven pages came out of it, and the rule for each is the one §13 and §20 already state: a shipped feature is documented against its handler, and a built-but-closed feature gets a page that says it is coming, what it will do, and the exact answer a call gets today.
+
+**`features/guardrails.mdx`** and **`manage/set-up-guardrails.mdx`** · PARTIAL (gate 47.7)
+- Purpose: the guardrail as a customer record: one per key, any number of keys per guardrail, replacing the key's own limits while attached; the nine rule kinds and the refusal code each produces at request time; the Guardrails screen flow (create, attach from either side, edit, delete) and what it can write today (name, spend cap, ZDR choice, sensitive-data detectors) against what it lists as coming soon (provider and model selection, no training, regions, token limits, injection checks).
+- Source of truth: `SRC/services/control-plane/src/guardrails/` (vocabulary, store, attachment, effective, refusal), `src/inference/injectionGate.ts`, `src/inference/sensitiveDataGate.ts`, `src/providers/upstream.ts` (the provider-resolution refusals), `src/money/flows/admission/reservation.ts` (token ceiling and cap), `SRC/apps/dashboard/src/features/guardrails/`.
+- Acceptance: every code in the table exists in a handler on publication day; the spend-cap sentence is the balance object's own with the guardrail suffix appended; no usage-outcome bucket name or projection noun appears; the organization guardrail routes are described as coming and not as a reference.
+
+**`manage/zero-data-retention.mdx`** · PARTIAL (gate 68.3)
+- Purpose: the two meanings kept apart: the workspace routing requirement (Epic 33, shipped; dashboard row behind a surface switch that production leaves unset) with its 403 `no_zdr_eligible_provider`, the per-key choice through a guardrail, and the BYOC destination plus signed receipts (Epic 68) as coming, with the plain statement that every receipt is `unverified` until the plaintext scan exists.
+- Source of truth: `SRC/services/control-plane/src/zdr/`, `src/dataHandling/eligibility.ts`, `src/storage/` (routes, config, probe, audit), `SRC/apps/dashboard/src/features/zdr/`.
+- Acceptance: no claim about what a provider does with a request; no capture vocabulary §13 item 9 bans; "Cloudflare R2" is let through the linter by name only for the customer's own bucket.
+
+**`features/completions-and-embeddings.mdx`**, **`features/anthropic-messages.mdx`**, **`features/responses-api.mdx`**, **`features/usage-lookup.mdx`** · WRITE-NOW
+- Purpose: the four served doors this site had never described (Stories 2.10, 2.30, 2.22 and 5.26 all `done`, every one reachable in production with no flag): request and response shape, the one difference each door carries (`encoding_format`, either credential header and the OpenAI envelope on refusals, the stored-state refusals, the single 404 for every miss), and the SDK settings. The same pass reclassified `POST /v1/completions`, `POST /v1/embeddings`, `POST /v1/messages` and `GET /v1/usage/{id}` from `blocked` to `public` in the overlay, with schemas and examples transcribed from the handlers and every example on the owed list.
+- Source of truth: `SRC/services/control-plane/src/inference/embeddingEncoding.ts`, `src/inference/doorRules.ts`, `src/middleware/customerAuth.ts`, `src/apiApp.ts`, `src/usage/keyReadback.ts`.
+- Acceptance: the five integration pages that said embeddings answered 404 (SF-214) are corrected in the same change; `resources/faq.mdx` answers yes; the Claude Code page becomes a configuration page.
+
+**`features/images-audio-and-video.mdx`** · PARTIAL (gates 52.4, 72.5)
+- Purpose: a coming-soon page for the five image and audio doors (Epic 50 `done`, `FIVE_DOORS_ENABLED` set on development only), the four video doors (Epic 71 `done`, `VIDEO_DOORS_ENABLED` likewise) and realtime (Epic 72, unset everywhere): the exact 404 a call gets today, the unit each will be charged in, and the video job lifecycle.
+- Acceptance: no provider names; the page never implies a date; the owed proof (Epic 52) is named as the gate.
+
+**`manage/management-api.mdx`**, **`manage/subscriptions-and-seats.mdx`**, **`manage/workload-insights.mdx`** · PARTIAL (gates 47.1; `spec-subscription-plans`; 53.1)
+- Purpose: one coming-soon page each for the three customer surfaces built on `develop` that production cannot reach: the workspace admin key and the `/v1/organization` resources it manages (minting has no dashboard screen, so no customer can hold a key); per-seat plans (merged to `develop` 2026-10-16 with no tracker row, named by its spec); the workflow registry (Story 53.1 at `review`, `develop` only).
+- Acceptance: each page states what a call gets today, what gates it, and never a date; the organization paths stay `blocked` in the overlay.
+
+**Corrections to existing pages made in the same pass**, each against the screen on `origin/main`: the Keys screen's Regenerate and Revoke controls (Story 3.11 `done`; `get-started/create-an-api-key.mdx` had said no such control existed); the Billing screen's Payment tab, Auto reload card (gate 4.32) and single promo code field (Stories 4.33 and 4.34 `done`); the Settings screen's monthly workspace limit control and the Team screen's Spend tab (`manage/spend-controls.mdx`, gates 9.6 and 9.25; `manage/rate-limits-and-spend-controls.mdx` had said the control was not built, which the tracker still says and the tree contradicts, and the tree wins).
+
 ## 8. API reference strategy (OpenAPI)
 
 **Decision: publish a derived public spec, never either repo spec verbatim.**
@@ -1180,6 +1209,16 @@ Tracked here so writers meet them where the work is; each names its unblock cond
     **What moved and stayed off this site.** Every operation that changed is a staff or browser door, among them `POST /api/me/credit/checkout` losing `rdtClickId` (internal SF-484, SF-488). `AA_CUSTOMER_SURFACES` is `on` in staging and still `off` in production, so no Artificial Analysis figure reaches a customer (internal SF-487).
 
     **The open owner findings listed in entries 70 and 73, and widened in 75, are unchanged; nothing in this range settles any of them.**
+
+71. **A feature gap pass reads production as `origin/main` for the first time, publishes four served doors, and gives every built-but-closed surface a coming-soon page** (2026-10-20, source `origin/main` at `e3984da930`, `develop` at `490bc1f9b5`). Not a sync pass: the sync point did not move (PR #22 moved it the same day). What changed is recorded in §7.7 and in this item so the next sync pass knows which classifications are now decisions already taken.
+
+    **The reading that changes the rest.** The source repository's deploy workflow maps `main` to production, and `main` was 1,345 commits behind `develop`. The tracker, the sync lock and every earlier item here read `develop`. So "shipped" has two answers, and this site now gives both: a page documents behaviour on `main`, and a page about something on `develop` alone says so and says what production answers. Found on `main`: guardrails (control plane and dashboard, no flag), the workspace ZDR requirement (dashboard row behind `NEXT_PUBLIC_ZDR_SURFACES`, which production leaves unset), the organization router with audit, projects, users, invites, inference keys (writes off), guardrails, admin keys, the BYOC registration route alone (no audit, no delete) and spend controls, automatic top-up, saved cards, promo codes, key regenerate and limits, the workspace monthly limit and member limits. Not on `main`: workload insights, subscriptions and seats, developer budgets, realtime. The image, audio and video flags are set on development only on both branches.
+
+    **Four operations moved `blocked` to `public`**: `POST /v1/completions`, `POST /v1/embeddings`, `POST /v1/messages` and `GET /v1/usage/{id}`. Each had been held on a writer pass rather than a gate (items 43, 53 and 18), and the owner's instruction for this pass was the decision. Their schemas and examples are transcribed from the handlers, every example is on the owed list, and the 45 MiB embeddings reply 413 stays undocumented pending SF-31. Two leaks the merge had let into the published artifact were closed at the same time: the base spec's `model` description naming a provider account, and its `x-hopscotch-served-via` description naming a story and a decision.
+
+    **Everything else stays `blocked`** and gains a prose page that says so: the `/v1/organization` paths (the admin key cannot be minted from any screen, so no customer can hold one), the five image and audio doors and the four video doors (flags closed in production), realtime (unset everywhere), the workflow registry (`develop` only), and the subscription surface (`develop` only, no tracker row, spec `spec-subscription-plans`).
+
+    **Findings raised for the owner** are recorded in the internal site's unresolved findings file and named in the pull request: the tracker rows 47.1, 47.2, 47.6 and 47.7 describe gates the code no longer has; developer budgets and subscriptions have no tracker row; the BYOC termination scan can mark a customer-bucket body absent on the strength of a platform-bucket read; the `rate-limits` page's workspace-limit sentence and the tracker's 9.6 row both lag the shipped control; the pause switch is drawn to every role.
 
 ## 15. Redirects, SEO, accessibility
 

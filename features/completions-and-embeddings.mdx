@@ -1,0 +1,187 @@
+---
+title: "Completions and embeddings"
+description: "POST /v1/completions and POST /v1/embeddings: the same key, the same model ids and the same balance as chat, with the two differences each one has."
+status: write-now
+gates: []
+---
+
+import BaseUrl from '/snippets/base-url.mdx';
+import RequestIdNote from '/snippets/request-id-note.mdx';
+
+Two more OpenAI endpoints are served beside chat completions: the legacy text
+completion endpoint and the embeddings endpoint. Both take the same key, the
+same `provider/model` ids, and draw on the same balance. A request on either
+lands in Activity and on your statement exactly like a chat request, filed
+under its own endpoint family so you can tell them apart.
+
+<BaseUrl />
+
+## Text completions
+
+`POST /v1/completions` takes the OpenAI text completion body and returns the
+OpenAI text completion object. `stream: true` is honoured and the stream is
+OpenAI's.
+
+<CodeGroup>
+
+```bash curl
+curl https://api.hopscotchlabs.ai/v1/completions \
+  -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "openai/gpt-4o-mini",
+    "prompt": "Write one sentence about rivers.",
+    "max_tokens": 60
+  }'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://api.hopscotchlabs.ai/v1",
+    api_key="ub_live_YOUR_KEY_HERE",
+)
+
+completion = client.completions.create(
+    model="openai/gpt-4o-mini",
+    prompt="Write one sentence about rivers.",
+    max_tokens=60,
+)
+print(completion.choices[0].text)
+```
+
+```typescript Node
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "https://api.hopscotchlabs.ai/v1",
+  apiKey: "ub_live_YOUR_KEY_HERE",
+});
+
+const completion = await client.completions.create({
+  model: "openai/gpt-4o-mini",
+  prompt: "Write one sentence about rivers.",
+  max_tokens: 60,
+});
+console.log(completion.choices[0].text);
+```
+
+</CodeGroup>
+
+The body is forwarded as you sent it, under the same rules as chat: two fields
+are read to size what the request could cost, `model` and `max_tokens`, and
+the handful of request fields we do not meter on our own provider credentials
+are refused with a 400 that names the field in `param`. The list is the one on
+[OpenAI compatibility](/get-started/openai-compatibility#request-parameters),
+and it applies only when the request is served on our credentials: on your own
+provider key the body is forwarded byte for byte.
+
+The model must be one the catalog lists for the completions family. A model
+that exists but is not offered on this endpoint is refused with HTTP 404 and
+the code `model_not_available`, and the message says which families the
+catalog does list it for. Ask [`GET /v1/models`](/features/models) for the
+`endpoint_families` of a model before you rely on it here.
+
+## Embeddings
+
+`POST /v1/embeddings` takes the OpenAI embeddings body and returns the OpenAI
+embeddings list. There is no streaming form.
+
+<CodeGroup>
+
+```bash curl
+curl https://api.hopscotchlabs.ai/v1/embeddings \
+  -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "openai/text-embedding-3-small",
+    "input": "The quick brown fox jumps over the lazy dog."
+  }'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://api.hopscotchlabs.ai/v1",
+    api_key="ub_live_YOUR_KEY_HERE",
+)
+
+result = client.embeddings.create(
+    model="openai/text-embedding-3-small",
+    input="The quick brown fox jumps over the lazy dog.",
+)
+print(len(result.data[0].embedding))
+```
+
+```typescript Node
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "https://api.hopscotchlabs.ai/v1",
+  apiKey: "ub_live_YOUR_KEY_HERE",
+});
+
+const result = await client.embeddings.create({
+  model: "openai/text-embedding-3-small",
+  input: "The quick brown fox jumps over the lazy dog.",
+});
+console.log(result.data[0].embedding.length);
+```
+
+</CodeGroup>
+
+An embeddings model is one the catalog lists for the embeddings family, which
+in practice is a model whose id carries `embed`. The same `model_not_available`
+refusal applies to a model listed only for chat.
+
+### The one field we read: `encoding_format`
+
+`encoding_format` is the one embeddings field we look at before forwarding,
+because the two values OpenAI defines are the two we can serve. Send `float`
+or `base64`, or nothing, which means `float`. Anything else is refused at the
+door, before any credit is held and before a provider is chosen:
+
+```json 400
+{
+  "error": {
+    "message": "The encoding_format \"int8\" is not supported. Use \"float\" or \"base64\"; a request that names neither is served as \"float\", which is the OpenAI default.",
+    "type": "invalid_request_error",
+    "param": "encoding_format",
+    "code": null,
+    "request_id": "REQUEST_ID"
+  }
+}
+```
+
+The refusal is recorded on your Activity screen as a refused request, so a
+client that keeps sending a value we do not serve is visible there.
+
+### Large inputs
+
+A request body of any kind is capped at eight MiB, and a body over that is refused
+with HTTP 413 and the code `payload_too_large` before it is read: nothing is
+held and no model is called. Embeddings requests are the ones most likely to
+meet it, because a batch of long inputs is a large body. Send fewer inputs per
+call.
+
+## Reading what a request cost
+
+Neither endpoint adds a usage header to its reply. The token counts and the
+charge are on the request's usage record, which you can read from the
+dashboard or from the API with the request id every response carries. See
+[Usage lookup](/features/usage-lookup).
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="OpenAI compatibility" href="/get-started/openai-compatibility">
+    The full list of endpoints, the fields we refuse, and the headers we add.
+  </Card>
+  <Card title="Models" href="/features/models">
+    How to find which endpoint families a model is offered on.
+  </Card>
+</CardGroup>
+
+<RequestIdNote />

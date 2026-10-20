@@ -1,0 +1,137 @@
+---
+title: "Set up guardrails"
+description: "Create a guardrail on the Guardrails screen, attach it to a key, and read what the screen and the API say when a rule trips."
+status: partial
+gates: ["47.7"]
+---
+
+import RequestIdNote from '/snippets/request-id-note.mdx';
+
+A guardrail is set up once on the **Guardrails** screen and then attached to
+the keys it should govern. This page walks the screen. For what each rule does
+to a request, and the refusal a caller sees, read
+[Guardrails](/features/guardrails) first.
+
+## Before you start
+
+You need to be the **owner** or an **admin** of the workspace. Every member can
+open the screen and read the guardrails that exist; the screen says so in its
+empty state:
+
+> Owners and admins set guardrails. Your keys run without caps until they do.
+
+A guardrail governs keys, so have the key you want to govern created first. See
+[Create an API key](/get-started/create-an-api-key).
+
+## Create a guardrail
+
+<Steps>
+  <Step title="Open Guardrails">
+    Sign in to the dashboard and open **Guardrails** in the sidebar, between Keys
+    and BYOK. With nothing created yet the screen reads "Nothing's fenced in yet"
+    and points you at the create control, top right.
+  </Step>
+  <Step title="Name it">
+    The name is how you will pick the guardrail out of a list and how a refusal
+    names it to a developer, so make it say what it is for. Names are unique
+    within a workspace, ignoring case, and are at most 120 characters.
+  </Step>
+  <Step title="Set a spend cap, or leave it off">
+    Turn **Spend cap** on and enter an **Amount** in dollars, such as 100.00,
+    and a **Period** of Daily, Weekly or Monthly. The amount is a whole number
+    of cents above zero. With the cap off, the guardrail caps nothing, whatever
+    the key's own limit said: a guardrail replaces a key's own limits while it is
+    attached.
+  </Step>
+  <Step title="Choose the zero-data-retention setting">
+    Under **Privacy**, pick **Workspace default**, **On** or **Off**. On routes
+    the governed keys only to providers recorded as zero-data-retention. Off
+    replaces the workspace setting with off for these keys. Workspace default
+    inherits whatever the workspace has set. See
+    [Zero data retention](/manage/zero-data-retention).
+  </Step>
+  <Step title="Turn on sensitive-data detectors">
+    Under **Sensitive-data detection**, switch on any of **Email addresses**,
+    **IP addresses** and **Passwords, secrets and API keys**. A request whose
+    prompt carries one of them is refused before it is sent. The screen says
+    how much each rule adds to a request once it has measured it.
+  </Step>
+  <Step title="Create">
+    Press **Create guardrail**. The guardrail appears as a card with its spend
+    cap and ZDR choice on its first lines and nothing attached yet.
+  </Step>
+</Steps>
+
+The form also lists Provider selection, Model selection, No training, Regions,
+Token limits and Injection checks under a "Coming soon" heading. Those rules
+are enforced when a guardrail carries them, and the screen cannot write them
+yet. See [Guardrails](/features/guardrails#the-rules) for what each will do.
+
+## Attach it to a key
+
+There are two ways in, and they do the same thing.
+
+**From the guardrail.** On the guardrail's card, open **Keys this guardrail
+governs** and tick the keys. A tick that will not save says so: "The save did
+not finish, so the ticks above show where it stands."
+
+**From the key.** On the **Keys** screen, each key you can see has a Guardrail
+cell reading "None" or the guardrail's name. Open **Attach to...** and choose
+the guardrail. The cell is only offered to owners and admins.
+
+A key is governed by at most one guardrail. Attaching a second one is refused:
+
+> This key is already governed by guardrail NAME. Detach it from that one before
+> attaching it here.
+
+Once attached, the key's own **Edit limits** control refuses to change its
+credit limit, naming the guardrail, until you detach it.
+
+## Edit or delete a guardrail
+
+**Edit** on the card opens the same form. Saving replaces the whole guardrail,
+name included, and every attached key picks the change up before the save is
+reported done.
+
+**Delete** sits behind a confirm. A guardrail that still governs keys cannot be
+deleted. The refusal counts and names the keys:
+
+```text
+This guardrail still governs 2 keys: prod-api, prod-worker. Detach them before deleting it.
+```
+
+Detach each key first, from either side, then delete.
+
+## What a developer sees when a rule trips
+
+A refused request gets an error in the usual envelope with the guardrail's name
+in the message and a code the client can branch on. Nothing is charged and no
+credit is held for it. The full code table is on
+[Guardrails](/features/guardrails#what-a-refused-request-sees); the one
+everyone meets first is the spend cap, which answers HTTP 402 with the code
+`key_limit_exceeded` and a sentence ending in which guardrail set the cap.
+
+On the Activity screen the request lands as a refusal on the key's line, so a
+cap that is tripping shows up where the spend would have.
+
+## Refusals you may hit on the screen
+
+| What you did | What the screen says |
+|---|---|
+| Saved with no name | A guardrail needs a name; you will pick it out of a list by it. |
+| Reused a name | This workspace already holds a guardrail named "NAME". Names are unique per workspace, ignoring case. |
+| Entered a cap of zero or with more than two decimals | Enter an amount above zero, in dollars, like 100.00. Turn Spend cap off for no cap. |
+| Tried to write as a developer or viewer | Your role in this workspace does not allow that. |
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Guardrails" href="/features/guardrails">
+    Every rule, what it does to a request, and the codes a caller sees.
+  </Card>
+  <Card title="Create an API key" href="/get-started/create-an-api-key">
+    A key's own expiry and credit limit, which a guardrail replaces while attached.
+  </Card>
+</CardGroup>
+
+<RequestIdNote />

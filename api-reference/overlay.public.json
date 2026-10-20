@@ -26,7 +26,11 @@
     "keyExpiry": "services/control-plane/src/middleware/customerAuth.ts (KEY_EXPIRED_CODE, keyExpiredMessage)",
     "keyCreditLimit": "services/control-plane/src/money/balance.ts (keyLimitMessage), services/control-plane/src/money/reservation.ts",
     "accountSuspension": "services/control-plane/src/middleware/customerAuth.ts (ACCOUNT_SUSPENDED_CODE, ACCOUNT_SUSPENDED_MESSAGE)",
-    "doorRules": "services/control-plane/src/inference/doorRules.ts (applyDoorRules, refusal)"
+    "doorRules": "services/control-plane/src/inference/doorRules.ts (applyDoorRules, refusal)",
+    "embeddingEncoding": "services/control-plane/src/inference/embeddingEncoding.ts (embeddingEncodingRefusal)",
+    "messagesCredential": "services/control-plane/src/middleware/customerAuth.ts (credentialOf, decide)",
+    "usageReadback": "services/control-plane/src/usage/keyReadback.ts (KeyUsageBody), services/control-plane/src/apiApp.ts (the /usage/* handler)",
+    "unpinnedModel": "services/control-plane/src/providers/upstream.ts (unpinnedModelMessage, the endpoint-family refusal)"
   },
   "info": {
     "title": "Hopscotch",
@@ -177,6 +181,314 @@
           "usage": {
             "type": "object",
             "additionalProperties": true
+          }
+        }
+      },
+      "TextCompletion": {
+        "type": "object",
+        "description": "An OpenAI text completion, as the provider produced it.",
+        "additionalProperties": true,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "type": "string",
+            "example": "text_completion"
+          },
+          "created": {
+            "type": "integer"
+          },
+          "model": {
+            "type": "string"
+          },
+          "choices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "index": {
+                  "type": "integer"
+                },
+                "logprobs": {
+                  "type": "object",
+                  "nullable": true,
+                  "additionalProperties": true
+                },
+                "finish_reason": {
+                  "type": "string",
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "usage": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "EmbeddingList": {
+        "type": "object",
+        "description": "An OpenAI embedding list, as the provider produced it.",
+        "additionalProperties": true,
+        "properties": {
+          "object": {
+            "type": "string",
+            "example": "list"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "object": {
+                  "type": "string",
+                  "example": "embedding"
+                },
+                "index": {
+                  "type": "integer"
+                },
+                "embedding": {
+                  "description": "An array of numbers for `float`, or a base64 string for `base64`.",
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "model": {
+            "type": "string"
+          },
+          "usage": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "prompt_tokens": {
+                "type": "integer"
+              },
+              "total_tokens": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "Message": {
+        "type": "object",
+        "description": "An Anthropic message, as the provider produced it.",
+        "additionalProperties": true,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "example": "message"
+          },
+          "role": {
+            "type": "string",
+            "example": "assistant"
+          },
+          "model": {
+            "type": "string"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "stop_reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "stop_sequence": {
+            "type": "string",
+            "nullable": true
+          },
+          "usage": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "input_tokens": {
+                "type": "integer"
+              },
+              "output_tokens": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "UsageRecord": {
+        "type": "object",
+        "description": "One request, as the key that made it can read it back.",
+        "additionalProperties": false,
+        "required": [
+          "object",
+          "request_id",
+          "occurred_at",
+          "model",
+          "outcome",
+          "streamed",
+          "usage",
+          "served_on_own_key",
+          "paid_from_allowance",
+          "latency_ms",
+          "note"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "enum": [
+              "usage.request"
+            ]
+          },
+          "request_id": {
+            "type": "string",
+            "description": "The id the `x-hopscotch-request-id` header carried on the response this record is about."
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the request started, in RFC 3339."
+          },
+          "model": {
+            "type": "string",
+            "description": "The full `provider/model` id the request was served under, the same string GET /v1/models publishes.",
+            "example": "openai/gpt-4o-mini"
+          },
+          "outcome": {
+            "type": "string",
+            "description": "How the request ended, from a closed set of words. A request that was answered is `served`.",
+            "example": "served"
+          },
+          "streamed": {
+            "type": "boolean"
+          },
+          "usage": {
+            "type": "object",
+            "description": "Every count a charge can turn on. Null means the provider did not report that count. 0 means it reported none. They are not the same fact.",
+            "additionalProperties": false,
+            "required": [
+              "prompt_tokens",
+              "completion_tokens",
+              "total_tokens",
+              "cache_read_tokens",
+              "cache_write_tokens",
+              "cache_write_1h_tokens",
+              "reasoning_tokens"
+            ],
+            "properties": {
+              "prompt_tokens": {
+                "type": "integer",
+                "nullable": true
+              },
+              "completion_tokens": {
+                "type": "integer",
+                "nullable": true
+              },
+              "total_tokens": {
+                "type": "integer",
+                "nullable": true
+              },
+              "cache_read_tokens": {
+                "type": "integer",
+                "nullable": true
+              },
+              "cache_write_tokens": {
+                "type": "integer",
+                "nullable": true,
+                "description": "The cache write at the default lifetime. It does not include `cache_write_1h_tokens`, so add the two to read the whole write."
+              },
+              "cache_write_1h_tokens": {
+                "type": "integer",
+                "nullable": true,
+                "description": "The one-hour part of the cache write. Null where the provider stated no split."
+              },
+              "reasoning_tokens": {
+                "type": "integer",
+                "nullable": true
+              }
+            }
+          },
+          "charge": {
+            "type": "object",
+            "description": "What the request cost, with what you need to check it against the rates GET /v1/models publishes. Present only when your workspace balance paid for the request, so it is absent when `paid_from_allowance` is true.",
+            "additionalProperties": false,
+            "required": [
+              "amount_micros",
+              "amount",
+              "currency",
+              "rate_revision_id",
+              "note"
+            ],
+            "properties": {
+              "amount_micros": {
+                "type": "integer",
+                "nullable": true,
+                "description": "The charge in millionths of one dollar, so 1000000 is $1.00. Null where the request was never priced, which is not the same as a charge of zero."
+              },
+              "amount": {
+                "type": "string",
+                "nullable": true,
+                "description": "The same figure as dollars a person reads, with up to six decimal places and trailing zeros trimmed. Null exactly when `amount_micros` is null.",
+                "example": "$0.000105"
+              },
+              "currency": {
+                "type": "string",
+                "description": "ISO 4217.",
+                "example": "USD"
+              },
+              "rate_revision_id": {
+                "type": "string",
+                "nullable": true,
+                "description": "An opaque id for the set of rates this charge was computed from. Two requests with the same value were priced by the same rates. Null on a record written before rate revisions existed, or one left unpriced."
+              },
+              "note": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "rate_absent_charged_at_anchor",
+                  "estimated_from_delivered_text",
+                  "exact_from_provider_frame",
+                  null
+                ],
+                "description": "What was unusual about this charge, or null on an ordinary one. `rate_absent_charged_at_anchor`: part of the request was priced at a rate the model does not list, a cache read or write at the input rate or reasoning at the output rate. `estimated_from_delivered_text`: the stream stopped before the provider reported its counts, so the charge is the prompt we counted plus an output estimated from the text delivered, never above the amount held. `exact_from_provider_frame`: the stream stopped early but the provider counts had already arrived, so the charge is exact."
+              }
+            }
+          },
+          "served_on_own_key": {
+            "type": "boolean",
+            "description": "True when the request ran on your own provider key, which is why nothing was charged. Read this rather than inferring it from a zero charge."
+          },
+          "paid_from_allowance": {
+            "type": "boolean",
+            "description": "True when an included allowance paid for the request, in which case `charge` is absent."
+          },
+          "latency_ms": {
+            "type": "integer",
+            "description": "Total time the caller waited, in milliseconds."
+          },
+          "note": {
+            "type": "string",
+            "description": "A fixed sentence saying no prompt and no response body was stored."
           }
         }
       },
@@ -556,7 +868,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ChatCompletionRequest"
+                "$ref": "#/components/schemas/ChatCompletionRequest",
+                "properties": {
+                  "model": {
+                    "description": "The model to call, which the live catalog has to offer for the responses family. A provider-pinned id, `{provider}/{that provider's own id}`, is split once on the first slash. A routing-profile slug, `profile/{identifier}`, tries that profile's models in your own order. `unirouter/auto`, or its second spelling `hopscotch/auto`, names whichever route your workspace made its default. A bare model id is refused with 400 and the code `model_id_not_pinned`. `GET /v1/models` lists the exact strings this key can call."
+                  }
+                }
               },
               "example": {
                 "model": "openai/gpt-4o-mini",
@@ -596,6 +913,7 @@
                 "$ref": "#/responseHeaders/ServedBy"
               },
               "x-hopscotch-served-via": {
+                "description": "Present, with the value `backup`, when a backup route served this request. Absent on every other response, and never sent with any other value, so a client that has never read it sees nothing change about an ordinary request. The provider named on x-hopscotch-provider and in the body is still the one you asked for.",
                 "$ref": "#/responseHeaders/ServedVia"
               }
             },
@@ -1066,14 +1384,1103 @@
       }
     },
     "/v1/completions": {
-      "classification": "blocked",
-      "gate": "2.10",
-      "reason": "The route exists in the source spec, and Story 2.10 (completions and embeddings serve real responses) moved from `backlog` to `done` on 2026-09-19 (4ff00eb6d, #1192). So the gate this entry carries has been MET, and it stays `blocked` for the reason /v1/messages is blocked rather than for the reason it used to be: publishing it is a decision rather than a reclassification. It needs its request and response schemas transcribed from the handler, its refusals transcribed with them (including the encoding_format 400 that Story 2.10 added at the door, and the embeddings 413 whose published shape is the open question of SF-31), and a page in the navigation. Note also that both paths have been REACHABLE since Story 2.11 registered them in src/public/routes.ts, so the absence here has never meant a 404; five integration pages on this site say otherwise and are recorded as SF-214, with the owner. Not a sync pass's call."
+      "classification": "public",
+      "post": {
+        "operationId": "createCompletion",
+        "summary": "Create a text completion",
+        "description": "Send an OpenAI text completion request, the older format that takes a `prompt` rather than `messages`. Set `stream: true` for server-sent events.\n\nThe body is forwarded as you sent it, so a field this page does not name still reaches the provider, and the reply is the provider's text completion object.\n\nOn the platform's own provider keys this route applies the same refusals as chat completions. See the 400 response. A request served on your own provider key keeps every one of those fields.\n\nCredit is held when the request is admitted and settled against the provider's own token counts when it finishes. You are charged the provider's rate at face value. Nothing is added per request.\n\nTo read back the tokens and charge of one request afterwards, send the value of the `x-hopscotch-request-id` response header to `GET /v1/usage/{id}`.",
+        "tags": [
+          "Completions"
+        ],
+        "security": [
+          {
+            "customerApiKey": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "model",
+                  "prompt"
+                ],
+                "additionalProperties": true,
+                "description": "An OpenAI text completion request. Fields beyond the ones named here are forwarded to the provider unchanged rather than refused for being unfamiliar.",
+                "properties": {
+                  "model": {
+                    "type": "string",
+                    "description": "A model id in `provider/model` form, or `profile/{identifier}` for one of your workspace's routing profiles. A bare model id is refused with 400 and the code `model_id_not_pinned`. The catalog must list the model for completions. List what you can call with GET /v1/models.",
+                    "example": "openai/gpt-4o-mini"
+                  },
+                  "prompt": {
+                    "description": "What to complete: a string, an array of strings, an array of token ids, or an array of token id arrays.",
+                    "oneOf": [
+                      {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        }
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "stream": {
+                    "type": "boolean",
+                    "description": "Return the reply as server-sent events instead of one JSON body.",
+                    "default": false
+                  },
+                  "max_tokens": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "The most output tokens you will accept. Sending it also lowers the credit held for the request while it runs. Omit it and the model's published maximum output is held instead."
+                  }
+                }
+              },
+              "example": {
+                "model": "openai/gpt-4o-mini",
+                "prompt": "Say hi in five words."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The completion, in OpenAI's text completion format as the provider produced it. A response that is not streamed carries the provider's token counts in its own `usage` object.\n\nWhen `stream` is true the body is `text/event-stream` instead, in OpenAI's own chunk format, ending with `data: [DONE]`.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-request-id": {
+                "$ref": "#/responseHeaders/SdkRequestId"
+              },
+              "x-hopscotch-provider": {
+                "$ref": "#/responseHeaders/Provider"
+              },
+              "x-hopscotch-retry-attempt-count": {
+                "$ref": "#/responseHeaders/RetryAttemptCount"
+              },
+              "x-hopscotch-cache-status": {
+                "$ref": "#/responseHeaders/CacheStatus"
+              },
+              "x-hopscotch-trace-id": {
+                "$ref": "#/responseHeaders/TraceId"
+              },
+              "x-hopscotch-served-by": {
+                "$ref": "#/responseHeaders/ServedBy"
+              },
+              "x-hopscotch-served-via": {
+                "$ref": "#/responseHeaders/ServedVia",
+                "description": "Present, with the value `backup`, when a backup route served this request. Absent on every other response, and never sent with any other value, so a client that has never read it sees nothing change about an ordinary request. The provider named on x-hopscotch-provider and in the body is still the one you asked for."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TextCompletion"
+                },
+                "example": {
+                  "id": "cmpl-EXAMPLE",
+                  "object": "text_completion",
+                  "created": 1756080000,
+                  "model": "openai/gpt-4o-mini",
+                  "choices": [
+                    {
+                      "text": "Hello, good to meet you.",
+                      "index": 0,
+                      "logprobs": null,
+                      "finish_reason": "stop"
+                    }
+                  ],
+                  "usage": {
+                    "prompt_tokens": 6,
+                    "completion_tokens": 7,
+                    "total_tokens": 13
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request cannot be served as sent. `code` is null for a missing parameter, with `param` naming it, `model_id_not_pinned` for a model id that names no provider, and `provider_key_refused` when the request ran on your own key for a provider that rejected it or refused this particular call under it. A refusal the provider made about this request is relayed with the provider's own status and its own sentence, quoted after the provider's name.\n\nOn the platform's own provider keys this route also refuses, with `code` null and `param` naming the field and never its value, a field that buys something this platform cannot bill yet or keeps the conversation at the provider: `store: true`, a `service_tier` other than `auto`, `default` or `on_demand`, a hosted tool the provider charges for per call, audio in or out, and the other fields this platform does not meter.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "missing_model": {
+                    "summary": "No model named",
+                    "value": {
+                      "error": {
+                        "message": "You must provide a model parameter naming the model to call. It is read to work out what the request could cost before it is sent.",
+                        "type": "invalid_request_error",
+                        "param": "model",
+                        "code": null,
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "model_id_not_pinned": {
+                    "summary": "The model id does not name its provider",
+                    "value": {
+                      "error": {
+                        "message": "The model \"gpt-4o-mini\" does not name its provider. A model field carries either \"provider/model\", where the part before the first slash is a provider this platform serves and the rest is that provider's own id for the model, for example \"anthropic/claude-opus-4-5\", or \"profile/{identifier}\", one of your workspace's routing profiles, for example \"profile/fast\". GET /v1/models lists the exact strings this key can call.",
+                        "type": "invalid_request_error",
+                        "param": "model",
+                        "code": "model_id_not_pinned",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "store_true": {
+                    "summary": "Asked the platform to store the conversation",
+                    "value": {
+                      "error": {
+                        "message": "\"store\" asks the provider to keep or reuse a stored conversation, and this platform stores none. Remove it, or send the request on your own provider key.",
+                        "type": "invalid_request_error",
+                        "param": "store",
+                        "code": null,
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "provider_key_refused": {
+                    "summary": "Your own provider key was rejected",
+                    "value": {
+                      "error": {
+                        "message": "openai rejected your workspace's own openai key (401), so the credential itself was not accepted. Replace it on the Provider keys screen. While your workspace holds a key for openai, every request to openai runs on yours and none is sent on a Hopscotch key, so no other credential was tried for it. Nothing was charged for this request. Remove the key on the Provider keys screen and these requests go back to running on Hopscotch's key and being charged for.",
+                        "type": "invalid_request_error",
+                        "param": null,
+                        "code": "provider_key_refused",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No key, a scheme other than Bearer, a key of the wrong shape, or a key we reject. An unknown key and a revoked key are answered with one identical message on purpose.\n\nA key past its own expiry date is refused here too, with code `key_expired` and a message naming the date. It is checked before the per-minute rate limiter, so an expired key never consumes that allowance. Expired keys are not renewed: create a new one.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Incorrect API key provided.",
+                    "type": "authentication_error",
+                    "param": null,
+                    "code": "invalid_api_key",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The request will not be paid for, and nothing was charged. Code `insufficient_credit` is the workspace being out of credit, which stops every key on it. Code `key_limit_exceeded` is the sending key reaching its own credit limit, which leaves every other key in the workspace serving normally; it is refused before any credit is held, and the message names what that key has settled and holds inside its current window.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "insufficient_credit": {
+                    "summary": "The workspace is out of credit",
+                    "value": {
+                      "error": {
+                        "message": "This account has 54 minor units available and the request needs 55 held.",
+                        "type": "insufficient_quota",
+                        "param": null,
+                        "code": "insufficient_credit",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "key_limit_exceeded": {
+                    "summary": "This key is at its own limit",
+                    "value": {
+                      "error": {
+                        "message": "This key may spend $20.00 in its current window and has $18.40 settled and $1.70 held against that, so a request needing $0.30 more is refused. Nothing was charged for it and no credit was held. The limit belongs to this key alone, so other keys in the workspace are unaffected. This limit resets monthly on UTC calendar windows, so requests are admitted again when the window rolls. It can also be raised or removed on the Keys screen.",
+                        "type": "insufficient_quota",
+                        "param": null,
+                        "code": "key_limit_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Refused for a setting the caller owns rather than anything about the model, and `code` names which. A key whose account staff have suspended is refused with code `account_suspended`, before any credit is held or any provider is called; contact support, because retrying will not change the answer.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "account_suspended": {
+                    "summary": "The key's account is suspended",
+                    "value": {
+                      "error": {
+                        "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
+                        "type": "permission_error",
+                        "param": null,
+                        "code": "account_suspended",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The model cannot be served, and the two cases are told apart by `code`. `model_not_found` means the id is in no catalog at all, which is what a typo produces, so check the spelling or list what this key can call with `GET /v1/models`. `model_not_available` means the id is catalogued and is not being served right now, or that the catalog does not list it for this endpoint. In the second case the message names the endpoint families the catalog does list it for, so move to a model that is listed for this one. No provider was called either way.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "model_not_found": {
+                    "summary": "No model of that id exists",
+                    "value": {
+                      "error": {
+                        "message": "The model \"MODEL_ID\" does not exist. Check the spelling, or list the models this key can call with GET /v1/models.",
+                        "type": "not_found_error",
+                        "param": null,
+                        "code": "model_not_found",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "model_not_available": {
+                    "summary": "Known to us, and not being served right now",
+                    "value": {
+                      "error": {
+                        "message": "The model \"MODEL_ID\" is not currently available. It is known to this platform and is not being served right now, so retrying later is worth more than changing the request.",
+                        "type": "not_found_error",
+                        "param": null,
+                        "code": "model_not_available",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "model_not_available_endpoint": {
+                    "summary": "Live, and not offered on this endpoint",
+                    "value": {
+                      "error": {
+                        "message": "\"MODEL_ID\" is not offered on this endpoint: the catalog lists it for chat_completions and not for completions.",
+                        "type": "not_found_error",
+                        "param": null,
+                        "code": "model_not_available",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The request body is larger than the 8388608 byte maximum this API accepts, so it was refused at the door. A body that declares its length is refused without a byte being read; one that declares none is read only as far as the ceiling and then abandoned. Nothing was parsed, no credit was held, no model was called and nothing was charged.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "payload_too_large": {
+                    "summary": "The request body is over the ceiling",
+                    "value": {
+                      "error": {
+                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "type": "invalid_request_error",
+                        "param": null,
+                        "code": "payload_too_large",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "A limit refused the request. `rate_limit_exceeded` is this key's own request rate and carries `Retry-After`. `spend_rate_exceeded` is the account spend rate cap, which counts the credit held for requests rather than the credit they settle at; send `max_tokens` to hold less. `provider_key_refused` is your own key for a provider being over its limit there; it clears on its own and carries no `Retry-After`. `upstream_rate_limited` is the model's provider rate-limiting the call: nothing about the request is wrong, nothing is charged, and it carries `Retry-After`.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "Retry-After": {
+                "description": "Seconds to wait. Present on `rate_limit_exceeded` and on `upstream_rate_limited`.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "example": 17
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "rate_limit_exceeded": {
+                    "summary": "This key's request rate",
+                    "value": {
+                      "error": {
+                        "message": "Rate limit reached for this key. Try again in 12 seconds. Request id REQUEST_ID.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "rate_limit_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "spend_rate_exceeded": {
+                    "summary": "The account spend rate cap",
+                    "value": {
+                      "error": {
+                        "message": "This account has already reserved 5000 minor units in the last 60 seconds, which is at its ceiling of 5000. Requests are admitted again within 60 seconds of the earliest reservation counted, with nothing to do in the meantime.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "spend_rate_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "provider_key_refused": {
+                    "summary": "Your own provider key is over its limit",
+                    "value": {
+                      "error": {
+                        "message": "openai refused this request as over its limits, on your workspace's own openai key. This is your account's limit at openai rather than ours. While your workspace holds a key for openai, every request to openai runs on yours and none is sent on a Hopscotch key, so no other credential was tried for it. Nothing was charged for this request. Remove the key on the Provider keys screen and these requests go back to running on Hopscotch's key and being charged for.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "provider_key_refused",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "upstream_rate_limited": {
+                    "summary": "The model's provider rate-limited the call",
+                    "value": {
+                      "error": {
+                        "message": "The provider serving this model is rate-limiting requests right now. Nothing was charged. Retry after the number of seconds in the Retry-After header. Quote the request id if you contact support.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "upstream_rate_limited",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A fault on our side. The request id is the one thing worth keeping.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "The server had an error while processing your request. Sorry about that! Quote the request id if you contact support.",
+                    "type": "api_error",
+                    "param": null,
+                    "code": null,
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Ours rather than yours, and `code` names the condition. `paused_by_owner` clears only when somebody lifts the pause, so retrying on a timer will not help. `balance_unavailable` (we could not read the balance, so the request was refused rather than served unmetered), `model_not_priceable` and `model_pricing_unreadable` (a model we list could not be priced for this call) and `no_provider_configured` (we are not currently configured to serve this) all clear without you doing anything.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "paused_by_owner": {
+                    "summary": "Somebody pressed Pause",
+                    "value": {
+                      "error": {
+                        "message": "Every request on this account is paused, because somebody with access to it pressed Pause in the dashboard. Nothing was charged for this request and no credit was held for it. It is retryable, and it will be refused the same way until the pause is lifted, so retrying on a timer will not clear it. Requests start working again the moment the pause is lifted from the same control, with nothing else to do and nothing to re-create.",
+                        "type": "server_error",
+                        "param": null,
+                        "code": "paused_by_owner",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "balance_unavailable": {
+                    "summary": "We could not read the balance",
+                    "value": {
+                      "error": {
+                        "message": "Your credit balance could not be checked while this request was running, so it was stopped rather than left unwatched. This is a fault on our side rather than a problem with your account, and it does not mean you are out of credit. Try again shortly.",
+                        "type": "server_error",
+                        "param": null,
+                        "code": "balance_unavailable",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "The request ran past the request deadline and was terminated.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This request ran longer than the 540 second limit and was terminated. Reduce the amount of work in one call, or stream the response, and try again.",
+                    "type": "server_error",
+                    "param": null,
+                    "code": "request_deadline_exceeded",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "servers": [
+          {
+            "url": "https://api.hopscotchlabs.ai",
+            "description": "Production"
+          }
+        ]
+      }
     },
     "/v1/embeddings": {
-      "classification": "blocked",
-      "gate": "2.10",
-      "reason": "The route exists in the source spec, and Story 2.10 (completions and embeddings serve real responses) moved from `backlog` to `done` on 2026-09-19 (4ff00eb6d, #1192). So the gate this entry carries has been MET, and it stays `blocked` for the reason /v1/messages is blocked rather than for the reason it used to be: publishing it is a decision rather than a reclassification. It needs its request and response schemas transcribed from the handler, its refusals transcribed with them (including the encoding_format 400 that Story 2.10 added at the door, and the embeddings 413 whose published shape is the open question of SF-31), and a page in the navigation. Note also that both paths have been REACHABLE since Story 2.11 registered them in src/public/routes.ts, so the absence here has never meant a 404; five integration pages on this site say otherwise and are recorded as SF-214, with the owner. Not a sync pass's call."
+      "classification": "public",
+      "post": {
+        "operationId": "createEmbedding",
+        "summary": "Create embeddings",
+        "description": "Turn text into embedding vectors, in the OpenAI embeddings format. The catalog must list the model for embeddings; GET /v1/models shows each model's `endpoint_families`.\n\n`encoding_format` is `float` or `base64`. Leave it out, or send null, and you get `float`, which is OpenAI's own default. Any other value is refused with 400 and `param` `encoding_format`, before a provider is chosen, rather than forwarded. Embeddings are not streamed.\n\nThe body is forwarded as you sent it, so a field this page does not name still reaches the provider.\n\nCredit is held when the request is admitted and settled against the provider's own token counts when it finishes. You are charged the provider's rate at face value. Nothing is added per request.\n\nTo read back the tokens and charge of one request afterwards, send the value of the `x-hopscotch-request-id` response header to `GET /v1/usage/{id}`.",
+        "tags": [
+          "Embeddings"
+        ],
+        "security": [
+          {
+            "customerApiKey": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "model",
+                  "input"
+                ],
+                "additionalProperties": true,
+                "description": "An OpenAI embeddings request. Fields beyond the ones named here are forwarded to the provider unchanged.",
+                "properties": {
+                  "model": {
+                    "type": "string",
+                    "description": "A model id in `provider/model` form, or `profile/{identifier}` for one of your workspace's routing profiles. A bare model id is refused with 400 and the code `model_id_not_pinned`. List what you can call with GET /v1/models.",
+                    "example": "openai/text-embedding-3-small"
+                  },
+                  "input": {
+                    "description": "The text or texts to embed: a string, an array of strings, an array of token ids, or an array of token id arrays.",
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        }
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "encoding_format": {
+                    "type": "string",
+                    "enum": [
+                      "float",
+                      "base64"
+                    ],
+                    "description": "How each vector is encoded in the reply. `float` is an array of numbers and `base64` is a base64 string. Absent or null is served as `float`. Any other value is refused with 400.",
+                    "example": "float"
+                  }
+                }
+              },
+              "example": {
+                "model": "openai/text-embedding-3-small",
+                "input": "Say hi in five words.",
+                "encoding_format": "float"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The embedding list, in OpenAI's format as the provider produced it, with a `usage` object carrying the provider's token counts. With `encoding_format` `float`, or absent, each `embedding` is an array of numbers. With `base64`, each is a base64 string. The example shows three values per vector; a real vector is much longer.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-request-id": {
+                "$ref": "#/responseHeaders/SdkRequestId"
+              },
+              "x-hopscotch-provider": {
+                "$ref": "#/responseHeaders/Provider"
+              },
+              "x-hopscotch-retry-attempt-count": {
+                "$ref": "#/responseHeaders/RetryAttemptCount"
+              },
+              "x-hopscotch-cache-status": {
+                "$ref": "#/responseHeaders/CacheStatus"
+              },
+              "x-hopscotch-trace-id": {
+                "$ref": "#/responseHeaders/TraceId"
+              },
+              "x-hopscotch-served-by": {
+                "$ref": "#/responseHeaders/ServedBy"
+              },
+              "x-hopscotch-served-via": {
+                "$ref": "#/responseHeaders/ServedVia",
+                "description": "Present, with the value `backup`, when a backup route served this request. Absent on every other response, and never sent with any other value, so a client that has never read it sees nothing change about an ordinary request. The provider named on x-hopscotch-provider and in the body is still the one you asked for."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmbeddingList"
+                },
+                "example": {
+                  "object": "list",
+                  "data": [
+                    {
+                      "object": "embedding",
+                      "index": 0,
+                      "embedding": [
+                        0.0023,
+                        -0.0094,
+                        0.0151
+                      ]
+                    }
+                  ],
+                  "model": "openai/text-embedding-3-small",
+                  "usage": {
+                    "prompt_tokens": 6,
+                    "total_tokens": 6
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request cannot be served as sent. `code` is null for a missing parameter and for an unsupported `encoding_format`, with `param` naming the field; `model_id_not_pinned` is a model id that names no provider; `provider_key_refused` is the request running on your own key for a provider that rejected it or refused this particular call under it. A refusal the provider made about this request is relayed with the provider's own status and its own sentence, quoted after the provider's name.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "missing_model": {
+                    "summary": "No model named",
+                    "value": {
+                      "error": {
+                        "message": "You must provide a model parameter naming the model to call. It is read to work out what the request could cost before it is sent.",
+                        "type": "invalid_request_error",
+                        "param": "model",
+                        "code": null,
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "model_id_not_pinned": {
+                    "summary": "The model id does not name its provider",
+                    "value": {
+                      "error": {
+                        "message": "The model \"gpt-4o-mini\" does not name its provider. A model field carries either \"provider/model\", where the part before the first slash is a provider this platform serves and the rest is that provider's own id for the model, for example \"anthropic/claude-opus-4-5\", or \"profile/{identifier}\", one of your workspace's routing profiles, for example \"profile/fast\". GET /v1/models lists the exact strings this key can call.",
+                        "type": "invalid_request_error",
+                        "param": "model",
+                        "code": "model_id_not_pinned",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "unsupported_encoding_format": {
+                    "summary": "An encoding_format other than float or base64",
+                    "value": {
+                      "error": {
+                        "message": "The encoding_format \"int8\" is not supported. Use \"float\" or \"base64\"; a request that names neither is served as \"float\", which is the OpenAI default.",
+                        "type": "invalid_request_error",
+                        "param": "encoding_format",
+                        "code": null,
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "provider_key_refused": {
+                    "summary": "Your own provider key was rejected",
+                    "value": {
+                      "error": {
+                        "message": "openai rejected your workspace's own openai key (401), so the credential itself was not accepted. Replace it on the Provider keys screen. While your workspace holds a key for openai, every request to openai runs on yours and none is sent on a Hopscotch key, so no other credential was tried for it. Nothing was charged for this request. Remove the key on the Provider keys screen and these requests go back to running on Hopscotch's key and being charged for.",
+                        "type": "invalid_request_error",
+                        "param": null,
+                        "code": "provider_key_refused",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No key, a scheme other than Bearer, a key of the wrong shape, or a key we reject. An unknown key and a revoked key are answered with one identical message on purpose.\n\nA key past its own expiry date is refused here too, with code `key_expired` and a message naming the date. It is checked before the per-minute rate limiter, so an expired key never consumes that allowance. Expired keys are not renewed: create a new one.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Incorrect API key provided.",
+                    "type": "authentication_error",
+                    "param": null,
+                    "code": "invalid_api_key",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The request will not be paid for, and nothing was charged. Code `insufficient_credit` is the workspace being out of credit, which stops every key on it. Code `key_limit_exceeded` is the sending key reaching its own credit limit, which leaves every other key in the workspace serving normally; it is refused before any credit is held, and the message names what that key has settled and holds inside its current window.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "insufficient_credit": {
+                    "summary": "The workspace is out of credit",
+                    "value": {
+                      "error": {
+                        "message": "This account has 54 minor units available and the request needs 55 held.",
+                        "type": "insufficient_quota",
+                        "param": null,
+                        "code": "insufficient_credit",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "key_limit_exceeded": {
+                    "summary": "This key is at its own limit",
+                    "value": {
+                      "error": {
+                        "message": "This key may spend $20.00 in its current window and has $18.40 settled and $1.70 held against that, so a request needing $0.30 more is refused. Nothing was charged for it and no credit was held. The limit belongs to this key alone, so other keys in the workspace are unaffected. This limit resets monthly on UTC calendar windows, so requests are admitted again when the window rolls. It can also be raised or removed on the Keys screen.",
+                        "type": "insufficient_quota",
+                        "param": null,
+                        "code": "key_limit_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Refused for a setting the caller owns rather than anything about the model, and `code` names which. A key whose account staff have suspended is refused with code `account_suspended`, before any credit is held or any provider is called; contact support, because retrying will not change the answer.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "account_suspended": {
+                    "summary": "The key's account is suspended",
+                    "value": {
+                      "error": {
+                        "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
+                        "type": "permission_error",
+                        "param": null,
+                        "code": "account_suspended",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The model cannot be served, and the two cases are told apart by `code`. `model_not_found` means the id is in no catalog at all, which is what a typo produces, so check the spelling or list what this key can call with `GET /v1/models`. `model_not_available` means the id is catalogued and is not being served right now, or that the catalog does not list it for this endpoint. In the second case the message names the endpoint families the catalog does list it for, so move to a model that is listed for this one. No provider was called either way.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "model_not_found": {
+                    "summary": "No model of that id exists",
+                    "value": {
+                      "error": {
+                        "message": "The model \"MODEL_ID\" does not exist. Check the spelling, or list the models this key can call with GET /v1/models.",
+                        "type": "not_found_error",
+                        "param": null,
+                        "code": "model_not_found",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "model_not_available": {
+                    "summary": "Known to us, and not being served right now",
+                    "value": {
+                      "error": {
+                        "message": "The model \"MODEL_ID\" is not currently available. It is known to this platform and is not being served right now, so retrying later is worth more than changing the request.",
+                        "type": "not_found_error",
+                        "param": null,
+                        "code": "model_not_available",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "model_not_available_endpoint": {
+                    "summary": "Live, and not offered on this endpoint",
+                    "value": {
+                      "error": {
+                        "message": "\"MODEL_ID\" is not offered on this endpoint: the catalog lists it for chat_completions and not for embeddings.",
+                        "type": "not_found_error",
+                        "param": null,
+                        "code": "model_not_available",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The request body is larger than the 8388608 byte maximum this API accepts, so it was refused at the door. A body that declares its length is refused without a byte being read; one that declares none is read only as far as the ceiling and then abandoned. Nothing was parsed, no credit was held, no model was called and nothing was charged.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "payload_too_large": {
+                    "summary": "The request body is over the ceiling",
+                    "value": {
+                      "error": {
+                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "type": "invalid_request_error",
+                        "param": null,
+                        "code": "payload_too_large",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "A limit refused the request. `rate_limit_exceeded` is this key's own request rate and carries `Retry-After`. `spend_rate_exceeded` is the account spend rate cap, which counts the credit held for requests rather than the credit they settle at. `provider_key_refused` is your own key for a provider being over its limit there; it clears on its own and carries no `Retry-After`. `upstream_rate_limited` is the model's provider rate-limiting the call: nothing about the request is wrong, nothing is charged, and it carries `Retry-After`.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "Retry-After": {
+                "description": "Seconds to wait. Present on `rate_limit_exceeded` and on `upstream_rate_limited`.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "example": 17
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "rate_limit_exceeded": {
+                    "summary": "This key's request rate",
+                    "value": {
+                      "error": {
+                        "message": "Rate limit reached for this key. Try again in 12 seconds. Request id REQUEST_ID.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "rate_limit_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "spend_rate_exceeded": {
+                    "summary": "The account spend rate cap",
+                    "value": {
+                      "error": {
+                        "message": "This account has already reserved 5000 minor units in the last 60 seconds, which is at its ceiling of 5000. Requests are admitted again within 60 seconds of the earliest reservation counted, with nothing to do in the meantime.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "spend_rate_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "provider_key_refused": {
+                    "summary": "Your own provider key is over its limit",
+                    "value": {
+                      "error": {
+                        "message": "openai refused this request as over its limits, on your workspace's own openai key. This is your account's limit at openai rather than ours. While your workspace holds a key for openai, every request to openai runs on yours and none is sent on a Hopscotch key, so no other credential was tried for it. Nothing was charged for this request. Remove the key on the Provider keys screen and these requests go back to running on Hopscotch's key and being charged for.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "provider_key_refused",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "upstream_rate_limited": {
+                    "summary": "The model's provider rate-limited the call",
+                    "value": {
+                      "error": {
+                        "message": "The provider serving this model is rate-limiting requests right now. Nothing was charged. Retry after the number of seconds in the Retry-After header. Quote the request id if you contact support.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "upstream_rate_limited",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A fault on our side. The request id is the one thing worth keeping.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "The server had an error while processing your request. Sorry about that! Quote the request id if you contact support.",
+                    "type": "api_error",
+                    "param": null,
+                    "code": null,
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Ours rather than yours, and `code` names the condition. `paused_by_owner` clears only when somebody lifts the pause, so retrying on a timer will not help. `balance_unavailable` (we could not read the balance, so the request was refused rather than served unmetered), `model_not_priceable` and `model_pricing_unreadable` (a model we list could not be priced for this call) and `no_provider_configured` (we are not currently configured to serve this) all clear without you doing anything.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "paused_by_owner": {
+                    "summary": "Somebody pressed Pause",
+                    "value": {
+                      "error": {
+                        "message": "Every request on this account is paused, because somebody with access to it pressed Pause in the dashboard. Nothing was charged for this request and no credit was held for it. It is retryable, and it will be refused the same way until the pause is lifted, so retrying on a timer will not clear it. Requests start working again the moment the pause is lifted from the same control, with nothing else to do and nothing to re-create.",
+                        "type": "server_error",
+                        "param": null,
+                        "code": "paused_by_owner",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "balance_unavailable": {
+                    "summary": "We could not read the balance",
+                    "value": {
+                      "error": {
+                        "message": "Your credit balance could not be checked while this request was running, so it was stopped rather than left unwatched. This is a fault on our side rather than a problem with your account, and it does not mean you are out of credit. Try again shortly.",
+                        "type": "server_error",
+                        "param": null,
+                        "code": "balance_unavailable",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "The request ran past the request deadline and was terminated.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This request ran longer than the 540 second limit and was terminated. Reduce the amount of work in one call, or stream the response, and try again.",
+                    "type": "server_error",
+                    "param": null,
+                    "code": "request_deadline_exceeded",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "servers": [
+          {
+            "url": "https://api.hopscotchlabs.ai",
+            "description": "Production"
+          }
+        ]
+      }
     },
     "/v1/models": {
       "classification": "public",
@@ -1691,6 +3098,7 @@
                 "$ref": "#/responseHeaders/ServedBy"
               },
               "x-hopscotch-served-via": {
+                "description": "Present, with the value `backup`, when a backup route served this request. Absent on every other response, and never sent with any other value, so a client that has never read it sees nothing change about an ordinary request. The provider named on x-hopscotch-provider and in the body is still the one you asked for.",
                 "$ref": "#/responseHeaders/ServedVia"
               }
             }
@@ -2089,14 +3497,923 @@
       "reason": "Story 72.5's realtime door, which reached the source tree in the 2026-10-16 late pm sync range (ade1426ac, PR #5456) under customerApiKey: GET /v1/realtime?model= upgraded to a WebSocket in the OpenAI Realtime event shape, with an opening hold before the upgrade and each response held and settled on its own. realtimeDoorEnabled in services/control-plane/src/public/routes.ts reads REALTIME_DOOR_ENABLED === 'true', services/control-plane/wrangler.toml says it stays unset in every environment until the realtime proof passes, and with the flag closed the path answers the pre-publication 404 endpoint_not_supported before the key is read. Story 72.5 reads `review`, and Story 72.8, which owns the docs, the API reference and the dashboard naming the realtime door, reads `backlog`. Publishing it is a writer pass rather than a reclassification: a WebSocket upgrade does not render as an ordinary operation, and the subprotocol refusal, the 4402 close when the next hold is refused, the 60 minute session limit and the per-response usage rows each need a page, with every example transcribed from services/control-plane/src/realtime/door.ts. Nothing is published until the flag opens in production and 72.8 is done. Recorded in the internal site's unresolved-findings.md as SF-481."
     },
     "/v1/usage/{id}": {
-      "classification": "blocked",
-      "gate": "5.26",
-      "reason": "GET /v1/usage/{id} reached the source tree on 2026-09-05 (PR #536), letting a key read back one request's tokens and charge without a dashboard session. It now HAS a tracker entry: sprint-status.yaml filed Story 5.26 retroactively on 2026-09-09 at `review`, because the owner has not accepted the merge, so the gate has moved from \"no story exists\" to \"the story is not accepted\". It is also a writer pass rather than a reclassification, needing its response schema transcribed from the handler and a page in the navigation. Nothing is published until the owner accepts Story 5.26. Recorded in the internal site's unresolved-findings.md as SF-43 and SF-91."
+      "classification": "public",
+      "get": {
+        "operationId": "retrieveRequestUsage",
+        "summary": "Retrieve one request's usage",
+        "description": "Read back what one request recorded and what it cost. Send the value of the `x-hopscotch-request-id` header from the response you are asking about. The key that made the request can read it, with no dashboard session.\n\nThe record is written after the response is sent, so a read taken the instant a response lands can arrive first and answer 404. Read it again a moment later. A record made by another key, a record outside this key's workspace, and an id that never existed all answer with the same 404, so this route cannot be used to learn whether an id exists.\n\nIn `usage`, null means the provider did not report that count and 0 means it was measured as none. The two are different facts. `charge` is present only when your workspace balance paid for the request. `served_on_own_key` is true when the request ran on your own provider key, and `paid_from_allowance` is true when an included allowance paid for it, in which case `charge` is absent. No prompt and no response body is stored, so none is returned.\n\nThis route counts against the calling key's own request rate limit, like every other route.",
+        "tags": [
+          "Usage"
+        ],
+        "security": [
+          {
+            "customerApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The request id: the value the `x-hopscotch-request-id` header carried on the response being asked about.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "REQUEST_ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The recorded request: when it started, the model that served it, how it ended, every token count a charge can turn on, and the charge with its currency and rate revision.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageRecord"
+                },
+                "example": {
+                  "object": "usage.request",
+                  "request_id": "REQUEST_ID",
+                  "occurred_at": "2026-09-05T06:20:11.000Z",
+                  "model": "openai/gpt-4o-mini",
+                  "outcome": "served",
+                  "streamed": false,
+                  "usage": {
+                    "prompt_tokens": 2011,
+                    "completion_tokens": 5,
+                    "total_tokens": 2016,
+                    "cache_read_tokens": 1800,
+                    "cache_write_tokens": 0,
+                    "cache_write_1h_tokens": null,
+                    "reasoning_tokens": 0
+                  },
+                  "charge": {
+                    "amount_micros": 31200,
+                    "amount": "$0.0312",
+                    "currency": "USD",
+                    "rate_revision_id": "RATE_REVISION_ID",
+                    "note": null
+                  },
+                  "served_on_own_key": false,
+                  "paid_from_allowance": false,
+                  "latency_ms": 812,
+                  "note": "No prompt and no response body was stored for this request; the figures here are everything that exists (we never store prompts)."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No request id was named at all, so there is nothing to look up.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Name the request id: GET /v1/usage/{request_id}, where the id is the value the x-hopscotch-request-id header carried on the response you are asking about.",
+                    "type": "invalid_request_error",
+                    "param": "request_id",
+                    "code": "missing_required_parameter",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No key, a scheme other than Bearer, a key of the wrong shape, a key we reject, or a key past its own expiry date, which carries code `key_expired` and names the date it expired on.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Incorrect API key provided.",
+                    "type": "authentication_error",
+                    "param": null,
+                    "code": "invalid_api_key",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Refused for a setting the caller owns rather than anything about the model, and `code` names which. A key whose account staff have suspended is refused with code `account_suspended`, before any credit is held or any provider is called; contact support, because retrying will not change the answer.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "account_suspended": {
+                    "summary": "The key's account is suspended",
+                    "value": {
+                      "error": {
+                        "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
+                        "type": "permission_error",
+                        "param": null,
+                        "code": "account_suspended",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No usage record with that id is visible to this key, with code `request_not_found`. The same answer covers an id that never existed, an id made by another key or in another workspace, and a record this read arrived ahead of.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "No usage record for \"REQUEST_ID\" is visible to this key. A record is written after the response is sent, so a read taken immediately can arrive first; a record made by another key, a record outside this key's workspace and an id that never existed answer identically.",
+                    "type": "not_found_error",
+                    "param": "request_id",
+                    "code": "request_not_found",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "A method other than GET on this path. A usage record is the record of what happened, so there is nothing to write and nothing to delete. The route boundary answers this before any key is looked at.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "Allow": {
+                "description": "The methods this path accepts.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "GET"
+                  ]
+                },
+                "example": "GET"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "POST is not supported for /v1/usage/REQUEST_ID in this release.",
+                    "type": "invalid_request_error",
+                    "param": null,
+                    "code": "method_not_allowed",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "This key's own request rate was reached, `rate_limit_exceeded`. The response carries `Retry-After`.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "Retry-After": {
+                "description": "Seconds to wait.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "example": 17
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Rate limit reached for this key. Try again in 12 seconds. Request id REQUEST_ID.",
+                    "type": "rate_limit_error",
+                    "param": null,
+                    "code": "rate_limit_exceeded",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A fault on our side. The request id is the one thing worth keeping.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "The server had an error while processing your request. Sorry about that! Quote the request id if you contact support.",
+                    "type": "api_error",
+                    "param": null,
+                    "code": null,
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "servers": [
+          {
+            "url": "https://api.hopscotchlabs.ai",
+            "description": "Production"
+          }
+        ]
+      }
     },
     "/v1/messages": {
-      "classification": "blocked",
-      "gate": "2.30",
-      "reason": "POST /v1/messages (the Anthropic Messages API) reached the source tree on 2026-08-31 and is the fifth served inference path there. Its gate has closed: sprint-status.yaml moved Story 2.30 to `done` on the 2026-09-25 tracker reconcile (PR #317 merged to develop). Publishing it is still a decision rather than a reclassification: it needs its request and response schemas transcribed from the handler, a page in the navigation, and its one remaining deliberate departure from Anthropic's own API documented (refusals wear the OpenAI error envelope). Since source commit 22e07125c the credential is read from either Authorization as a Bearer token or Anthropic's own x-api-key, where two different values are refused, so the header is no longer a departure. It stays blocked until the owner decides to publish it. Recorded in the internal site's unresolved-findings.md as SF-91 and SF-282."
+      "classification": "public",
+      "post": {
+        "operationId": "createMessage",
+        "summary": "Create a message (Anthropic Messages API)",
+        "description": "Send a request in the Anthropic Messages format. Set `stream: true` for Anthropic's own server-sent event stream.\n\nThe credential is read from either `Authorization: Bearer` or Anthropic's own `x-api-key` header, so an unmodified Anthropic SDK works whichever way it authenticates. If both headers are present they must carry the same key: two different keys are refused with 401 rather than one being chosen.\n\n`max_tokens` is required by Anthropic and is passed through as you send it. It is not defaulted here, and a request that leaves it out is refused by the provider in the provider's own words. It is also the figure the credit held for the request is sized from. An `anthropic-version` header is not forwarded.\n\nThis route differs from Anthropic's own API in one way: a refusal comes back in the OpenAI error envelope that every other route here uses, so an Anthropic SDK reads the sentence from `error.message`. Only `POST /v1/messages` is served. `POST /v1/messages/count_tokens` is not, and answers 404 with the code `endpoint_not_supported`.\n\nCredit is held when the request is admitted and settled against the provider's own token counts when it finishes. You are charged the provider's rate at face value. Nothing is added per request.\n\nTo read back the tokens and charge of one request afterwards, send the value of the `x-hopscotch-request-id` response header to `GET /v1/usage/{id}`.",
+        "tags": [
+          "Messages"
+        ],
+        "security": [
+          {
+            "customerApiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": false,
+            "description": "Your Hopscotch API key, as an alternative to `Authorization: Bearer`. If you send both, they must carry the same key.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "ub_live_YOUR_KEY_HERE"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "model",
+                  "messages",
+                  "max_tokens"
+                ],
+                "additionalProperties": true,
+                "description": "An Anthropic Messages request. Fields beyond the ones named here are forwarded to the provider unchanged, so Anthropic's own documentation describes them.",
+                "properties": {
+                  "model": {
+                    "type": "string",
+                    "description": "A model id in `provider/model` form, or `profile/{identifier}` for one of your workspace's routing profiles. A bare model id is refused with 400 and the code `model_id_not_pinned`. The catalog must list the model for messages. List what you can call with GET /v1/models.",
+                    "example": "anthropic/claude-sonnet-4-5"
+                  },
+                  "messages": {
+                    "type": "array",
+                    "description": "The conversation turns, in Anthropic message form.",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  },
+                  "max_tokens": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "The most output tokens you will accept. Required, and passed to the provider as sent. The provider owns the ceiling for the model you name."
+                  },
+                  "system": {
+                    "description": "A system prompt, as Anthropic's API takes it: a string or an array of content blocks.",
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": true
+                        }
+                      }
+                    ]
+                  },
+                  "stream": {
+                    "type": "boolean",
+                    "description": "Return the reply as Anthropic's own event stream instead of one JSON body.",
+                    "default": false
+                  },
+                  "tools": {
+                    "type": "array",
+                    "description": "Tool definitions, in Anthropic's form.",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  },
+                  "tool_choice": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "How the model may use the tools, in Anthropic's form."
+                  }
+                }
+              },
+              "example": {
+                "model": "anthropic/claude-sonnet-4-5",
+                "max_tokens": 64,
+                "messages": [
+                  {
+                    "role": "user",
+                    "content": "Say hi in five words."
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The message, in Anthropic's format as the provider produced it: a `content` array, a `stop_reason`, and a `usage` object with `input_tokens` and `output_tokens`.\n\nWhen `stream` is true the body is `text/event-stream` instead, passed through in Anthropic's own event format.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-request-id": {
+                "$ref": "#/responseHeaders/SdkRequestId"
+              },
+              "x-hopscotch-provider": {
+                "$ref": "#/responseHeaders/Provider"
+              },
+              "x-hopscotch-retry-attempt-count": {
+                "$ref": "#/responseHeaders/RetryAttemptCount"
+              },
+              "x-hopscotch-cache-status": {
+                "$ref": "#/responseHeaders/CacheStatus"
+              },
+              "x-hopscotch-trace-id": {
+                "$ref": "#/responseHeaders/TraceId"
+              },
+              "x-hopscotch-served-by": {
+                "$ref": "#/responseHeaders/ServedBy"
+              },
+              "x-hopscotch-served-via": {
+                "$ref": "#/responseHeaders/ServedVia",
+                "description": "Present, with the value `backup`, when a backup route served this request. Absent on every other response, and never sent with any other value, so a client that has never read it sees nothing change about an ordinary request. The provider named on x-hopscotch-provider and in the body is still the one you asked for."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                },
+                "example": {
+                  "id": "msg_EXAMPLE",
+                  "type": "message",
+                  "role": "assistant",
+                  "model": "claude-sonnet-4-5",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Hello, good to meet you."
+                    }
+                  ],
+                  "stop_reason": "end_turn",
+                  "stop_sequence": null,
+                  "usage": {
+                    "input_tokens": 12,
+                    "output_tokens": 9
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request cannot be served as sent. `code` is null for a missing parameter, with `param` naming it, `model_id_not_pinned` for a model id that names no provider, and `provider_key_refused` when the request ran on your own key for a provider that rejected it or refused this particular call under it. A refusal the provider made about this request, such as a missing `max_tokens`, is relayed with the provider's own status and its own sentence, quoted after the provider's name.\n\nOn the platform's own provider keys this route also refuses, with `code` null and `param` naming the field and never its value, a field that buys something this platform cannot bill yet: `container`, `mcp_servers`, a hosted tool the provider charges for per call, a one-hour cache write, and the priority, speed and regional processing fields. A request served on your own provider key keeps every one of them.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "missing_model": {
+                    "summary": "No model named",
+                    "value": {
+                      "error": {
+                        "message": "You must provide a model parameter naming the model to call. It is read to work out what the request could cost before it is sent.",
+                        "type": "invalid_request_error",
+                        "param": "model",
+                        "code": null,
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "model_id_not_pinned": {
+                    "summary": "The model id does not name its provider",
+                    "value": {
+                      "error": {
+                        "message": "The model \"gpt-4o-mini\" does not name its provider. A model field carries either \"provider/model\", where the part before the first slash is a provider this platform serves and the rest is that provider's own id for the model, for example \"anthropic/claude-opus-4-5\", or \"profile/{identifier}\", one of your workspace's routing profiles, for example \"profile/fast\". GET /v1/models lists the exact strings this key can call.",
+                        "type": "invalid_request_error",
+                        "param": "model",
+                        "code": "model_id_not_pinned",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "max_tokens_missing": {
+                    "summary": "The provider refused a request with no max_tokens",
+                    "value": {
+                      "error": {
+                        "message": "anthropic refused this request: max_tokens: Field required",
+                        "type": "invalid_request_error",
+                        "param": null,
+                        "code": null,
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "mcp_servers": {
+                    "summary": "A field this platform does not meter",
+                    "value": {
+                      "error": {
+                        "message": "\"mcp_servers\" asks the provider for something this platform does not meter yet (a priority or fast mode, regional processing, a hosted tool or search, audio, or a one-hour cache write). Remove it, or send the request on your own provider key.",
+                        "type": "invalid_request_error",
+                        "param": "mcp_servers",
+                        "code": null,
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "provider_key_refused": {
+                    "summary": "Your own provider key was rejected",
+                    "value": {
+                      "error": {
+                        "message": "openai rejected your workspace's own openai key (401), so the credential itself was not accepted. Replace it on the Provider keys screen. While your workspace holds a key for openai, every request to openai runs on yours and none is sent on a Hopscotch key, so no other credential was tried for it. Nothing was charged for this request. Remove the key on the Provider keys screen and these requests go back to running on Hopscotch's key and being charged for.",
+                        "type": "invalid_request_error",
+                        "param": null,
+                        "code": "provider_key_refused",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No key, a scheme other than Bearer with no `x-api-key` beside it, a key of the wrong shape, or a key we reject. An unknown key and a revoked key are answered with one identical message on purpose. Two different keys, one in `Authorization` and one in `x-api-key`, are refused too, with the same code and a message saying so. A key past its own expiry date is refused with code `key_expired` and a message naming the date.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "invalid_api_key": {
+                    "summary": "A key we reject",
+                    "value": {
+                      "error": {
+                        "message": "Incorrect API key provided.",
+                        "type": "authentication_error",
+                        "param": null,
+                        "code": "invalid_api_key",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "no_api_key": {
+                    "summary": "No credential in either header",
+                    "value": {
+                      "error": {
+                        "message": "You did not provide an API key. Send it in an Authorization header using Bearer auth, or in x-api-key.",
+                        "type": "authentication_error",
+                        "param": null,
+                        "code": "invalid_api_key",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "two_different_keys": {
+                    "summary": "Two different keys",
+                    "value": {
+                      "error": {
+                        "message": "This request carried two different API keys, in Authorization and x-api-key. Send one credential.",
+                        "type": "authentication_error",
+                        "param": null,
+                        "code": "invalid_api_key",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The request will not be paid for, and nothing was charged. Code `insufficient_credit` is the workspace being out of credit, which stops every key on it. Code `key_limit_exceeded` is the sending key reaching its own credit limit, which leaves every other key in the workspace serving normally; it is refused before any credit is held, and the message names what that key has settled and holds inside its current window.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "insufficient_credit": {
+                    "summary": "The workspace is out of credit",
+                    "value": {
+                      "error": {
+                        "message": "This account has 54 minor units available and the request needs 55 held.",
+                        "type": "insufficient_quota",
+                        "param": null,
+                        "code": "insufficient_credit",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "key_limit_exceeded": {
+                    "summary": "This key is at its own limit",
+                    "value": {
+                      "error": {
+                        "message": "This key may spend $20.00 in its current window and has $18.40 settled and $1.70 held against that, so a request needing $0.30 more is refused. Nothing was charged for it and no credit was held. The limit belongs to this key alone, so other keys in the workspace are unaffected. This limit resets monthly on UTC calendar windows, so requests are admitted again when the window rolls. It can also be raised or removed on the Keys screen.",
+                        "type": "insufficient_quota",
+                        "param": null,
+                        "code": "key_limit_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Refused for a setting the caller owns rather than anything about the model, and `code` names which. A key whose account staff have suspended is refused with code `account_suspended`, before any credit is held or any provider is called; contact support, because retrying will not change the answer.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "account_suspended": {
+                    "summary": "The key's account is suspended",
+                    "value": {
+                      "error": {
+                        "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
+                        "type": "permission_error",
+                        "param": null,
+                        "code": "account_suspended",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The model cannot be served, and the two cases are told apart by `code`. `model_not_found` means the id is in no catalog at all, which is what a typo produces, so check the spelling or list what this key can call with `GET /v1/models`. `model_not_available` means the id is catalogued and is not being served right now, or that the catalog does not list it for this endpoint. In the second case the message names the endpoint families the catalog does list it for, so move to a model that is listed for this one. No provider was called either way.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "model_not_found": {
+                    "summary": "No model of that id exists",
+                    "value": {
+                      "error": {
+                        "message": "The model \"MODEL_ID\" does not exist. Check the spelling, or list the models this key can call with GET /v1/models.",
+                        "type": "not_found_error",
+                        "param": null,
+                        "code": "model_not_found",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "model_not_available": {
+                    "summary": "Known to us, and not being served right now",
+                    "value": {
+                      "error": {
+                        "message": "The model \"MODEL_ID\" is not currently available. It is known to this platform and is not being served right now, so retrying later is worth more than changing the request.",
+                        "type": "not_found_error",
+                        "param": null,
+                        "code": "model_not_available",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "model_not_available_endpoint": {
+                    "summary": "Live, and not offered on this endpoint",
+                    "value": {
+                      "error": {
+                        "message": "\"MODEL_ID\" is not offered on this endpoint: the catalog lists it for chat_completions and not for messages.",
+                        "type": "not_found_error",
+                        "param": null,
+                        "code": "model_not_available",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "A method other than POST on this path. The route boundary answers this before any key is looked at, so it costs nothing and reveals nothing.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "Allow": {
+                "description": "The methods this path accepts.",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "POST"
+                  ]
+                },
+                "example": "POST"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "GET is not supported for /v1/messages in this release.",
+                    "type": "invalid_request_error",
+                    "param": null,
+                    "code": "method_not_allowed",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The request body is larger than the 8388608 byte maximum this API accepts, so it was refused at the door. A body that declares its length is refused without a byte being read; one that declares none is read only as far as the ceiling and then abandoned. Nothing was parsed, no credit was held, no model was called and nothing was charged.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "payload_too_large": {
+                    "summary": "The request body is over the ceiling",
+                    "value": {
+                      "error": {
+                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "type": "invalid_request_error",
+                        "param": null,
+                        "code": "payload_too_large",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "A limit refused the request. `rate_limit_exceeded` is this key's own request rate and carries `Retry-After`. `spend_rate_exceeded` is the account spend rate cap, which counts the credit held for requests rather than the credit they settle at; send `max_tokens` to hold less. `provider_key_refused` is your own key for a provider being over its limit there; it clears on its own and carries no `Retry-After`. `upstream_rate_limited` is the model's provider rate-limiting the call: nothing about the request is wrong, nothing is charged, and it carries `Retry-After`.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "Retry-After": {
+                "description": "Seconds to wait. Present on `rate_limit_exceeded` and on `upstream_rate_limited`.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "example": 17
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "rate_limit_exceeded": {
+                    "summary": "This key's request rate",
+                    "value": {
+                      "error": {
+                        "message": "Rate limit reached for this key. Try again in 12 seconds. Request id REQUEST_ID.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "rate_limit_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "spend_rate_exceeded": {
+                    "summary": "The account spend rate cap",
+                    "value": {
+                      "error": {
+                        "message": "This account has already reserved 5000 minor units in the last 60 seconds, which is at its ceiling of 5000. Requests are admitted again within 60 seconds of the earliest reservation counted, with nothing to do in the meantime.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "spend_rate_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "provider_key_refused": {
+                    "summary": "Your own provider key is over its limit",
+                    "value": {
+                      "error": {
+                        "message": "openai refused this request as over its limits, on your workspace's own openai key. This is your account's limit at openai rather than ours. While your workspace holds a key for openai, every request to openai runs on yours and none is sent on a Hopscotch key, so no other credential was tried for it. Nothing was charged for this request. Remove the key on the Provider keys screen and these requests go back to running on Hopscotch's key and being charged for.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "provider_key_refused",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "upstream_rate_limited": {
+                    "summary": "The model's provider rate-limited the call",
+                    "value": {
+                      "error": {
+                        "message": "The provider serving this model is rate-limiting requests right now. Nothing was charged. Retry after the number of seconds in the Retry-After header. Quote the request id if you contact support.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "upstream_rate_limited",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A fault on our side. The request id is the one thing worth keeping.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "The server had an error while processing your request. Sorry about that! Quote the request id if you contact support.",
+                    "type": "api_error",
+                    "param": null,
+                    "code": null,
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Ours rather than yours, and `code` names the condition. `paused_by_owner` clears only when somebody lifts the pause, so retrying on a timer will not help. `balance_unavailable` (we could not read the balance, so the request was refused rather than served unmetered), `model_not_priceable` and `model_pricing_unreadable` (a model we list could not be priced for this call) and `no_provider_configured` (we are not currently configured to serve this) all clear without you doing anything.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "paused_by_owner": {
+                    "summary": "Somebody pressed Pause",
+                    "value": {
+                      "error": {
+                        "message": "Every request on this account is paused, because somebody with access to it pressed Pause in the dashboard. Nothing was charged for this request and no credit was held for it. It is retryable, and it will be refused the same way until the pause is lifted, so retrying on a timer will not clear it. Requests start working again the moment the pause is lifted from the same control, with nothing else to do and nothing to re-create.",
+                        "type": "server_error",
+                        "param": null,
+                        "code": "paused_by_owner",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "balance_unavailable": {
+                    "summary": "We could not read the balance",
+                    "value": {
+                      "error": {
+                        "message": "Your credit balance could not be checked while this request was running, so it was stopped rather than left unwatched. This is a fault on our side rather than a problem with your account, and it does not mean you are out of credit. Try again shortly.",
+                        "type": "server_error",
+                        "param": null,
+                        "code": "balance_unavailable",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "The request ran past the request deadline and was terminated.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This request ran longer than the 540 second limit and was terminated. Reduce the amount of work in one call, or stream the response, and try again.",
+                    "type": "server_error",
+                    "param": null,
+                    "code": "request_deadline_exceeded",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "servers": [
+          {
+            "url": "https://api.hopscotchlabs.ai",
+            "description": "Production"
+          }
+        ]
+      }
     },
     "/v1/systemone": {
       "classification": "blocked",
@@ -2392,6 +4709,22 @@
     {
       "name": "Models",
       "description": "What you can call."
+    },
+    {
+      "name": "Completions",
+      "description": "Text completions, streamed or not."
+    },
+    {
+      "name": "Embeddings",
+      "description": "Embedding vectors for text."
+    },
+    {
+      "name": "Messages",
+      "description": "The Anthropic Messages API, streamed or not."
+    },
+    {
+      "name": "Usage",
+      "description": "What one request recorded and what it cost."
     }
   ],
   "exampleVerification": {
@@ -2467,6 +4800,66 @@
         "example": "GET /v1/models 403, GET /v1/models/{id} 403, POST /v1/chat/completions 403 account_suspended, POST /v1/responses 403 account_suspended",
         "shapeFrom": "Message transcribed verbatim from ACCOUNT_SUSPENDED_MESSAGE in services/control-plane/src/middleware/customerAuth.ts; the request id is a runtime value.",
         "note": "Needs a live transcript against a suspended account's key. Story 6.13 reads in-progress."
+      },
+      {
+        "example": "POST /v1/completions 200",
+        "shapeFrom": "OpenAI text completion shape; provider body forwarded unchanged per services/control-plane/src/inference/core.ts",
+        "note": "Field values are illustrative, and whether the `model` field echoes the pinned slug as chat completions does is not established. Needs a live 200 transcript."
+      },
+      {
+        "example": "POST /v1/completions 400 store_true and model_id_not_pinned, 404 model_not_available, and 401/402/403/413/429/500/503/504",
+        "shapeFrom": "Chat completions entries in this overlay for the shared statuses; the stored branch of refusal in services/control-plane/src/inference/doorRules.ts; unpinnedModelMessage and the endpoint-family branch in services/control-plane/src/providers/upstream.ts.",
+        "note": "Messages copied from the chat completions block where one handler answers both doors; the endpoint-family sentence names the raw family strings the handler interpolates. Needs a live transcript per status."
+      },
+      {
+        "example": "POST /v1/embeddings 200",
+        "shapeFrom": "OpenAI embeddings list shape; provider body forwarded unchanged per services/control-plane/src/inference/core.ts",
+        "note": "Vectors are shortened to three values and the field values are illustrative. Whether `model` echoes the pinned slug is not established. Needs a live 200 transcript for both encoding_format values."
+      },
+      {
+        "example": "POST /v1/embeddings 400 unsupported_encoding_format",
+        "shapeFrom": "embeddingEncodingRefusal in services/control-plane/src/inference/embeddingEncoding.ts",
+        "note": "Message transcribed verbatim from the handler with the value \"int8\" substituted. Needs a live transcript, which is cheap: any value other than float or base64 produces it."
+      },
+      {
+        "example": "POST /v1/embeddings 400 model_id_not_pinned, 404 model_not_available, and 401/402/403/413/429/500/503/504",
+        "shapeFrom": "Chat completions entries in this overlay for the shared statuses; unpinnedModelMessage and the endpoint-family branch in services/control-plane/src/providers/upstream.ts.",
+        "note": "Copied from the chat completions block where one handler answers both doors. Needs a live transcript per status."
+      },
+      {
+        "example": "POST /v1/embeddings 413 reply-size ceiling",
+        "shapeFrom": "The embeddings reply-size refusal in the source tree, a 413 payload_too_large at 45 MiB whose message tells the caller to use base64 or send fewer inputs.",
+        "note": "Deliberately NOT documented. Its published shape is the open question recorded as SF-31. Only the 8 MiB request ceiling is documented on this route. Add the reply-size 413 when SF-31 is resolved."
+      },
+      {
+        "example": "POST /v1/messages 200",
+        "shapeFrom": "Anthropic's Messages response shape, passed through unchanged per services/control-plane/src/inference/core.ts",
+        "note": "Field values are illustrative, and the `model` field is shown as the provider names it rather than as the pinned slug, which is not established. That a streamed reply keeps Anthropic event shape is inferred from the pass-through, not observed. Needs a live 200 transcript, streamed and not."
+      },
+      {
+        "example": "POST /v1/messages 401 invalid_api_key two_different_keys and no_api_key",
+        "shapeFrom": "credentialOf and decide in services/control-plane/src/middleware/customerAuth.ts",
+        "note": "Both sentences transcribed verbatim. Needs a live transcript with two differing keys and with neither header."
+      },
+      {
+        "example": "POST /v1/messages 400 max_tokens_missing and mcp_servers",
+        "shapeFrom": "refusalMessage in services/control-plane/src/errors/openai.ts for the provider-refusal frame; the unmetered branch of refusal in services/control-plane/src/inference/doorRules.ts.",
+        "note": "The max_tokens sentence is the example the handler comment itself gives, and the provider owns the words after the colon, so they may change. Needs a live transcript for each."
+      },
+      {
+        "example": "POST /v1/messages 405 and 404 model_not_available, and 402/403/413/429/500/503/504",
+        "shapeFrom": "services/control-plane/src/public/routes.ts for the 405 with Allow; the chat completions entries in this overlay and upstream.ts for the rest.",
+        "note": "Method and path substituted into the handler sentence. Needs a live transcript per status."
+      },
+      {
+        "example": "GET /v1/usage/{id} 200",
+        "shapeFrom": "KeyUsageBody in services/control-plane/src/usage/keyReadback.ts and NOTHING_STORED_NOTE in services/control-plane/src/usage/reads.ts",
+        "note": "Every field value is illustrative, including the token counts and the charge, and the request id and rate revision id are placeholders. The charge key is omitted when paid_from_allowance is true; that variant is described but has no example. Needs a live transcript."
+      },
+      {
+        "example": "GET /v1/usage/{id} 400 missing_required_parameter, 404 request_not_found, 405, 429, and 401/403/500",
+        "shapeFrom": "The api.get(\"/usage/*\") handler in services/control-plane/src/apiApp.ts; services/control-plane/src/public/routes.ts for the 405.",
+        "note": "The 400 and 404 sentences are transcribed verbatim, with the id substituted. Whether the 400 is reachable through the route boundary is not established. Needs a live transcript per status."
       }
     ]
   }

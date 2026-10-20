@@ -1,0 +1,156 @@
+---
+title: "Anthropic Messages API"
+description: "POST /v1/messages serves the Anthropic Messages wire on the same key and balance as everything else: what is identical, the one departure, and the SDK settings."
+status: write-now
+gates: []
+---
+
+import RequestIdNote from '/snippets/request-id-note.mdx';
+
+Clients written against Anthropic's Messages API can be pointed at Hopscotch
+without being rewritten into chat completions. `POST /v1/messages` takes the
+Messages request body, answers with the Messages response body, and streams
+Anthropic's own event stream when you ask for one. It is the same key, the same
+catalog and the same balance as the OpenAI-shaped endpoints, filed under its own
+endpoint family in your usage.
+
+## Point the Anthropic SDK at it
+
+Two settings change, as with the OpenAI SDKs: the base URL and the key. The
+Anthropic SDKs add `/v1/messages` themselves, so the base URL is the bare
+origin.
+
+<CodeGroup>
+
+```bash curl
+curl https://api.hopscotchlabs.ai/v1/messages \
+  -H "x-api-key: ub_live_YOUR_KEY_HERE" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "anthropic/claude-sonnet-4-5",
+    "max_tokens": 256,
+    "messages": [{"role": "user", "content": "Say hi in five words."}]
+  }'
+```
+
+```python Python
+from anthropic import Anthropic
+
+client = Anthropic(
+    base_url="https://api.hopscotchlabs.ai",
+    api_key="ub_live_YOUR_KEY_HERE",
+)
+
+message = client.messages.create(
+    model="anthropic/claude-sonnet-4-5",
+    max_tokens=256,
+    messages=[{"role": "user", "content": "Say hi in five words."}],
+)
+print(message.content[0].text)
+```
+
+```typescript Node
+import Anthropic from "@anthropic-ai/sdk";
+
+const client = new Anthropic({
+  baseURL: "https://api.hopscotchlabs.ai",
+  apiKey: "ub_live_YOUR_KEY_HERE",
+});
+
+const message = await client.messages.create({
+  model: "anthropic/claude-sonnet-4-5",
+  max_tokens: 256,
+  messages: [{ role: "user", content: "Say hi in five words." }],
+});
+console.log(message.content[0]);
+```
+
+</CodeGroup>
+
+The model id is a Hopscotch id, `provider/model`, so the provider half is
+written out. A bare Anthropic id is refused with the code
+`model_id_not_pinned` like everywhere else. Any model the catalog lists for the
+messages family is callable here; ask [`GET /v1/models`](/features/models) for
+the exact strings.
+
+## Either credential header
+
+Anthropic's own SDKs send the key as `x-api-key`. The OpenAI SDKs and most
+other clients send `Authorization: Bearer`. On this one path both are read, so
+whichever client you have works unchanged.
+
+Send one of them. A request carrying both with different values is refused
+with HTTP 401 rather than served on either:
+
+```json 401
+{
+  "error": {
+    "message": "This request carried two different API keys, in Authorization and x-api-key. Send one credential.",
+    "type": "authentication_error",
+    "param": null,
+    "code": "invalid_api_key",
+    "request_id": "REQUEST_ID"
+  }
+}
+```
+
+Both headers carrying the same key is accepted. A request with neither gets the
+usual missing-key 401, whose message on this path names both headers.
+
+## What is identical
+
+- The request body. `model`, `max_tokens`, `messages`, `system`, `tools`,
+  `tool_choice`, `stream` and the rest travel as you sent them.
+- The success body. A non-streamed reply is Anthropic's message object, with
+  its `content` array, `stop_reason` and `usage` of `input_tokens` and
+  `output_tokens`, exactly as the provider returned it.
+- The stream. With `stream: true` you receive Anthropic's own server-sent
+  events, so an Anthropic SDK's streaming helpers work.
+- `max_tokens`. Anthropic requires it, and we do not fill one in for you. A
+  request without it reaches the provider and is refused there, in the
+  provider's own words, relayed with its status.
+
+## The one departure: refusals wear the OpenAI envelope
+
+A refusal that comes from us rather than from Anthropic, such as an unknown
+key, an empty balance, a spend cap or a guardrail, is shaped as the OpenAI
+error envelope documented on [Errors](/features/errors): an `error` object
+with `message`, `type`, `param`, `code` and `request_id`. It is not shaped as
+Anthropic's error object.
+
+The reason is that every refusal on this platform is one shape, so a client
+that handles one of them handles all of them. An Anthropic SDK still raises on
+the status code; what differs is the body it attaches to the exception, and
+the `code` inside it is where the reason lives.
+
+A refusal that comes from Anthropic itself, such as an invalid tool definition,
+is relayed with the provider's own status and a message that quotes the
+provider's sentence.
+
+## What we do not forward
+
+Nothing you send as a header reaches the provider. The request we make is built
+from your body and our own credential with a fresh header set, so an
+`anthropic-version` or `anthropic-beta` header you send is read by nobody. The
+version the provider sees is the one we send, and a feature that needs a beta
+header is not reachable this way. Send the version header anyway if your SDK
+insists; it is harmless.
+
+The same fields we refuse on our own provider credentials elsewhere are refused
+here too: `store: true`, hosted tools that the provider bills for, and the two
+container fields `container` and `mcp_servers`. Each is a 400 naming the field
+in `param`, and each is forwarded untouched on your own provider key.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Claude Code" href="/integrations/claude-code">
+    Pointing the Claude Code harness at this endpoint.
+  </Card>
+  <Card title="Errors" href="/features/errors">
+    The envelope every refusal above is shaped as, and what each code asks of you.
+  </Card>
+</CardGroup>
+
+<RequestIdNote />

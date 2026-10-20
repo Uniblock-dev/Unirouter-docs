@@ -122,10 +122,13 @@ rules:
 
   # 7. Internal architecture nouns
   - id: internal-architecture
-    pattern: "durable object|\\bKV (namespace|prefix)\\b|\\bD1\\b|\\bR2\\b|service binding|wrangler|workers\\.dev|x-(hopscotch|uniblock)-internal-secret"
+    pattern: "durable object|\\bKV (namespace|prefix)\\b|\\bD1\\b|(?<!Cloudflare )\\bR2\\b|service binding|wrangler|workers\\.dev|x-(hopscotch|uniblock)-internal-secret"
     reason: >-
       Internal topology. None of it is reachable, actionable, or stable from a
       customer's side, and worker names and hostnames are a map of the system.
+      "Cloudflare R2" is let through because a customer may register a bucket
+      of their own there (the storage destination on the zero-data-retention
+      page); a bare "R2" is still ours and still refused.
 
   - id: internal-error-shape
     pattern: "\\{\\s*\"?error\"?\\s*:\\s*\"[^\"]*\"\\s*\\}"

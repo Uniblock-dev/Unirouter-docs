@@ -2,10 +2,9 @@
 title: "OpenAI compatibility"
 description: "What OpenAI-compatible means here: the endpoints that exist today, the differences that are additive, and what a call to anything else returns."
 status: partial
-gates: ["2.3", "2.10", "2.11", "13.9"]
+gates: ["2.3", "2.11", "2.31", "13.9"]
 ---
 
-import FeatureStatus from '/snippets/feature-status.mdx';
 import BaseUrl from '/snippets/base-url.mdx';
 
 "OpenAI-compatible" here means three specific things, and it is worth being
@@ -22,20 +21,24 @@ exact about each of them rather than leaving you to find the edges by calling.
 
 ## The endpoints that exist today
 
-<FeatureStatus
-  missing="documentation for text completions and embeddings"
-  instead="POST /v1/completions and POST /v1/embeddings are not documented here. The story they were gated on has now shipped, and a writer has not yet transcribed them, so nothing about them is published: not a request shape, not a response shape, and not a refusal. That is an absence rather than a statement that they are unreachable, and this page does not tell you what a call to either one does."
-/>
-
 | Endpoint | Method | Status |
 |---|---|---|
 | `/v1/chat/completions` | `POST` | Serves. Streaming and non-streaming. |
-| `/v1/responses` | `POST` | Serves. Streaming and non-streaming. |
+| `/v1/responses` | `POST` | Serves. Streaming and non-streaming. See [Responses API](/features/responses-api). |
+| `/v1/completions` | `POST` | Serves. Streaming and non-streaming. See [Completions and embeddings](/features/completions-and-embeddings). |
+| `/v1/embeddings` | `POST` | Serves. See [Completions and embeddings](/features/completions-and-embeddings). |
+| `/v1/messages` | `POST` | Serves the Anthropic Messages format. See [Anthropic Messages API](/features/anthropic-messages). |
 | `/v1/models` | `GET` | Serves. |
 | `/v1/models/{id}` | `GET` | Serves. |
+| `/v1/usage/{id}` | `GET` | Serves. See [Usage lookup](/features/usage-lookup). |
 
-That table is the whole documented surface. A path that is not on it is one this
-site says nothing about, which is not the same as a path that does not exist.
+That table is the whole documented surface, and it is also the whole served
+surface in production today, with one exception: `POST /v1/systemone` serves a
+partner's typed-judgment API and is not documented here yet.
+
+**Built and closed.** The image, audio, video and realtime endpoints exist and
+answer the 404 below in production until their doors open. See
+[Images, audio and video](/features/images-audio-and-video) for what is coming.
 
 ## What a call to a path we do not serve returns
 
