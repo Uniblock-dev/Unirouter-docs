@@ -1177,7 +1177,7 @@ Tracked here so writers meet them where the work is; each names its unblock cond
 
     **What changed on this site.** Nothing. No page is edited, and no page's `gates:` names the one row that moved, Story 52.5 (`backlog` to `review`).
 
-    **What moved and stayed off this site.** Every operation that changed is a staff or browser door, among them `POST /api/me/credit/checkout` losing `rdtClickId` (internal SF-484, SF-488). `AA_CUSTOMER_SURFACES` is `on` in staging and still `off` in production, so no Artificial Analysis figure reaches a customer (internal SF-487).
+    **What moved and stayed off this site.** Every operation that changed is a staff or browser door, among them `POST /api/me/credit/checkout` losing `rdtClickId` (internal SF-501, SF-505). `AA_CUSTOMER_SURFACES` is `on` in staging and still `off` in production, so no Artificial Analysis figure reaches a customer (internal SF-504).
 
     **The open owner findings listed in entries 70 and 73, and widened in 75, are unchanged; nothing in this range settles any of them.**
 
@@ -1185,9 +1185,9 @@ Tracked here so writers meet them where the work is; each names its unblock cond
 
     **What changed on this site.** Nothing. No page is edited, and no page's `gates:` names the one row that moved, Story 70.18 (joined at `review`).
 
-    **What will falsify pages here, and is held for the owner.** The free first call and the starter key are on `develop` only; neither `origin/staging` nor `origin/main` holds them, so every page below is still true of production. Once promoted, `features/playground.mdx` ("spends real credit", "No key means no playground"), `get-started/quickstart.mdx` and `get-started/migrate-from-openai.mdx` (a zero balance refuses requests, true for an API key but silent on the Playground exception), and `manage/create-a-workspace.mdx` (a new workspace holds no keys) need new words, and no tracker row gates them, since both are Linear items. What the site says about "First call on us" is an owner call (internal SF-493).
+    **What will falsify pages here, and is held for the owner.** The free first call and the starter key are on `develop` only; neither `origin/staging` nor `origin/main` holds them, so every page below is still true of production. Once promoted, `features/playground.mdx` ("spends real credit", "No key means no playground"), `get-started/quickstart.mdx` and `get-started/migrate-from-openai.mdx` (a zero balance refuses requests, true for an API key but silent on the Playground exception), and `manage/create-a-workspace.mdx` (a new workspace holds no keys) need new words, and no tracker row gates them, since both are Linear items. What the site says about "First call on us" is an owner call (internal SF-510).
 
-    **What moved and stayed off this site.** Every operation that changed is a staff or browser door; `GET /public/models` now leaves out a model a provider's 405 burst keeps off the catalog pages while `GET /v1/models` still lists it (internal SF-489). `AA_CUSTOMER_SURFACES` is `on` for production in `wrangler.toml` on `develop`, not yet deployed, and this site carries no Artificial Analysis claim (internal SF-492). `FIVE_DOORS_ENABLED` is now stated `"false"` for production, which changes nothing: the five image and audio doors stay closed there.
+    **What moved and stayed off this site.** Every operation that changed is a staff or browser door; `GET /public/models` now leaves out a model a provider's 405 burst keeps off the catalog pages while `GET /v1/models` still lists it (internal SF-506). `AA_CUSTOMER_SURFACES` is `on` for production in `wrangler.toml` on `develop`, not yet deployed, and this site carries no Artificial Analysis claim (internal SF-509). `FIVE_DOORS_ENABLED` is now stated `"false"` for production, which changes nothing: the five image and audio doors stay closed there.
 
     **The open owner findings listed in entries 70 and 73, and widened in 75, are unchanged; nothing in this range settles any of them.**
 
