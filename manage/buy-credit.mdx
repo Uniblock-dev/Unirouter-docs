@@ -2,7 +2,7 @@
 title: "Buy credit"
 description: "Buy prepaid credit from the Billing screen, read the total before you pay, and set the notice that warns you before it runs out."
 status: write-now
-gates: ["4.15", "4.20"]
+gates: ["4.15", "4.20", "4.32"]
 ---
 
 import OwnerOnlyNote from '/snippets/owner-only-note.mdx';
@@ -52,6 +52,15 @@ the credit you receive; our fee, currently 0%, is added on top at the checkout.
     what you see is the rate your checkout session will use. Where a card is already
     saved, it is named inside the same box, so the card, the total, the credit and
     the rate are read together before you commit.
+  </Step>
+  <Step title="Apply a code, if you have one">
+    **Have a code?** opens a single **Promo code** field with an **Apply** control,
+    and one field serves both kinds of code. A Hopscotch credit code adds credit to
+    your balance on its own, with no purchase, and the screen says so: the amount
+    "added to your balance". A discount code from our payment provider is checked
+    against the amount you typed and reduces the charge at checkout: the screen
+    reads the code "applied" with the amount off. A credit code is redeemable once
+    per workspace, and credit it grants is spent before credit you paid for.
   </Step>
   <Step title="Continue to payment">
     The control opens a checkout session with our payment provider and sends you to
@@ -130,17 +139,33 @@ can go stale. A saved card can be removed, which means the next purchase asks fo
 card again; it changes nothing about credit you have already bought and nothing about
 your balance.
 
-<Note>
-  **The Billing screen has no card controls at the moment.** The tab that held them
-  was taken off Billing on 2026-09-11 while the controls are being worked on, so
-  Billing is Balance and Statement. Buying credit is untouched and is still on the
-  Balance tab, reading the same terms, and a card saved during a purchase is still
-  kept and still used for the next one. If you need a card removed while the controls
-  are off the screen, ask support.
-</Note>
+The card controls are on the Billing screen's **Payment** tab, under **Your
+card**. Adding a card opens a setup session with our payment provider, and no
+money moves. With more than one card saved, **Make default** records which one
+pays and charges nothing. **Remove** asks you to confirm, and if the card you are
+removing is the one that pays while others remain, the screen asks which card
+takes over before it lets go of the old one.
 
-There is no automatic top up: nothing charges your card while you are away, and there
-is no setting that turns that on.
+## Auto reload
+
+By default nothing charges your card while you are away, and the **Auto reload**
+section on the Billing screen says so: "Off. You are only charged when you buy
+credits yourself."
+
+Turning it on takes two figures and a card. **When credits fall below** is the
+threshold, and **Buy this many** is the credit bought each time the balance
+crosses it. Both are dollar figures; the amount is at least the smallest purchase
+we accept, and the threshold can be set to zero to turn the reload off again.
+With no card on file the screen asks for one first, because a reload with nothing
+to charge is not a reload. Once on, the summary line reads what will happen:
+"On. Buys AMOUNT when the balance falls below THRESHOLD, so requests never stop."
+
+A reload that is declined does not retry forever. After a run of consecutive
+failed charges the reload stops, the screen says so, and a new card or a manual
+purchase starts it again. The threshold is separate from the low credit email's
+threshold below; the two do not have to agree.
+
+Setting either figure takes the same authority as buying credit: owner or admin.
 
 ## Next
 

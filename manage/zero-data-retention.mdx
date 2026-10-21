@@ -1,0 +1,172 @@
+---
+title: "Zero data retention"
+description: "Require that requests on our credentials go only to providers recorded as zero-data-retention, what that does and does not verify, and the receipts to come."
+status: partial
+gates: ["68.3"]
+---
+
+import FeatureStatus from '/snippets/feature-status.mdx';
+
+"Zero data retention" means two different things in this product, and this
+page keeps them apart.
+
+1. **A routing requirement.** Your workspace can require that a request served
+   on our provider credentials goes only to a provider whose published
+   retention is zero and whose training on inputs is disabled. This is shipped.
+2. **A signed receipt about our own storage.** A statement, signed by us, of
+   whether Hopscotch itself holds any of your prompt or response bodies. This
+   is coming, and the last section says exactly how far it has got.
+
+Neither changes what Hopscotch records about a request. We keep metadata and
+never the bodies, with or without either of these, and
+[Data and privacy](/manage/data-and-privacy) is the page for that.
+
+## The workspace requirement
+
+The requirement is a workspace setting. The dashboard describes it in one
+paragraph, which is also the most precise description of what it does:
+
+> When on, platform credentials use providers whose published retention is zero
+> and training is disabled. Requests using your workspace's own provider key are
+> always eligible. We cannot verify that provider's retention or training terms
+> for your key.
+
+Three consequences follow.
+
+**It narrows which providers may serve a model.** A model is often carried by
+more than one provider. With the requirement on, a request for that model is
+served only by a provider recorded as zero-retention and no-training, and if no
+such provider carries the model the request is refused rather than quietly
+served elsewhere.
+
+**Your own provider key is always eligible.** A request served on a key you
+brought runs under your own agreement with that provider. We do not check that
+agreement, and we do not refuse the request. See
+[Bring your own key](/features/bring-your-own-key).
+
+**"Recorded as" is the operative phrase.** The requirement reads what the
+provider publishes about retention and training. It is a record we keep, not
+a test we run against the provider, and this page makes no claim about what a
+provider actually does with a request once it has it.
+
+### What a refused request sees
+
+A request the requirement blocks is refused before it is sent, with HTTP 403,
+type `permission_error` and code `no_zdr_eligible_provider`. Nothing is
+charged and no credit is held.
+
+```json 403
+{
+  "error": {
+    "message": "The workspace requires zero-data-retention providers, and \"openai/gpt-4o-mini\" is not served by one recorded as meeting that requirement. Turn the requirement off under Data handling, or route this request to a provider recorded as zero-data-retention.",
+    "type": "permission_error",
+    "param": null,
+    "code": "no_zdr_eligible_provider",
+    "request_id": "REQUEST_ID"
+  }
+}
+```
+
+The message names the model, so a developer can tell whether to pick another
+model id or ask the workspace to change the setting.
+
+### Turning it on
+
+The setting is off until somebody sets it; the row reads "Not set yet" before
+then. Turning it on or off takes owner or admin. Every member can read it.
+
+<FeatureStatus
+  missing="the Zero data retention row on the Settings screen in production"
+  instead="The row exists in the dashboard and is switched on for our development environment while it is tested. Where you do not see it under Settings, the requirement is not yet yours to set from the screen. When it is shown in production this page changes with it."
+/>
+
+The setting is published to the request path when it is saved, and the save is
+refused rather than half-applied if that publication fails:
+
+> The requirement could not be published to the request path just now, so it was
+> not changed. Try again shortly.
+
+### Checking a model before you rely on it
+
+The models table marks each model's eligibility under the requirement:
+eligible, eligible through your own key, not eligible, or eligibility
+unavailable. The same answer is available to the dashboard for up to 40 model
+ids at a time, so a screen can check a list before you commit to it. Those
+marks sit behind the same switch as the setting row.
+
+## Per key, through a guardrail
+
+A [guardrail](/features/guardrails) carries its own zero-data-retention choice:
+**On**, **Off**, or **Workspace default**. On a key the guardrail governs, that
+choice replaces the workspace setting. So a workspace can leave the requirement
+off and still hold one key to it, or require it everywhere and exempt one key
+for a model nobody zero-retention carries. A guardrail refusal names the
+guardrail instead of the workspace:
+
+```text
+The guardrail "eu-only" on this key requires zero-data-retention providers, and "openai/gpt-4o-mini" is not served by one recorded as meeting that requirement. Change the guardrail, or route this request to a provider recorded as zero-data-retention.
+```
+
+A guardrail can also require providers recorded as not training on inputs,
+without the retention half. That refusal uses the same code with a message
+that says "not training on inputs" instead.
+
+## Signed receipts and your own storage bucket
+
+<FeatureStatus
+  missing="zero-data-retention receipts and a storage destination you own"
+  instead="Both exist in the source tree behind the management API, which is not yet available to customers, and the receipt itself cannot yet say anything stronger than unverified. Nothing below is something you can do today."
+/>
+
+What is being built, so you know what to expect:
+
+**A storage destination you own.** You will register a bucket of your own,
+either an AWS S3 bucket reached through a role you create for us, or a
+Cloudflare R2 bucket reached through a scoped token, plus a prefix within it.
+We prove we can write to it before we keep the registration, with one
+zero-byte object that we then delete, and we store the credentials encrypted.
+Telemetry about your requests, never the bodies, is then written to your bucket
+rather than ours. The AWS role must require an external id of `hopscotch:`
+followed by your workspace id, so that nobody else's registration can assume
+it.
+
+**A receipt.** On request, we scan what we hold for your workspace and issue a
+signed receipt: a verdict of `certified` or `unverified`, a closed list of
+reasons, the counts behind them, a hash of the destination the receipt is
+about, and an HMAC-SHA256 signature. Receipts are append-only and the most
+recent hundred are listable. Disconnecting your bucket issues a termination
+receipt and removes the credentials; it deletes nothing in your bucket.
+
+**Why every receipt is `unverified` today.** A certified verdict needs a
+plaintext scan of our own storage, and that scan is not built. Until it is,
+every receipt carries the reason `plaintext_scan_unavailable`, and a receipt
+that can only say unverified is not a promise we are willing to put on a
+customer page. That is the gate on this section, and the stories that clear it
+are named in the frontmatter of this page.
+
+## What this page does not claim
+
+- Nothing about what a provider does with a request once it has it. The
+  requirement reads a provider's published terms and nothing else.
+- No certification or audit of any kind. No such claim exists on this site.
+- No setting that stores your prompts or replies. Capture of request bodies
+  is not available in production, and the enable control refuses it there in
+  as many words: the machinery it would store your prompts under is not built,
+  so we will not take your consent for it.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Data and privacy" href="/manage/data-and-privacy">
+    What we record about a request and what we never do.
+  </Card>
+  <Card title="Guardrails" href="/features/guardrails">
+    Hold one key to zero data retention, or exempt one from it.
+  </Card>
+  <Card title="Bring your own key" href="/features/bring-your-own-key">
+    Why a request on your own provider key is always eligible.
+  </Card>
+  <Card title="Management API" href="/manage/management-api">
+    Where the bucket registration and receipt endpoints will live.
+  </Card>
+</CardGroup>

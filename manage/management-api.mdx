@@ -1,0 +1,137 @@
+---
+title: "Management API"
+description: "Coming soon: a scoped workspace admin key that manages members, keys, guardrails, provider keys, spend controls and the audit log under /v1/organization."
+status: partial
+gates: ["47.1"]
+---
+
+import FeatureStatus from '/snippets/feature-status.mdx';
+
+<FeatureStatus
+  missing="the management API and the admin key that calls it"
+  instead="Every endpoint on this page is built, and none is published in the API reference, because the admin key that authenticates them cannot yet be created from the dashboard. Nothing here can be called with an inference key. This page says what is coming and how it is shaped, so a team can plan an integration. The endpoints join the API reference, each with its request and response shape, when the key becomes available."
+/>
+
+Everything on the dashboard's Keys, Team, Guardrails, BYOK, Billing and
+Settings screens is also an API. The management API is that API: a set of
+endpoints under `/v1/organization`, authenticated by a **workspace admin key**
+that is separate from the inference keys your requests use, carrying exactly
+the scopes you give it.
+
+## The admin key
+
+An admin key is minted by the workspace owner with a name, an explicit list of
+scopes, and an optional expiry of up to a year. It is shown once, hashed on
+our side like every key, and sent as `Authorization: Bearer` on every call.
+It is accepted only under `/v1/organization`; sending it to `/v1/chat/completions`
+is a 401, and sending an inference key to `/v1/organization` is a 401 too.
+
+**Scopes are the dashboard's own capabilities.** The names are the ones the
+product already uses to decide what a role may do: `workspace.read`,
+`usage.read`, `key.create`, `key.revoke`, `guardrail.manage`, `audit.read`,
+`admin_key.manage` and the rest of a closed list. A key's effective scopes are
+the scopes it stores intersected with what its issuer's role grants right now,
+so a key can only ever narrow its issuer and never outlive a demotion. A call
+without the scope it needs is refused with HTTP 403, type `permission_error`
+and code `insufficient_scope`, and the message names the scope.
+
+**Child keys.** A key that holds `admin_key.manage` may mint a child key with
+a subset of its own scopes and an expiry no later than its own. Revoking a key
+revokes every child beneath it.
+
+Every call re-checks that the key is unrevoked, unexpired and that its issuer
+is still a member, so revocation is visible on the next request.
+
+## What it manages
+
+The resource the API calls a **project** is your workspace. A key is bound to
+one workspace, and every path that names a project id accepts only that
+workspace's id. Lists share one envelope, `object: "list"` with `data`,
+`first_id`, `last_id` and `has_more`, and an opaque `after` cursor.
+
+| Area | What you will be able to do | Scope |
+|---|---|---|
+| Project | Read the workspace, rename it, archive it | `workspace.read`, `workspace.rename`, `workspace.archive` |
+| Members and invites | List users, invite by email with a role, change a role, remove a member with the per-key choice, list and revoke invitations | `member.read`, `member.invite`, `member.role.set`, `member.remove` |
+| Inference keys | List and read keys without ever seeing the secret; create, rotate, revoke and set the expiry and credit limit of a key | `key.read.limited` or `key.read.all`; `key.create`, `key.revoke`, `key.limit.set` |
+| Guardrails | Create, replace and delete a guardrail; attach and detach keys | `guardrail.manage` |
+| Provider keys | Add, replace and remove a workspace's own provider credential | `byok.manage` |
+| Usage and costs | Usage in buckets of a minute, an hour or a day, grouped by key, member, model or endpoint family, and the charge over the same buckets | `usage.read` |
+| Balance and spend controls | Read the balance; read and set the spend rate cap, the workspace monthly limit and member limits; pause and unpause; read automatic top-up | `account.read`, `spend_limit.set`, `account.settings.set`, `credit.buy` |
+| Audit log | Every management change for the last year, as identifiers and event names | `audit.read` |
+| Storage destination | Register a bucket you own and request zero-data-retention receipts | owner-issued keys only |
+| Workflows | The [workload insights](/manage/workload-insights) registry | `insights.workflow.manage` to write, `usage.read` to read |
+
+Three things are deliberately not there: an inference key's secret is never
+returned by a read, ownership transfer stays on the dashboard, and the API
+never creates a second workspace.
+
+## The audit log
+
+Every change made through the dashboard or through this API leaves an audit
+entry: who did it, as a user or an admin key, what kind of event it was, which
+resource it touched, and when. The event names are a closed list of about
+three dozen, such as `api_key.created`, `member.role_changed`,
+`guardrail.key_attached`, `spend_rate_cap.changed` and
+`admin_api_key.revoked`. An entry carries identifiers only, never a prompt, a
+key or a card. The log is readable for a year.
+
+## Usage and costs
+
+The usage endpoints answer the question the dashboard's Usage screen answers,
+as data: how many requests, how many of each kind of token, and what they
+cost, in buckets you choose, filtered by key, member, model, outcome or
+endpoint family, and grouped by any of those. Times are Unix seconds, buckets
+are aligned to UTC, and a token sum is null when no request in the group
+reported that count. The cost endpoint sums the charge on served requests that
+your balance paid for, counts the ones it could not price, and counts the ones
+your own provider key served, so a reconciliation can see all three.
+
+## Spend controls
+
+The spend controls are the ones on the Settings screen: the spend rate cap,
+the workspace monthly limit, each member's monthly limit, and the pause. Each
+has a read and a write, writes take the dollar figure as a string, and a write
+returns only once its audit entry is readable. Automatic top-up is readable;
+its writes stay on the dashboard for now.
+
+## Developer budgets
+
+Alongside the spend controls is a small request-and-approve flow for
+developers: a developer may lower their own monthly allowance or a key's limit
+without asking, and may file a request to raise either, which an owner or
+admin approves or denies. A request names an absolute figure, not a change,
+lapses after a week, and is refused if the figure it was filed against has
+moved. This flow has no story of its own in the tracker yet and is listed
+here so the scope names it uses, `budget.lower_own`, `budget.request` and
+`budget.request.decide`, are not a surprise.
+
+## What is still to settle
+
+- **Minting the key.** The route exists and the dashboard has no screen for
+  it. The key becomes available when that screen ships, and this page is gated
+  on that story.
+- **Inference-key writes.** Create, rotate, revoke and limits answer HTTP 503
+  today, by design, until the way their audit entry is recorded has been
+  approved. Reads work.
+- **Ownership transfer and archiving a workspace that still has live keys**
+  also answer 503 for the same reason.
+- **Rate limits.** There is no request-rate limit on `/v1/organization` yet,
+  and this page will state one if one is added.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Workspaces and members" href="/manage/workspaces-and-members">
+    The roles whose grants become an admin key's scopes.
+  </Card>
+  <Card title="Guardrails" href="/features/guardrails">
+    The first resource most teams will manage from here.
+  </Card>
+  <Card title="Zero data retention" href="/manage/zero-data-retention">
+    The storage destination and receipts that live behind owner-issued keys.
+  </Card>
+  <Card title="Rate limits and spend controls" href="/manage/rate-limits-and-spend-controls">
+    What each control does, which is unchanged whether set from the screen or the API.
+  </Card>
+</CardGroup>

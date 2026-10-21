@@ -113,12 +113,14 @@ they are `undefined` rather than wrong if a response ever arrives without one. A
 client that treats `error.code` as always present is making an assumption this
 API happens to satisfy today.
 
-## Endpoints this SDK can reach and this API does not serve
+## Endpoints this SDK can reach and this API does not serve yet
 
-Calling `client.embeddings.create(...)` against this base URL reaches a path this
-API does not serve for you, and the SDK raises `NotFoundError`. The base URL is
-not the problem when that happens. See
-[OpenAI compatibility](/get-started/openai-compatibility) for what does serve.
+Calling `client.images.generate(...)` or `client.audio.speech.create(...)`
+against this base URL reaches a path this API does not serve yet, and the SDK
+raises `NotFoundError`. The base URL is not the problem when that happens.
+`client.embeddings.create(...)`, `client.completions.create(...)` and
+`client.responses.create(...)` do serve. See
+[OpenAI compatibility](/get-started/openai-compatibility) for the full list.
 
 ## What we did not verify
 

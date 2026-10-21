@@ -1,0 +1,77 @@
+---
+title: "Workload insights"
+description: "Coming soon: name the recurring workflows your workspace runs, then attribute requests to them and read a per-workflow summary. What is built and what is next."
+status: partial
+gates: ["53.1"]
+---
+
+import FeatureStatus from '/snippets/feature-status.mdx';
+
+<FeatureStatus
+  missing="workload insights in production"
+  instead="The first slice, a registry of named workflows, is built and is being tested on our development environment. Nothing on this page is reachable from the production dashboard or the production API yet, and no request is attributed to a workflow anywhere."
+/>
+
+Workload insights is for a workspace that runs the same operation over and over
+and wants to see it as one thing: an extraction job, a summariser, an agent
+loop. You name the workflow once, your requests say which workflow they belong
+to, and the usage screen rolls them up by workflow instead of by key or model.
+
+## What is built: the workflow registry
+
+A workflow is a named, versioned record that belongs to the workspace. It
+carries:
+
+- a **name**, up to 80 characters, and an optional **description** up to four
+  kilobytes, which is stored encrypted;
+- a **declared type**, one of `extraction`, `summarization`,
+  `classification`, `coding`, `question_answering`, `content_generation`,
+  `agent_workflow` or `unknown`, or none;
+- an optional **metric definition**: how you will judge a run of this workflow
+  succeeded, as an application assertion or a human acceptance, with a version
+  so the definition can change without losing history;
+- an **archived** flag. Archiving clears the description and does not restore
+  it on unarchive.
+
+Every write bumps the workflow's version by one, and a revision names the
+version it expects, so two people editing the same workflow cannot silently
+overwrite each other. A workspace may hold 100 active workflows; archived ones
+do not count.
+
+Saving a workflow classifies nothing and records no consent. It is a label,
+and the label does nothing until the next slices land.
+
+The registry has a section on the Settings screen, where the owner names and
+revises workflows and everyone else sees the list, and a set of endpoints on
+the [management API](/manage/management-api). Both are owner-only to write and
+open to every role to read.
+
+## What is still to come
+
+In the order the work is planned:
+
+1. **Attribution.** A request header naming the workflow it belongs to, read
+   on the way through and never forwarded to a provider. A label never changes
+   which model serves the request.
+2. **Summaries.** Request counts and charges rolled up per workflow, joined by
+   request identity to the same records Activity shows.
+3. **The usage screen.** The roll-up beside the existing by-key and by-model
+   views.
+4. **Tasks.** Bounded units of work inside a workflow, with their own scoped
+   credentials.
+5. **Deletion and retention.** Removing a workflow's observations on your own
+   schedule.
+
+Each of those is a story of its own, and this page gains a section as each one
+ships. Nothing here promises a date.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Monitor usage" href="/manage/monitor-usage">
+    The usage screen as it stands today, by key and by model.
+  </Card>
+  <Card title="Management API" href="/manage/management-api">
+    Where the workflow endpoints live.
+  </Card>
+</CardGroup>

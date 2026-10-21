@@ -95,9 +95,33 @@ providers is two ids with two prices.
 </Accordion>
 
 <Accordion title="Is there an embeddings endpoint?">
-Nothing is documented here for one. Embeddings stay off this site until the
-tracker says they serve real responses, and until then we would rather say
-nothing than describe a call you cannot rely on.
+Yes. `POST /v1/embeddings` serves the OpenAI embeddings body with a pinned
+model id such as `openai/text-embedding-3-small`, and `POST /v1/completions`
+serves the legacy text completion body. See
+[Completions and embeddings](/features/completions-and-embeddings).
+</Accordion>
+
+<Accordion title="Can I call Anthropic's Messages API through Hopscotch?">
+Yes. `POST /v1/messages` takes the Anthropic Messages body and reads the key
+from either `x-api-key` or `Authorization: Bearer`, so the Anthropic SDKs work
+with two settings changed. Refusals that come from us are shaped as the OpenAI
+error envelope, which is the one departure. See
+[Anthropic Messages API](/features/anthropic-messages).
+</Accordion>
+
+<Accordion title="Can I limit what a key may do beyond its credit limit?">
+Attach a guardrail to it. A guardrail is a named rule set the workspace
+creates once and attaches to any number of keys: a spend cap per day, week or
+month, a zero-data-retention requirement, and prompt checks for email
+addresses, IP addresses and credentials. See
+[Guardrails](/features/guardrails).
+</Accordion>
+
+<Accordion title="What about images, audio and video?">
+The endpoints are built and are not open in production yet. A call to any of
+them answers 404 with the code `endpoint_not_supported` and nothing is charged.
+[Images, audio and video](/features/images-audio-and-video) says what is
+coming and how it will be priced.
 </Accordion>
 
 </AccordionGroup>

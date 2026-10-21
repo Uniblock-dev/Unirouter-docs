@@ -62,13 +62,47 @@ can touch which of the three.
   </Card>
 </CardGroup>
 
-## Trust
+## Controls
+
+A guardrail is a rule set you write once and attach to keys, so a runaway key
+is stopped by its own cap rather than by the workspace's.
 
 <CardGroup cols={2}>
+  <Card title="Set up guardrails" icon="shield-check" href="/manage/set-up-guardrails">
+    Create one on the Guardrails screen, attach it to a key, and read what trips it.
+  </Card>
+  <Card title="Guardrails" icon="list-check" href="/features/guardrails">
+    Every rule a guardrail can carry and the refusal each one produces.
+  </Card>
+</CardGroup>
+
+## Trust
+
+<CardGroup cols={3}>
   <Card title="Data and privacy" icon="lock" href="/manage/data-and-privacy">
     What we keep per request, and why your prompts and responses are not in it.
   </Card>
+  <Card title="Zero data retention" icon="eye-off" href="/manage/zero-data-retention">
+    Require zero-retention providers for the workspace or for one key, and the receipts that are coming.
+  </Card>
   <Card title="Security" icon="shield-lock" href="/manage/security">
     Key handling, transport, and how to report something you have found.
+  </Card>
+</CardGroup>
+
+## Coming soon
+
+Three things are built and not yet yours to use in production. Each page says
+what it will do and what gates it.
+
+<CardGroup cols={3}>
+  <Card title="Management API" icon="api" href="/manage/management-api">
+    A scoped admin key that manages members, keys, guardrails, spend controls and the audit log.
+  </Card>
+  <Card title="Subscriptions and seats" icon="ticket" href="/manage/subscriptions-and-seats">
+    A per-seat plan with a fixed allowance of model use, beside prepaid credit.
+  </Card>
+  <Card title="Workload insights" icon="binary-tree" href="/manage/workload-insights">
+    Name the workflows you run and see usage rolled up by workflow.
   </Card>
 </CardGroup>

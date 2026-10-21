@@ -2,7 +2,7 @@
 title: "Credits and billing"
 description: "How prepaid credit works: the fee is added when you buy credit, and a request deducts the provider's price with nothing added."
 status: write-now
-gates: ["4.27"]
+gates: ["4.27", "4.32"]
 ---
 
 import OwnerOnlyNote from '/snippets/owner-only-note.mdx';
@@ -179,8 +179,7 @@ If a line you are looking at carries none of these, nothing unusual happened to 
 
 Any member of a workspace may read the balance and the statement. Buying credit and
 managing the card are the owner's and every admin's; setting the low credit notice is
-the owner's alone. The
-card controls are off the Billing screen at the moment (see
+the owner's alone. The card controls live on the Billing screen's Payment tab (see
 [Buy credit](/manage/buy-credit)). A
 developer or a viewer calling a billing route gets HTTP 403 with the sentence above, rather than
 a screen that lets them start something that will fail.
@@ -191,10 +190,14 @@ figures.
 
 ## Two things this product does not do
 
-**There is no automatic top up.** Charging a card while nobody is at the keyboard is
-the highest trust action this product could take, and we are not taking it yet.
-Nothing charges your card unless you buy credit yourself, and there is no setting
-that turns that on.
+**Nothing charges your card unless you asked for it.** Charging a card while
+nobody is at the keyboard is the highest trust action this product takes, so it
+is off until you turn it on. The Billing screen's **Auto reload** setting is
+the one place that changes it: with a threshold and an amount set, and a card
+on file, credit is bought when the balance falls below the threshold. With it
+off, which is the default, the summary line says so in its own words: "Off.
+You are only charged when you buy credits yourself." See
+[Buy credit](/manage/buy-credit#auto-reload).
 
 **We never see your card number.** Our payment provider holds it. When a card is
 saved, the brand and the last four digits are read from them at the moment the screen

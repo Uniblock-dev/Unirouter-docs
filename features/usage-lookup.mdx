@@ -1,0 +1,116 @@
+---
+title: "Usage lookup"
+description: "GET /v1/usage/{id} reads back the tokens, charge and outcome of one of your own requests with the API key that made it, no dashboard session needed."
+status: write-now
+gates: []
+---
+
+import RequestIdNote from '/snippets/request-id-note.mdx';
+
+Every response carries a request id. `GET /v1/usage/{id}` takes that id and
+answers with the usage record the dashboard would show for it: the token
+counts, what it cost, whether it was served, and how long it took. It reads the
+same record the Activity screen reads, so the two never disagree, and it needs
+only the API key, so a job can account for its own spend without anyone
+signing in.
+
+## Read one request back
+
+Take the id from the `x-hopscotch-request-id` header of the response you want
+to look up, or from `x-request-id`, which carries the same value for the
+OpenAI SDKs, and ask for it:
+
+```bash
+curl https://api.hopscotchlabs.ai/v1/usage/REQUEST_ID \
+  -H "Authorization: Bearer ub_live_YOUR_KEY_HERE"
+```
+
+```json 200
+{
+  "object": "usage.request",
+  "request_id": "REQUEST_ID",
+  "occurred_at": "2026-10-20T14:03:11.412Z",
+  "model": "openai/gpt-4o-mini",
+  "outcome": "served",
+  "streamed": false,
+  "usage": {
+    "prompt_tokens": 14,
+    "completion_tokens": 9,
+    "total_tokens": 23,
+    "cache_read_tokens": null,
+    "cache_write_tokens": null,
+    "cache_write_1h_tokens": null,
+    "reasoning_tokens": 0
+  },
+  "charge": {
+    "amount_micros": 7500,
+    "amount": "0.0075",
+    "currency": "USD",
+    "rate_revision_id": "rr_01HXYZ",
+    "note": "exact_from_provider_frame"
+  },
+  "served_on_own_key": false,
+  "paid_from_allowance": false,
+  "latency_ms": 812,
+  "note": "No prompt and no response body was stored for this request; the figures here are everything that exists (we never store prompts)."
+}
+```
+
+## The fields
+
+| Field | What it holds |
+|---|---|
+| `request_id` | The id you asked for. |
+| `occurred_at` | When the request began, as an `RFC 3339` timestamp. |
+| `model` | The full `provider/model` id that was asked for. |
+| `outcome` | Whether it was served, refused, or failed, in the vocabulary on [Usage and metering](/manage/usage-and-metering#the-outcome-vocabulary). |
+| `streamed` | Whether the request asked for a stream. |
+| `usage` | Seven token counts. A `null` means the provider did not report that count; a `0` means it reported none. The two are kept apart on purpose. |
+| `charge` | What the request took from your balance: the amount in micro-dollars and as a decimal string, the currency, the rate revision it was priced under, and a note on how the figure was arrived at. Absent when the balance did not pay for the request. |
+| `served_on_own_key` | Whether a provider key you brought served it, in which case we charged nothing. |
+| `paid_from_allowance` | Whether a subscription seat's allowance paid for it rather than the balance. |
+| `latency_ms` | How long the request took, end to end, as we measured it. |
+| `note` | A sentence about what exists for this record. Today it says what the example above says: the bodies were never stored. |
+
+The fields a customer never sees stay fenced out: nothing about our cost, our
+added latency, or how many attempts it took is in this record.
+
+## When a record is not found
+
+One answer covers every miss. A request another key made, a request in a
+different workspace, and an id that never existed all get the same 404, so the
+endpoint cannot be used to probe for other people's requests:
+
+```json 404
+{
+  "error": {
+    "message": "No usage record for \"REQUEST_ID\" is visible to this key. A record is written after the response is sent, so a read taken immediately can arrive first; a record made by another key, a record outside this key's workspace and an id that never existed answer identically.",
+    "type": "not_found_error",
+    "param": "request_id",
+    "code": "request_not_found",
+    "request_id": "REQUEST_ID"
+  }
+}
+```
+
+The first sentence is the one to act on. The record is written after the
+response has been sent to you, so a lookup fired the instant a response
+arrives can run ahead of it. Retry a 404 once after a short pause before
+treating it as missing.
+
+Records age out on the retention window described on
+[Data and privacy](/manage/data-and-privacy#how-long-records-are-kept). A
+request older than that is a 404 here too; its charge stays on your statement.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Usage and metering" href="/manage/usage-and-metering">
+    What one record holds and the outcome vocabulary.
+  </Card>
+  <Card title="View activity" href="/manage/view-activity">
+    The same record on the dashboard, with filters.
+  </Card>
+</CardGroup>
+
+<RequestIdNote />

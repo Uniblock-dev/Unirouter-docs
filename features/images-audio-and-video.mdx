@@ -1,0 +1,101 @@
+---
+title: "Images, audio and video"
+description: "Coming soon: image generation and editing, speech, transcription, translation and video jobs on the same key and balance, and what a call returns today."
+status: partial
+gates: ["52.4", "72.5"]
+---
+
+import FeatureStatus from '/snippets/feature-status.mdx';
+
+<FeatureStatus
+  missing="the image, audio, video and realtime endpoints in production"
+  instead="Every endpoint on this page is built and is open on our development environment while it is proved against real providers. In production each one answers the 404 below, and nothing you send to it is charged. This page says what is coming so you can plan for it; it is not a page you can code against today."
+/>
+
+## What a call returns today
+
+A request to any path on this page gets HTTP 404 in the OpenAI envelope with
+the code `endpoint_not_supported`, before authentication and before anything
+is read from the body:
+
+```json 404
+{
+  "error": {
+    "message": "POST /v1/images/generations is not supported in this release.",
+    "type": "invalid_request_error",
+    "param": null,
+    "code": "endpoint_not_supported",
+    "request_id": "REQUEST_ID"
+  }
+}
+```
+
+That is the same answer as any path we do not serve. When a door opens, the
+same request on the same key starts being served, and the models the catalog
+lists for that family appear in [`GET /v1/models`](/features/models) under
+`endpoint_families`.
+
+## The endpoints that are coming
+
+| Endpoint | Shape | How it will be charged |
+|---|---|---|
+| `POST /v1/images/generations` | OpenAI image generation, JSON body | Per image, at a rate that can depend on size and quality |
+| `POST /v1/images/edits` | OpenAI image edit, multipart body | Per image |
+| `POST /v1/audio/speech` | OpenAI text to speech, JSON body, binary audio reply | Per million characters of input |
+| `POST /v1/audio/transcriptions` | OpenAI transcription, multipart body | Per second of audio, priced per minute or per hour |
+| `POST /v1/audio/translations` | OpenAI translation to English, multipart body | Per second of audio |
+| `POST /v1/videos` | OpenAI video job: create, then poll | Per second of video, at a rate that can depend on resolution |
+| `GET /v1/videos/{id}` | Read a job you created | Settles the job when it reaches a final state |
+| `GET /v1/videos/{id}/content` | Stream the finished video's bytes | Nothing further |
+| `DELETE /v1/videos/{id}` | Cancel or delete a job | A cancelled job is charged nothing |
+| `GET /v1/realtime` | A WebSocket session in OpenAI's realtime shape | Per response, as each one is reported |
+
+Listing videos is not part of the shape and will stay a 404.
+
+## How the money will work
+
+The money model does not change for a request that is not measured in tokens.
+Credit is held when a request is admitted, sized from the request's own unit,
+and settled against what the provider reports when it finishes, at the
+provider's rate with nothing added.
+
+- An image request holds `n` times the dearest matching per-image rate for the
+  size and quality you asked for, and settles on the images returned.
+- A speech request holds the characters of `input` at the per-million rate.
+- A transcription or translation holds whichever is larger of the `duration`
+  you declare and an estimate from the file's size, and settles on the seconds
+  the provider reports.
+- A video job holds `seconds` times the per-second rate for the `size` you
+  asked for, with `seconds` defaulting to four if you omit it, and the hold lives
+  for the length of the job. A job that completes is charged for the seconds
+  delivered, up to what you asked for. A job that fails or is cancelled is
+  charged nothing. A job still open three hours after it was created is treated
+  as expired and charged its full hold, so poll it.
+
+A request for a model with no published rate in the unit it needs is refused
+with HTTP 503 and the code `model_not_priceable` rather than served free or at
+a guessed price. The multipart doors share the eight MiB body cap every
+endpoint has.
+
+Only the account that created a video job can read it, fetch its content or
+cancel it. Any other key, and an id that never existed, get the same 404.
+
+## Why the doors are closed
+
+Each of these families is opened only once a proof run against the real
+providers has passed and stays fresh, so that a model is never offered on a
+door that would fail on call. The image and audio doors wait on that proof.
+The video doors are open on development while video is tested. The realtime
+door is not open anywhere yet. The stories that gate this page are named in
+its frontmatter and the release checklist holds it until they clear.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="OpenAI compatibility" href="/get-started/openai-compatibility">
+    The endpoints that serve today.
+  </Card>
+  <Card title="Credits and billing" href="/manage/credits-and-billing">
+    How a hold becomes a charge.
+  </Card>
+</CardGroup>
