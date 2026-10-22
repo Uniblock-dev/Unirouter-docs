@@ -28,7 +28,7 @@ the total is what your card is charged. At the current rate of 0%:
 
 The balance then reads 100.00 and your card statement reads 100.00. While the rate is
 0% there is nothing between the two, and the purchase line on your statement still
-carries both figures so it can be checked (see [Every movement is on your statement](#every-movement-is-on-your-statement)).
+carries both figures so it can be checked (see [Every transaction is on your statement](#every-transaction-is-on-your-statement)).
 
 The smallest purchase is 5.00 of credit. The minimum is stated in the credit you
 receive rather than in the amount charged, so the figure you type is the figure any
@@ -63,7 +63,7 @@ connection, or returning to the dashboard before the confirmation arrives change
 nothing: a customer who waited and a customer who closed the browser end in the same
 state. Until the confirmation lands, the Billing screen says the purchase is pending
 and shows no new credit, because a screen that claimed the credit had arrived would
-be right most of the time, which is the worst kind of wrong for money.
+be right most of the time, which is the worst kind of wrong for billing.
 
 ## What a request costs
 
@@ -77,8 +77,8 @@ carry their own rate. The rates behind a charge are recorded with the charge, so
 line can be explained by the rates that were in force when it was served rather than
 by whatever they are today.
 
-Money you are charged is held in integer **micro-dollars**, millionths of one dollar,
-and the platform holds one currency, USD. The unit is fine enough that a small request
+Charges are recorded in integer **micro-dollars**, millionths of one dollar,
+and the platform bills in one currency, USD. The unit is fine enough that a small request
 is not rounded away: a charge worth a fraction of a cent is stored as the exact figure
 it is rather than as nothing. Amounts are formatted for reading only at the screen, the
 email or the API response that shows them, so nothing is rounded a second time on the
@@ -96,17 +96,17 @@ The Billing screen shows three numbers, and the difference between them matters:
 | Figure | What it is |
 |---|---|
 | **Available** | What you can spend now. This is the figure a new request is admitted against. |
-| **Settled** | The sum of every movement on your ledger. |
-| **Held for requests in flight** | Credit reserved for requests that are still running. |
+| **Settled** | The sum of every transaction on your statement. |
+| **Held for requests in flight** | Credit set aside for requests that are still running. |
 
-Available is settled minus what is held. When a request is admitted we reserve the
-most it could possibly cost, and that reservation comes back the moment the request
+Available is settled minus what is held. When a request is admitted we hold the
+most it could possibly cost, and that hold comes back the moment the request
 finishes, at which point you are charged for what it actually used. A request that
 omits `max_tokens` therefore holds more than it will spend, briefly, which is also
 the reason it can meet the spend rate cap sooner. See
 [Rate limits and spend controls](/manage/rate-limits-and-spend-controls).
 
-Only one component computes what an account holds, and every screen and endpoint that
+Only one component computes an account's balance, and every screen and endpoint that
 shows your balance reads it from there. Your balance and your usage figures cannot
 disagree, because there is no second place for either to be worked out.
 
@@ -117,7 +117,7 @@ platform, not only this one.
 
 When your available balance cannot cover a new request, the request is refused with
 HTTP 402 and code `insufficient_credit`. The message names both figures, so you can
-see what you hold and what the request needed:
+see what you have and what the request needed:
 
 ```json
 {
@@ -131,7 +131,7 @@ see what you hold and what the request needed:
 }
 ```
 
-A request that is already streaming when the money runs out is **cut off** rather
+A request that is already streaming when the credit runs out is **cut off** rather
 than allowed to finish. The stream ends with a `data:` line carrying the same error
 envelope, type `insufficient_quota` and code `balance_exhausted`, so an unmodified
 SDK reads the end of the stream the way it reads the 402 at admission. The hold goes
@@ -143,11 +143,11 @@ to tell them apart without asking us.
 Buying credit clears both conditions immediately. There is nothing to wait for and
 nothing to reset.
 
-## Every movement is on your statement
+## Every transaction is on your statement
 
-The Statement tab lists every movement of money on your ledger, newest first, fifty
+The Statement tab lists every transaction on your balance, newest first, fifty
 lines to a page. Each line carries when it happened, the signed amount in minor
-units, what kind of movement it was, and something you can quote to us: the payment
+units, what kind of transaction it was, and something you can quote to us: the payment
 id on a purchase, and the request id on a charge.
 
 A **purchase line** carries three sub-fields rather than a separate fee line: the
@@ -156,10 +156,10 @@ any gap between your card statement and your balance, inside the line that cause
 It is also what keeps the statement honest: the statement adds up to your settled
 balance exactly, and a fee line that never became balance would break that.
 
-Each page also carries a **running ledger total**, which is the sum of your movements
+Each page also carries a **running balance**, which is the sum of your transactions
 up to and including that line. It is the arithmetic you would do yourself down the
-amount column, and its whole purpose is to let you check ours. It is not your balance
-and is never presented as one: your balance is the figure on the Balance tab, and it
+amount column, and its whole purpose is to let you check ours. It is not your available balance
+and is never presented as one: that is the figure on the Balance tab, and it
 accounts for credit currently held for requests in flight.
 
 ### When a line carries an explanation

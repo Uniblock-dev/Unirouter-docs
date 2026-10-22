@@ -80,7 +80,7 @@ when a feature ships that needs a new value. These are the values you may see to
 | `usage_metadata_missing` | No usage figures arrived with the reply. |
 | `usage_metadata_unreadable` | Usage figures arrived and could not be read. |
 | `usage_not_reported_by_provider` | The provider served the request and reported no counts. |
-| `rebuilt_from_ledger` | The record was reconstructed from the money movement it caused. |
+| `rebuilt_from_ledger` | The record was reconstructed from the transaction it caused on your statement. |
 
 The last five are the outcomes where a charge exists and final counts never did. On
 those rows the token figures read `unknown`, and the charge is what was settled
@@ -110,10 +110,10 @@ we read them, because "when we looked" is never the question. The question is ho
 current the figures are, and a total summed from a request that started nine minutes
 ago is stale in a way the read time cannot express.
 
-## Usage and money agree
+## Usage and billing agree
 
-Usage figures and your balance are the same money, read two ways. Charges on your
-usage records and the `usage` movements on your statement are matched against each
+Usage figures and your balance are the same charges, read two ways. Charges on your
+usage records and the `usage` transactions on your statement are matched against each
 other by request id, with no tolerance for a difference, and we are told when they
 disagree rather than waiting for you to find it.
 
@@ -121,7 +121,7 @@ One caveat is stated on the screens rather than hidden. A served request whose t
 counts never reached us is settled against its hold, and the row cannot yet say for
 how much. The totals name **how many** such requests fall in the window, so the cost
 totals read as incomplete rather than as complete-and-low. Your statement carries the
-real movements meanwhile.
+real transactions meanwhile.
 
 The Usage and Activity screens, and the endpoints behind them, are shipped. The field
 set, the outcome vocabulary and the retention window above are what a customer reads
@@ -150,8 +150,8 @@ job that enforces it and by the screens that print it, so what you read cannot d
 from what is enforced. Sixty two days is the floor beneath it: support has to be able
 to quote a request from two full billing months back.
 
-When a record passes the window it is deleted. **The money survives**: the ledger
-movement for that request is never purged, so a balance older than its usage records
+When a record passes the window it is deleted. **The charge survives**: the
+transaction for that request is never purged, so a balance older than its usage records
 can still be explained line by line. A lookup for a request that has aged out names
 the retention window rather than answering as though the request never existed, and a
 date filter that reaches past the window says so rather than returning an empty list.

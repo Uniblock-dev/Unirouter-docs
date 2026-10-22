@@ -147,12 +147,12 @@ follow.
 
 Credit is prepaid, and the limit a coding harness reaches first is the account
 spend rate cap rather than the balance. Understanding why takes one fact: **the
-cap counts money reserved, not money spent.**
+cap counts credit held, not credit spent.**
 
 When a request is admitted we hold the most it could possibly cost. That figure
 comes from the request's own `max_tokens` where it names one, and from the
 model's published maximum output length where it does not. The window counts what
-was reserved and when, and nothing comes back out of it: a request that finished
+was held and when, and nothing comes back out of it: a request that finished
 cheaply a moment ago goes on counting for its full 60 seconds.
 
 A coding harness is the traffic shape that hits this hardest. It fires several
@@ -160,7 +160,7 @@ requests at once, on a model with a large published maximum output, often withou
 naming `max_tokens` at all. Each of those holds that whole published maximum, so
 the cap can refuse the harness while your real spending is a small fraction of
 it. The refusal is `429` with the code `spend_rate_exceeded`, and it clears
-itself 60 seconds after the earliest reservation it counted.
+itself 60 seconds after the earliest hold it counted.
 
 **The lever is `max_tokens`.** A harness that names a realistic output ceiling
 gets several times more requests a minute out of the same cap, and is charged
