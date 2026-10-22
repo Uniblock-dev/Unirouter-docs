@@ -10,7 +10,7 @@ import OwnerOnlyNote from '/snippets/owner-only-note.mdx';
 import RequestIdNote from '/snippets/request-id-note.mdx';
 
 Several limits can refuse a request, and they answer with different codes on
-purpose: you should be able to tell "too fast for this key" from "too much money
+purpose: you should be able to tell "too fast for this key" from "too much spend
 attempted too quickly" from "this key is done" without asking us.
 
 **Nothing is charged for a request we refuse**, whichever limit refused it.
@@ -20,7 +20,7 @@ attempted too quickly" from "this key is done" without asking us.
 | Status | `code` | What ran out | What to do |
 |---|---|---|---|
 | 429 | `rate_limit_exceeded` | This key's request rate. | Wait the number of seconds in `Retry-After`. |
-| 429 | `spend_rate_exceeded` | Your spend rate cap, which counts money reserved rather than money spent. | Wait `Retry-After` seconds, up to 60, or send `max_tokens`. See below. |
+| 429 | `spend_rate_exceeded` | Your spend rate cap, which counts credit held rather than credit spent. | Wait `Retry-After` seconds, up to 60, or send `max_tokens`. See below. |
 | 429 | `upstream_rate_limited` | Nothing of yours. The model's provider rate-limited the call. | Wait the number of seconds in `Retry-After`. Nothing about the request is wrong and nothing is charged. |
 | 413 | `payload_too_large` | Nothing. The request body is over the 8388608 byte maximum this API accepts. | Send fewer messages, a shorter prompt, or fewer inputs. |
 | 402 | `insufficient_credit` | Available credit at admission. | Buy credit. |
@@ -84,23 +84,25 @@ refused with HTTP 429 and code `spend_rate_exceeded`:
 }
 ```
 
-It clears itself. Sixty seconds after the earliest reservation counted, requests are
+The message says "reserved". It means held, the word the rest of this site uses.
+
+It clears itself. Sixty seconds after the earliest hold counted, requests are
 admitted again, with nothing for you to do in the meantime and nothing to reset.
 
 The refusal carries `Retry-After` in whole seconds, computed from that same earliest
-reservation, so the header and the sentence in the message name the same wait. A
+hold, so the header and the sentence in the message name the same wait. A
 client that backs off on `Retry-After` needs no special case for this code.
 
 ### What it counts, which is not what you spent
 
-**The cap counts money reserved, and a reservation is an estimated maximum.**
+**The cap counts credit held, and a hold is an estimated maximum.**
 
 When a request is admitted we hold the most it could possibly cost. That figure comes
 from the request's own `max_tokens` where it names one, and from the model's published
 maximum output length where it does not. The request then settles for what it actually
 produced and the rest of the hold comes straight back.
 
-The window counts what was reserved, when it was reserved, and nothing is ever taken
+The window counts what was held, when it was held, and nothing is ever taken
 back out of it. A released hold, an expired hold and a settled hold all go on counting
 for their full 60 seconds. That is deliberate rather than convenient: a leaked key
 makes requests that finish, thousands a minute, holding almost nothing at any one
@@ -113,7 +115,7 @@ Two consequences you can see:
   the ceiling for a minute afterwards.
 - On an expensive model, requests that omit `max_tokens` hold the model's whole
   published maximum output. The cap can therefore bind well below 50.00 a minute of
-  real spending, because the money it is counting is money you were never going to
+  real spending, because the credit it is counting is credit you were never going to
   spend.
 
 ### The lever: send `max_tokens`
@@ -159,7 +161,7 @@ thing to change.
 
 ### Out of credit and over the cap at the same time
 
-You are told about the money. An account that is both out of credit and over its
+You are told about the balance first. An account that is both out of credit and over its
 ceiling gets the 402, because the cap clears itself in 60 seconds and telling someone
 with no credit to slow down is advice that cannot work.
 
@@ -186,14 +188,14 @@ and the message names what that key has settled and holds inside its current win
 against what it may spend.
 
 That is a different refusal from `insufficient_credit`, which is the account having no
-money and stops every key on it. A key at its own limit leaves the other keys in the
+credit and stops every key on it. A key at its own limit leaves the other keys in the
 workspace serving from the same balance, and buying credit does not clear it. What
 clears it is the window rolling, where the limit resets on a cadence, or somebody
 raising or removing it on the Keys screen. A limit set never to reset does not clear
 by waiting.
 
 Requests served on your own provider key do not count against a key's credit limit and
-are never refused by it: the money it counts is money spent from your balance, and
+are never refused by it: the credit it counts is credit spent from your balance, and
 those requests spend none of it. See [Bring your own
 key](/features/bring-your-own-key).
 

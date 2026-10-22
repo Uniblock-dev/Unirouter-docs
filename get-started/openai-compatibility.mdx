@@ -185,7 +185,7 @@ and `code`, never on the message text: the fields are the contract and the
 sentences are prose that may be reworded. Every shipped code and its status is in
 [errors](/features/errors).
 
-One difference in kind is worth naming. Some of our refusals are about money
+One difference in kind is worth naming. Some of our refusals are about billing
 rather than about your request: not enough credit, or an account spend rate cap.
 Those reuse OpenAI's own `insufficient_quota` and `rate_limit_error` types, so the
 branch your client already has keeps working, and carry a Hopscotch `code` that

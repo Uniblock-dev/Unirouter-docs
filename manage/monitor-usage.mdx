@@ -51,7 +51,7 @@ first tells you how current the figures are.
 
 **Windows longer than the retention window.** Usage records are kept for 90 days, so
 a 1 year window shows what is still kept rather than a full year. Your statement is
-the record that goes back further, because ledger movements are never purged.
+the record that goes back further, because transactions are never purged.
 
 <Note>
   Breakdowns by key and by member are scoped to what you may see. An owner or admin
@@ -120,7 +120,7 @@ rather than by policy, so the lookup cannot be used to learn whether an id exist
 somewhere else.
 
 A request that has passed the 90 day retention window is answered by naming the
-window rather than by an empty row. The money movement for that request is still on
+window rather than by an empty row. The transaction for that request is still on
 your statement.
 
 ## Reconcile a statement line with a request
@@ -137,8 +137,8 @@ join:
     cost for that exact request.
   </Step>
   <Step title="Compare the figures">
-    The charge on the usage record and the amount on the ledger line are the same
-    money, matched by request id with no tolerance for a difference. If they do not
+    The charge on the usage record and the amount on the statement line are the same
+    figure, matched by request id with no tolerance for a difference. If they do not
     agree, that is a defect on our side rather than something for you to reconcile.
     Quote the request id.
   </Step>
@@ -152,7 +152,7 @@ Two cases where a line carries more than the amount:
 - **A served request with no cost figure.** Where token counts never reached us, the
   request is settled against its hold and the usage row cannot yet say for how much.
   The totals name how many such requests fall in the window, so the cost totals read
-  as incomplete rather than as complete. Your statement carries the real movement.
+  as incomplete rather than as complete. Your statement carries the real transaction.
 
 ## Next
 
@@ -165,7 +165,7 @@ Two cases where a line carries more than the amount:
     The full field set, the outcome vocabulary and the retention rules.
   </Card>
   <Card title="Credits and billing" href="/manage/credits-and-billing">
-    Statement lines, purchase annotations and the running ledger total.
+    Statement lines, purchase annotations and the running balance.
   </Card>
 </CardGroup>
 

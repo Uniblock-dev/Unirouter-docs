@@ -15,7 +15,7 @@ per-member limit lives on the **Team** screen's **Spend** tab.
 | Control | What it does | Who may read it | Who may change it |
 |---|---|---|---|
 | Pause | Refuses every request straight away, revoking nothing. | Any member | Owner |
-| Spend rate cap | Limits how much money may be reserved per rolling 60 seconds. | Any member | Owner |
+| Spend rate cap | Limits how much credit may be held per rolling 60 seconds. | Any member | Owner |
 | Monthly workspace limit | Caps what the whole workspace may spend in a UTC calendar month. | Any member | Owner |
 | Monthly member limit | Caps what one member's keys may spend in a UTC calendar month. | Any member | Owner |
 | Low credit notice | Emails you once when your available balance falls below a figure. | Any member | Owner |
@@ -73,13 +73,13 @@ were.
 
 ## Set your spend rate cap
 
-The spend rate cap limits how much money may be **reserved** per rolling 60 seconds.
+The spend rate cap limits how much credit may be **held** per rolling 60 seconds.
 The default is 5000 minor units. Over it, requests are refused with HTTP 429 and code
 `spend_rate_exceeded`, and they are admitted again within 60 seconds with nothing for
 you to do. The refusal carries `Retry-After` in whole seconds.
 
 Read [Rate limits and spend controls](/manage/rate-limits-and-spend-controls) first
-if you have not: the cap counts estimated maximums rather than money spent, and
+if you have not: the cap counts estimated maximums rather than credit spent, and
 sending `max_tokens` is the lever that makes it bind less often.
 
 <Steps>
