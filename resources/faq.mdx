@@ -95,10 +95,16 @@ providers is two ids with two prices.
 </Accordion>
 
 <Accordion title="Is there an embeddings endpoint?">
-Yes. `POST /v1/embeddings` serves the OpenAI embeddings body with a pinned
-model id such as `openai/text-embedding-3-small`, and `POST /v1/completions`
-serves the legacy text completion body. See
+Not yet. Embeddings are not served, and we have no date to give. A call to
+`POST /v1/embeddings` is refused rather than answered. `POST /v1/completions`,
+the legacy text completion body, is a separate matter; see
 [Completions and embeddings](/features/completions-and-embeddings).
+</Accordion>
+
+<Accordion title="How soon do new models appear?">
+New models from supported providers are usually added within a few days of
+public availability. That is a usual pace, not a promise. `GET /v1/models` is
+always current, so ask it rather than assuming. See [Models](/features/models).
 </Accordion>
 
 <Accordion title="Can I call Anthropic's Messages API through Hopscotch?">
@@ -159,7 +165,9 @@ settlement either way. See [Request parameters](/api-reference/parameters).
 
 <Accordion title="Where do I see what a request actually cost?">
 On the Activity screen, one row per request. The usage record is the authority on
-what a request cost, not a rate in the catalog. See
+what a request cost, not a rate in the catalog. The `usage.estimated_cost` in a
+response body is the provider's own estimate, passed through. It is not what
+Hopscotch charges. See
 [View activity](/manage/view-activity).
 </Accordion>
 
@@ -188,8 +196,9 @@ it. See [Authentication](/get-started/authentication).
 
 <Accordion title="Why are provider rate-limit headers missing?">
 They are not forwarded, because they describe a pool we hold rather than a limit
-that applies to you. Your own limits arrive as `429` codes you can branch on. See
-[Headers](/api-reference/headers).
+that applies to you. Your own limit is reported on `x-uniblock-ratelimit-requests-*` headers and,
+once exceeded, as a `429` code you can branch on. See
+[Headers](/api-reference/headers#rate-limit-headers).
 </Accordion>
 
 <Accordion title="What should I include when I ask about a request?">

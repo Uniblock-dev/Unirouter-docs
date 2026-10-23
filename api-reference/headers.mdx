@@ -58,6 +58,22 @@ The diagnostic headers are set when there is something to say and are absent
 otherwise. Treat them as diagnostics: read them in logs, do not build behaviour
 on them, and expect the set to grow.
 
+### Rate-limit headers
+
+A served response reports your key's request rate on three headers. The
+`x-uniblock-` spelling is current for these; they are not part of the retired set
+above.
+
+| Header | Unit | What it is |
+|---|---|---|
+| `x-uniblock-ratelimit-requests-limit` | Requests per minute | How many requests this key may make in one minute. |
+| `x-uniblock-ratelimit-requests-remaining` | Requests | How many of them are left in the current window. |
+| `x-uniblock-ratelimit-requests-reset` | Seconds | Seconds until the window resets. A count of seconds from now, not a timestamp. |
+
+The limit is counted per key and per minute, so a limit header with no unit of
+its own is requests per minute. Over it, the request is refused as described in
+[Rate limits and spend controls](/manage/rate-limits-and-spend-controls#the-per-key-request-rate).
+
 ### `x-hopscotch-served-via`
 
 Most requests never carry this header. When one does, its value is `backup` and
@@ -74,7 +90,7 @@ same fact appears on the request's row in [Activity](/manage/view-activity), mar
 Nothing else from upstream reaches you. In particular, **provider rate-limit
 headers are not forwarded**: the limits you are subject to are ours, so a
 provider's remaining-quota headers would describe a budget that is not yours and
-tell you nothing you can act on. Read our own limits from the `429` codes in
+tell you nothing you can act on. Read our own limits from the headers above, or from the `429` codes in
 [Errors](/api-reference/errors#rate-limits-and-spend-refusals) instead.
 
 <RequestIdNote />
