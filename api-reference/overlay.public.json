@@ -1076,18 +1076,13 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 },
-                "examples": {
-                  "account_suspended": {
-                    "summary": "The key's account is suspended",
-                    "value": {
-                      "error": {
-                        "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
-                        "type": "permission_error",
-                        "param": null,
-                        "code": "account_suspended",
-                        "request_id": "REQUEST_ID"
-                      }
-                    }
+                "example": {
+                  "error": {
+                    "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
+                    "type": "permission_error",
+                    "param": null,
+                    "code": "account_suspended",
+                    "request_id": "REQUEST_ID"
                   }
                 }
               }
@@ -1143,6 +1138,14 @@
                     }
                   }
                 }
+              }
+            }
+          },
+          "409": {
+            "description": "Reserved for workload insights, which is not available yet. A request that does not name a workflow never receives it.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
               }
             }
           },
@@ -1380,7 +1383,8 @@
             "url": "https://api.hopscotchlabs.ai",
             "description": "Production"
           }
-        ]
+        ],
+        "parameters": []
       }
     },
     "/v1/completions": {
@@ -1663,18 +1667,13 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 },
-                "examples": {
-                  "account_suspended": {
-                    "summary": "The key's account is suspended",
-                    "value": {
-                      "error": {
-                        "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
-                        "type": "permission_error",
-                        "param": null,
-                        "code": "account_suspended",
-                        "request_id": "REQUEST_ID"
-                      }
-                    }
+                "example": {
+                  "error": {
+                    "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
+                    "type": "permission_error",
+                    "param": null,
+                    "code": "account_suspended",
+                    "request_id": "REQUEST_ID"
                   }
                 }
               }
@@ -1730,6 +1729,14 @@
                     }
                   }
                 }
+              }
+            }
+          },
+          "409": {
+            "description": "Reserved for workload insights, which is not available yet. A request that does not name a workflow never receives it.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
               }
             }
           },
@@ -1930,7 +1937,8 @@
             "url": "https://api.hopscotchlabs.ai",
             "description": "Production"
           }
-        ]
+        ],
+        "parameters": []
       }
     },
     "/v1/embeddings": {
@@ -2212,18 +2220,13 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 },
-                "examples": {
-                  "account_suspended": {
-                    "summary": "The key's account is suspended",
-                    "value": {
-                      "error": {
-                        "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
-                        "type": "permission_error",
-                        "param": null,
-                        "code": "account_suspended",
-                        "request_id": "REQUEST_ID"
-                      }
-                    }
+                "example": {
+                  "error": {
+                    "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
+                    "type": "permission_error",
+                    "param": null,
+                    "code": "account_suspended",
+                    "request_id": "REQUEST_ID"
                   }
                 }
               }
@@ -2279,6 +2282,14 @@
                     }
                   }
                 }
+              }
+            }
+          },
+          "409": {
+            "description": "Reserved for workload insights, which is not available yet. A request that does not name a workflow never receives it.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
               }
             }
           },
@@ -2479,7 +2490,8 @@
             "url": "https://api.hopscotchlabs.ai",
             "description": "Production"
           }
-        ]
+        ],
+        "parameters": []
       }
     },
     "/v1/models": {
@@ -3233,18 +3245,13 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 },
-                "examples": {
-                  "account_suspended": {
-                    "summary": "The key's account is suspended",
-                    "value": {
-                      "error": {
-                        "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
-                        "type": "permission_error",
-                        "param": null,
-                        "code": "account_suspended",
-                        "request_id": "REQUEST_ID"
-                      }
-                    }
+                "example": {
+                  "error": {
+                    "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
+                    "type": "permission_error",
+                    "param": null,
+                    "code": "account_suspended",
+                    "request_id": "REQUEST_ID"
                   }
                 }
               }
@@ -3300,6 +3307,14 @@
                     }
                   }
                 }
+              }
+            }
+          },
+          "409": {
+            "description": "Reserved for workload insights, which is not available yet. A request that does not name a workflow never receives it.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
               }
             }
           },
@@ -3488,13 +3503,14 @@
             "url": "https://api.hopscotchlabs.ai",
             "description": "Production"
           }
-        ]
+        ],
+        "parameters": []
       }
     },
     "/v1/realtime": {
       "classification": "blocked",
       "gate": "72.5",
-      "reason": "Story 72.5's realtime door, which reached the source tree in the 2026-10-16 late pm sync range (ade1426ac, PR #5456) under customerApiKey: GET /v1/realtime?model= upgraded to a WebSocket in the OpenAI Realtime event shape, with an opening hold before the upgrade and each response held and settled on its own. realtimeDoorEnabled in services/control-plane/src/public/routes.ts reads REALTIME_DOOR_ENABLED === 'true', services/control-plane/wrangler.toml says it stays unset in every environment until the realtime proof passes, and with the flag closed the path answers the pre-publication 404 endpoint_not_supported before the key is read. Story 72.5 reads `review`, and Story 72.8, which owns the docs, the API reference and the dashboard naming the realtime door, reads `backlog`. Publishing it is a writer pass rather than a reclassification: a WebSocket upgrade does not render as an ordinary operation, and the subprotocol refusal, the 4402 close when the next hold is refused, the 60 minute session limit and the per-response usage rows each need a page, with every example transcribed from services/control-plane/src/realtime/door.ts. Nothing is published until the flag opens in production and 72.8 is done. Recorded in the internal site's unresolved-findings.md as SF-481."
+      "reason": "Story 72.5's realtime door, which reached the source tree in the 2026-10-16 late pm sync range (ade1426ac, PR #5456) under customerApiKey: GET /v1/realtime?model= upgraded to a WebSocket in the OpenAI Realtime event shape, with an opening hold before the upgrade and each response held and settled on its own. realtimeDoorEnabled in services/control-plane/src/public/routes.ts reads REALTIME_DOOR_ENABLED === 'true', services/control-plane/wrangler.toml says it stays unset in every environment until the realtime proof passes, and with the flag closed the path answers the pre-publication 404 endpoint_not_supported before the key is read. Story 72.5 reads `review`, and Story 72.8, which owns the docs, the API reference and the dashboard naming the realtime door, reads `review` since the 2026-10-21 pm sync. Publishing it is a writer pass rather than a reclassification: a WebSocket upgrade does not render as an ordinary operation, and the subprotocol refusal, the 4402 close when the next hold is refused, the 60 minute session limit and the per-response usage rows each need a page, with every example transcribed from services/control-plane/src/realtime/door.ts. Nothing is published until the flag opens in production and 72.8 is done. Recorded in the internal site's unresolved-findings.md as SF-481."
     },
     "/v1/usage/{id}": {
       "classification": "public",
@@ -4111,18 +4127,13 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 },
-                "examples": {
-                  "account_suspended": {
-                    "summary": "The key's account is suspended",
-                    "value": {
-                      "error": {
-                        "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
-                        "type": "permission_error",
-                        "param": null,
-                        "code": "account_suspended",
-                        "request_id": "REQUEST_ID"
-                      }
-                    }
+                "example": {
+                  "error": {
+                    "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
+                    "type": "permission_error",
+                    "param": null,
+                    "code": "account_suspended",
+                    "request_id": "REQUEST_ID"
                   }
                 }
               }
@@ -4212,6 +4223,14 @@
                     "request_id": "REQUEST_ID"
                   }
                 }
+              }
+            }
+          },
+          "409": {
+            "description": "Reserved for workload insights, which is not available yet. A request that does not name a workflow never receives it.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
               }
             }
           },
@@ -4663,27 +4682,27 @@
     "/v1/audio/speech": {
       "classification": "blocked",
       "gate": "50.6",
-      "reason": "Story 50.6's image and audio door, documented in the source spec in the 2026-10-12 am sync range (c4bf88709, PR #3084) under customerApiKey. The handler does not serve it: fiveDoorsEnabled in services/control-plane/src/public/routes.ts reads FIVE_DOORS_ENABLED === 'true', only the development environment sets it (686d2853c, PR #4266; staging and production do not inherit top-level vars and stay closed), and with the flag closed the path answers the pre-publication 404 endpoint_not_supported before authentication (73e344c15, an owner ruling holding the five doors until the Epic 52 proof checks land). Story 50.6 and the rest of Epic 50 read `done` since the 2026-10-14 am sync, so the gate is now the flag rather than the story; Story 52.4, offer a family only while its proof is fresh, reads `backlog`. Publishing it is a writer pass rather than a reclassification: per-unit pricing, the multipart body and its 8 MiB cap, and the binary audio reply each need a page, and every example has to be transcribed from the handler. Nothing is published until the flag opens in production and 50.6 is done. Recorded in the internal site's unresolved-findings.md as SF-398 and SF-420."
+      "reason": "Story 50.6's image and audio door, documented in the source spec in the 2026-10-12 am sync range (c4bf88709, PR #3084) under customerApiKey. The handler does not serve it: fiveDoorsEnabled in services/control-plane/src/public/routes.ts reads FIVE_DOORS_ENABLED === 'true', only the development environment sets it (686d2853c, PR #4266; staging and production do not inherit top-level vars and stay closed), and with the flag closed the path answers the pre-publication 404 endpoint_not_supported before authentication (73e344c15, an owner ruling holding the five doors until the Epic 52 proof checks land). Story 50.6 and the rest of Epic 50 read `done` since the 2026-10-14 am sync, so the gate is now the flag rather than the story; Story 52.4, offer a family only while its proof is fresh, and the rest of Epic 52 read `done` since the 2026-10-21 pm sync, so the proof checks the owner ruling named have landed on develop; production still sets FIVE_DOORS_ENABLED to \"false\" in the [env.production] block of services/control-plane/wrangler.toml, so the hold is the flag alone (internal SF-524). Publishing it is a writer pass rather than a reclassification: per-unit pricing, the multipart body and its 8 MiB cap, and the binary audio reply each need a page, and every example has to be transcribed from the handler. Nothing is published until the flag opens in production and 50.6 is done. Recorded in the internal site's unresolved-findings.md as SF-398 and SF-420."
     },
     "/v1/audio/transcriptions": {
       "classification": "blocked",
       "gate": "50.6",
-      "reason": "Story 50.6's image and audio door, documented in the source spec in the 2026-10-12 am sync range (c4bf88709, PR #3084) under customerApiKey. The handler does not serve it: fiveDoorsEnabled in services/control-plane/src/public/routes.ts reads FIVE_DOORS_ENABLED === 'true', only the development environment sets it (686d2853c, PR #4266; staging and production do not inherit top-level vars and stay closed), and with the flag closed the path answers the pre-publication 404 endpoint_not_supported before authentication (73e344c15, an owner ruling holding the five doors until the Epic 52 proof checks land). Story 50.6 and the rest of Epic 50 read `done` since the 2026-10-14 am sync, so the gate is now the flag rather than the story; Story 52.4, offer a family only while its proof is fresh, reads `backlog`. Publishing it is a writer pass rather than a reclassification: per-unit pricing, the multipart body and its 8 MiB cap, and the binary audio reply each need a page, and every example has to be transcribed from the handler. Nothing is published until the flag opens in production and 50.6 is done. Recorded in the internal site's unresolved-findings.md as SF-398 and SF-420."
+      "reason": "Story 50.6's image and audio door, documented in the source spec in the 2026-10-12 am sync range (c4bf88709, PR #3084) under customerApiKey. The handler does not serve it: fiveDoorsEnabled in services/control-plane/src/public/routes.ts reads FIVE_DOORS_ENABLED === 'true', only the development environment sets it (686d2853c, PR #4266; staging and production do not inherit top-level vars and stay closed), and with the flag closed the path answers the pre-publication 404 endpoint_not_supported before authentication (73e344c15, an owner ruling holding the five doors until the Epic 52 proof checks land). Story 50.6 and the rest of Epic 50 read `done` since the 2026-10-14 am sync, so the gate is now the flag rather than the story; Story 52.4, offer a family only while its proof is fresh, and the rest of Epic 52 read `done` since the 2026-10-21 pm sync, so the proof checks the owner ruling named have landed on develop; production still sets FIVE_DOORS_ENABLED to \"false\" in the [env.production] block of services/control-plane/wrangler.toml, so the hold is the flag alone (internal SF-524). Publishing it is a writer pass rather than a reclassification: per-unit pricing, the multipart body and its 8 MiB cap, and the binary audio reply each need a page, and every example has to be transcribed from the handler. Nothing is published until the flag opens in production and 50.6 is done. Recorded in the internal site's unresolved-findings.md as SF-398 and SF-420."
     },
     "/v1/audio/translations": {
       "classification": "blocked",
       "gate": "50.6",
-      "reason": "Story 50.6's image and audio door, documented in the source spec in the 2026-10-12 am sync range (c4bf88709, PR #3084) under customerApiKey. The handler does not serve it: fiveDoorsEnabled in services/control-plane/src/public/routes.ts reads FIVE_DOORS_ENABLED === 'true', only the development environment sets it (686d2853c, PR #4266; staging and production do not inherit top-level vars and stay closed), and with the flag closed the path answers the pre-publication 404 endpoint_not_supported before authentication (73e344c15, an owner ruling holding the five doors until the Epic 52 proof checks land). Story 50.6 and the rest of Epic 50 read `done` since the 2026-10-14 am sync, so the gate is now the flag rather than the story; Story 52.4, offer a family only while its proof is fresh, reads `backlog`. Publishing it is a writer pass rather than a reclassification: per-unit pricing, the multipart body and its 8 MiB cap, and the binary audio reply each need a page, and every example has to be transcribed from the handler. Nothing is published until the flag opens in production and 50.6 is done. Recorded in the internal site's unresolved-findings.md as SF-398 and SF-420."
+      "reason": "Story 50.6's image and audio door, documented in the source spec in the 2026-10-12 am sync range (c4bf88709, PR #3084) under customerApiKey. The handler does not serve it: fiveDoorsEnabled in services/control-plane/src/public/routes.ts reads FIVE_DOORS_ENABLED === 'true', only the development environment sets it (686d2853c, PR #4266; staging and production do not inherit top-level vars and stay closed), and with the flag closed the path answers the pre-publication 404 endpoint_not_supported before authentication (73e344c15, an owner ruling holding the five doors until the Epic 52 proof checks land). Story 50.6 and the rest of Epic 50 read `done` since the 2026-10-14 am sync, so the gate is now the flag rather than the story; Story 52.4, offer a family only while its proof is fresh, and the rest of Epic 52 read `done` since the 2026-10-21 pm sync, so the proof checks the owner ruling named have landed on develop; production still sets FIVE_DOORS_ENABLED to \"false\" in the [env.production] block of services/control-plane/wrangler.toml, so the hold is the flag alone (internal SF-524). Publishing it is a writer pass rather than a reclassification: per-unit pricing, the multipart body and its 8 MiB cap, and the binary audio reply each need a page, and every example has to be transcribed from the handler. Nothing is published until the flag opens in production and 50.6 is done. Recorded in the internal site's unresolved-findings.md as SF-398 and SF-420."
     },
     "/v1/images/edits": {
       "classification": "blocked",
       "gate": "50.6",
-      "reason": "Story 50.6's image and audio door, documented in the source spec in the 2026-10-12 am sync range (c4bf88709, PR #3084) under customerApiKey. The handler does not serve it: fiveDoorsEnabled in services/control-plane/src/public/routes.ts reads FIVE_DOORS_ENABLED === 'true', only the development environment sets it (686d2853c, PR #4266; staging and production do not inherit top-level vars and stay closed), and with the flag closed the path answers the pre-publication 404 endpoint_not_supported before authentication (73e344c15, an owner ruling holding the five doors until the Epic 52 proof checks land). Story 50.6 and the rest of Epic 50 read `done` since the 2026-10-14 am sync, so the gate is now the flag rather than the story; Story 52.4, offer a family only while its proof is fresh, reads `backlog`. Publishing it is a writer pass rather than a reclassification: per-unit pricing, the multipart body and its 8 MiB cap, and the binary audio reply each need a page, and every example has to be transcribed from the handler. Nothing is published until the flag opens in production and 50.6 is done. Recorded in the internal site's unresolved-findings.md as SF-398 and SF-420."
+      "reason": "Story 50.6's image and audio door, documented in the source spec in the 2026-10-12 am sync range (c4bf88709, PR #3084) under customerApiKey. The handler does not serve it: fiveDoorsEnabled in services/control-plane/src/public/routes.ts reads FIVE_DOORS_ENABLED === 'true', only the development environment sets it (686d2853c, PR #4266; staging and production do not inherit top-level vars and stay closed), and with the flag closed the path answers the pre-publication 404 endpoint_not_supported before authentication (73e344c15, an owner ruling holding the five doors until the Epic 52 proof checks land). Story 50.6 and the rest of Epic 50 read `done` since the 2026-10-14 am sync, so the gate is now the flag rather than the story; Story 52.4, offer a family only while its proof is fresh, and the rest of Epic 52 read `done` since the 2026-10-21 pm sync, so the proof checks the owner ruling named have landed on develop; production still sets FIVE_DOORS_ENABLED to \"false\" in the [env.production] block of services/control-plane/wrangler.toml, so the hold is the flag alone (internal SF-524). Publishing it is a writer pass rather than a reclassification: per-unit pricing, the multipart body and its 8 MiB cap, and the binary audio reply each need a page, and every example has to be transcribed from the handler. Nothing is published until the flag opens in production and 50.6 is done. Recorded in the internal site's unresolved-findings.md as SF-398 and SF-420."
     },
     "/v1/images/generations": {
       "classification": "blocked",
       "gate": "50.6",
-      "reason": "Story 50.6's image and audio door, documented in the source spec in the 2026-10-12 am sync range (c4bf88709, PR #3084) under customerApiKey. The handler does not serve it: fiveDoorsEnabled in services/control-plane/src/public/routes.ts reads FIVE_DOORS_ENABLED === 'true', only the development environment sets it (686d2853c, PR #4266; staging and production do not inherit top-level vars and stay closed), and with the flag closed the path answers the pre-publication 404 endpoint_not_supported before authentication (73e344c15, an owner ruling holding the five doors until the Epic 52 proof checks land). Story 50.6 and the rest of Epic 50 read `done` since the 2026-10-14 am sync, so the gate is now the flag rather than the story; Story 52.4, offer a family only while its proof is fresh, reads `backlog`. Publishing it is a writer pass rather than a reclassification: per-unit pricing, the multipart body and its 8 MiB cap, and the binary audio reply each need a page, and every example has to be transcribed from the handler. Nothing is published until the flag opens in production and 50.6 is done. Recorded in the internal site's unresolved-findings.md as SF-398 and SF-420."
+      "reason": "Story 50.6's image and audio door, documented in the source spec in the 2026-10-12 am sync range (c4bf88709, PR #3084) under customerApiKey. The handler does not serve it: fiveDoorsEnabled in services/control-plane/src/public/routes.ts reads FIVE_DOORS_ENABLED === 'true', only the development environment sets it (686d2853c, PR #4266; staging and production do not inherit top-level vars and stay closed), and with the flag closed the path answers the pre-publication 404 endpoint_not_supported before authentication (73e344c15, an owner ruling holding the five doors until the Epic 52 proof checks land). Story 50.6 and the rest of Epic 50 read `done` since the 2026-10-14 am sync, so the gate is now the flag rather than the story; Story 52.4, offer a family only while its proof is fresh, and the rest of Epic 52 read `done` since the 2026-10-21 pm sync, so the proof checks the owner ruling named have landed on develop; production still sets FIVE_DOORS_ENABLED to \"false\" in the [env.production] block of services/control-plane/wrangler.toml, so the hold is the flag alone (internal SF-524). Publishing it is a writer pass rather than a reclassification: per-unit pricing, the multipart body and its 8 MiB cap, and the binary audio reply each need a page, and every example has to be transcribed from the handler. Nothing is published until the flag opens in production and 50.6 is done. Recorded in the internal site's unresolved-findings.md as SF-398 and SF-420."
     },
     "/v1/videos": {
       "classification": "blocked",
@@ -4699,6 +4718,81 @@
       "classification": "blocked",
       "gate": "71.6",
       "reason": "Story 71.6's video door (OpenAI Sora shape), documented in the source spec in the 2026-10-14 am sync range (c7ab2a341, PR #3122, with Stories 71.5 and 71.7) under customerApiKey. Since the 2026-10-14 pm sync range (06bb50800, PR #4609) it sits behind its own flag: videoDoorsEnabled in services/control-plane/src/public/routes.ts reads VIDEO_DOORS_ENABLED === 'true', only the development environment sets it (staging and production do not inherit top-level vars and stay closed), and with the flag closed the path answers the pre-publication 404 endpoint_not_supported; it has not reached main or staging either. Epic 71 and Story 71.6 read `done`. Publishing it is a writer pass rather than a reclassification: the per-second hold sized from `seconds` and `size`, the three-hour full-hold expiry, the rule that a follow-up answers only the account that created the job, and the binary content stream each need a page, and every example has to be transcribed from services/control-plane/src/video/doors.ts. Nothing is published until the flag opens in production and the owner decides to publish them. Recorded in the internal site's unresolved-findings.md as SF-419 and SF-428."
+    },
+    "/v1/organization/workload-insights/summary": {
+      "classification": "blocked",
+      "gate": "53.3",
+      "reason": "Story 53.3's reconciled workload summary (read), under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. It reached the source tree in the 2026-10-21 pm sync range through the release wall merge (22f019998, PR #6194), mounted from services/control-plane/src/organization/routeTable.ts and the modules under services/control-plane/src/workloadInsights/. It is on develop only; origin/main carries no workload-insights path. Story 53.3 reads `backlog` in sprint-status.yaml although the route is merged, which is recorded as drift rather than reconciled here. Publishing it is a writer pass rather than a reclassification. Recorded in the internal site's unresolved-findings.md as SF-519 and SF-520."
+    },
+    "/v1/organization/workload-insights/tasks": {
+      "classification": "blocked",
+      "gate": "53.5",
+      "reason": "Story 53.5's bounded task registry (create a task), under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. It reached the source tree in the 2026-10-21 pm sync range through the release wall merge (22f019998, PR #6194), mounted from services/control-plane/src/organization/routeTable.ts and the modules under services/control-plane/src/workloadInsights/. It is on develop only; origin/main carries no workload-insights path. Story 53.5 reads `backlog` in sprint-status.yaml although the route is merged, which is recorded as drift rather than reconciled here. Publishing it is a writer pass rather than a reclassification. Recorded in the internal site's unresolved-findings.md as SF-519 and SF-520."
+    },
+    "/v1/organization/workload-insights/tasks/{id}": {
+      "classification": "blocked",
+      "gate": "53.5",
+      "reason": "Story 53.5's bounded task registry (read a task), under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. It reached the source tree in the 2026-10-21 pm sync range through the release wall merge (22f019998, PR #6194), mounted from services/control-plane/src/organization/routeTable.ts and the modules under services/control-plane/src/workloadInsights/. It is on develop only; origin/main carries no workload-insights path. Story 53.5 reads `backlog` in sprint-status.yaml although the route is merged, which is recorded as drift rather than reconciled here. Publishing it is a writer pass rather than a reclassification. Recorded in the internal site's unresolved-findings.md as SF-519 and SF-520."
+    },
+    "/v1/organization/workload-insights/tasks/{id}/close": {
+      "classification": "blocked",
+      "gate": "53.5",
+      "reason": "Story 53.5's bounded task registry (close a task), under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. It reached the source tree in the 2026-10-21 pm sync range through the release wall merge (22f019998, PR #6194), mounted from services/control-plane/src/organization/routeTable.ts and the modules under services/control-plane/src/workloadInsights/. It is on develop only; origin/main carries no workload-insights path. Story 53.5 reads `backlog` in sprint-status.yaml although the route is merged, which is recorded as drift rather than reconciled here. Publishing it is a writer pass rather than a reclassification. Recorded in the internal site's unresolved-findings.md as SF-519 and SF-520."
+    },
+    "/v1/organization/workload-insights/tasks/{id}/outcome": {
+      "classification": "blocked",
+      "gate": "55.1",
+      "reason": "Story 55.1's typed task outcome (report an outcome, idempotent), under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. It reached the source tree in the 2026-10-21 pm sync range through the release wall merge (22f019998, PR #6194), mounted from services/control-plane/src/organization/routeTable.ts and the modules under services/control-plane/src/workloadInsights/. It is on develop only; origin/main carries no workload-insights path. Story 55.1 reads `backlog` in sprint-status.yaml although the route is merged, which is recorded as drift rather than reconciled here. Publishing it is a writer pass rather than a reclassification. Recorded in the internal site's unresolved-findings.md as SF-519 and SF-520."
+    },
+    "/v1/organization/workload-insights/workflows/{id}/classify": {
+      "classification": "blocked",
+      "gate": "54.2",
+      "reason": "Story 54.2's consented workflow classification (classify), under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. It reached the source tree in the 2026-10-21 pm sync range through the release wall merge (22f019998, PR #6194), mounted from services/control-plane/src/organization/routeTable.ts and the modules under services/control-plane/src/workloadInsights/. It is on develop only; origin/main carries no workload-insights path. Story 54.2 reads `backlog` in sprint-status.yaml although the route is merged, which is recorded as drift rather than reconciled here. Publishing it is a writer pass rather than a reclassification. Recorded in the internal site's unresolved-findings.md as SF-519 and SF-520."
+    },
+    "/v1/organization/workload-insights/workflows/{id}/classification": {
+      "classification": "blocked",
+      "gate": "54.3",
+      "reason": "Story 54.3's workflow classification (inspect and correct), under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. It reached the source tree in the 2026-10-21 pm sync range through the release wall merge (22f019998, PR #6194), mounted from services/control-plane/src/organization/routeTable.ts and the modules under services/control-plane/src/workloadInsights/. It is on develop only; origin/main carries no workload-insights path. Story 54.3 reads `backlog` in sprint-status.yaml although the route is merged, which is recorded as drift rather than reconciled here. Publishing it is a writer pass rather than a reclassification. Recorded in the internal site's unresolved-findings.md as SF-519 and SF-520."
+    },
+    "/v1/organization/workload-insights/workflows/{id}/classification/comparison": {
+      "classification": "blocked",
+      "gate": "54.4",
+      "reason": "Story 54.4's comparison of corrections with inference, under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. It reached the source tree in the 2026-10-21 pm sync range through the release wall merge (22f019998, PR #6194), mounted from services/control-plane/src/organization/routeTable.ts and the modules under services/control-plane/src/workloadInsights/. It is on develop only; origin/main carries no workload-insights path. Story 54.4 reads `backlog` in sprint-status.yaml although the route is merged, which is recorded as drift rather than reconciled here. Publishing it is a writer pass rather than a reclassification. Recorded in the internal site's unresolved-findings.md as SF-519 and SF-520."
+    },
+    "/v1/organization/workload-insights/workflows/{id}/outcomes": {
+      "classification": "blocked",
+      "gate": "55.2",
+      "reason": "Story 55.2's per-task charge and outcome comparison, under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. It reached the source tree in the 2026-10-21 pm sync range through the release wall merge (22f019998, PR #6194), mounted from services/control-plane/src/organization/routeTable.ts and the modules under services/control-plane/src/workloadInsights/. It is on develop only; origin/main carries no workload-insights path. Story 55.2 reads `backlog` in sprint-status.yaml although the route is merged, which is recorded as drift rather than reconciled here. Publishing it is a writer pass rather than a reclassification. Recorded in the internal site's unresolved-findings.md as SF-519 and SF-520."
+    },
+    "/v1/organization/workload-insights/recommendations": {
+      "classification": "blocked",
+      "gate": "55.3",
+      "reason": "Story 55.3's bounded, evidence-linked recommendations, under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. It reached the source tree in the 2026-10-21 pm sync range through the release wall merge (22f019998, PR #6194), mounted from services/control-plane/src/organization/routeTable.ts and the modules under services/control-plane/src/workloadInsights/. It is on develop only; origin/main carries no workload-insights path. Story 55.3 reads `backlog` in sprint-status.yaml although the route is merged, which is recorded as drift rather than reconciled here. Publishing it is a writer pass rather than a reclassification. Recorded in the internal site's unresolved-findings.md as SF-519 and SF-520."
+    },
+    "/v1/organization/workload-insights/recommendations/{digest}/dismiss": {
+      "classification": "blocked",
+      "gate": "55.4",
+      "reason": "Story 55.4's recommendation dismissal, under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. It reached the source tree in the 2026-10-21 pm sync range through the release wall merge (22f019998, PR #6194), mounted from services/control-plane/src/organization/routeTable.ts and the modules under services/control-plane/src/workloadInsights/. It is on develop only; origin/main carries no workload-insights path. Story 55.4 reads `backlog` in sprint-status.yaml although the route is merged, which is recorded as drift rather than reconciled here. Publishing it is a writer pass rather than a reclassification. Recorded in the internal site's unresolved-findings.md as SF-519 and SF-520."
+    },
+    "/v1/organization/workload-insights/experiments": {
+      "classification": "blocked",
+      "gate": "56.1",
+      "reason": "Story 56.1's profile-bound experiment drafts (list and create), under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. It reached the source tree in the 2026-10-21 pm sync range through the release wall merge (22f019998, PR #6194), mounted from services/control-plane/src/organization/routeTable.ts and the modules under services/control-plane/src/workloadInsights/. It is on develop only; origin/main carries no workload-insights path. Story 56.1 reads `backlog` in sprint-status.yaml although the route is merged, which is recorded as drift rather than reconciled here. Publishing it is a writer pass rather than a reclassification. Recorded in the internal site's unresolved-findings.md as SF-519 and SF-520."
+    },
+    "/v1/organization/workload-insights/experiments/{id}": {
+      "classification": "blocked",
+      "gate": "56.1",
+      "reason": "Story 56.1's profile-bound experiment drafts (read and revise), under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. It reached the source tree in the 2026-10-21 pm sync range through the release wall merge (22f019998, PR #6194), mounted from services/control-plane/src/organization/routeTable.ts and the modules under services/control-plane/src/workloadInsights/. It is on develop only; origin/main carries no workload-insights path. Story 56.1 reads `backlog` in sprint-status.yaml although the route is merged, which is recorded as drift rather than reconciled here. Publishing it is a writer pass rather than a reclassification. Recorded in the internal site's unresolved-findings.md as SF-519 and SF-520."
+    },
+    "/v1/ocr": {
+      "classification": "blocked",
+      "gate": "unowned",
+      "reason": "The OCR door: one synchronous document read billed per page processed, which reached the source tree in the 2026-10-21 pm sync range through the release wall merge (22f019998, PR #6194; the slice is 6cefa2b51) under customerApiKey. ocrFamilyEnabled in services/control-plane/src/public/routes.ts reads OCR_FAMILY_ENABLED === 'true', only the development environment sets it (services/control-plane/wrangler.toml, top-level vars; staging and production do not inherit them), and with the flag closed the path answers the pre-publication 404 endpoint_not_supported before authentication. It is not on origin/main. No story in sprint-status.yaml owns OCR, so the gate is `unowned` until the owner names one. The source spec's description of this operation is copied from image generation and does not describe OCR, so nothing could be transcribed from it either. Recorded in the internal site's unresolved-findings.md as SF-518 and SF-521."
+    },
+    "/v1/realtime/client_secrets": {
+      "classification": "blocked",
+      "gate": "72.6",
+      "reason": "Story 72.6's realtime client secret: a server holding an API key mints a short-lived, single-use secret bound to that key and one model, which a browser offers to GET /v1/realtime as a WebSocket subprotocol. It reached the source tree in the 2026-10-21 pm sync range through the release wall merge (22f019998, PR #6194) under customerApiKey, and shares the realtime door's flag: realtimeDoorEnabled in services/control-plane/src/public/routes.ts reads REALTIME_DOOR_ENABLED === 'true', which services/control-plane/wrangler.toml leaves unset in every environment until the realtime proof passes, so the path answers the pre-publication 404 endpoint_not_supported. Story 72.6 reads `review`. Nothing is published until the flag opens in production and the realtime door itself (/v1/realtime, gate 72.5) is published. Recorded in the internal site's unresolved-findings.md as SF-519."
     }
   },
   "tags": [
