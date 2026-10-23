@@ -96,9 +96,9 @@ providers is two ids with two prices.
 
 <Accordion title="Is there an embeddings endpoint?">
 Not yet. Embeddings are not served, and we have no date to give. A call to
-`POST /v1/embeddings` is refused rather than answered. `POST /v1/completions`,
-the legacy text completion body, is a separate matter; see
-[Completions and embeddings](/features/completions-and-embeddings).
+`POST /v1/embeddings` is refused with a 404 `not_found_error`.
+`POST /v1/completions`, the legacy text completion body, is a separate matter;
+see [Completions and embeddings](/features/completions-and-embeddings).
 </Accordion>
 
 <Accordion title="How soon do new models appear?">

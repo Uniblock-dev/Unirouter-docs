@@ -1,6 +1,6 @@
 ---
 title: "LlamaIndex"
-description: "Use LlamaIndex's OpenAILike class with Hopscotch, why the plain OpenAI class refuses our model ids before sending, and how to set the embedding model."
+description: "Use LlamaIndex's OpenAILike class with Hopscotch, why the plain OpenAI class refuses our model ids, and why embeddings are not served yet."
 status: partial
 gates: ["2.3", "2.11"]
 ---
@@ -15,7 +15,8 @@ import FeatureStatus from '/snippets/feature-status.mdx';
 LlamaIndex has two OpenAI classes and the difference between them matters here
 more than anywhere else in this section, because the wrong one fails before a
 request is ever sent. It also carries defaults for both the language model and
-the embedding model, and both defaults are bare model names this API refuses.
+the embedding model. The language model default is a bare model name this API
+refuses, and the embedding default posts to an endpoint this API does not serve yet.
 
 ## Use OpenAILike
 
@@ -78,34 +79,15 @@ with no lookup at all, which is why those arguments are the ones that class adds
 
 ## Embeddings, which are the other thing to set
 
-**LlamaIndex reaches for an OpenAI embedding model by default, under a bare
-name this API refuses.** `Settings.embed_model` resolves lazily: read it
-without setting it and LlamaIndex constructs an `OpenAIEmbedding` for you,
-with a model name that carries no provider. So indexing a document reaches
-[`POST /v1/embeddings`](/features/completions-and-embeddings), which this API
-serves, with an id it refuses as `model_id_not_pinned`.
+**This API does not serve embeddings yet, and we have no date to give.**
+`Settings.embed_model` resolves lazily: read it without setting it and
+LlamaIndex constructs an `OpenAIEmbedding` for you, which posts to `/embeddings`.
+[`POST /v1/embeddings`](/features/completions-and-embeddings#embeddings) is
+refused here with a 404 `not_found_error`, so your language model calls work and
+then the first thing you index fails.
 
-The consequence is worth stating plainly, because it is the shape of failure
-this framework produces here: your language model calls work, and then the
-first thing you index is refused. Set the embedding model explicitly, with the
-same base URL and key and a pinned id:
-
-```python
-from llama_index.core import Settings
-from llama_index.embeddings.openai_like import OpenAILikeEmbedding
-
-Settings.llm = llm             # the OpenAILike above
-Settings.embed_model = OpenAILikeEmbedding(
-    model_name="openai/text-embedding-3-small",
-    api_base="https://api.hopscotchlabs.ai/v1",
-    api_key="ub_live_YOUR_KEY_HERE",
-)
-```
-
-`OpenAILikeEmbedding` is the embeddings counterpart of `OpenAILike`, from the
-`llama-index-embeddings-openai-like` package, and it is used here for the same
-reason: it takes the model name as given rather than checking it against a
-list of OpenAI's own.
+Set `Settings.embed_model` explicitly to an embedding model from a provider you
+call directly, and keep `Settings.llm` pointed at this API.
 
 There is a default language model too, resolved the same way, and it is a plain
 OpenAI client rather than an `OpenAILike` one. Setting `Settings.llm` is what
@@ -148,10 +130,7 @@ not yet a host that answers.
 the default is an `OpenAIEmbedding` and that it therefore reaches an embeddings
 endpoint was read from the resolution code; the specific model name it picks was
 not confirmed from the current source, and this page does not print one because
-the fact that matters is that the name carries no provider. That
-`OpenAILikeEmbedding` takes `model_name`, `api_base` and `api_key` and performs
-no name lookup was read from its package; the example above has not been run
-against our hostname.
+the fact that matters is that this API does not serve embeddings yet.
 
 **And not checked.** That LlamaIndex never wraps an SDK exception. The completion
 path we read shows no wrapping, and the retry decorator around it does not appear

@@ -87,14 +87,11 @@ depend on which default the OpenAI provider currently holds.
 and cannot send a bare id you did not write. The pinned-id rule still applies to
 the id you pass.
 
-**`embed` and `embedMany` work, with a pinned id.** The OpenAI embedding model
-in these packages posts to `/embeddings` under whatever base URL you
-configured, and this API serves
-[`POST /v1/embeddings`](/features/completions-and-embeddings). The id you pass
-to `openai.embedding(...)` or `openai.textEmbeddingModel(...)` is under the same
-pinned-id rule as a language model: `openai/text-embedding-3-small` is
-accepted, and a bare `text-embedding-3-small` is refused with
-`model_id_not_pinned` before anything is sent.
+**`embed` and `embedMany` do not work against this API yet.** The OpenAI
+embedding model in these packages posts to `/embeddings` under whatever base URL
+you configured, and this API does not serve
+[`POST /v1/embeddings`](/features/completions-and-embeddings#embeddings) yet. It
+has no date to give. Use an embedding model from a provider you call directly.
 
 **Nothing calls the catalog.** Neither provider asks `GET /v1/models` to validate
 a model name or discover one, so an id that is wrong is wrong at request time,

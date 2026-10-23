@@ -104,17 +104,12 @@ the per-harness pages say which kind each one is.
 
 <NotDocumented
   subject="An embeddings endpoint"
-  reason="The route exists in the source tree and nothing about it is published. The story it was gated on has shipped and a writer has not transcribed it, so this site describes no request shape, no response shape and no refusal for it. That means we also cannot tell you what a harness feature that calls it will do here."
+  reason="Embeddings are not served yet, and we have no date to give. A call to POST /v1/embeddings is refused with a 404 not_found_error, so this site describes no request shape or response shape for it."
 />
 
-Read that as an absence rather than as a promise in either direction. Earlier
-versions of this page said a request to an embeddings endpoint is answered with
-a `404`. That was wrong, it has been removed, and nothing has replaced it,
-because the honest position is that this site does not document the endpoint at
-all.
-
-What follows is still worth knowing, because it decides which of your harness's
-features depend on an answer we do not publish.
+Read that as an absence rather than as a promise: there is no date. What
+follows decides which of your harness's features depend on an endpoint this API
+does not serve.
 
 Any harness feature that builds an index of your repository to search it by
 meaning rather than by text calls an embeddings endpoint, and those are the
@@ -139,8 +134,7 @@ auditing it for one.
 
 **If your harness configures its embedding model separately from its chat model,
 which several do, leave that setting pointed wherever it already points and
-change only the chat model.** That is the practical advice on this page whose
-value does not depend on what our embeddings route does, and it is the one to
+change only the chat model.** That is the practical advice on this page, and it is the one to
 follow.
 
 ## A harness spends faster than a chat client

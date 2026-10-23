@@ -118,8 +118,9 @@ API happens to satisfy today.
 Calling `client.images.generate(...)` or `client.audio.speech.create(...)`
 against this base URL reaches a path this API does not serve yet, and the SDK
 raises `NotFoundError`. The base URL is not the problem when that happens.
-`client.embeddings.create(...)`, `client.completions.create(...)` and
-`client.responses.create(...)` do serve. See
+`client.completions.create(...)` and `client.responses.create(...)` do serve.
+`client.embeddings.create(...)` does not yet; embeddings are not served and
+there is no date. See
 [OpenAI compatibility](/get-started/openai-compatibility) for the full list.
 
 ## What we did not verify
