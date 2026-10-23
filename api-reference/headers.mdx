@@ -70,9 +70,21 @@ above.
 | `x-uniblock-ratelimit-requests-remaining` | Requests | How many of them are left in the current window. |
 | `x-uniblock-ratelimit-requests-reset` | Seconds | Seconds until the window resets. A count of seconds from now, not a timestamp. |
 
-The limit is counted per key and per minute, so a limit header with no unit of
-its own is requests per minute. Over it, the request is refused as described in
+The limit is counted per key and per minute, and the reset is a count of seconds.
+Over it, the request is refused as described in
 [Rate limits and spend controls](/manage/rate-limits-and-spend-controls#the-per-key-request-rate).
+
+These three are the only rate-limit headers sent. There is no
+`x-uniblock-ratelimit-unit` header, and no input-token or output-token variants,
+so read the units from the table above.
+
+<Note>
+  **Where the project record and production disagree.** The project record lists
+  the stories behind these headers as not started and says nothing about them is
+  published. A live call to `POST /v1/chat/completions` on 2026-10-23 returned
+  exactly the three headers above, so this page follows what production sends. If
+  that changes, this section changes with it.
+</Note>
 
 ### `x-hopscotch-served-via`
 

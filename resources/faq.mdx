@@ -196,7 +196,7 @@ it. See [Authentication](/get-started/authentication).
 
 <Accordion title="Why are provider rate-limit headers missing?">
 They are not forwarded, because they describe a pool we hold rather than a limit
-that applies to you. Your own limit is reported on `x-uniblock-ratelimit-requests-*` headers and,
+that applies to you. Your own limit is reported on the `x-uniblock-ratelimit-requests-limit`, `-remaining` and `-reset` headers and,
 once exceeded, as a `429` code you can branch on. See
 [Headers](/api-reference/headers#rate-limit-headers).
 </Accordion>
