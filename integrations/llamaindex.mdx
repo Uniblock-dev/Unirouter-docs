@@ -81,10 +81,12 @@ with no lookup at all, which is why those arguments are the ones that class adds
 
 **This API does not serve embeddings yet, and we have no date to give.**
 `Settings.embed_model` resolves lazily: read it without setting it and
-LlamaIndex constructs an `OpenAIEmbedding` for you, which posts to `/embeddings`.
+LlamaIndex constructs its own default `OpenAIEmbedding`, which resolves its own
+key and base URL separately from the `OpenAILike` model you configured. With only
+that configuration it does not reach this API, and indexing can fail on a missing
+OpenAI key instead. If you point an embedding model at this API,
 [`POST /v1/embeddings`](/features/completions-and-embeddings#embeddings) is
-refused here with a 404 `not_found_error`, so your language model calls work and
-then the first thing you index fails.
+refused with a 404 `not_found_error`.
 
 Set `Settings.embed_model` explicitly to an embedding model from a provider you
 call directly, and keep `Settings.llm` pointed at this API.

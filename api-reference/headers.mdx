@@ -60,13 +60,13 @@ on them, and expect the set to grow.
 
 ### Rate-limit headers
 
-A served response reports your key's request rate on three headers. The
+A served response reports your key's request rate on these headers. The
 `x-uniblock-` spelling is current for these; they are not part of the retired set
 above.
 
 | Header | Unit | What it is |
 |---|---|---|
-| `x-uniblock-ratelimit-requests-limit` | Requests per minute | How many requests this key may make in one minute. |
+| `x-uniblock-ratelimit-requests-limit` | Requests per minute | How many requests this key may make per minute. |
 | `x-uniblock-ratelimit-requests-remaining` | Requests | How many of them are left in the current window. |
 | `x-uniblock-ratelimit-requests-reset` | Seconds | Seconds until the window resets. A count of seconds from now, not a timestamp. |
 
