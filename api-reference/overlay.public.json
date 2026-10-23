@@ -27,7 +27,6 @@
     "keyCreditLimit": "services/control-plane/src/money/balance.ts (keyLimitMessage), services/control-plane/src/money/reservation.ts",
     "accountSuspension": "services/control-plane/src/middleware/customerAuth.ts (ACCOUNT_SUSPENDED_CODE, ACCOUNT_SUSPENDED_MESSAGE)",
     "doorRules": "services/control-plane/src/inference/doorRules.ts (applyDoorRules, refusal)",
-    "embeddingEncoding": "services/control-plane/src/inference/embeddingEncoding.ts (embeddingEncodingRefusal)",
     "messagesCredential": "services/control-plane/src/middleware/customerAuth.ts (credentialOf, decide)",
     "usageReadback": "services/control-plane/src/usage/keyReadback.ts (KeyUsageBody), services/control-plane/src/apiApp.ts (the /usage/* handler)",
     "unpinnedModel": "services/control-plane/src/providers/upstream.ts (unpinnedModelMessage, the endpoint-family refusal)"
@@ -229,62 +228,6 @@
           "usage": {
             "type": "object",
             "additionalProperties": true
-          }
-        }
-      },
-      "EmbeddingList": {
-        "type": "object",
-        "description": "An OpenAI embedding list, as the provider produced it.",
-        "additionalProperties": true,
-        "properties": {
-          "object": {
-            "type": "string",
-            "example": "list"
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "additionalProperties": true,
-              "properties": {
-                "object": {
-                  "type": "string",
-                  "example": "embedding"
-                },
-                "index": {
-                  "type": "integer"
-                },
-                "embedding": {
-                  "description": "An array of numbers for `float`, or a base64 string for `base64`.",
-                  "oneOf": [
-                    {
-                      "type": "array",
-                      "items": {
-                        "type": "number"
-                      }
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "model": {
-            "type": "string"
-          },
-          "usage": {
-            "type": "object",
-            "additionalProperties": true,
-            "properties": {
-              "prompt_tokens": {
-                "type": "integer"
-              },
-              "total_tokens": {
-                "type": "integer"
-              }
-            }
           }
         }
       },
@@ -4262,26 +4205,6 @@
         "example": "POST /v1/completions 400 store_true and model_id_not_pinned, 404 model_not_available, and 401/402/403/413/429/500/503/504",
         "shapeFrom": "Chat completions entries in this overlay for the shared statuses; the stored branch of refusal in services/control-plane/src/inference/doorRules.ts; unpinnedModelMessage and the endpoint-family branch in services/control-plane/src/providers/upstream.ts.",
         "note": "Messages copied from the chat completions block where one handler answers both doors; the endpoint-family sentence names the raw family strings the handler interpolates. Needs a live transcript per status."
-      },
-      {
-        "example": "POST /v1/embeddings 200",
-        "shapeFrom": "OpenAI embeddings list shape; provider body forwarded unchanged per services/control-plane/src/inference/core.ts",
-        "note": "Vectors are shortened to three values and the field values are illustrative. Whether `model` echoes the pinned slug is not established. Needs a live 200 transcript for both encoding_format values."
-      },
-      {
-        "example": "POST /v1/embeddings 400 unsupported_encoding_format",
-        "shapeFrom": "embeddingEncodingRefusal in services/control-plane/src/inference/embeddingEncoding.ts",
-        "note": "Message transcribed verbatim from the handler with the value \"int8\" substituted. Needs a live transcript, which is cheap: any value other than float or base64 produces it."
-      },
-      {
-        "example": "POST /v1/embeddings 400 model_id_not_pinned, 404 model_not_available, and 401/402/403/413/429/500/503/504",
-        "shapeFrom": "Chat completions entries in this overlay for the shared statuses; unpinnedModelMessage and the endpoint-family branch in services/control-plane/src/providers/upstream.ts.",
-        "note": "Copied from the chat completions block where one handler answers both doors. Needs a live transcript per status."
-      },
-      {
-        "example": "POST /v1/embeddings 413 reply-size ceiling",
-        "shapeFrom": "The embeddings reply-size refusal in the source tree, a 413 payload_too_large at 45 MiB whose message tells the caller to use base64 or send fewer inputs.",
-        "note": "Deliberately NOT documented. Its published shape is the open question recorded as SF-31. Only the 8 MiB request ceiling is documented on this route. Add the reply-size 413 when SF-31 is resolved."
       },
       {
         "example": "POST /v1/messages 200",

@@ -3308,62 +3308,6 @@
           }
         }
       },
-      "EmbeddingList": {
-        "type": "object",
-        "description": "An OpenAI embedding list, as the provider produced it.",
-        "additionalProperties": true,
-        "properties": {
-          "object": {
-            "type": "string",
-            "example": "list"
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "additionalProperties": true,
-              "properties": {
-                "object": {
-                  "type": "string",
-                  "example": "embedding"
-                },
-                "index": {
-                  "type": "integer"
-                },
-                "embedding": {
-                  "description": "An array of numbers for `float`, or a base64 string for `base64`.",
-                  "oneOf": [
-                    {
-                      "type": "array",
-                      "items": {
-                        "type": "number"
-                      }
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "model": {
-            "type": "string"
-          },
-          "usage": {
-            "type": "object",
-            "additionalProperties": true,
-            "properties": {
-              "prompt_tokens": {
-                "type": "integer"
-              },
-              "total_tokens": {
-                "type": "integer"
-              }
-            }
-          }
-        }
-      },
       "Message": {
         "type": "object",
         "description": "An Anthropic message, as the provider produced it.",

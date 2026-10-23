@@ -5,7 +5,7 @@ status: partial
 gates: ["2.3", "2.10", "2.11"]
 ---
 
-import { FeatureStatus, NotDocumented } from '/snippets/feature-status.mdx';
+import { FeatureStatus } from '/snippets/feature-status.mdx';
 import BaseUrl from '/snippets/base-url.mdx';
 
 A coding harness is an agent that edits your code: an editor extension, or a CLI
@@ -100,16 +100,12 @@ pinned id. And a harness that offers a fixed dropdown of vendor model names
 rather than a free-text field cannot be pointed at an id of this shape at all;
 the per-harness pages say which kind each one is.
 
-## Embeddings are not part of what this site documents
+## Embeddings are not served yet
 
-<NotDocumented
-  subject="An embeddings endpoint"
-  reason="Embeddings are not served yet, and we have no date to give. A call to POST /v1/embeddings is refused with a 404 not_found_error, so this site describes no request shape or response shape for it."
-/>
-
-Read that as an absence rather than as a promise: there is no date. What
-follows decides which of your harness's features depend on an endpoint this API
-does not serve.
+Embeddings are not served yet, and we have no date to give. A call to
+`POST /v1/embeddings` is refused with a 404 `not_found_error`. What follows
+decides which of your harness's features depend on an endpoint this API does not
+serve.
 
 Any harness feature that builds an index of your repository to search it by
 meaning rather than by text calls an embeddings endpoint, and those are the
