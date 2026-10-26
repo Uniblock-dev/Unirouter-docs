@@ -1,0 +1,141 @@
+---
+title: "Stored request data"
+description: "What Hopscotch stores about your requests by default, how capture keeps prompts and responses when turned on, and how to view, delete or bucket them."
+status: partial
+gates: ["7.5", "7.7", "7.8", "7.9", "7.10", "7.11", "7.12", "7.13", "7.14", "7.16", "7.17", "7.19", "68.2", "68.3"]
+---
+
+By default Hopscotch keeps metadata about each request: the time, the model,
+token counts and the cost. It does not keep the prompt or the response. Capture
+is the one setting that changes this. When you turn it on for a key, the bodies
+of that key's requests are stored, encrypted, for you to read back in the
+dashboard, and they are charged for by the amount of storage they hold.
+
+The journey below follows that setting from the first switch to deletion. The
+data stance itself is on [Data and privacy](/manage/data-and-privacy).
+
+<Note>
+Capture is not yet available to production accounts. Turning it on is refused
+in production until the opt-in path ships, so the steps below describe what the
+feature does where it is enabled, and every step is gated.
+</Note>
+
+## Capture is off until you turn it on
+
+Capture is set one key at a time. A new key starts with capture off, and a key
+with capture off stores no bodies for its requests. You turn it on from the
+dashboard with a single switch beside the key.
+
+Turning capture off is always allowed. It stops new bodies from being stored
+for that key. Bodies that were already stored stay until you delete them or
+they expire, so turning it off is not a delete.
+
+## What is stored for each captured request
+
+Each captured request stores its prompt and its response as one encrypted
+object, kept together with the metadata that the request already produces.
+Bodies are encrypted before they are written, and they are read back through
+the dashboard.
+
+Responses returned in one piece are captured. Streamed responses are meant to be
+captured too, but that part is not shipped yet, so a streamed request stores its
+metadata and no body until it is.
+
+## Viewing captured requests
+
+Captured history is in the dashboard, under Activity, as a list of your
+requests with bodies, newest first. You can narrow it by:
+
+- model
+- outcome
+- key
+- a start and end date
+- an exact request id
+
+The list is paged. Opening a request shows the prompt and the response that
+were stored for it. If a stored body cannot be read, the request still opens
+with a plain sentence saying so, and the metadata is still shown.
+
+There is no search over the text of prompts or responses. Captured history is
+dashboard only. The `/v1` routing API does not read it.
+
+## What storage costs and how it is charged
+
+Storage is charged by the bytes held and the time they are held. A body starts
+counting from the moment it is stored and stops counting the moment it is
+deleted or expires, so deleting history stops its charge straight away.
+
+The charge is worked out once per calendar month from the stored bodies
+themselves, not added up run by run. A missed day is picked up by the next
+run, and the same month is never charged twice. Each month's storage charge
+appears on the balance ledger as its own line. It is not a request charge, so
+it does not appear in per-model spend or in request counts.
+
+The storage price, and what your account is charged so far this month, are
+shown in the dashboard next to the capture switch. This page does not state a
+price.
+
+If an account's balance falls below zero because of storage charges, capture is
+switched off for its keys and the account owner is emailed. Requests keep
+working. See [Credits and billing](/manage/credits-and-billing) for how the
+balance itself works.
+
+## Expiry
+
+Every stored body expires on its own after a fixed retention window. The window
+is not configurable today, and it applies to each body from the moment it was
+stored. Expired bodies are removed by a scheduled job, so an expired body can
+remain for a short time after its expiry before it is removed. Expired bodies
+stop being charged once they expire.
+
+## Deleting captured history
+
+You can delete captured history in any of these ways:
+
+- one request, by its id
+- a time range
+- everything captured for the workspace
+
+The request returns at once with a deletion receipt and the number of items
+targeted. Those items disappear from captured history immediately. Their bodies
+are removed from storage right after that. The receipt stays pending until the
+removal is checked, and you can read it again by its id until then.
+
+Deleting captured history removes the prompts and responses. It does not delete
+the metadata recorded for each request, which is time, model, token counts and
+cost, or the balance changes recorded for it.
+
+If a deletion does not finish, it is recorded and raised as an alert rather than
+left looking complete.
+
+## Bringing your own bucket
+
+Enterprise workspaces can connect a bucket they own on AWS S3 or Cloudflare R2.
+The credential must be write-only and scoped to that bucket. A registration is
+checked by writing, reading back, listing and deleting a test object before it
+is accepted.
+
+Once a bucket registration is active, the capture destination for the
+workspace can be set to that bucket. Captured bodies are then written to your
+bucket, not to Hopscotch storage, and deleting captured history removes them
+from your bucket too. Setting the destination is not yet available in the
+dashboard.
+
+Telemetry for an enterprise workspace is streamed to your bucket, and bodies are
+included only for keys with capture on. A receipt that verifies zero retention on
+Hopscotch storage for a bucket destination is not yet shipped, so this page
+makes no claim that it holds. See
+[Zero data retention](/manage/zero-data-retention) for what is verified today.
+
+## The opposite choice: zero data retention
+
+Leaving capture off is the default, and it means that for that key we store no
+prompt or response bodies at all. That is the position most customers want, and
+it needs no setting beyond the switch already described.
+
+Zero data retention is a separate control. It is a workspace requirement that
+routes a request on our provider credentials only to providers whose published
+terms say they keep nothing and train on nothing. It does not turn capture off,
+and capture does not turn it on. Both pages explain what each control does and
+what it does not verify: [Zero data retention](/manage/zero-data-retention) and
+[Data and privacy](/manage/data-and-privacy).

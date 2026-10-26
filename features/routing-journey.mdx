@@ -1,0 +1,163 @@
+---
+title: "Automatic model routing"
+description: "Pick hopscotch/auto or a routing profile, set backups, and see which model served each request, step by step."
+status: partial
+gates: [2.9, 5.11, 5.12, 5.18, 13.8, 13.9]
+---
+
+Automatic routing gives a request a list of models to try, in order, rather than
+one fixed model. This page walks the whole journey, from choosing a route to
+checking afterwards which model answered. Each step links to the reference page
+that holds the full detail.
+
+## Step one: choose between `hopscotch/auto` and a profile
+
+Send one of two kinds of value in the `model` field.
+
+| Value | Use it when | Who sets the order |
+|---|---|---|
+| `hopscotch/auto` | You want the default route for your workspace and are happy for it to change on the Routing screen without a code change. | Your default route. Until you set one, the list for your cost tier. |
+| `profile/<identifier>` | You want a fixed order of models that you control, under an identifier that never changes. | You, in the profile. |
+
+`unirouter/auto` is the canonical spelling of the automatic route and
+`hopscotch/auto` is accepted as a second spelling that resolves identically, so
+either works in the same field. See [Routing profiles](/features/routing-profiles)
+for the identifier rules.
+
+## Step two: pick a cost tier, if you have not set a default route
+
+A workspace that has never chosen a default route still gets an answer from
+`hopscotch/auto`. The answer comes from a list published for your cost tier.
+There are three tiers, `low`, `balanced` and `high`, and a workspace that has not
+chosen is on `balanced`. The tier is a shortlist, not a spending ceiling.
+
+Setting a default route of your own removes the automatic id from the published
+lists, and your route answers instead.
+
+## Step three: create a routing profile with backups
+
+Profiles are created, renamed, replaced and archived on your workspace's
+**Profiles** screen. Only the workspace owner and admins can change them, and any
+member can see them and request them.
+
+1. Open **Profiles** and choose to create one.
+2. Enter a **name**. You can change the name later.
+3. Enter an **identifier**. It is what your code sends, and it cannot be changed
+   after the profile exists. Identifiers are at most 40 characters, use lowercase
+   letters, digits and dashes, and cannot start or end with a dash.
+4. Add an ordered list of models: one primary, then up to four backups. Each model
+   must be one you can call right now, and none may appear twice. A profile holds
+   between one and five models.
+5. Save. You can hold up to 20 live profiles per workspace. Archiving one frees a
+   slot, but not its identifier, so an identifier that has been used cannot be
+   claimed again.
+
+Full limits and the permission table are on
+[Routing profiles](/features/routing-profiles#limits).
+
+## Step four: send the request
+
+Put the value in the `model` field of the call you already make. Nothing else
+changes.
+
+```bash
+curl https://api.hopscotchlabs.ai/v1/chat/completions \
+  -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "profile/customer-support",
+    "messages": [{"role": "user", "content": "Say hello."}]
+  }'
+```
+
+To use the automatic route instead, set `"model": "hopscotch/auto"`. For the
+request body and streaming, see [Chat completions](/api-reference/overview) and
+[Streaming](/features/streaming).
+
+## Step five: what happens on fallback
+
+A profile's models are tried strictly in the order you set.
+
+- The request goes to the primary first.
+- It moves to the next model only when the attempt fails because that model could
+  not serve it. A fault in the request itself, such as a malformed body, is returned
+  to you as it is, because another model would fail the same way.
+- A model that cannot be served at all right now is skipped rather than counted as
+  a failed attempt, as long as at least one model in the list can still answer.
+- If every model in the profile is out, the request is refused. See the refusals below.
+
+Each individual attempt is not reported to you. What you see is the answer, and
+which model gave it, in the response headers and in Activity described below.
+
+## Step six: see which model served the request
+
+There are three places to look, depending on what you have to hand.
+
+**In the response headers**, on every served response:
+
+- `x-hopscotch-served-by` gives the full `{provider}/{model}` id of the model that
+  answered. On a streamed response this is the only place that id appears.
+- `x-hopscotch-served-via` is sent only when a backup route served the request, and
+  its value is `backup`. Its absence means the ordinary route answered.
+- `x-hopscotch-request-id` (and `x-request-id`, the same value) identifies the
+  request if you need to ask about it or look it up.
+
+The full list of headers is on [Headers](/api-reference/headers).
+
+**On the Activity screen**, each request is a row. The **Served by** column shows
+the provider that answered, with a **backup** mark beside it when a backup route
+served the request. Click the request id to open the single request view. See
+[View activity](/manage/view-activity).
+
+**Through the usage lookup**, with the request id and your API key:
+
+```bash
+curl https://api.hopscotchlabs.ai/v1/usage/REQUEST_ID \
+  -H "Authorization: Bearer ub_live_YOUR_KEY_HERE"
+```
+
+The usage record carries the model that was asked for, the outcome, the tokens and
+the charge. It does not name the model that answered, so use the headers or the
+Activity row for that. A lookup that finds nothing may need one short pause before
+you retry, because the record is written after the response is sent. See
+[Usage lookup](/features/usage-lookup).
+
+## Step seven: track changes to the models behind a route
+
+A model in a profile or a default route can be deprecated or can reach its sunset
+date. The catalog carries both dates, and `GET /v1/models` lists them so you can
+see what is ending before it stops answering. See
+[Model lifecycle](/features/model-lifecycle). Review your profile's model list when
+a date you depend on approaches, and replace a model with a new save on the Profiles
+screen.
+
+## Step eight: read the refusal when a route is not available to you
+
+Each automatic or profile route has its own refusal. Branch on the `code`, not the
+message text.
+
+| Situation | Status | `code` | What to do |
+|---|---|---|---|
+| `profile/<identifier>` names a profile that is archived or never existed. The two are refused identically. | 503 | `no_provider_configured` | Check the identifier on the Profiles screen. An archived profile cannot be restored, so create a new one under a new identifier. |
+| Every model in a profile is out right now. | 503 | `no_provider_configured` | Retry with backoff. Note the request id for support. |
+| `hopscotch/auto` has no list for your cost tier, or nothing on it can be served at that moment. | 404 | `model_not_available` | The message names your tier and both ways out: choose a different tier or set a default route. The route never falls back to a tier you did not pick. |
+| A model in the request has been retired by its provider. | 404 | `model_not_available` | Retrying will not help. Move to the replacement named in the catalog, if one is given. |
+
+The full error envelope and the status map are on [Errors and refusals](/features/errors).
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Routing profiles" href="/features/routing-profiles">
+    Identifiers, the order rules, limits and who can change a profile.
+  </Card>
+  <Card title="Headers" href="/api-reference/headers">
+    The response headers that report the model and the backup route.
+  </Card>
+  <Card title="View activity" href="/manage/view-activity">
+    Served by, the backup mark and the single request view.
+  </Card>
+  <Card title="Usage lookup" href="/features/usage-lookup">
+    Read one request back with its API key.
+  </Card>
+</CardGroup>
