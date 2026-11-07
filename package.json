@@ -16,6 +16,7 @@
     "check:banned": "node scripts/lint-banned-content.mjs",
     "check:claims": "node scripts/check-claims.mjs",
     "check:gates": "node scripts/check-status-gates.mjs",
+    "check:gates:tracker": "node scripts/check-status-gates.mjs --tracker ../Gateway-LLM",
     "check:links": "mint broken-links",
     "check": "npm run check:openapi && npm run check:docs-json && npm run check:banned && npm run check:claims && npm run check:gates",
     "ci": "npm run check:openapi && npm run check:docs-json && npm run check:banned && npm run check:claims && node scripts/check-status-gates.mjs --allow-missing-pages"
