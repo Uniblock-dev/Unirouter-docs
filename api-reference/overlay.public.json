@@ -4100,44 +4100,2293 @@
       "reason": "Story 53.1's workspace workflow registry (read and revise one workflow by id), which reached the source tree in the 2026-10-15 am sync range (f9f89a9c1, merged by PR #3534) under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. services/control-plane/src/organization/routeTable.ts declares reads under capability usage.read and writes under insights.workflow.manage; writes need an Idempotency-Key header and take at most 8192 bytes, and the source spec says no classifier or consent is created. Story 53.1 and Epic 53 read `backlog` in sprint-status.yaml although the routes merged, and Story 47.1, the admin key every one of these doors authenticates with, reads `in-progress`. Publishing it is a writer pass rather than a reclassification: the management key needs a page of its own, the workflow schemas, versioning and refusals have to be transcribed from the handler, and the security scheme has to join keepSecuritySchemes. Nothing is published until 47.1 and 53.1 are done. Recorded in the internal site's unresolved-findings.md as SF-434."
     },
     "/v1/audio/speech": {
-      "classification": "blocked",
-      "gate": "50.6",
-      "reason": "POST /v1/audio/speech: Story 50.6's image and audio door, documented in the source spec under customerApiKey. It is live in production. fiveDoorsEnabled in services/control-plane/src/public/routes.ts reads FIVE_DOORS_ENABLED === 'true', and services/control-plane/wrangler.toml sets that flag to \"true\" under [env.production.vars] on main, so the path is served there and no longer answers the 404 endpoint_not_supported (SF-706). It stays blocked on this site only until a documentation pass publishes it: per-unit pricing, the multipart body and its 8 MiB cap, and the binary audio reply each need a page, and every example has to be transcribed from the handler. Recorded in the internal site's unresolved-findings.md as SF-398, SF-420 and SF-706."
+      "classification": "public",
+      "post": {
+        "operationId": "createSpeech",
+        "summary": "Create speech",
+        "description": "Generate spoken audio from `input` text in the `voice` you name. Credit is held for the characters of `input` at the model's per-million-character rate, and settled on the same count. The reply is the audio itself, not JSON. Its content type is the one the provider sent, such as `audio/mpeg` for `mp3` output.",
+        "tags": [
+          "Audio"
+        ],
+        "security": [
+          {
+            "customerApiKey": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "https://api.hopscotchlabs.ai",
+            "description": "Production"
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "model": "openai/tts-1",
+                "input": "Hello there.",
+                "voice": "alloy"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The provider's audio, relayed unchanged apart from platform headers.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-redirected-from": {
+                "description": "Present only when a sunset redirect served this request. The retiring model id requested, including a profile member redirected to its successor.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/retiring-model"
+                }
+              },
+              "x-hopscotch-served-model": {
+                "description": "The successor model that actually answered a sunset redirect, priced and admitted under that model. Present for JSON and streamed replies.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/successor-model"
+                }
+              }
+            },
+            "content": {
+              "audio/mpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "You must provide a model parameter naming the model to call. It is read to work out what the request could cost before it is sent.",
+                    "type": "invalid_request_error",
+                    "param": "model",
+                    "code": null,
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The request cannot be served as sent, including a missing model or a body the provider rejects. A refusal the PROVIDER made about this request is relayed with the provider's own status and its own sentence, quoted after the provider's name, so a parameter it requires and did not get reads as what it is rather than as a fault on this platform."
+          },
+          "401": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Incorrect API key provided.",
+                    "type": "authentication_error",
+                    "param": null,
+                    "code": "invalid_api_key",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "No API key, a non-Bearer scheme, a malformed key, or a key this platform rejects."
+          },
+          "402": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This account has $0.54 available and the request needs $0.55 held.",
+                    "type": "insufficient_quota",
+                    "param": null,
+                    "code": "insufficient_credit",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The account has insufficient credit for the estimated maximum cost. Nothing was sent to the provider. Three narrower ceilings refuse with the same status and their own codes, and each stops something smaller than the account: a key's own credit limit answers key_limit_exceeded and stops that key alone; a member's own monthly spend limit answers member_limit_exceeded and stops the one person the request is attributed to; a workspace's own monthly spend limit answers workspace_limit_exceeded and stops every member of that workspace, on every key that carries the projected ceiling and in the playground unconditionally. A request past more than one is told about the widest of them."
+          },
+          "403": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This organization excludes models with no provider content filter.",
+                    "type": "permission_error",
+                    "param": null,
+                    "code": "unfiltered_model_not_permitted"
+                  }
+                }
+              }
+            },
+            "description": "Refused for a setting the caller owns rather than anything about the model, and the code names which: guardrail_not_permitted (the key's guardrail excludes the model or its provider), no_region_eligible_provider (the guardrail's region rule excludes the provider), no_zdr_eligible_provider (a data-handling requirement, zero data retention or no training, that no provider serving the model meets) or route_key_unavailable (the route runs on the workspace's own key and the workspace holds none for that provider). For a routing profile slug the message names the SLUG and no member; the per-member reasons, ours included, are in the log line each skipped member writes. Sentence shape, carrying the request id. A key whose account staff have suspended refuses 403 with code account_suspended and a message saying so, before any rate limit, credit hold or provider is touched; the usage record carries refused_not_permitted and names the account (Story 6.13). A key lacking inference.run receives 403 with code capability_denied before size checks, reservations, or provider calls. With the unfiltered-model policy enabled, unfiltered_model_not_permitted means organization exclusion or missing consent for automatic/default selection; the request is refused before reservation or provider dispatch."
+          },
+          "404": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "The model \"MODEL_ID\" does not exist. Check the spelling, or list the models this key can call with GET /v1/models.",
+                    "type": "not_found_error",
+                    "param": null,
+                    "code": "model_not_found",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The model cannot be served, and the two cases are told apart by code. model_not_found means the slug is in no catalog document at all, which is what a typo produces; model_not_available means the slug IS cataloged and this platform is not serving it right now, on this endpoint family or at all. No provider was called either way. Since 2026-09-06 the model_not_available SENTENCE says why, where the platform's serve verdict recorded a reason: a model the provider has RETIRED says so and says that retrying will not reach it, since it is gone rather than unwell; a model the account this platform holds at that provider cannot reach says that instead, and that nothing about the request is wrong. Neither names a replacement model unless the provider named one itself. The status and the code are unchanged for all three, so a client branching on either keeps working. Sentence shape, carrying the request id. A third case reaches this status from further away: the provider answering 404 for a model this catalog publishes. That one carries the provider's own sentence, quoted after the provider's name, and it means the catalog and the provider disagree about what is served."
+          },
+          "409": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "description": "The workflow named by x-hopscotch-workflow-id is archived and takes no new requests. Checked before any hold or provider call."
+          },
+          "413": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                    "type": "invalid_request_error",
+                    "param": null,
+                    "code": "payload_too_large",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The request body is larger than the 8388608 byte maximum this API accepts, so it was refused at the door: code is payload_too_large. A body that declares its length is refused without a byte being read; one that declares none is read only as far as the ceiling and then abandoned. Nothing was parsed, no hold was taken, no provider was called and nothing was charged. Eight mebibytes is about double a full one-million-token prompt at ordinary prose density, so it sits above a maximum-context request on every model this platform sells today. Sentence shape, carrying the request id."
+          },
+          "429": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Rate limit reached for this key. Try again in 12 seconds. Request id REQUEST_ID.",
+                    "type": "rate_limit_error",
+                    "param": null,
+                    "code": "rate_limit_exceeded",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "rate_limit_exceeded also covers the key's own throughput allowance: the response names the exhausted unit in the error and x-uniblock-ratelimit-unit, with Retry-After and the metered allowance header triples. A metered token unit already over its ceiling refuses even when the request has no token estimate or max_tokens. Late settlement counts in the reservation's original allowance window. Two different refusals share this status, and the code tells them apart. spend_rate_exceeded is ours: the account is over the spend rate cap for the window and nothing was sent to the provider. upstream_rate_limited is the provider's: it refused the call on the credential this request ran on, and nothing is charged for it. On a platform credential, the message names the rate limit and says nothing was charged. Retry-After carries whole seconds on both refusals. spend_rate_exceeded's is the wait until the window has no counted reservation left, computed from the earliest reservation counted so the header agrees with the English sentence in the body, and clamped to a whole second at least 1. upstream_rate_limited's is the provider's own figure clamped to between 1 and 60 where it sent one, and 5 where it sent none."
+          },
+          "500": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "The server had an error while processing your request. Sorry about that! Quote the request id if you contact support.",
+                    "type": "api_error",
+                    "param": null,
+                    "code": null,
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "An unexpected failure inside the control plane. The request id on the response is the search term for it."
+          },
+          "503": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "No price per million characters is published for speech characters on \"openai/tts-1\", so what this request could cost is unknown and no credit can be held for it. The request is refused rather than served free, and nothing was sent.",
+                    "type": "server_error",
+                    "param": "model",
+                    "code": "model_not_priceable",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "Nothing was charged for the request, and no provider answered it. Each code points at a different thing to go and look at. no_provider_configured covers the three gaps between things we own: no provider is configured, the catalog routes the model to a provider nobody set up, or the stored provider credential could not be opened. guardrail_injection_rule_unreadable means an injection rule governing this key holds a pattern the linear-time engine cannot evaluate, so the prompt could not be checked against it and the request was refused closed rather than sent ungoverned; the refusal names the guardrail and re-saving it republishes the rule. Both are ours rather than the request, so a retry once the fault is fixed will serve, which is why a model this platform cannot serve answers 404 instead. Sentence shape, carrying the request id. model_pricing_unreadable also covers platform requests whose published token rates name no charged revision; these are refused before a provider call or charge rather than billed at an untraceable anchor. model_pricing_unreadable also covers an unavailable or unverifiable catalog source-terms publication. This is a temporary platform failure, recorded as refused_platform_unavailable, with no provider call or charge; it is not a spelling error."
+          },
+          "504": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This request ran longer than the 540 second limit and was terminated. Reduce the amount of work in one call, or stream the response, and try again.",
+                    "type": "server_error",
+                    "param": null,
+                    "code": "request_deadline_exceeded",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The request passed the 540 second deadline. Nothing further is charged for it."
+          }
+        },
+        "x-mint": {
+          "href": "/api-reference/audio/create-speech"
+        }
+      }
     },
     "/v1/audio/transcriptions": {
-      "classification": "blocked",
-      "gate": "50.6",
-      "reason": "POST /v1/audio/transcriptions: Story 50.6's image and audio door, documented in the source spec under customerApiKey. It is live in production. fiveDoorsEnabled in services/control-plane/src/public/routes.ts reads FIVE_DOORS_ENABLED === 'true', and services/control-plane/wrangler.toml sets that flag to \"true\" under [env.production.vars] on main, so the path is served there and no longer answers the 404 endpoint_not_supported (SF-706). It stays blocked on this site only until a documentation pass publishes it: per-unit pricing, the multipart body and its 8 MiB cap, and the binary audio reply each need a page, and every example has to be transcribed from the handler. Recorded in the internal site's unresolved-findings.md as SF-398, SF-420 and SF-706."
+      "classification": "public",
+      "post": {
+        "operationId": "createTranscription",
+        "summary": "Create a transcription",
+        "description": "Transcribe an audio file into text in its own language. Send the audio in the multipart `file` field. Credit is held for whichever is larger of the `duration` you declare and an estimate from the file's size, and settled on the duration the provider reports, in whole seconds, at the model's per-minute rate.",
+        "tags": [
+          "Audio"
+        ],
+        "security": [
+          {
+            "customerApiKey": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "https://api.hopscotchlabs.ai",
+            "description": "Production"
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "example": {
+                "model": "openai/whisper-1",
+                "duration": 61.5,
+                "response_format": "verbose_json"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-redirected-from": {
+                "description": "Present only when a sunset redirect served this request. The retiring model id requested, including a profile member redirected to its successor.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/retiring-model"
+                }
+              },
+              "x-hopscotch-served-model": {
+                "description": "The successor model that actually answered a sunset redirect, priced and admitted under that model. Present for JSON and streamed replies.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/successor-model"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "text": "Hello there, and welcome."
+                }
+              }
+            },
+            "description": "The provider's transcription or translation, relayed unchanged apart from platform headers. The charge is the reported duration in whole seconds at the model's per-minute rate; where the reply states no duration the held seconds are charged and the ledger says usage_not_reported_by_provider."
+          },
+          "400": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "You must provide a model parameter naming the model to call. It is read to work out what the request could cost before it is sent.",
+                    "type": "invalid_request_error",
+                    "param": "model",
+                    "code": null,
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The request cannot be served as sent, including a missing model or a body the provider rejects. A refusal the PROVIDER made about this request is relayed with the provider's own status and its own sentence, quoted after the provider's name, so a parameter it requires and did not get reads as what it is rather than as a fault on this platform."
+          },
+          "401": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Incorrect API key provided.",
+                    "type": "authentication_error",
+                    "param": null,
+                    "code": "invalid_api_key",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "No API key, a non-Bearer scheme, a malformed key, or a key this platform rejects."
+          },
+          "402": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This account has $0.54 available and the request needs $0.55 held.",
+                    "type": "insufficient_quota",
+                    "param": null,
+                    "code": "insufficient_credit",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The account has insufficient credit for the estimated maximum cost. Nothing was sent to the provider. Three narrower ceilings refuse with the same status and their own codes, and each stops something smaller than the account: a key's own credit limit answers key_limit_exceeded and stops that key alone; a member's own monthly spend limit answers member_limit_exceeded and stops the one person the request is attributed to; a workspace's own monthly spend limit answers workspace_limit_exceeded and stops every member of that workspace, on every key that carries the projected ceiling and in the playground unconditionally. A request past more than one is told about the widest of them."
+          },
+          "403": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This organization excludes models with no provider content filter.",
+                    "type": "permission_error",
+                    "param": null,
+                    "code": "unfiltered_model_not_permitted"
+                  }
+                }
+              }
+            },
+            "description": "Refused for a setting the caller owns rather than anything about the model, and the code names which: guardrail_not_permitted (the key's guardrail excludes the model or its provider), no_region_eligible_provider (the guardrail's region rule excludes the provider), no_zdr_eligible_provider (a data-handling requirement, zero data retention or no training, that no provider serving the model meets) or route_key_unavailable (the route runs on the workspace's own key and the workspace holds none for that provider). For a routing profile slug the message names the SLUG and no member; the per-member reasons, ours included, are in the log line each skipped member writes. Sentence shape, carrying the request id. A key whose account staff have suspended refuses 403 with code account_suspended and a message saying so, before any rate limit, credit hold or provider is touched; the usage record carries refused_not_permitted and names the account (Story 6.13). A key lacking inference.run receives 403 with code capability_denied before size checks, reservations, or provider calls. With the unfiltered-model policy enabled, unfiltered_model_not_permitted means organization exclusion or missing consent for automatic/default selection; the request is refused before reservation or provider dispatch."
+          },
+          "404": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "The model \"MODEL_ID\" does not exist. Check the spelling, or list the models this key can call with GET /v1/models.",
+                    "type": "not_found_error",
+                    "param": null,
+                    "code": "model_not_found",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The model cannot be served, and the two cases are told apart by code. model_not_found means the slug is in no catalog document at all, which is what a typo produces; model_not_available means the slug IS cataloged and this platform is not serving it right now, on this endpoint family or at all. No provider was called either way. Since 2026-09-06 the model_not_available SENTENCE says why, where the platform's serve verdict recorded a reason: a model the provider has RETIRED says so and says that retrying will not reach it, since it is gone rather than unwell; a model the account this platform holds at that provider cannot reach says that instead, and that nothing about the request is wrong. Neither names a replacement model unless the provider named one itself. The status and the code are unchanged for all three, so a client branching on either keeps working. Sentence shape, carrying the request id. A third case reaches this status from further away: the provider answering 404 for a model this catalog publishes. That one carries the provider's own sentence, quoted after the provider's name, and it means the catalog and the provider disagree about what is served."
+          },
+          "409": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "description": "The workflow named by x-hopscotch-workflow-id is archived and takes no new requests. Checked before any hold or provider call."
+          },
+          "413": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                    "type": "invalid_request_error",
+                    "param": null,
+                    "code": "payload_too_large",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The upload is larger than the 8388608 byte maximum this API accepts for a multipart/form-data body, so it was refused at the door: code is payload_too_large. Nothing was parsed, no hold was taken, no provider was called and nothing was charged. Sentence shape, carrying the request id."
+          },
+          "429": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Rate limit reached for this key. Try again in 12 seconds. Request id REQUEST_ID.",
+                    "type": "rate_limit_error",
+                    "param": null,
+                    "code": "rate_limit_exceeded",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "rate_limit_exceeded also covers the key's own throughput allowance: the response names the exhausted unit in the error and x-uniblock-ratelimit-unit, with Retry-After and the metered allowance header triples. A metered token unit already over its ceiling refuses even when the request has no token estimate or max_tokens. Late settlement counts in the reservation's original allowance window. Two different refusals share this status, and the code tells them apart. spend_rate_exceeded is ours: the account is over the spend rate cap for the window and nothing was sent to the provider. upstream_rate_limited is the provider's: it refused the call on the credential this request ran on, and nothing is charged for it. On a platform credential, the message names the rate limit and says nothing was charged. Retry-After carries whole seconds on both refusals. spend_rate_exceeded's is the wait until the window has no counted reservation left, computed from the earliest reservation counted so the header agrees with the English sentence in the body, and clamped to a whole second at least 1. upstream_rate_limited's is the provider's own figure clamped to between 1 and 60 where it sent one, and 5 where it sent none."
+          },
+          "500": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "The server had an error while processing your request. Sorry about that! Quote the request id if you contact support.",
+                    "type": "api_error",
+                    "param": null,
+                    "code": null,
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "An unexpected failure inside the control plane. The request id on the response is the search term for it."
+          },
+          "503": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "No price per minute is published for audio minutes on \"openai/whisper-1\", so what this request could cost is unknown and no credit can be held for it. The request is refused rather than served free, and nothing was sent.",
+                    "type": "server_error",
+                    "param": "model",
+                    "code": "model_not_priceable",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "Nothing was charged for the request, and no provider answered it. Each code points at a different thing to go and look at. no_provider_configured covers the three gaps between things we own: no provider is configured, the catalog routes the model to a provider nobody set up, or the stored provider credential could not be opened. guardrail_injection_rule_unreadable means an injection rule governing this key holds a pattern the linear-time engine cannot evaluate, so the prompt could not be checked against it and the request was refused closed rather than sent ungoverned; the refusal names the guardrail and re-saving it republishes the rule. Both are ours rather than the request, so a retry once the fault is fixed will serve, which is why a model this platform cannot serve answers 404 instead. Sentence shape, carrying the request id. model_pricing_unreadable also covers platform requests whose published token rates name no charged revision; these are refused before a provider call or charge rather than billed at an untraceable anchor. model_pricing_unreadable also covers an unavailable or unverifiable catalog source-terms publication. This is a temporary platform failure, recorded as refused_platform_unavailable, with no provider call or charge; it is not a spelling error."
+          },
+          "504": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This request ran longer than the 540 second limit and was terminated. Reduce the amount of work in one call, or stream the response, and try again.",
+                    "type": "server_error",
+                    "param": null,
+                    "code": "request_deadline_exceeded",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The request passed the 540 second deadline. Nothing further is charged for it."
+          }
+        },
+        "x-mint": {
+          "href": "/api-reference/audio/create-transcription"
+        }
+      }
     },
     "/v1/audio/translations": {
-      "classification": "blocked",
-      "gate": "50.6",
-      "reason": "POST /v1/audio/translations: Story 50.6's image and audio door, documented in the source spec under customerApiKey. It is live in production. fiveDoorsEnabled in services/control-plane/src/public/routes.ts reads FIVE_DOORS_ENABLED === 'true', and services/control-plane/wrangler.toml sets that flag to \"true\" under [env.production.vars] on main, so the path is served there and no longer answers the 404 endpoint_not_supported (SF-706). It stays blocked on this site only until a documentation pass publishes it: per-unit pricing, the multipart body and its 8 MiB cap, and the binary audio reply each need a page, and every example has to be transcribed from the handler. Recorded in the internal site's unresolved-findings.md as SF-398, SF-420 and SF-706."
+      "classification": "public",
+      "post": {
+        "operationId": "createTranslation",
+        "summary": "Create a translation",
+        "description": "Translate an audio file into English text. It takes the same multipart body as transcription and is held and settled the same way, at the model's per-minute rate.",
+        "tags": [
+          "Audio"
+        ],
+        "security": [
+          {
+            "customerApiKey": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "https://api.hopscotchlabs.ai",
+            "description": "Production"
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "example": {
+                "model": "openai/whisper-1",
+                "duration": 61.5,
+                "response_format": "verbose_json"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-redirected-from": {
+                "description": "Present only when a sunset redirect served this request. The retiring model id requested, including a profile member redirected to its successor.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/retiring-model"
+                }
+              },
+              "x-hopscotch-served-model": {
+                "description": "The successor model that actually answered a sunset redirect, priced and admitted under that model. Present for JSON and streamed replies.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/successor-model"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "text": "Hello there, and welcome."
+                }
+              }
+            },
+            "description": "The provider's transcription or translation, relayed unchanged apart from platform headers. The charge is the reported duration in whole seconds at the model's per-minute rate; where the reply states no duration the held seconds are charged and the ledger says usage_not_reported_by_provider."
+          },
+          "400": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "You must provide a model parameter naming the model to call. It is read to work out what the request could cost before it is sent.",
+                    "type": "invalid_request_error",
+                    "param": "model",
+                    "code": null,
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The request cannot be served as sent, including a missing model or a body the provider rejects. A refusal the PROVIDER made about this request is relayed with the provider's own status and its own sentence, quoted after the provider's name, so a parameter it requires and did not get reads as what it is rather than as a fault on this platform."
+          },
+          "401": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Incorrect API key provided.",
+                    "type": "authentication_error",
+                    "param": null,
+                    "code": "invalid_api_key",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "No API key, a non-Bearer scheme, a malformed key, or a key this platform rejects."
+          },
+          "402": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This account has $0.54 available and the request needs $0.55 held.",
+                    "type": "insufficient_quota",
+                    "param": null,
+                    "code": "insufficient_credit",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The account has insufficient credit for the estimated maximum cost. Nothing was sent to the provider. Three narrower ceilings refuse with the same status and their own codes, and each stops something smaller than the account: a key's own credit limit answers key_limit_exceeded and stops that key alone; a member's own monthly spend limit answers member_limit_exceeded and stops the one person the request is attributed to; a workspace's own monthly spend limit answers workspace_limit_exceeded and stops every member of that workspace, on every key that carries the projected ceiling and in the playground unconditionally. A request past more than one is told about the widest of them."
+          },
+          "403": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This organization excludes models with no provider content filter.",
+                    "type": "permission_error",
+                    "param": null,
+                    "code": "unfiltered_model_not_permitted"
+                  }
+                }
+              }
+            },
+            "description": "Refused for a setting the caller owns rather than anything about the model, and the code names which: guardrail_not_permitted (the key's guardrail excludes the model or its provider), no_region_eligible_provider (the guardrail's region rule excludes the provider), no_zdr_eligible_provider (a data-handling requirement, zero data retention or no training, that no provider serving the model meets) or route_key_unavailable (the route runs on the workspace's own key and the workspace holds none for that provider). For a routing profile slug the message names the SLUG and no member; the per-member reasons, ours included, are in the log line each skipped member writes. Sentence shape, carrying the request id. A key whose account staff have suspended refuses 403 with code account_suspended and a message saying so, before any rate limit, credit hold or provider is touched; the usage record carries refused_not_permitted and names the account (Story 6.13). A key lacking inference.run receives 403 with code capability_denied before size checks, reservations, or provider calls. With the unfiltered-model policy enabled, unfiltered_model_not_permitted means organization exclusion or missing consent for automatic/default selection; the request is refused before reservation or provider dispatch."
+          },
+          "404": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "The model \"MODEL_ID\" does not exist. Check the spelling, or list the models this key can call with GET /v1/models.",
+                    "type": "not_found_error",
+                    "param": null,
+                    "code": "model_not_found",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The model cannot be served, and the two cases are told apart by code. model_not_found means the slug is in no catalog document at all, which is what a typo produces; model_not_available means the slug IS cataloged and this platform is not serving it right now, on this endpoint family or at all. No provider was called either way. Since 2026-09-06 the model_not_available SENTENCE says why, where the platform's serve verdict recorded a reason: a model the provider has RETIRED says so and says that retrying will not reach it, since it is gone rather than unwell; a model the account this platform holds at that provider cannot reach says that instead, and that nothing about the request is wrong. Neither names a replacement model unless the provider named one itself. The status and the code are unchanged for all three, so a client branching on either keeps working. Sentence shape, carrying the request id. A third case reaches this status from further away: the provider answering 404 for a model this catalog publishes. That one carries the provider's own sentence, quoted after the provider's name, and it means the catalog and the provider disagree about what is served."
+          },
+          "409": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "description": "The workflow named by x-hopscotch-workflow-id is archived and takes no new requests. Checked before any hold or provider call."
+          },
+          "413": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                    "type": "invalid_request_error",
+                    "param": null,
+                    "code": "payload_too_large",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The upload is larger than the 8388608 byte maximum this API accepts for a multipart/form-data body, so it was refused at the door: code is payload_too_large. Nothing was parsed, no hold was taken, no provider was called and nothing was charged. Sentence shape, carrying the request id."
+          },
+          "429": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Rate limit reached for this key. Try again in 12 seconds. Request id REQUEST_ID.",
+                    "type": "rate_limit_error",
+                    "param": null,
+                    "code": "rate_limit_exceeded",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "rate_limit_exceeded also covers the key's own throughput allowance: the response names the exhausted unit in the error and x-uniblock-ratelimit-unit, with Retry-After and the metered allowance header triples. A metered token unit already over its ceiling refuses even when the request has no token estimate or max_tokens. Late settlement counts in the reservation's original allowance window. Two different refusals share this status, and the code tells them apart. spend_rate_exceeded is ours: the account is over the spend rate cap for the window and nothing was sent to the provider. upstream_rate_limited is the provider's: it refused the call on the credential this request ran on, and nothing is charged for it. On a platform credential, the message names the rate limit and says nothing was charged. Retry-After carries whole seconds on both refusals. spend_rate_exceeded's is the wait until the window has no counted reservation left, computed from the earliest reservation counted so the header agrees with the English sentence in the body, and clamped to a whole second at least 1. upstream_rate_limited's is the provider's own figure clamped to between 1 and 60 where it sent one, and 5 where it sent none."
+          },
+          "500": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "The server had an error while processing your request. Sorry about that! Quote the request id if you contact support.",
+                    "type": "api_error",
+                    "param": null,
+                    "code": null,
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "An unexpected failure inside the control plane. The request id on the response is the search term for it."
+          },
+          "503": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "No price per minute is published for audio minutes on \"openai/whisper-1\", so what this request could cost is unknown and no credit can be held for it. The request is refused rather than served free, and nothing was sent.",
+                    "type": "server_error",
+                    "param": "model",
+                    "code": "model_not_priceable",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "Nothing was charged for the request, and no provider answered it. Each code points at a different thing to go and look at. no_provider_configured covers the three gaps between things we own: no provider is configured, the catalog routes the model to a provider nobody set up, or the stored provider credential could not be opened. guardrail_injection_rule_unreadable means an injection rule governing this key holds a pattern the linear-time engine cannot evaluate, so the prompt could not be checked against it and the request was refused closed rather than sent ungoverned; the refusal names the guardrail and re-saving it republishes the rule. Both are ours rather than the request, so a retry once the fault is fixed will serve, which is why a model this platform cannot serve answers 404 instead. Sentence shape, carrying the request id. model_pricing_unreadable also covers platform requests whose published token rates name no charged revision; these are refused before a provider call or charge rather than billed at an untraceable anchor. model_pricing_unreadable also covers an unavailable or unverifiable catalog source-terms publication. This is a temporary platform failure, recorded as refused_platform_unavailable, with no provider call or charge; it is not a spelling error."
+          },
+          "504": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This request ran longer than the 540 second limit and was terminated. Reduce the amount of work in one call, or stream the response, and try again.",
+                    "type": "server_error",
+                    "param": null,
+                    "code": "request_deadline_exceeded",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The request passed the 540 second deadline. Nothing further is charged for it."
+          }
+        },
+        "x-mint": {
+          "href": "/api-reference/audio/create-translation"
+        }
+      }
     },
     "/v1/images/edits": {
-      "classification": "blocked",
-      "gate": "50.6",
-      "reason": "POST /v1/images/edits: Story 50.6's image and audio door, documented in the source spec under customerApiKey. It is live in production. fiveDoorsEnabled in services/control-plane/src/public/routes.ts reads FIVE_DOORS_ENABLED === 'true', and services/control-plane/wrangler.toml sets that flag to \"true\" under [env.production.vars] on main, so the path is served there and no longer answers the 404 endpoint_not_supported (SF-706). It stays blocked on this site only until a documentation pass publishes it: per-unit pricing, the multipart body and its 8 MiB cap, and the binary audio reply each need a page, and every example has to be transcribed from the handler. Recorded in the internal site's unresolved-findings.md as SF-398, SF-420 and SF-706."
+      "classification": "public",
+      "post": {
+        "operationId": "createImageEdit",
+        "summary": "Edit an image",
+        "description": "Edit an image with a text prompt. Send the source image in the multipart `image` field with `model` and `prompt`. It is priced like image generation: credit is held for `n` images at the dearest matching per-image rate and settled on the images returned. The multipart body shares the 8 MiB request cap every endpoint has, and a larger body is refused with 413 `payload_too_large` before it is read.",
+        "tags": [
+          "Images"
+        ],
+        "security": [
+          {
+            "customerApiKey": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "https://api.hopscotchlabs.ai",
+            "description": "Production"
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "example": {
+                "model": "openai/gpt-image-1",
+                "prompt": "Make the door blue.",
+                "n": 1
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-redirected-from": {
+                "description": "Present only when a sunset redirect served this request. The retiring model id requested, including a profile member redirected to its successor.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/retiring-model"
+                }
+              },
+              "x-hopscotch-served-model": {
+                "description": "The successor model that actually answered a sunset redirect, priced and admitted under that model. Present for JSON and streamed replies.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/successor-model"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "created": 1756080000,
+                  "data": [
+                    {
+                      "b64_json": "BASE64_IMAGE_DATA"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "The provider's image list, relayed unchanged apart from platform headers. The charge is the number of images returned at the model's per-image rate, never above the hold sized from the request's n."
+          },
+          "400": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "You must provide a model parameter naming the model to call. It is read to work out what the request could cost before it is sent.",
+                    "type": "invalid_request_error",
+                    "param": "model",
+                    "code": null,
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The request cannot be served as sent, including a missing model or a body the provider rejects. A refusal the PROVIDER made about this request is relayed with the provider's own status and its own sentence, quoted after the provider's name, so a parameter it requires and did not get reads as what it is rather than as a fault on this platform."
+          },
+          "401": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Incorrect API key provided.",
+                    "type": "authentication_error",
+                    "param": null,
+                    "code": "invalid_api_key",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "No API key, a non-Bearer scheme, a malformed key, or a key this platform rejects."
+          },
+          "402": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This account has $0.54 available and the request needs $0.55 held.",
+                    "type": "insufficient_quota",
+                    "param": null,
+                    "code": "insufficient_credit",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The account has insufficient credit for the estimated maximum cost. Nothing was sent to the provider. Three narrower ceilings refuse with the same status and their own codes, and each stops something smaller than the account: a key's own credit limit answers key_limit_exceeded and stops that key alone; a member's own monthly spend limit answers member_limit_exceeded and stops the one person the request is attributed to; a workspace's own monthly spend limit answers workspace_limit_exceeded and stops every member of that workspace, on every key that carries the projected ceiling and in the playground unconditionally. A request past more than one is told about the widest of them."
+          },
+          "403": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This organization excludes models with no provider content filter.",
+                    "type": "permission_error",
+                    "param": null,
+                    "code": "unfiltered_model_not_permitted"
+                  }
+                }
+              }
+            },
+            "description": "Refused for a setting the caller owns rather than anything about the model, and the code names which: guardrail_not_permitted (the key's guardrail excludes the model or its provider), no_region_eligible_provider (the guardrail's region rule excludes the provider), no_zdr_eligible_provider (a data-handling requirement, zero data retention or no training, that no provider serving the model meets) or route_key_unavailable (the route runs on the workspace's own key and the workspace holds none for that provider). For a routing profile slug the message names the SLUG and no member; the per-member reasons, ours included, are in the log line each skipped member writes. Sentence shape, carrying the request id. A key whose account staff have suspended refuses 403 with code account_suspended and a message saying so, before any rate limit, credit hold or provider is touched; the usage record carries refused_not_permitted and names the account (Story 6.13). A key lacking inference.run receives 403 with code capability_denied before size checks, reservations, or provider calls. With the unfiltered-model policy enabled, unfiltered_model_not_permitted means organization exclusion or missing consent for automatic/default selection; the request is refused before reservation or provider dispatch."
+          },
+          "404": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "The model \"MODEL_ID\" does not exist. Check the spelling, or list the models this key can call with GET /v1/models.",
+                    "type": "not_found_error",
+                    "param": null,
+                    "code": "model_not_found",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The model cannot be served, and the two cases are told apart by code. model_not_found means the slug is in no catalog document at all, which is what a typo produces; model_not_available means the slug IS cataloged and this platform is not serving it right now, on this endpoint family or at all. No provider was called either way. Since 2026-09-06 the model_not_available SENTENCE says why, where the platform's serve verdict recorded a reason: a model the provider has RETIRED says so and says that retrying will not reach it, since it is gone rather than unwell; a model the account this platform holds at that provider cannot reach says that instead, and that nothing about the request is wrong. Neither names a replacement model unless the provider named one itself. The status and the code are unchanged for all three, so a client branching on either keeps working. Sentence shape, carrying the request id. A third case reaches this status from further away: the provider answering 404 for a model this catalog publishes. That one carries the provider's own sentence, quoted after the provider's name, and it means the catalog and the provider disagree about what is served."
+          },
+          "409": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "description": "The workflow named by x-hopscotch-workflow-id is archived and takes no new requests. Checked before any hold or provider call."
+          },
+          "413": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                    "type": "invalid_request_error",
+                    "param": null,
+                    "code": "payload_too_large",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The upload is larger than the 8388608 byte maximum this API accepts for a multipart/form-data body, so it was refused at the door: code is payload_too_large. Nothing was parsed, no hold was taken, no provider was called and nothing was charged. Sentence shape, carrying the request id."
+          },
+          "429": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Rate limit reached for this key. Try again in 12 seconds. Request id REQUEST_ID.",
+                    "type": "rate_limit_error",
+                    "param": null,
+                    "code": "rate_limit_exceeded",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "rate_limit_exceeded also covers the key's own throughput allowance: the response names the exhausted unit in the error and x-uniblock-ratelimit-unit, with Retry-After and the metered allowance header triples. A metered token unit already over its ceiling refuses even when the request has no token estimate or max_tokens. Late settlement counts in the reservation's original allowance window. Two different refusals share this status, and the code tells them apart. spend_rate_exceeded is ours: the account is over the spend rate cap for the window and nothing was sent to the provider. upstream_rate_limited is the provider's: it refused the call on the credential this request ran on, and nothing is charged for it. On a platform credential, the message names the rate limit and says nothing was charged. Retry-After carries whole seconds on both refusals. spend_rate_exceeded's is the wait until the window has no counted reservation left, computed from the earliest reservation counted so the header agrees with the English sentence in the body, and clamped to a whole second at least 1. upstream_rate_limited's is the provider's own figure clamped to between 1 and 60 where it sent one, and 5 where it sent none."
+          },
+          "500": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "The server had an error while processing your request. Sorry about that! Quote the request id if you contact support.",
+                    "type": "api_error",
+                    "param": null,
+                    "code": null,
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "An unexpected failure inside the control plane. The request id on the response is the search term for it."
+          },
+          "503": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "No price per image is published for an image at 1024x1024 on \"openai/gpt-image-1\", so what this request could cost is unknown and no credit can be held for it. The request is refused rather than served free, and nothing was sent.",
+                    "type": "server_error",
+                    "param": "model",
+                    "code": "model_not_priceable",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "Nothing was charged for the request, and no provider answered it. Each code points at a different thing to go and look at. no_provider_configured covers the three gaps between things we own: no provider is configured, the catalog routes the model to a provider nobody set up, or the stored provider credential could not be opened. guardrail_injection_rule_unreadable means an injection rule governing this key holds a pattern the linear-time engine cannot evaluate, so the prompt could not be checked against it and the request was refused closed rather than sent ungoverned; the refusal names the guardrail and re-saving it republishes the rule. Both are ours rather than the request, so a retry once the fault is fixed will serve, which is why a model this platform cannot serve answers 404 instead. Sentence shape, carrying the request id. model_pricing_unreadable also covers platform requests whose published token rates name no charged revision; these are refused before a provider call or charge rather than billed at an untraceable anchor. model_pricing_unreadable also covers an unavailable or unverifiable catalog source-terms publication. This is a temporary platform failure, recorded as refused_platform_unavailable, with no provider call or charge; it is not a spelling error."
+          },
+          "504": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This request ran longer than the 540 second limit and was terminated. Reduce the amount of work in one call, or stream the response, and try again.",
+                    "type": "server_error",
+                    "param": null,
+                    "code": "request_deadline_exceeded",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The request passed the 540 second deadline. Nothing further is charged for it."
+          }
+        },
+        "x-mint": {
+          "href": "/api-reference/images/edit-image"
+        }
+      }
     },
     "/v1/images/generations": {
-      "classification": "blocked",
-      "gate": "50.6",
-      "reason": "POST /v1/images/generations: Story 50.6's image and audio door, documented in the source spec under customerApiKey. It is live in production. fiveDoorsEnabled in services/control-plane/src/public/routes.ts reads FIVE_DOORS_ENABLED === 'true', and services/control-plane/wrangler.toml sets that flag to \"true\" under [env.production.vars] on main, so the path is served there and no longer answers the 404 endpoint_not_supported (SF-706). It stays blocked on this site only until a documentation pass publishes it: per-unit pricing, the multipart body and its 8 MiB cap, and the binary audio reply each need a page, and every example has to be transcribed from the handler. Recorded in the internal site's unresolved-findings.md as SF-398, SF-420 and SF-706."
+      "classification": "public",
+      "post": {
+        "operationId": "createImageGeneration",
+        "summary": "Create images",
+        "description": "Generate images from a text prompt. Credit is held before the call for `n` images at the dearest rate the model publishes for the `size` and `quality` you ask for, and settled on the number of images the provider returns, never above that hold. A model with no published per-image rate for the request is refused with 503 `model_not_priceable` before anything is sent. An invalid `n`, `size` or `quality` is refused with 400 naming the field.",
+        "tags": [
+          "Images"
+        ],
+        "security": [
+          {
+            "customerApiKey": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "https://api.hopscotchlabs.ai",
+            "description": "Production"
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "model": "openai/gpt-image-1",
+                "prompt": "A red door in a white wall.",
+                "n": 1,
+                "size": "1024x1024"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-redirected-from": {
+                "description": "Present only when a sunset redirect served this request. The retiring model id requested, including a profile member redirected to its successor.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/retiring-model"
+                }
+              },
+              "x-hopscotch-served-model": {
+                "description": "The successor model that actually answered a sunset redirect, priced and admitted under that model. Present for JSON and streamed replies.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/successor-model"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "created": 1756080000,
+                  "data": [
+                    {
+                      "b64_json": "BASE64_IMAGE_DATA"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "The provider's image list, relayed unchanged apart from platform headers. The charge is the number of images returned at the model's per-image rate, never above the hold sized from the request's n."
+          },
+          "400": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "You must provide a model parameter naming the model to call. It is read to work out what the request could cost before it is sent.",
+                    "type": "invalid_request_error",
+                    "param": "model",
+                    "code": null,
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The request cannot be served as sent, including a missing model or a body the provider rejects. A refusal the PROVIDER made about this request is relayed with the provider's own status and its own sentence, quoted after the provider's name, so a parameter it requires and did not get reads as what it is rather than as a fault on this platform. A verified pixel-count limit relayed inside a provider failure is returned as 400 with its numeric limit and no provider identity, and any other relayed vendor invalid-parameter refusal is returned as 400 with a fixed provider-free message."
+          },
+          "401": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Incorrect API key provided.",
+                    "type": "authentication_error",
+                    "param": null,
+                    "code": "invalid_api_key",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "No API key, a non-Bearer scheme, a malformed key, or a key this platform rejects."
+          },
+          "402": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This account has $0.54 available and the request needs $0.55 held.",
+                    "type": "insufficient_quota",
+                    "param": null,
+                    "code": "insufficient_credit",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The account has insufficient credit for the estimated maximum cost. Nothing was sent to the provider. Three narrower ceilings refuse with the same status and their own codes, and each stops something smaller than the account: a key's own credit limit answers key_limit_exceeded and stops that key alone; a member's own monthly spend limit answers member_limit_exceeded and stops the one person the request is attributed to; a workspace's own monthly spend limit answers workspace_limit_exceeded and stops every member of that workspace, on every key that carries the projected ceiling and in the playground unconditionally. A request past more than one is told about the widest of them."
+          },
+          "403": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This organization excludes models with no provider content filter.",
+                    "type": "permission_error",
+                    "param": null,
+                    "code": "unfiltered_model_not_permitted"
+                  }
+                }
+              }
+            },
+            "description": "Refused for a setting the caller owns rather than anything about the model, and the code names which: guardrail_not_permitted (the key's guardrail excludes the model or its provider), no_region_eligible_provider (the guardrail's region rule excludes the provider), no_zdr_eligible_provider (a data-handling requirement, zero data retention or no training, that no provider serving the model meets) or route_key_unavailable (the route runs on the workspace's own key and the workspace holds none for that provider). For a routing profile slug the message names the SLUG and no member; the per-member reasons, ours included, are in the log line each skipped member writes. Sentence shape, carrying the request id. A key whose account staff have suspended refuses 403 with code account_suspended and a message saying so, before any rate limit, credit hold or provider is touched; the usage record carries refused_not_permitted and names the account (Story 6.13). A key lacking inference.run receives 403 with code capability_denied before size checks, reservations, or provider calls. With the unfiltered-model policy enabled, unfiltered_model_not_permitted means organization exclusion or missing consent for automatic/default selection; the request is refused before reservation or provider dispatch."
+          },
+          "404": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "The model \"MODEL_ID\" does not exist. Check the spelling, or list the models this key can call with GET /v1/models.",
+                    "type": "not_found_error",
+                    "param": null,
+                    "code": "model_not_found",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The model cannot be served, and the two cases are told apart by code. model_not_found means the slug is in no catalog document at all, which is what a typo produces; model_not_available means the slug IS cataloged and this platform is not serving it right now, on this endpoint family or at all. No provider was called either way. Since 2026-09-06 the model_not_available SENTENCE says why, where the platform's serve verdict recorded a reason: a model the provider has RETIRED says so and says that retrying will not reach it, since it is gone rather than unwell; a model the account this platform holds at that provider cannot reach says that instead, and that nothing about the request is wrong. Neither names a replacement model unless the provider named one itself. The status and the code are unchanged for all three, so a client branching on either keeps working. Sentence shape, carrying the request id. A third case reaches this status from further away: the provider answering 404 for a model this catalog publishes. That one carries the provider's own sentence, quoted after the provider's name, and it means the catalog and the provider disagree about what is served."
+          },
+          "409": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "description": "The workflow named by x-hopscotch-workflow-id is archived and takes no new requests. Checked before any hold or provider call."
+          },
+          "413": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                    "type": "invalid_request_error",
+                    "param": null,
+                    "code": "payload_too_large",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The request body is larger than the 8388608 byte maximum this API accepts, so it was refused at the door: code is payload_too_large. A body that declares its length is refused without a byte being read; one that declares none is read only as far as the ceiling and then abandoned. Nothing was parsed, no hold was taken, no provider was called and nothing was charged. Eight mebibytes is about double a full one-million-token prompt at ordinary prose density, so it sits above a maximum-context request on every model this platform sells today. Sentence shape, carrying the request id."
+          },
+          "429": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Rate limit reached for this key. Try again in 12 seconds. Request id REQUEST_ID.",
+                    "type": "rate_limit_error",
+                    "param": null,
+                    "code": "rate_limit_exceeded",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "rate_limit_exceeded also covers the key's own throughput allowance: the response names the exhausted unit in the error and x-uniblock-ratelimit-unit, with Retry-After and the metered allowance header triples. A metered token unit already over its ceiling refuses even when the request has no token estimate or max_tokens. Late settlement counts in the reservation's original allowance window. Two different refusals share this status, and the code tells them apart. spend_rate_exceeded is ours: the account is over the spend rate cap for the window and nothing was sent to the provider. upstream_rate_limited is the provider's: it refused the call on the credential this request ran on, and nothing is charged for it. On a platform credential, the message names the rate limit and says nothing was charged. Retry-After carries whole seconds on both refusals. spend_rate_exceeded's is the wait until the window has no counted reservation left, computed from the earliest reservation counted so the header agrees with the English sentence in the body, and clamped to a whole second at least 1. upstream_rate_limited's is the provider's own figure clamped to between 1 and 60 where it sent one, and 5 where it sent none."
+          },
+          "500": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "The server had an error while processing your request. Sorry about that! Quote the request id if you contact support.",
+                    "type": "api_error",
+                    "param": null,
+                    "code": null,
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "An unexpected failure inside the control plane. The request id on the response is the search term for it."
+          },
+          "503": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "No price per image is published for an image at 1024x1024 on \"openai/gpt-image-1\", so what this request could cost is unknown and no credit can be held for it. The request is refused rather than served free, and nothing was sent.",
+                    "type": "server_error",
+                    "param": "model",
+                    "code": "model_not_priceable",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "Nothing was charged for the request, and no provider answered it. Each code points at a different thing to go and look at. no_provider_configured covers the three gaps between things we own: no provider is configured, the catalog routes the model to a provider nobody set up, or the stored provider credential could not be opened. guardrail_injection_rule_unreadable means an injection rule governing this key holds a pattern the linear-time engine cannot evaluate, so the prompt could not be checked against it and the request was refused closed rather than sent ungoverned; the refusal names the guardrail and re-saving it republishes the rule. Both are ours rather than the request, so a retry once the fault is fixed will serve, which is why a model this platform cannot serve answers 404 instead. Sentence shape, carrying the request id. model_pricing_unreadable also covers platform requests whose published token rates name no charged revision; these are refused before a provider call or charge rather than billed at an untraceable anchor. model_pricing_unreadable also covers an unavailable or unverifiable catalog source-terms publication. This is a temporary platform failure, recorded as refused_platform_unavailable, with no provider call or charge; it is not a spelling error."
+          },
+          "504": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This request ran longer than the 540 second limit and was terminated. Reduce the amount of work in one call, or stream the response, and try again.",
+                    "type": "server_error",
+                    "param": null,
+                    "code": "request_deadline_exceeded",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The request passed the 540 second deadline. Nothing further is charged for it."
+          }
+        },
+        "x-mint": {
+          "href": "/api-reference/images/generate-images"
+        }
+      }
     },
     "/v1/videos": {
-      "classification": "blocked",
-      "gate": "71.6",
-      "reason": "POST /v1/videos: Story 71.6's video door (OpenAI Sora shape), documented in the source spec under customerApiKey. It is live in production. videoDoorsEnabled in services/control-plane/src/public/routes.ts reads VIDEO_DOORS_ENABLED === 'true', and services/control-plane/wrangler.toml sets that flag to \"true\" under [env.production.vars] on main, so the path is served there and no longer answers the 404 endpoint_not_supported (SF-706). It stays blocked on this site only until a documentation pass publishes it: the per-second hold sized from `seconds` and `size`, the three-hour full-hold expiry, the rule that a follow-up answers only the account that created the job, and the binary content stream each need a page, and every example has to be transcribed from services/control-plane/src/video/doors.ts. Recorded in the internal site's unresolved-findings.md as SF-419, SF-428 and SF-706."
+      "classification": "public",
+      "post": {
+        "operationId": "createVideo",
+        "summary": "Create a video",
+        "description": "Start a video generation job. The create answers with the provider's job object, which carries the job `id` and `status`. Poll `GET /v1/videos/{id}` until `status` is `completed`, then download the bytes from `GET /v1/videos/{id}/content`. Credit is held for `seconds` at the per-second rate for the `size` you ask for, and settled on the seconds delivered when the job reaches a final state. A job still open three hours after it was created is treated as expired and charged its full hold. Only the account that created a job can read it.",
+        "tags": [
+          "Videos"
+        ],
+        "security": [
+          {
+            "customerApiKey": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "https://api.hopscotchlabs.ai",
+            "description": "Production"
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "model": "openai/sora-2",
+                "prompt": "A paper boat drifting down a rainy street.",
+                "seconds": "8",
+                "size": "1280x720"
+              }
+            },
+            "multipart/form-data": {
+              "example": {
+                "model": "openai/sora-2",
+                "prompt": "A paper boat drifting down a rainy street.",
+                "seconds": "8",
+                "size": "1280x720"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-hopscotch-redirected-from": {
+                "description": "Present only when a sunset redirect served this request. The retiring model id requested, including a profile member redirected to its successor.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/retiring-model"
+                }
+              },
+              "x-hopscotch-served-model": {
+                "description": "The successor model that actually answered a sunset redirect, priced and admitted under that model. Present for JSON and streamed replies.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/successor-model"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "id": "video_EXAMPLE",
+                  "object": "video",
+                  "model": "openai/sora-2",
+                  "status": "queued",
+                  "progress": 0,
+                  "created_at": 1756080000,
+                  "seconds": "8",
+                  "size": "1280x720"
+                }
+              }
+            },
+            "description": "The provider's video job object (id, status, progress), with external URLs omitted. A recorded job is charged when a terminal status is observed. If the provider returns no readable job id or an id already recorded for that provider, the full hold is charged immediately and usage is recorded under this create request's unique request id."
+          },
+          "400": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "You must provide a model parameter naming the model to call. It is read to work out what the request could cost before it is sent.",
+                    "type": "invalid_request_error",
+                    "param": "model",
+                    "code": null,
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The request cannot be served as sent, including a missing model or a body the provider rejects. A refusal the PROVIDER made about this request is relayed with the provider's own status and its own sentence, quoted after the provider's name, so a parameter it requires and did not get reads as what it is rather than as a fault on this platform."
+          },
+          "401": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Incorrect API key provided.",
+                    "type": "authentication_error",
+                    "param": null,
+                    "code": "invalid_api_key",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "No API key, a non-Bearer scheme, a malformed key, or a key this platform rejects."
+          },
+          "402": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This account has $0.54 available and the request needs $0.55 held.",
+                    "type": "insufficient_quota",
+                    "param": null,
+                    "code": "insufficient_credit",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The account has insufficient credit for the estimated maximum cost. Nothing was sent to the provider. Three narrower ceilings refuse with the same status and their own codes, and each stops something smaller than the account: a key's own credit limit answers key_limit_exceeded and stops that key alone; a member's own monthly spend limit answers member_limit_exceeded and stops the one person the request is attributed to; a workspace's own monthly spend limit answers workspace_limit_exceeded and stops every member of that workspace, on every key that carries the projected ceiling and in the playground unconditionally. A request past more than one is told about the widest of them."
+          },
+          "403": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This organization excludes models with no provider content filter.",
+                    "type": "permission_error",
+                    "param": null,
+                    "code": "unfiltered_model_not_permitted"
+                  }
+                }
+              }
+            },
+            "description": "Refused for a setting the caller owns rather than anything about the model, and the code names which: guardrail_not_permitted (the key's guardrail excludes the model or its provider), no_region_eligible_provider (the guardrail's region rule excludes the provider), no_zdr_eligible_provider (a data-handling requirement, zero data retention or no training, that no provider serving the model meets) or route_key_unavailable (the route runs on the workspace's own key and the workspace holds none for that provider). For a routing profile slug the message names the SLUG and no member; the per-member reasons, ours included, are in the log line each skipped member writes. Sentence shape, carrying the request id. A key whose account staff have suspended refuses 403 with code account_suspended and a message saying so, before any rate limit, credit hold or provider is touched; the usage record carries refused_not_permitted and names the account (Story 6.13). A key lacking inference.run receives 403 with code capability_denied before size checks, reservations, or provider calls. With the unfiltered-model policy enabled, unfiltered_model_not_permitted means organization exclusion or missing consent for automatic/default selection; the request is refused before reservation or provider dispatch."
+          },
+          "404": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "The model \"MODEL_ID\" does not exist. Check the spelling, or list the models this key can call with GET /v1/models.",
+                    "type": "not_found_error",
+                    "param": null,
+                    "code": "model_not_found",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The model cannot be served, and the two cases are told apart by code. model_not_found means the slug is in no catalog document at all, which is what a typo produces; model_not_available means the slug IS cataloged and this platform is not serving it right now, on this endpoint family or at all. No provider was called either way. Since 2026-09-06 the model_not_available SENTENCE says why, where the platform's serve verdict recorded a reason: a model the provider has RETIRED says so and says that retrying will not reach it, since it is gone rather than unwell; a model the account this platform holds at that provider cannot reach says that instead, and that nothing about the request is wrong. Neither names a replacement model unless the provider named one itself. The status and the code are unchanged for all three, so a client branching on either keeps working. Sentence shape, carrying the request id. A third case reaches this status from further away: the provider answering 404 for a model this catalog publishes. That one carries the provider's own sentence, quoted after the provider's name, and it means the catalog and the provider disagree about what is served."
+          },
+          "409": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "description": "The workflow named by x-hopscotch-workflow-id is archived and takes no new requests. Checked before any hold or provider call."
+          },
+          "413": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                    "type": "invalid_request_error",
+                    "param": null,
+                    "code": "payload_too_large",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The body is above the 8 MiB (8388608 bytes) cap. Nothing was held and nothing was sent."
+          },
+          "429": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Rate limit reached for this key. Try again in 12 seconds. Request id REQUEST_ID.",
+                    "type": "rate_limit_error",
+                    "param": null,
+                    "code": "rate_limit_exceeded",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "rate_limit_exceeded also covers the key's own throughput allowance: the response names the exhausted unit in the error and x-uniblock-ratelimit-unit, with Retry-After and the metered allowance header triples. A metered token unit already over its ceiling refuses even when the request has no token estimate or max_tokens. Late settlement counts in the reservation's original allowance window. Two different refusals share this status, and the code tells them apart. spend_rate_exceeded is ours: the account is over the spend rate cap for the window and nothing was sent to the provider. upstream_rate_limited is the provider's: it refused the call on the credential this request ran on, and nothing is charged for it. On a platform credential, the message names the rate limit and says nothing was charged. Retry-After carries whole seconds on both refusals. spend_rate_exceeded's is the wait until the window has no counted reservation left, computed from the earliest reservation counted so the header agrees with the English sentence in the body, and clamped to a whole second at least 1. upstream_rate_limited's is the provider's own figure clamped to between 1 and 60 where it sent one, and 5 where it sent none."
+          },
+          "500": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "The server had an error while processing your request. Sorry about that! Quote the request id if you contact support.",
+                    "type": "api_error",
+                    "param": null,
+                    "code": null,
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "An unexpected failure inside the control plane. The request id on the response is the search term for it."
+          },
+          "503": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "No price per second is published for video at size \"1280x720\" on \"openai/sora-2\", so what this request could cost is unknown and no credit can be held for it. The request is refused rather than served free, and nothing was sent.",
+                    "type": "server_error",
+                    "param": "model",
+                    "code": "model_not_priceable",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "Nothing was charged for the request, and no provider answered it. Each code points at a different thing to go and look at. no_provider_configured covers the three gaps between things we own: no provider is configured, the catalog routes the model to a provider nobody set up, or the stored provider credential could not be opened. guardrail_injection_rule_unreadable means an injection rule governing this key holds a pattern the linear-time engine cannot evaluate, so the prompt could not be checked against it and the request was refused closed rather than sent ungoverned; the refusal names the guardrail and re-saving it republishes the rule. Both are ours rather than the request, so a retry once the fault is fixed will serve, which is why a model this platform cannot serve answers 404 instead. Sentence shape, carrying the request id. model_pricing_unreadable also covers platform requests whose published token rates name no charged revision; these are refused before a provider call or charge rather than billed at an untraceable anchor. model_pricing_unreadable also covers an unavailable or unverifiable catalog source-terms publication. This is a temporary platform failure, recorded as refused_platform_unavailable, with no provider call or charge; it is not a spelling error."
+          },
+          "504": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This request ran longer than the 540 second limit and was terminated. Reduce the amount of work in one call, or stream the response, and try again.",
+                    "type": "server_error",
+                    "param": null,
+                    "code": "request_deadline_exceeded",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "The request passed the 540 second deadline. Nothing further is charged for it."
+          }
+        },
+        "x-mint": {
+          "href": "/api-reference/videos/create-video"
+        }
+      }
     },
     "/v1/videos/{id}": {
-      "classification": "blocked",
-      "gate": "71.6",
-      "reason": "GET and DELETE /v1/videos/{id}: Story 71.6's video door (OpenAI Sora shape), documented in the source spec under customerApiKey. It is live in production. videoDoorsEnabled in services/control-plane/src/public/routes.ts reads VIDEO_DOORS_ENABLED === 'true', and services/control-plane/wrangler.toml sets that flag to \"true\" under [env.production.vars] on main, so the path is served there and no longer answers the 404 endpoint_not_supported (SF-706). It stays blocked on this site only until a documentation pass publishes it: the per-second hold sized from `seconds` and `size`, the three-hour full-hold expiry, the rule that a follow-up answers only the account that created the job, and the binary content stream each need a page, and every example has to be transcribed from services/control-plane/src/video/doors.ts. Recorded in the internal site's unresolved-findings.md as SF-419, SF-428 and SF-706."
+      "classification": "public",
+      "get": {
+        "operationId": "retrieveVideo",
+        "summary": "Retrieve a video job",
+        "description": "Read a video job you created. It returns the provider's current job object, with its `status` and `progress`, and with external URLs removed. A terminal status seen here settles the job's charge once. Reading writes no usage row and charges nothing. Only the account that created the job can read it: any other key, and an id that never existed, get the same 404.",
+        "tags": [
+          "Videos"
+        ],
+        "security": [
+          {
+            "customerApiKey": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "https://api.hopscotchlabs.ai",
+            "description": "Production"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The video job id the create answered, such as \"video_123\".",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "example": {
+                  "id": "video_EXAMPLE",
+                  "object": "video",
+                  "model": "openai/sora-2",
+                  "status": "in_progress",
+                  "progress": 45,
+                  "created_at": 1756080000,
+                  "seconds": "8",
+                  "size": "1280x720"
+                }
+              }
+            },
+            "description": "The provider's video job object with external URLs omitted and its model field rewritten to the public id the create returned (provider/model). Download completed content through GET /v1/videos/{id}/content."
+          },
+          "401": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Incorrect API key provided.",
+                    "type": "authentication_error",
+                    "param": null,
+                    "code": "invalid_api_key",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "No API key, a non-Bearer scheme, a malformed key, or a key this platform rejects."
+          },
+          "404": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "No video \"video_EXAMPLE\" is visible to this key. A video made by another account and an id that never existed answer identically.",
+                    "type": "invalid_request_error",
+                    "param": "video_id",
+                    "code": "video_not_found",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "video_not_found: no job with this id was created by this account. A job another account created and an id that never existed answer identically, and the provider is not called."
+          },
+          "429": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Rate limit reached for this key. Try again in 12 seconds. Request id REQUEST_ID.",
+                    "type": "rate_limit_error",
+                    "param": null,
+                    "code": "rate_limit_exceeded",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "rate_limit_exceeded also covers the key's own throughput allowance: the response names the exhausted unit in the error and x-uniblock-ratelimit-unit, with Retry-After and the metered allowance header triples. A metered token unit already over its ceiling refuses even when the request has no token estimate or max_tokens. Late settlement counts in the reservation's original allowance window. Two different refusals share this status, and the code tells them apart. spend_rate_exceeded is ours: the account is over the spend rate cap for the window and nothing was sent to the provider. upstream_rate_limited is the provider's: it refused the call on the credential this request ran on, and nothing is charged for it. On a platform credential, the message names the rate limit and says nothing was charged. Retry-After carries whole seconds on both refusals. spend_rate_exceeded's is the wait until the window has no counted reservation left, computed from the earliest reservation counted so the header agrees with the English sentence in the body, and clamped to a whole second at least 1. upstream_rate_limited's is the provider's own figure clamped to between 1 and 60 where it sent one, and 5 where it sent none."
+          },
+          "502": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "provider_unavailable": {
+                    "summary": "The provider holding the job could not be reached",
+                    "value": {
+                      "error": {
+                        "message": "The provider that holds this video could not be reached. Nothing was charged; try again shortly.",
+                        "type": "api_error",
+                        "param": null,
+                        "code": "provider_unavailable",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "invalid_provider_response": {
+                    "summary": "The provider's reply could not be read",
+                    "value": {
+                      "error": {
+                        "message": "The video response could not be read.",
+                        "type": "api_error",
+                        "param": null,
+                        "code": "invalid_provider_response",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "description": "provider_unavailable: the provider holding the job could not be reached. Nothing was charged."
+          }
+        },
+        "x-mint": {
+          "href": "/api-reference/videos/retrieve-video"
+        }
+      }
     },
     "/v1/videos/{id}/content": {
-      "classification": "blocked",
-      "gate": "71.6",
-      "reason": "GET /v1/videos/{id}/content: Story 71.6's video door (OpenAI Sora shape), documented in the source spec under customerApiKey. It is live in production. videoDoorsEnabled in services/control-plane/src/public/routes.ts reads VIDEO_DOORS_ENABLED === 'true', and services/control-plane/wrangler.toml sets that flag to \"true\" under [env.production.vars] on main, so the path is served there and no longer answers the 404 endpoint_not_supported (SF-706). It stays blocked on this site only until a documentation pass publishes it: the per-second hold sized from `seconds` and `size`, the three-hour full-hold expiry, the rule that a follow-up answers only the account that created the job, and the binary content stream each need a page, and every example has to be transcribed from services/control-plane/src/video/doors.ts. Recorded in the internal site's unresolved-findings.md as SF-419, SF-428 and SF-706."
+      "classification": "public",
+      "get": {
+        "operationId": "retrieveVideoContent",
+        "summary": "Download video content",
+        "description": "Download the bytes of a completed video. It is answered with 409 `video_not_completed` while the job has not completed. Only the account that created the job can download it. The reply is the video itself, and its content type is the one the provider sent. Any query string is forwarded to the provider unchanged.",
+        "tags": [
+          "Videos"
+        ],
+        "security": [
+          {
+            "customerApiKey": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "https://api.hopscotchlabs.ai",
+            "description": "Production"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The video job id the create answered, such as \"video_123\".",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The video (or the requested variant) bytes, streamed from the provider.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "video/mp4": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Incorrect API key provided.",
+                    "type": "authentication_error",
+                    "param": null,
+                    "code": "invalid_api_key",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "No API key, a non-Bearer scheme, a malformed key, or a key this platform rejects."
+          },
+          "404": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "No video \"video_EXAMPLE\" is visible to this key. A video made by another account and an id that never existed answer identically.",
+                    "type": "invalid_request_error",
+                    "param": "video_id",
+                    "code": "video_not_found",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "video_not_found: no job with this id was created by this account. A job another account created and an id that never existed answer identically, and the provider is not called."
+          },
+          "409": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Video \"video_EXAMPLE\" has no content: the provider reports it in_progress, and content is served only for a completed video.",
+                    "type": "invalid_request_error",
+                    "param": "video_id",
+                    "code": "video_not_completed",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "video_not_completed: the provider does not report the job completed, so there are no bytes to serve."
+          },
+          "429": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Rate limit reached for this key. Try again in 12 seconds. Request id REQUEST_ID.",
+                    "type": "rate_limit_error",
+                    "param": null,
+                    "code": "rate_limit_exceeded",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "rate_limit_exceeded also covers the key's own throughput allowance: the response names the exhausted unit in the error and x-uniblock-ratelimit-unit, with Retry-After and the metered allowance header triples. A metered token unit already over its ceiling refuses even when the request has no token estimate or max_tokens. Late settlement counts in the reservation's original allowance window. Two different refusals share this status, and the code tells them apart. spend_rate_exceeded is ours: the account is over the spend rate cap for the window and nothing was sent to the provider. upstream_rate_limited is the provider's: it refused the call on the credential this request ran on, and nothing is charged for it. On a platform credential, the message names the rate limit and says nothing was charged. Retry-After carries whole seconds on both refusals. spend_rate_exceeded's is the wait until the window has no counted reservation left, computed from the earliest reservation counted so the header agrees with the English sentence in the body, and clamped to a whole second at least 1. upstream_rate_limited's is the provider's own figure clamped to between 1 and 60 where it sent one, and 5 where it sent none."
+          },
+          "502": {
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "The provider that holds this video could not be reached. Nothing was charged; try again shortly.",
+                    "type": "api_error",
+                    "param": null,
+                    "code": "provider_unavailable",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            },
+            "description": "provider_unavailable: the provider holding the job could not be reached. Nothing was charged."
+          }
+        },
+        "x-mint": {
+          "href": "/api-reference/videos/download-video-content"
+        }
+      }
     },
     "/v1/organization/workload-insights/summary": {
       "classification": "blocked",
@@ -4275,6 +6524,18 @@
     {
       "name": "Usage",
       "description": "What one request recorded and what it cost."
+    },
+    {
+      "name": "Images",
+      "description": "Image generation and editing."
+    },
+    {
+      "name": "Audio",
+      "description": "Speech, transcription and translation."
+    },
+    {
+      "name": "Videos",
+      "description": "Video jobs: create, read and download."
     }
   ],
   "exampleVerification": {
@@ -4390,6 +6651,56 @@
         "example": "GET /v1/usage/{id} 400 missing_required_parameter, 404 request_not_found, 405, 429, and 401/403/500",
         "shapeFrom": "The api.get(\"/usage/*\") handler in services/control-plane/src/apiApp.ts; services/control-plane/src/public/routes.ts for the 405.",
         "note": "The 400 and 404 sentences are transcribed verbatim, with the id substituted. Whether the 400 is reachable through the route boundary is not established. Needs a live transcript per status."
+      },
+      {
+        "example": "POST /v1/images/generations and POST /v1/images/edits 200",
+        "shapeFrom": "Request examples: services/control-plane/openapi.json at origin/main (requestBody example, generated from the door's handler). Reply: relayed from the provider unchanged per the spec text; the list shape is OpenAI's images shape, a shape choice not a handler literal.",
+        "note": "Needs a live transcript. The reply values are illustrative."
+      },
+      {
+        "example": "POST /v1/audio/speech 200",
+        "shapeFrom": "Binary reply, relayed from the provider per services/control-plane/openapi.json at origin/main. No body example is given because the reply is audio bytes.",
+        "note": "Needs a live transcript that records the content type the provider sends."
+      },
+      {
+        "example": "POST /v1/audio/transcriptions and POST /v1/audio/translations 200",
+        "shapeFrom": "Request examples: services/control-plane/openapi.json at origin/main. Reply: relayed from the provider per the spec; the text shape is OpenAI's transcription shape.",
+        "note": "Needs a live transcript. The text value is illustrative."
+      },
+      {
+        "example": "POST /v1/videos 200 and GET /v1/videos/{id} 200",
+        "shapeFrom": "services/control-plane/src/video/doors.ts (openVideoJob, the job id read and the public model rewrite) and services/control-plane/src/video/publicJob.ts (URLs and billed_tokens removed); request examples from services/control-plane/openapi.json at origin/main.",
+        "note": "Needs a live transcript. The job values are illustrative."
+      },
+      {
+        "example": "GET /v1/videos/{id}/content 200",
+        "shapeFrom": "services/control-plane/src/video/doors.ts (serveVideoFollowUp relays the provider's bytes and content type).",
+        "note": "Binary reply, no body example. Needs a live transcript of the content type."
+      },
+      {
+        "example": "POST media doors 402 insufficient_credit",
+        "shapeFrom": "services/control-plane/src/money/durableObjects/accountBalance/messages.ts (insufficientCreditMessage, dollar sentence). The dollar figures are illustrative.",
+        "note": "Needs a live transcript."
+      },
+      {
+        "example": "POST media doors 403 unfiltered_model_not_permitted",
+        "shapeFrom": "Example text from services/control-plane/openapi.json at origin/main. The message is built in services/control-plane/src/inference/modelRefusal.ts, so the literal is not in a single handler string.",
+        "note": "Needs a live transcript."
+      },
+      {
+        "example": "POST media doors 413 payload_too_large",
+        "shapeFrom": "services/control-plane/src/inference/requestBody.ts (PAYLOAD_TOO_LARGE_SENTENCE, MAX_INFERENCE_BODY_BYTES), transcribed verbatim.",
+        "note": "Message is verbatim; needs a live transcript that the multipart door answers it."
+      },
+      {
+        "example": "POST media doors 503 model_not_priceable",
+        "shapeFrom": "services/control-plane/src/money/flows/admission/unitHold.ts (dearest, no_unit_rate message) with the per-unit wording from services/control-plane/src/models/vocabulary.ts (RATE_UNIT_QUANTA). The model, size and what-phrase are illustrative.",
+        "note": "Needs a live transcript, which requires a model with no stored rate row. The template is transcribed; the values are not."
+      },
+      {
+        "example": "GET /v1/videos/{id} and GET /v1/videos/{id}/content 404, 409 and 502",
+        "shapeFrom": "services/control-plane/src/video/doors.ts (videoNotFound, the video_not_completed refusal, providerUnreachable, publicJobResponse), transcribed verbatim with the job id illustrative.",
+        "note": "Needs a live transcript per status."
       }
     ]
   }

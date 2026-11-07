@@ -279,8 +279,10 @@ function auditArtifact(artifact, report) {
         report.fail(where, 'does not require customerApiKey.');
       }
 
-      const body = operation.requestBody?.content?.['application/json'];
-      if (operation.requestBody && !hasExample(body)) {
+      // A multipart upload (images/edits, audio, videos) has no JSON media type,
+      // so any media type on the request body may carry the example.
+      const bodies = Object.values(operation.requestBody?.content ?? {});
+      if (operation.requestBody && !bodies.some(hasExample)) {
         report.fail(where, 'has a request body with no example. DOCS_PLAN.md section 8 requires one.');
       }
 
