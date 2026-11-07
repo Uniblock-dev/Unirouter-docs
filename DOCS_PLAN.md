@@ -45,7 +45,7 @@ Facts safe to state publicly, each with its source of truth:
 | Dashboard URL | `https://app.hopscotchlabs.ai` | `SRC/_bmad-output/product/epics.md` (production origin) |
 | API auth | `Authorization: Bearer <key>` | `SRC/services/control-plane/src/middleware/customerAuth.ts` |
 | Key format | `ub_live_` + 43 base64url chars (env prefixes `ub_dev_`, `ub_stg_`, `ub_live_`) | `SRC/services/control-plane/src/keys/format.ts`; decision `1-7-key-format-and-accountability.md` |
-| Keys per workspace | up to 5, shown once, hashed at rest, last four retained | PRD FR-11, FR-13 |
+| Keys per workspace | up to 500, shown once, hashed at rest, last four retained | PRD FR-11, FR-13 |
 | Error envelope | OpenAI shape, one top-level `error` with exactly `message`, `type`, `param`, `code`, `request_id`; `type` closed set of 8 | AD-9; `SRC/services/control-plane/src/errors/openai.ts` |
 | Usage on the wire | `x-uniblock-usage` header (non-streamed) / `:x-uniblock-usage {...}` SSE comment before `data: [DONE]` (streamed) | AD-14; `SRC/services/gateway/src/uniblockUsage.ts`; `src/usage/emitter.ts` |
 | Fee model | The fee is added at credit purchase and is currently 0% (the opening promotion), so buying 100 credits charges 100.00 and grants 100; a served request deducts provider cost at face value, no markup; rate fixed at checkout-session creation | Decisions `the-platform-fee-is-taken-at-purchase.md`, `the-checkout-session-fixes-the-fee-rate.md`; FR-15, FR-18 |
@@ -285,7 +285,7 @@ differently, §5 wins.
 - Acceptance: never mentions Portkey, the fork, or the gateway service; the supported-endpoint list matches the shipped control-plane `/v1` surface on the day of publication, not the gateway's internal route table; the not-supported behavior is verified by an actual request, not assumed.
 
 **`get-started/authentication.mdx`** · WRITE-NOW
-- Purpose: API keys end to end: `Authorization: Bearer`, key format and env prefixes, shown-once semantics ("We keep only a hash, so we cannot show it to you again", per EXPERIENCE.md voice), up to five per workspace, keys belong to the workspace not the person, revoke/replace, the closed revocation list (FR-41: explicit revoke, replace, or removal-with-revoke; a role change never revokes).
+- Purpose: API keys end to end: `Authorization: Bearer`, key format and env prefixes, shown-once semantics ("We keep only a hash, so we cannot show it to you again", per EXPERIENCE.md voice), up to 500 per workspace, keys belong to the workspace not the person, revoke/replace, the closed revocation list (FR-41: explicit revoke, replace, or removal-with-revoke; a role change never revokes).
 - Source of truth: FR-11/FR-12/FR-13/FR-41; decision `1-7-key-format-and-accountability.md`; `customerAuth.ts`; `SRC/services/control-plane/src/keys/`.
 - Required examples: correct header; the 401 envelope for a bad key (one identical message for unknown and revoked, by design).
 - Acceptance: states that unknown and revoked keys get the same 401 on purpose; does NOT promise one-second global revocation (FR-12's story 2.17 is backlog; say "revocation takes effect quickly" only after verifying shipped behavior, otherwise omit timing); never shows a real-looking full key (use `ub_live_` + obvious placeholder).
@@ -335,7 +335,7 @@ differently, §5 wins.
 - Acceptance: every documented code exists in `openai.ts` or a shipped handler on publication day; codes with unsettled strings (workspace spend-limit, playground role refusal, the fourth revocation sentence) are excluded until settled (§14); the internal `{error:{code,message}}` shape is never shown.
 
 **`manage/workspaces-and-members.mdx`** · PARTIAL (Epic 9 mid-flight; document shipped roles behavior, gate the rest)
-- Purpose: the workspace is the unit: keys, usage, playground, spend limit, and billing all hang off it; roles (owner/admin/developer/viewer) and what each may do; exactly one owner, who alone manages billing and alone grants admin; ownership moves only by transfer; any member may read balance and statement, only the owner may act on money (the product's own sentence: only the workspace owner manages billing); invitations: email-bound, 7 days, authority re-checked at redemption, optional key reservation occupying one of the five slots; removal never silently revokes a key (the explicit choice per key); a key's member limit is visibility scoping, not request-path enforcement, and promises no per-person usage split.
+- Purpose: the workspace is the unit: keys, usage, playground, spend limit, and billing all hang off it; roles (owner/admin/developer/viewer) and what each may do; exactly one owner, who alone manages billing and alone grants admin; ownership moves only by transfer; any member may read balance and statement, only the owner may act on money (the product's own sentence: only the workspace owner manages billing); invitations: email-bound, 7 days, authority re-checked at redemption, optional key reservation occupying one of the 500 slots; removal never silently revokes a key (the explicit choice per key); a key's member limit is visibility scoping, not request-path enforcement, and promises no per-person usage split.
 - Source of truth: FR-38/39/40/41; decisions `the-workspace-is-the-unit.md`, `money-actions-are-the-owners.md`; AD-17; `SRC/services/control-plane/src/members/can.ts`; `src/workspaces/index.ts`.
 - Required examples: a role-capability table (customer-facing capabilities only); the 403 owner-only refusal sentence as the product sends it.
 - Acceptance: multi-workspace features (second workspace, switching) documented only if shipped (Stories 9.4/9.5 backlog; the switcher component exists in the dashboard, verify at publication); no mention of the internal `account` row (FR-38: never shown as distinct); the one-card-one-workspace consequence stated plainly.
@@ -350,7 +350,7 @@ differently, §5 wins.
 All guides share: source of truth is the shipped screen in `SRC/apps/dashboard/src/app/(portal)/` plus the control-plane routes it calls; voice per `EXPERIENCE.md` (state the number and the consequence together; name the way out); each documents role requirements inline.
 
 **`get-started/create-an-api-key.mdx`** · PARTIAL (screen shipped at `(portal)/keys/`; Story 3.9 flow at review)
-- Purpose: mint, name, copy-once, revoke, replace; the five-slot rule including reservations; who can see which keys.
+- Purpose: mint, name, copy-once, revoke, replace; the 500-slot rule including reservations; who can see which keys.
 - Sources: `(portal)/keys/` (MintKeyForm, PendingKeyPanel); `/api/me/keys*` routes; FR-11.
 - Acceptance: screenshots (or none) match the shipped screen; the shown-once sentence uses the product's own wording; reservation lapse rules stated (7 days).
 
