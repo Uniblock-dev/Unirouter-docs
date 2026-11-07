@@ -162,9 +162,15 @@ to charge is not a reload. Once on, the summary line reads what will happen:
 "On. Buys AMOUNT when the balance falls below THRESHOLD, so requests never stop."
 
 A reload that is declined does not retry forever. After a run of consecutive
-failed charges the reload stops, the screen says so, and a new card or a manual
-purchase starts it again. The threshold is separate from the low credit email's
-threshold below; the two do not have to agree.
+failed charges the reload stops, and the screen says so. Adding a new card starts
+it again; a manual purchase does not. The threshold is separate from the low credit
+email's threshold below; the two do not have to agree.
+
+Removing your last saved card switches Auto reload off. The removal sets its
+threshold to zero and keeps the amount you chose to buy, and the removal's message
+says so: "Automatic top-up has been turned off because no card is left to charge.
+Add a card and switch it on again to resume." Adding a card does not switch Auto
+reload back on. You turn it on again yourself.
 
 Setting either figure takes the same authority as buying credit: owner or admin.
 
