@@ -86,8 +86,8 @@ the credit you receive; our fee, currently 0%, is added on top at the checkout.
 ## If something goes wrong
 
 **You left the payment page.** The screen says no card was charged and no credit was
-added, and you can start again. A saved card is untouched by this: nothing on any
-failure path in this product removes a saved card.
+added, and you can start again. A saved card or Stripe Link wallet is untouched by
+this: nothing on any failure path in this product removes a saved payment method.
 
 **The purchase could not be started.** The amount you typed is preserved. Do not
 press Continue again straight away: each attempt opens its own checkout session, and
@@ -132,16 +132,17 @@ about it is a credential and nothing about it expires.
 
 ## Your saved card
 
-Your card is kept by our payment provider so that the next purchase does not ask for
-it again. We store no card number and no expiry: the brand and the last four digits
-are read from the provider when they are shown, so there is nothing on our side that
-can go stale. A saved card can be removed, which means the next purchase asks for a
-card again; it changes nothing about credit you have already bought and nothing about
-your balance.
+Your card, or your Stripe Link wallet, is kept by our payment provider so that the
+next purchase does not ask for it again. We store no card number and no expiry: the
+brand and the last four digits are read from the provider when they are shown, and a
+Link wallet is shown as Link with no last four digits, so there is nothing on our side
+that can go stale. A saved card or Link wallet can be removed, which means the next
+purchase asks for a card or Link again; it changes nothing about credit you have
+already bought and nothing about your balance.
 
 The card controls are on the Billing screen's **Payment** tab, under **Your
-card**. Adding a card opens a setup session with our payment provider, and nothing
-is charged. With more than one card saved, **Make default** records which one
+card**. Adding a card opens a setup session with our payment provider, where you can
+save a card or Stripe Link, and nothing is charged. With more than one card saved, **Make default** records which one
 pays and charges nothing. **Remove** asks you to confirm, and if the card you are
 removing is the one that pays while others remain, the screen asks which card
 takes over before it lets go of the old one.
