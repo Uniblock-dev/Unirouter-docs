@@ -4221,28 +4221,28 @@
     },
     "/v1/organization/workload-insights/experiments/{id}/dataset-export": {
       "classification": "blocked",
-      "gate": "53.1",
-      "reason": "Part of the workload-insights management API under the workspaceAdminBearer scheme, a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep: classified blocked on gate 53.1 by the owner's decision, so nothing is published until that gate reads done and every example is transcribed from the handler (internal SF-711)."
+      "gate": "no-story",
+      "reason": "Part of the workload-insights management API under the workspaceAdminBearer scheme, a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep: classified blocked with no story by the owner's decision, since no story in the ticket tree names this route, so nothing is published until one does and its plan reads done and every example is transcribed from the handler (internal SF-711)."
     },
     "/v1/organization/workload-insights/experiments/{id}/promotion": {
       "classification": "blocked",
-      "gate": "53.1",
-      "reason": "Part of the workload-insights management API under the workspaceAdminBearer scheme, a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep: classified blocked on gate 53.1 by the owner's decision, so nothing is published until that gate reads done and every example is transcribed from the handler (internal SF-711)."
+      "gate": "56.7",
+      "reason": "Part of the workload-insights management API under the workspaceAdminBearer scheme, a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep: classified blocked on gate 56.7 by the owner's decision, so nothing is published until that gate reads done and every example is transcribed from the handler (internal SF-711)."
     },
     "/v1/organization/workload-insights/profiles/{profileId}/optimization": {
       "classification": "blocked",
-      "gate": "53.1",
-      "reason": "Part of the workload-insights management API under the workspaceAdminBearer scheme, a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep: classified blocked on gate 53.1 by the owner's decision, so nothing is published until that gate reads done and every example is transcribed from the handler (internal SF-711)."
+      "gate": "no-story",
+      "reason": "Part of the workload-insights management API under the workspaceAdminBearer scheme, a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep: classified blocked with no story by the owner's decision, since no story in the ticket tree names this route, so nothing is published until one does and its plan reads done and every example is transcribed from the handler (internal SF-711)."
     },
     "/v1/organization/workload-insights/experiments/{id}/evaluate": {
       "classification": "blocked",
-      "gate": "53.1",
-      "reason": "Part of the workload-insights management API under the workspaceAdminBearer scheme, a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep: classified blocked on gate 53.1 by the owner's decision, so nothing is published until that gate reads done and every example is transcribed from the handler (internal SF-711)."
+      "gate": "56.5",
+      "reason": "Part of the workload-insights management API under the workspaceAdminBearer scheme, a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep: classified blocked on gate 56.5 by the owner's decision, so nothing is published until that gate reads done and every example is transcribed from the handler (internal SF-711)."
     },
     "/v1/organization/workload-insights/experiments/{id}/promote": {
       "classification": "blocked",
-      "gate": "53.1",
-      "reason": "Part of the workload-insights management API under the workspaceAdminBearer scheme, a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep: classified blocked on gate 53.1 by the owner's decision, so nothing is published until that gate reads done and every example is transcribed from the handler (internal SF-711)."
+      "gate": "56.7",
+      "reason": "Part of the workload-insights management API under the workspaceAdminBearer scheme, a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep: classified blocked on gate 56.7 by the owner's decision, so nothing is published until that gate reads done and every example is transcribed from the handler (internal SF-711)."
     },
     "/v1/ocr": {
       "classification": "blocked",
