@@ -1,6 +1,6 @@
 ---
 title: "Authentication"
-description: "API keys end to end: the Bearer header, the key format, shown-once keys, the five-slot ceiling, and how a key ends."
+description: "API keys end to end: the Bearer header, the key format, shown-once keys, the 500-key ceiling, and how a key ends."
 status: partial
 gates: ["2.17", "3.11"]
 ---
@@ -95,21 +95,21 @@ member who created a key does not, on its own, stop the key. Revoking is an
 explicit choice, made per key, at the moment of removal. See
 [workspaces and members](/manage/workspaces-and-members).
 
-## Five live keys per workspace
+## 500 live keys per workspace
 
-A workspace holds up to five live keys. An outstanding key reservation attached
-to an invitation occupies one of the five while it is outstanding, and frees it
-if the reservation is cancelled or lapses. When all five slots are held, minting
+A workspace holds up to 500 live keys. An outstanding key reservation attached
+to an invitation occupies one of the 500 while it is outstanding, and frees it
+if the reservation is cancelled or lapses. When all 500 slots are held, minting
 refuses until a slot frees.
 
-Five is the ceiling on live keys, not on keys ever minted. A key that has been
+500 is the ceiling on live keys, not on keys ever minted. A key that has been
 ended frees its slot.
 
 ## How a key ends
 
 <FeatureStatus
   feature="revoking and replacing a key yourself"
-  detail="Revoke and Replace are not on the Keys screen yet, and there is no route behind them, so a key you no longer want cannot be ended by you today. The one path that ends a key now is the per-key choice made when a member is removed from the workspace. Treat a key as live for as long as it exists, and plan around the five-slot ceiling until the other two paths ship."
+  detail="Revoke and Replace are not on the Keys screen yet, and there is no route behind them, so a key you no longer want cannot be ended by you today. The one path that ends a key now is the per-key choice made when a member is removed from the workspace. Treat a key as live for as long as it exists, and plan around the ceiling of 500 keys until the other two paths ship."
 />
 
 The set of things that may ever **end** a key, meaning the key stops existing and
@@ -208,7 +208,7 @@ apart. See [rate limits and spend controls](/manage/rate-limits-and-spend-contro
   control. The `ub_live_` prefix exists partly so that scanners catch the mistake,
   but catching it after the fact is not the same as avoiding it.
 - Use one key per deployment or per service rather than one shared key, within the
-  five-slot ceiling. Usage is attributed per key, so separate keys are what make a
+  ceiling of 500 keys. Usage is attributed per key, so separate keys are what make a
   spending question answerable, and ending one then costs you one deployment
   rather than all of them.
 - We set no expiry on a key ourselves and publish no rotation requirement, so a

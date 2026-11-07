@@ -95,15 +95,27 @@ claims:
     status: shipped
 
   - id: keys-per-workspace
-    value: "five"
+    value: "500"
     means: "How many API keys a workspace may hold at once, key reservations included."
-    source: "PRD FR-11, FR-13"
+    source: "services/control-plane/src/limits/ceilings.ts MAX_LIVE_KEYS_PER_WORKSPACE (500) at Gateway-LLM origin/main e5dcfb652f; the refusal text is SLOTS_FULL_MESSAGE in services/control-plane/src/keys/store.ts; supersedes PRD FR-11, FR-13 (five, amended 2026-08-15); SF-738"
     status: shipped
 
   - id: keys-per-workspace-digit
-    value: "5"
+    value: "500"
     means: "The same limit, written as a digit."
-    source: "PRD FR-11, FR-13"
+    source: "services/control-plane/src/limits/ceilings.ts MAX_LIVE_KEYS_PER_WORKSPACE (500) at Gateway-LLM origin/main e5dcfb652f; SF-738"
+    status: shipped
+
+  - id: five-unaudited
+    value: "five"
+    means: "Not one claim. Until 2026-11-07 the five-key ceiling registered this token, and that entry silently covered unrelated sentences (five seconds, five stages, five endpoints and others). It keeps them passing while each gets its own registration; the audit is recorded in the internal findings register."
+    source: "unknown: each sentence needs its own source; audit tracked in the internal findings register"
+    status: shipped
+
+  - id: five-unaudited-digit
+    value: "5"
+    means: "The digit form of five-unaudited, for example features/routing-profiles.mdx (1 to 5 models)."
+    source: "unknown: audit tracked in the internal findings register"
     status: shipped
 
   - id: catalog-capability-count
@@ -116,7 +128,7 @@ claims:
       - features/model-capabilities
       - resources/glossary
       - resources/faq
-    note: "Registered in its own right rather than leaning on keys-per-workspace, which shares the token and means something unrelated. If the capability map gains a word, this claim is what the sweep finds."
+    note: "Registered in its own right rather than leaning on keys-per-workspace, which means something unrelated. If the capability map gains a word, this claim is what the sweep finds."
 
   - id: key-secret-length
     value: "43"

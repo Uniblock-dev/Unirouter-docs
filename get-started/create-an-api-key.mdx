@@ -1,6 +1,6 @@
 ---
 title: "Create an API key"
-description: "Mint a key in the dashboard, copy it once, and know who else can see it. Covers the five-slot limit, member limits, and reserved keys."
+description: "Mint a key in the dashboard, copy it once, and know who else can see it. Covers the 500-key limit, member limits, and reserved keys."
 status: partial
 gates: ["3.9", "3.10", "3.11", "3.13", "9.22", "9.23"]
 ---
@@ -93,19 +93,19 @@ Each key also carries one accountable member, so its spend has a name attached
 to it. Being accountable for a key is not a permission: it says who answers for
 what the key does, not who is allowed to use it.
 
-## Five live keys per workspace
+## 500 live keys per workspace
 
-A workspace holds up to five live keys. Asking for a sixth is refused with:
+A workspace holds up to 500 live keys. Asking for one more when it already holds 500 is refused with:
 
-> This workspace already holds 5 live keys, which is the maximum. Revoke one to
+> This workspace already holds 500 live keys, which is the maximum. Revoke one to
 > free a slot.
 
-Five rather than one is deliberate: with a single key the same secret ends up on
+Several keys rather than one is deliberate: with a single key the same secret ends up on
 a laptop, in CI, and in production, and the only remedy for a leak is an outage.
 With several, you can create the replacement, move traffic, and end the old key
 with nothing down in between.
 
-A key reservation attached to an invitation occupies one of the five slots from
+A key reservation attached to an invitation occupies one of the 500 slots from
 the moment it is made, even though the key does not exist yet. See
 [Keys that arrive with an invitation](#keys-that-arrive-with-an-invitation).
 
@@ -137,7 +137,7 @@ limit is about screens and management, and it promises no per-person usage split
 An invitation can carry a key reservation, so somebody joining a workspace
 arrives with a key waiting for them.
 
-- The reservation takes one of the workspace's five slots as soon as it is made,
+- The reservation takes one of the workspace's 500 slots as soon as it is made,
   so the workspace cannot promise a key it has no room for.
 - The key does not exist until the invitee views it for the first time after
   accepting. Viewing it creates it, once.
