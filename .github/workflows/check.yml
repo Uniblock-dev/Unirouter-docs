@@ -1,0 +1,35 @@
+# Runs the docs checks on every pull request and on every push to main, so a page, spec or
+# navigation entry that the build would refuse fails here rather than at deploy.
+name: check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: npm ci
+        run: npm ci
+
+      # The CI script without the private source checkout. The tracker gate (check:gates:tracker)
+      # needs a sibling Gateway-LLM checkout, which CI does not have, so it is run locally only.
+      - name: npm run ci
+        run: npm run ci

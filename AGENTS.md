@@ -10,7 +10,7 @@
 
 Only what a customer can act on: published `/v1` operations, error codes, money and limits, dashboard guides.
 
-`_bmad-output/build/sprint-status.yaml` in the source tree is the arbiter of what has shipped. **This site never claims unshipped behavior.** A page that is true but gated carries `gates: [<story>]` in its frontmatter, and the release checklist holds it until the tracker says `done`. A move into `review` is not acceptance.
+The story's `status` in the ticket tree `_bmad-output/initiative-gateway-llm/tickets/` in the source tree is the arbiter of what has shipped. Read it on `origin/main`, because main is what production runs; `npm run check:gates:tracker` checks it. **This site never claims unshipped behavior.** A page that is true but gated carries `gates: [<story>]` in its frontmatter, and the release checklist holds it until the tracker says `done`. A move into `review` is not acceptance.
 
 ## What this site must never carry
 
@@ -37,5 +37,7 @@ A new `/v1` path that the overlay does not classify fails the build on purpose. 
 ```
 npm run check
 ```
+
+When a sibling `Gateway-LLM` checkout exists, also run `npm run check:gates:tracker`.
 
 Open pull requests against `main`. Findings that need an owner go in the internal docs repository's `docs-project/unresolved-findings.md` and are named in the pull request body here.
