@@ -24,6 +24,11 @@ them is missing:
 <Steps>
   <Step title="A verified account">
     Sign up and verify your email address at [platform.hopscotchlabs.ai](https://platform.hopscotchlabs.ai).
+
+    If the browser check on the sign-up form fails, sign-up is refused with HTTP 403
+    and the code `signup_turnstile_failed`, with the message "We could not confirm you
+    are not a bot. Reload the page and try again." Reload the page and submit the form
+    again.
   </Step>
   <Step title="A workspace with credit">
     Credit is prepaid, so a workspace with a zero balance refuses requests
