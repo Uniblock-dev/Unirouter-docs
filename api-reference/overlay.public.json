@@ -4219,6 +4219,31 @@
       "gate": "56.4",
       "reason": "Story 56.4's terminal rollback for a running or paused experiment (commit 308acb332), under the workspaceAdminBearer scheme: a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep. It reached the source tree in the 2026-10-23 pm sync range through a trunk promotion of wall/develop, mounted from services/control-plane/src/organization/routeTable.ts with handlers in services/control-plane/src/workloadInsights/experimentRoutes.ts. It is on develop only; origin/main carries no workload-insights path. Story 56.4 reads `backlog` in sprint-status.yaml although the route is merged, which is recorded as drift rather than reconciled here. Publishing it is a writer pass rather than a reclassification. Recorded in the internal site's unresolved-findings.md as SF-581."
     },
+    "/v1/organization/workload-insights/experiments/{id}/dataset-export": {
+      "classification": "blocked",
+      "gate": "53.1",
+      "reason": "Part of the workload-insights management API under the workspaceAdminBearer scheme, a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep: classified blocked on gate 53.1 by the owner's decision, so nothing is published until that gate reads done and every example is transcribed from the handler (internal SF-711)."
+    },
+    "/v1/organization/workload-insights/experiments/{id}/promotion": {
+      "classification": "blocked",
+      "gate": "53.1",
+      "reason": "Part of the workload-insights management API under the workspaceAdminBearer scheme, a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep: classified blocked on gate 53.1 by the owner's decision, so nothing is published until that gate reads done and every example is transcribed from the handler (internal SF-711)."
+    },
+    "/v1/organization/workload-insights/profiles/{profileId}/optimization": {
+      "classification": "blocked",
+      "gate": "53.1",
+      "reason": "Part of the workload-insights management API under the workspaceAdminBearer scheme, a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep: classified blocked on gate 53.1 by the owner's decision, so nothing is published until that gate reads done and every example is transcribed from the handler (internal SF-711)."
+    },
+    "/v1/organization/workload-insights/experiments/{id}/evaluate": {
+      "classification": "blocked",
+      "gate": "53.1",
+      "reason": "Part of the workload-insights management API under the workspaceAdminBearer scheme, a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep: classified blocked on gate 53.1 by the owner's decision, so nothing is published until that gate reads done and every example is transcribed from the handler (internal SF-711)."
+    },
+    "/v1/organization/workload-insights/experiments/{id}/promote": {
+      "classification": "blocked",
+      "gate": "53.1",
+      "reason": "Part of the workload-insights management API under the workspaceAdminBearer scheme, a workspace_admin management key accepted only on /v1/organization/**, which this artifact does not keep: classified blocked on gate 53.1 by the owner's decision, so nothing is published until that gate reads done and every example is transcribed from the handler (internal SF-711)."
+    },
     "/v1/ocr": {
       "classification": "blocked",
       "gate": "unowned",
