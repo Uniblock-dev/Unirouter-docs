@@ -1,43 +1,20 @@
 ---
 title: "Images, audio and video"
-description: "Coming soon: image generation and editing, speech, transcription, translation and video jobs on the same key and balance, and what a call returns today."
+description: "Image generation and editing, speech, transcription, translation and video jobs, live in production on the same key and balance, and how each one is billed."
 status: partial
 gates: ["52.4", "72.5"]
 ---
 
-import FeatureStatus from '/snippets/feature-status.mdx';
+The image, audio and video endpoints are live in production. They take the same
+key as chat completions and draw on the same balance. Full reference
+documentation for them is coming, so this page says what each endpoint is and
+how it is billed, and does not yet give request and response schemas. The
+realtime endpoint is not open yet, and [below](#realtime) says what a call to it
+returns.
 
-<FeatureStatus
-  missing="the image, audio, video and realtime endpoints in production"
-  instead="Every endpoint on this page is built and is open on our development environment while it is proved against real providers. In production each one answers the 404 below, and nothing you send to it is charged. This page says what is coming so you can plan for it; it is not a page you can code against today."
-/>
+## The endpoints
 
-## What a call returns today
-
-A request to any path on this page gets HTTP 404 in the OpenAI envelope with
-the code `endpoint_not_supported`, before authentication and before anything
-is read from the body:
-
-```json 404
-{
-  "error": {
-    "message": "POST /v1/images/generations is not supported in this release.",
-    "type": "invalid_request_error",
-    "param": null,
-    "code": "endpoint_not_supported",
-    "request_id": "REQUEST_ID"
-  }
-}
-```
-
-That is the same answer as any path we do not serve. When a door opens, the
-same request on the same key starts being served, and the models the catalog
-lists for that family appear in [`GET /v1/models`](/features/models) under
-`endpoint_families`.
-
-## The endpoints that are coming
-
-| Endpoint | Shape | How it will be charged |
+| Endpoint | Shape | How it is charged |
 |---|---|---|
 | `POST /v1/images/generations` | OpenAI image generation, JSON body | Per image, at a rate that can depend on size and quality |
 | `POST /v1/images/edits` | OpenAI image edit, multipart body | Per image |
@@ -48,7 +25,6 @@ lists for that family appear in [`GET /v1/models`](/features/models) under
 | `GET /v1/videos/{id}` | Read a job you created | Settles the job when it reaches a final state |
 | `GET /v1/videos/{id}/content` | Stream the finished video's bytes | Nothing further |
 | `DELETE /v1/videos/{id}` | Cancel or delete a job | A cancelled job is charged nothing |
-| `GET /v1/realtime` | A WebSocket session in OpenAI's realtime shape | Per response, as each one is reported |
 
 Listing videos is not part of the shape and will stay a 404.
 
@@ -80,14 +56,15 @@ endpoint has.
 Only the account that created a video job can read it, fetch its content or
 cancel it. Any other key, and an id that never existed, get the same 404.
 
-## Why the doors are closed
+## Realtime
 
-Each of these families is opened only once a proof run against the real
-providers has passed and stays fresh, so that a model is never offered on a
-door that would fail on call. The image and audio doors wait on that proof.
-The video doors are open on development while video is tested. The realtime
-door is not open anywhere yet. The stories that gate this page are named in
-its frontmatter and the release checklist holds it until they clear.
+The realtime endpoint, `GET /v1/realtime`, is not open in any environment yet,
+so it answers the same 404 that any path this release does not serve answers.
+See [OpenAI compatibility](/get-started/openai-compatibility) for that answer.
+Each family is offered only while its proof run against the real providers is
+fresh, so a model is not offered on a door that would fail on call. The stories
+that gate this page are named in its frontmatter, and the release checklist
+holds the page until they clear.
 
 ## Next
 
