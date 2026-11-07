@@ -5,7 +5,7 @@ status: partial
 gates: ["18.13", "18.24", "18.40", "18.62"]
 ---
 
-These terms carry money and permissions, so they are defined once here and used
+These terms govern billing and permissions, so they are defined once here and used
 identically on every other page.
 
 ### API key
@@ -16,9 +16,15 @@ creation, stored only as a one-way hash, and identified afterwards by its name,
 its prefix and its last four characters. See
 [Create an API key](/get-started/create-an-api-key).
 
+### Available balance
+
+What a new request can spend right now: the settled balance minus every hold. The
+Billing screen labels it "Available to spend".
+
 ### Balance
 
-The credit a workspace has left right now.
+The credit a workspace has left right now. Unqualified, it means the available
+balance.
 
 ### Capability
 
@@ -40,6 +46,13 @@ and the credit granted. On this site, "credit" always means the second.
 The date a provider stopped recommending a model. The model still answers. It is
 not the same as a sunset. See [Model lifecycle](/features/model-lifecycle).
 
+### Hold
+
+Credit set aside when a request is admitted, for the most that request could cost,
+and given back when it finishes, at which point the request is charged what it used.
+The Billing screen totals them as "Held for requests in flight". See
+[Credits and billing](/manage/credits-and-billing).
+
 ### Invitation
 
 An emailed link that offers somebody a role in a workspace. Bound to one email
@@ -52,7 +65,8 @@ carry a key reservation. See
 A promised key attached to an invitation. It occupies one of the workspace's five
 key slots from the moment it is made, and becomes a real key only when its holder
 views it for the first time after accepting. A reservation that lapses or is
-cancelled was never a key, so ending it is not a revocation.
+cancelled was never a key, so ending it is not a revocation. It is the only
+reservation on this site: credit set aside for a request is a hold.
 
 ### Live model
 
@@ -125,15 +139,19 @@ What a member may do in one workspace: one of owner, admin, developer or viewer,
 and a member holds exactly one. A role is a set of permissions rather than a
 rank. See [Workspaces and members](/manage/workspaces-and-members).
 
+### Settled balance
+
+The balance before holds are taken off it. The Billing screen labels it "Settled".
+
 ### Spend rate cap
 
-A ceiling on how much a workspace may commit to in-flight requests over a rolling
-window. It is the one limit you may raise yourself. See
+A ceiling on how much credit a workspace's holds may take over a rolling window.
+The Limits section of Settings labels it "Spend per rolling 60 seconds". It is the one limit you may raise yourself. See
 [Spend controls](/manage/spend-controls).
 
 ### Statement
 
-The line-by-line record of every change to a workspace's balance: what was
+The list of every transaction on a workspace's balance, newest first: what was
 bought, what was charged, and what each request took. Any member may read it;
 only the owner or an admin may buy credit.
 
@@ -142,6 +160,11 @@ only the owner or an admin may buy credit.
 The date a model stops answering. After it, the model leaves the catalog and a
 request naming it is refused. Distinct from a deprecation, which is advice rather
 than a shutdown. See [Model lifecycle](/features/model-lifecycle).
+
+### Transaction
+
+One change to a workspace's balance, such as a purchase or a charge, shown as one
+line on the statement. Each line carries the running balance after it.
 
 ### Usage record
 

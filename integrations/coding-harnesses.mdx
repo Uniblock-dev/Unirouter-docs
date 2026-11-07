@@ -5,7 +5,7 @@ status: partial
 gates: ["2.3", "2.10", "2.11"]
 ---
 
-import { FeatureStatus, NotDocumented } from '/snippets/feature-status.mdx';
+import { FeatureStatus } from '/snippets/feature-status.mdx';
 import BaseUrl from '/snippets/base-url.mdx';
 
 A coding harness is an agent that edits your code: an editor extension, or a CLI
@@ -100,21 +100,12 @@ pinned id. And a harness that offers a fixed dropdown of vendor model names
 rather than a free-text field cannot be pointed at an id of this shape at all;
 the per-harness pages say which kind each one is.
 
-## Embeddings are not part of what this site documents
+## Embeddings are not served yet
 
-<NotDocumented
-  subject="An embeddings endpoint"
-  reason="The route exists in the source tree and nothing about it is published. The story it was gated on has shipped and a writer has not transcribed it, so this site describes no request shape, no response shape and no refusal for it. That means we also cannot tell you what a harness feature that calls it will do here."
-/>
-
-Read that as an absence rather than as a promise in either direction. Earlier
-versions of this page said a request to an embeddings endpoint is answered with
-a `404`. That was wrong, it has been removed, and nothing has replaced it,
-because the honest position is that this site does not document the endpoint at
-all.
-
-What follows is still worth knowing, because it decides which of your harness's
-features depend on an answer we do not publish.
+Embeddings are not served yet, and we have no date to give. A call to
+`POST /v1/embeddings` is refused with a 404 `not_found_error`. What follows
+decides which of your harness's features depend on an endpoint this API does not
+serve.
 
 Any harness feature that builds an index of your repository to search it by
 meaning rather than by text calls an embeddings endpoint, and those are the
@@ -139,20 +130,19 @@ auditing it for one.
 
 **If your harness configures its embedding model separately from its chat model,
 which several do, leave that setting pointed wherever it already points and
-change only the chat model.** That is the practical advice on this page whose
-value does not depend on what our embeddings route does, and it is the one to
+change only the chat model.** That is the practical advice on this page, and it is the one to
 follow.
 
 ## A harness spends faster than a chat client
 
 Credit is prepaid, and the limit a coding harness reaches first is the account
 spend rate cap rather than the balance. Understanding why takes one fact: **the
-cap counts money reserved, not money spent.**
+cap counts credit held, not credit spent.**
 
 When a request is admitted we hold the most it could possibly cost. That figure
 comes from the request's own `max_tokens` where it names one, and from the
 model's published maximum output length where it does not. The window counts what
-was reserved and when, and nothing comes back out of it: a request that finished
+was held and when, and nothing comes back out of it: a request that finished
 cheaply a moment ago goes on counting for its full 60 seconds.
 
 A coding harness is the traffic shape that hits this hardest. It fires several
@@ -160,7 +150,7 @@ requests at once, on a model with a large published maximum output, often withou
 naming `max_tokens` at all. Each of those holds that whole published maximum, so
 the cap can refuse the harness while your real spending is a small fraction of
 it. The refusal is `429` with the code `spend_rate_exceeded`, and it clears
-itself 60 seconds after the earliest reservation it counted.
+itself 60 seconds after the earliest hold it counted.
 
 **The lever is `max_tokens`.** A harness that names a realistic output ceiling
 gets several times more requests a minute out of the same cap, and is charged

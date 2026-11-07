@@ -49,7 +49,7 @@ told us how many tokens it used is not the same as a request that genuinely used
 none, and collapsing them would turn an outage into a page of free requests.
 
 **`unpriced` is not free, and no new row reads it.** A row with no charge figure at
-all reads `unpriced`; a charge of `0` is printed as money, and only a request that was
+all reads `unpriced`; a charge of `0` is printed as a dollar amount, and only a request that was
 actually priced at zero shows a zero. Since 2026-09-10 the platform does not write a
 row without a charge figure: a request that was served is always charged, from the
 amount you accepted when it was admitted where nothing better can be worked out, and a
@@ -121,7 +121,7 @@ reaches past that horizon is the third case above, "the range reaches further ba
 than we keep," not an empty table.
 
 <Note>
-  Money outlives the row. When a request passes out of this window, the charge it
+  Your statement outlives the row. When a request passes out of this window, the charge it
   caused stays on your statement even though the row describing the request is
   gone.
 </Note>

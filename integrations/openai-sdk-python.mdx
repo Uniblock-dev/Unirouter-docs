@@ -68,8 +68,8 @@ base URL reaches a path this API does not serve yet, and the SDK turns the
 shape of failure that looks like a configuration mistake and is not: the base
 URL is right and the endpoint is absent. See
 [OpenAI compatibility](/get-started/openai-compatibility) for the list that
-serves, which includes `client.embeddings.create(...)`,
-`client.completions.create(...)` and `client.responses.create(...)`. A `404` is
+serves, which includes `client.completions.create(...)` and
+`client.responses.create(...)`. `client.embeddings.create(...)` is not served yet. A `404` is
 not in the SDK's retry set, so it fails on the first attempt rather than after
 a backoff.
 

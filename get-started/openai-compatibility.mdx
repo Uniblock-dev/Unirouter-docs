@@ -26,7 +26,7 @@ exact about each of them rather than leaving you to find the edges by calling.
 | `/v1/chat/completions` | `POST` | Serves. Streaming and non-streaming. |
 | `/v1/responses` | `POST` | Serves. Streaming and non-streaming. See [Responses API](/features/responses-api). |
 | `/v1/completions` | `POST` | Serves. Streaming and non-streaming. See [Completions and embeddings](/features/completions-and-embeddings). |
-| `/v1/embeddings` | `POST` | Serves. See [Completions and embeddings](/features/completions-and-embeddings). |
+| `/v1/embeddings` | `POST` | Not served yet, no date. A call is refused with a 404 `not_found_error`. See [Completions and embeddings](/features/completions-and-embeddings#embeddings). |
 | `/v1/messages` | `POST` | Serves the Anthropic Messages format. See [Anthropic Messages API](/features/anthropic-messages). |
 | `/v1/models` | `GET` | Serves. |
 | `/v1/models/{id}` | `GET` | Serves. |
@@ -185,7 +185,7 @@ and `code`, never on the message text: the fields are the contract and the
 sentences are prose that may be reworded. Every shipped code and its status is in
 [errors](/features/errors).
 
-One difference in kind is worth naming. Some of our refusals are about money
+One difference in kind is worth naming. Some of our refusals are about billing
 rather than about your request: not enough credit, or an account spend rate cap.
 Those reuse OpenAI's own `insufficient_quota` and `rate_limit_error` types, so the
 branch your client already has keeps working, and carry a Hopscotch `code` that

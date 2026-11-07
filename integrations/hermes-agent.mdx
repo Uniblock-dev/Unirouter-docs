@@ -152,9 +152,8 @@ provider's own config file rather than in `model` or `providers`.
 
 That is the good case: the setting you would have to leave alone is already
 somewhere else. Point the chat model here and change nothing about memory. This
-site publishes nothing about an embeddings endpoint, which the shared page
-explains, so there is no answer here for what a memory backend pointed at this
-API would do.
+API does not serve embeddings yet, which the shared page explains, so do not
+point a memory backend's embedder at it.
 
 ## Keys, and the file that gets committed
 

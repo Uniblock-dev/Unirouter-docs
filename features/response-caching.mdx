@@ -1,0 +1,136 @@
+---
+title: "Response caching"
+description: "Opt a key into response caching, see when a repeat is served from storage at no charge, bypass or purge it, and how it differs from prompt caching."
+status: blocked
+gates: ["exact-match-4", "exact-match-5", "exact-match-6", "exact-match-7", "exact-match-8", "exact-match-9", "exact-match-10", "exact-match-14", "exact-match-15"]
+---
+
+Response caching answers a request from a stored copy of an earlier reply. When
+an identical request arrives from a key that has opted in, Hopscotch returns the
+saved reply without calling the provider, and the request is not charged. It is
+opt-in, off by default, and it only ever serves replies stored for the same
+workspace.
+
+This page follows one key through the whole journey: turning it on, what counts
+as a repeat, what a hit costs, how to bypass or clear the cache, how a hit shows
+in your responses, and how it differs from provider prompt caching.
+
+## Where it runs today
+
+Response caching runs only in the development environment. Turning it on in
+production is refused until the consent and retention rules for production are
+in place. Outside development the switch stays visible and can be turned off,
+but it cannot be turned on, and requests are served exactly as they would be
+without the cache.
+
+## Turn it on
+
+Each key has its own switch, on the key's page under **Response cache**.
+
+1. Read the disclosure above the switch. It says what is stored, for how long,
+   and what happens when you turn it off.
+2. Turn the switch on. Enabling asks you to accept the consent again every time
+   you enable it, because turning it on is the act that records your consent.
+   In development that consent is a development-only record for this key. It is
+   not production consent.
+3. Optionally allow two classes of request for this key. Both are off by
+   default:
+   - **Nondeterministic requests**, where the reply is allowed to differ from
+     one identical request to the next.
+   - **Tool-call replies**, where a reply that asks your code to call a tool may
+     be stored and served.
+
+Any workspace member can change the switch for a live key in the workspace
+they are viewing.
+
+Owners and admins also set a default lifetime for the whole workspace. A stored
+reply is served for up to one hour by default. A workspace can set a shorter or
+longer default, up to a seven-day ceiling. A request can only shorten the
+lifetime its key and workspace allow, never extend it.
+
+A workspace that requires zero data retention never uses the cache, even when a
+key in it has opted in.
+
+## What counts as a repeat
+
+A request is answered from cache only when all of these hold:
+
+- It goes to the same endpoint and names the same model as the stored request.
+- Its body matches the stored body. The `stream`, `stream_options`, `user` and
+  `metadata` fields are ignored for matching, so a streamed and a non-streamed
+  request can share one stored reply. Any other change to the body is a
+  different request.
+- It pins its own sampling. Either the temperature is set to zero, or it sets an
+  integer `seed`. Any other request is sent to the provider as normal, unless
+  the key allows nondeterministic requests.
+- The key has opted in, and the workspace does not require zero data retention.
+
+A reply is stored only when it finished cleanly. Replies that were cut short,
+that carry a content filter or a refusal, that are too large to store, or that
+are not a success are never stored. A reply that asks for a tool call is stored
+only if the key allows tool-call replies, and such a reply is not replayed as a
+stream. A streamed request that matches a stored reply is answered as a stream,
+in the same shape a provider stream would take.
+
+## What a hit costs
+
+A cache hit makes no provider call and carries no charge. Its usage row has the
+outcome `cached`, with no charge and no provider cost. The provider cost the
+hit avoided is recorded on that row as the saved provider cost, so you can see
+what the cache saved.
+
+A miss is billed exactly as it would be without the cache. A bypass is billed
+exactly as it would be without the cache. The cache never adds a charge to a
+request.
+
+## Bypass or clear the cache for one request
+
+Send these headers on a request to control the cache for that request only. An
+unrecognized value is ignored, and the request is served normally.
+
+| Header | Value | What it does |
+|---|---|---|
+| `x-hopscotch-cache` | `skip` | Sends this request to the provider and does not read or store the cache for it. The reply reports the bypass reason `skip`. |
+| `x-hopscotch-cache` | `refresh` | Sends this request to the provider, then stores the new reply in place of the old one. |
+| `x-hopscotch-cache-ttl` | whole seconds, from one second up to the seven-day ceiling | Lowers how long the stored reply for this request may be served. It cannot raise the lifetime the key and workspace allow. |
+
+To clear a key's stored replies, purge it from the key's **Response cache**
+section. A purge hides the entries at once, so they are never served again, and
+removes them within a day. Turning a key's switch off has the same effect for
+that key.
+
+## How a hit shows
+
+Every reply from a request that reached the cache carries the header
+`x-hopscotch-cache-status`:
+
+| Value | Meaning |
+|---|---|
+| `HIT` | The reply came from storage. No provider call was made. |
+| `MISS` | The provider answered, and the reply was stored where it is eligible. |
+| `BYPASS:<reason>` | The cache sat this request out. The reason follows the colon. |
+
+Common reasons are `not_opted_in`, `skip`, `nondeterministic`, `zdr`,
+`tool_calls`, `refusal`, `content_filter` and `error`. The header is absent while
+the cache is off for your environment, and the reply then reads exactly as it
+did before the cache existed.
+
+Hits appear on your usage record as outcome `cached`. The usage screen shows
+cache hits and the saved provider cost in the savings panel once that view is on
+for your environment.
+
+## Response caching and prompt caching
+
+These are two different features, and both can apply to the same request.
+
+- **Prompt caching** is the provider's own feature. It reuses a repeated prefix
+  of the prompt, so the provider charges less for the input tokens it already
+  holds. The provider still generates a new reply. It needs nothing from you
+  beyond the request, and nothing here turns it off. See
+  [Prompt caching](/features/prompt-caching) for how its counts are reported.
+- **Response caching** stores the whole reply. A hit makes no provider call at
+  all, so it carries no charge. It is opt-in, per key, and it applies only to
+  requests that match a stored one exactly.
+
+Matching is exact. Similar requests that are not identical are not matched, so
+the cache never answers a question with a reply written for a different one.

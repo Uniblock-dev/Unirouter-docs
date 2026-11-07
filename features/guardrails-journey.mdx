@@ -1,0 +1,147 @@
+---
+title: "Guardrails journey"
+description: "Set a policy on a workspace or a key, read what a blocked request returns, find the block in Activity, and change a policy after a false positive."
+status: partial
+gates: ["47.7"]
+---
+
+This page walks the whole guardrails journey in order: set the policy, watch a
+request meet it, find the block afterwards, and correct the policy when it was
+wrong. It ties together two reference pages. [Guardrails](/features/guardrails)
+says what each rule does to a request and lists every refusal code.
+[Set up guardrails](/manage/set-up-guardrails) walks each control on the
+Guardrails screen. Read those for the detail this page leaves out.
+
+## Decide which layer the policy belongs to
+
+Three settings can refuse or shape a request, and they sit at different levels.
+
+| Layer | Where it is set | What it governs |
+|---|---|---|
+| Workspace | Workspace settings | Limits and the zero-data-retention default for every key in the workspace. See [Rate limits and spend controls](/manage/rate-limits-and-spend-controls) and [Zero data retention](/manage/zero-data-retention). |
+| Guardrail | Guardrails screen | A named rule set, attached to one or more keys. While attached, it replaces that key's own credit limit and zero-data-retention value. |
+| Key | Keys screen | A key's own expiry and credit limit, used only when no guardrail governs the key. |
+
+Use a guardrail when several keys should share one rule set, such as every
+production key. Use a key's own limit for a single key that has no shared
+policy. A guardrail does not change the workspace setting for keys it does not
+govern.
+
+## Set the policy
+
+Only an owner or an admin can create or change a guardrail. Every member can see
+the guardrails and which keys they govern.
+
+1. Open **Guardrails** in the dashboard sidebar, between Keys and BYOK.
+2. Create the guardrail with the rules the screen can write today: a name, a
+   spend cap with a daily, weekly or monthly period, the zero-data-retention
+   choice, and any sensitive-data detectors. The other rules appear under
+   "Coming soon" and cannot be set from the dashboard yet.
+3. Attach it to the keys it should govern. You can attach from the guardrail's
+   card or from the key's row on the Keys screen. A key can have at most one
+   guardrail, so detach the old one first if a key already has one.
+
+Once a key is governed, the Keys screen refuses to change that key's own
+limits and names the guardrail. That refusal is the signal that the guardrail,
+not the key, is now setting the limits.
+
+For the steps behind each control, see
+[Set up guardrails](/manage/set-up-guardrails).
+
+## Know what a blocked request returns
+
+A request that breaks a rule is refused before any provider sees it. Nothing is
+charged and no credit is held. The error uses the usual envelope, and the
+message names the guardrail that set the rule, so a developer can tell the
+workspace which rule to change.
+
+Your client should branch on the HTTP status and the `code`, not on the message
+text. The codes are listed in full on
+[Guardrails](/features/guardrails#what-a-refused-request-sees). The four you are
+most likely to meet are:
+
+| Code | Status | Meaning |
+|---|---|---|
+| `key_limit_exceeded` | 402 | The spend cap for the current window is used up. |
+| `guardrail_not_permitted` | 403 | The provider or model is not on the guardrail's allow list. |
+| `injection_pattern_matched` | 403 | The prompt matched an injection pattern on the guardrail. |
+| `sensitive_data_matched` | 403 | The prompt carries a detector the guardrail has switched on. |
+
+When two rules would both refuse a request, the first one in the fixed order
+wins: which providers may serve the key, then injection patterns, then
+sensitive-data detectors, then the token ceiling and the spend cap. A request
+refused for an earlier rule will not show the later one until the earlier one
+is fixed.
+
+A refused request can also be a platform problem rather than a policy problem.
+If a rule cannot be read when the request arrives, the request is refused with
+HTTP 503 and a code ending in `_unreadable`, instead of being served with the
+rule skipped. The message says nothing was sent. Re-saving the guardrail
+republishes its rules, which clears the condition.
+
+Error shapes and retry guidance for the rest of the API are on
+[Errors](/features/errors).
+
+## Find the block in Activity
+
+Refused requests are ordinary rows on the Activity screen, not hidden and not
+grouped. To find the blocks on a key:
+
+1. Open **Activity** and filter by the key's model or date as needed.
+2. Set the outcome filter to **refused**. The rows show the refusal beside the
+   key and the model, and the charge reads zero.
+3. Open one row to see the single request view, which keeps the exact code. Use
+   the request id from the response header or the error body to reach the same
+   row directly.
+
+The Activity row shows the outcome in plain words. The code and the guardrail
+name are on the single request view and in the error the caller received.
+
+For what Activity keeps about each request, see
+[View activity](/manage/view-activity).
+
+## Fix a policy after a false positive
+
+A false positive is a request the guardrail refused that should have been
+served. Work out which rule refused it before changing anything: the code in
+Activity, or the error the caller received, names the rule, and the message
+names the guardrail.
+
+Then pick the smallest change that lets the request through.
+
+- **Spend cap.** Raise the amount or change the period on the guardrail's card,
+  or turn the cap off. Saving replaces the whole guardrail, and every attached
+  key picks up the change before the save is reported as done.
+- **Zero data retention.** Set the guardrail's privacy choice to workspace default
+  or off, if the key should not require retention-only providers.
+- **Sensitive-data detectors.** Switch off the detector that matched, on the
+  guardrail's edit form.
+- **Injection patterns and allow lists.** These cannot be edited on the screen
+  yet. Until they can, detaching the key from the guardrail lifts all of its
+  rules from that key, and the key then runs on its own limits. Detach it from
+  the guardrail's card or from the key's row on the Keys screen, and re-attach
+  once the rule is changed in a supported place.
+
+Check the fix by sending the same request again and watching Activity. A fixed
+request shows as served. If it is still refused, the code will tell you which
+rule is still in the way.
+
+Do not switch a rule off to hide a real problem. Each refusal is recorded in
+Activity, so a rule that was loosened to stop noise leaves a trail there.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Guardrails" href="/features/guardrails">
+    Every rule, what it does to a request, and the codes a caller sees.
+  </Card>
+  <Card title="Set up guardrails" href="/manage/set-up-guardrails">
+    Each control on the Guardrails screen, step by step.
+  </Card>
+  <Card title="View activity" href="/manage/view-activity">
+    Finding refused requests and opening one request in full.
+  </Card>
+  <Card title="Errors" href="/features/errors">
+    The envelope every refusal is shaped as.
+  </Card>
+</CardGroup>

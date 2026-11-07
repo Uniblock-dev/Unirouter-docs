@@ -91,7 +91,7 @@ failure path in this product removes a saved card.
 
 **The purchase could not be started.** The amount you typed is preserved. Do not
 press Continue again straight away: each attempt opens its own checkout session, and
-a purchase that did start takes no money unless you finish paying for it. Quote the
+a purchase that did start charges nothing unless you finish paying for it. Quote the
 request id shown with the failure if you need us.
 
 **The credit has not arrived.** Reload the Balance tab. Credit lands only on the
@@ -101,17 +101,17 @@ your statement.
 
 ## Read the statement
 
-The Statement tab lists every movement, newest first, fifty lines to a page, with
+The Statement tab lists every transaction, newest first, fifty lines to a page, with
 date filters. A purchase line carries the amount charged, the credit granted and the
 fee, as three sub-fields of the one line, which is what explains any gap between your
 card statement and your balance.
 
-The running total on each page is the sum of your movements up to that line. It is
-there so you can check our arithmetic. It is not your balance: your balance is on the
+The running balance on each page is the sum of your transactions up to that line. It is
+there so you can check our arithmetic. It is not your available balance: that is on the
 Balance tab and accounts for credit currently held for requests in flight.
 
 The Statement tab is live today, one of the two tabs on the Billing screen alongside
-Balance. What you see there is read from your ledger, not a preview of a screen still
+Balance. What you see there is the live record, not a preview of a screen still
 being designed.
 
 ## Set the low credit notice
@@ -140,8 +140,8 @@ card again; it changes nothing about credit you have already bought and nothing 
 your balance.
 
 The card controls are on the Billing screen's **Payment** tab, under **Your
-card**. Adding a card opens a setup session with our payment provider, and no
-money moves. With more than one card saved, **Make default** records which one
+card**. Adding a card opens a setup session with our payment provider, and nothing
+is charged. With more than one card saved, **Make default** records which one
 pays and charges nothing. **Remove** asks you to confirm, and if the card you are
 removing is the one that pays while others remain, the screen asks which card
 takes over before it lets go of the old one.
@@ -171,7 +171,7 @@ Setting either figure takes the same authority as buying credit: owner or admin.
 
 <CardGroup cols={2}>
   <Card title="Credits and billing" href="/manage/credits-and-billing">
-    The money model in full: the fee, holds, and what happens at zero.
+    How billing works in full: the fee, holds, and what happens at zero.
   </Card>
   <Card title="Spend controls" href="/manage/spend-controls">
     The spend rate cap and the pause, before you need them.

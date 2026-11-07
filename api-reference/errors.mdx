@@ -78,7 +78,7 @@ separates causes sharing a status.
 | 405 | `invalid_request_error` | `method_not_allowed` | A method other than GET on a path that exists. Carries an `Allow` header. Answered before any key is looked at, so it costs nothing and reveals nothing. |
 | 413 | `invalid_request_error` | `payload_too_large` | The request body is larger than the 8388608 byte maximum this API accepts, and it was refused at the door. A body that declares its length is refused without a byte being read; one that declares none is read only as far as the ceiling and then abandoned. Nothing was parsed, no credit was held, no model was called and nothing was charged. The message names the figure and what to change: fewer messages, a shorter prompt, or fewer inputs. |
 | 429 | `rate_limit_error` | `rate_limit_exceeded` | This key's request rate limit. Carries `Retry-After`. |
-| 429 | `rate_limit_error` | `spend_rate_exceeded` | The account's spend rate cap. Nothing to fix; requests are admitted again as the window rolls forward. Carries `Retry-After` in whole seconds: the wait until the window has no counted reservation left, computed from the earliest reservation still counted, and never less than one second. |
+| 429 | `rate_limit_error` | `spend_rate_exceeded` | The account's spend rate cap. Nothing to fix; requests are admitted again as the window rolls forward. Carries `Retry-After` in whole seconds: the wait until the window has no counted hold left, computed from the earliest hold still counted, and never less than one second. |
 | 429 | `rate_limit_error` | `upstream_rate_limited` | The model's provider rate-limited the call. Nothing about the request is wrong and nothing is charged for it. Carries `Retry-After` in whole seconds: the provider's own figure where it sent one, and five seconds where it sent none. Back off and retry. |
 | 429 | `rate_limit_error` | `provider_key_refused` | The request ran on your own key for that provider, and the provider says that key is over its limit there. Nothing to fix on our side; it clears on its own. |
 | 500 | `api_error` | `null` | An unhandled fault on our side. Quote the request id. |
@@ -101,11 +101,11 @@ the status alone does not tell you which of the three you met.
 - `rate_limit_exceeded` is your key sending too many requests. The response
   carries `Retry-After` in seconds. Back off and retry.
 - `spend_rate_exceeded` is the account's spend rate cap, which counts the
-  estimated maximum cost reserved in a rolling window rather than settled spend.
+  estimated maximum cost held in a rolling window rather than settled spend.
   It carries `Retry-After` in whole seconds, computed from the earliest
-  reservation still counted in the window, so the header and the wait named in
+  hold still counted in the window, so the header and the wait named in
   the message cannot disagree. Sending `max_tokens` on your requests lowers the
-  estimated maximum each one reserves. See
+  estimated maximum each one holds. See
   [Rate limits and spend controls](/manage/rate-limits-and-spend-controls).
 - `upstream_rate_limited` is the model's provider rate-limiting the call. It is
   not your key's allowance and not your account's cap, nothing about the request

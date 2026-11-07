@@ -1,0 +1,291 @@
+---
+title: "Evaluate and improve models"
+description: "The workload insights journey: observe your traffic, classify workflows, report outcomes, get recommendations, trial a candidate model and promote a winner."
+status: blocked
+gates: ["53.1", "53.2", "53.3", "53.4", "53.5", "53.6", "54.1", "54.2", "54.3", "54.4", "54.5", "55.1", "55.2", "55.3", "55.4", "55.5", "56.1", "56.2", "56.3", "56.4", "56.5", "56.6", "56.7", "57.3", "57.4"]
+---
+
+import FeatureStatus from '/snippets/feature-status.mdx';
+
+<FeatureStatus
+  missing="the evaluate and improve journey"
+  instead="Nothing on this page is reachable from the production dashboard or the production API yet. Read it as the plan each stage follows, and see [Workload insights](/manage/workload-insights) for the part that is built."
+/>
+
+Workload insights helps you find out whether a cheaper or faster model does the
+same job well for a workflow you run again and again. The work moves through five
+stages. Each stage is separate, each one starts off, and you turn on the next one
+only when you want it. If a stage is off for your workspace, the product says so
+where you look. It never shows an empty result in its place.
+
+## The five stages
+
+| Stage | What it gives you | What you opt into | Status |
+|---|---|---|---|
+| Observe | Your requests grouped by workflow and task, with customer charges, latency and the model mix | Nothing beyond sending two headers with each request | Gated |
+| Classify | A type label for a workflow, inferred from the description you wrote | Owner consent, which you can revoke | Gated |
+| Recommend | A suggested approved model for a workflow, with the evidence behind it | Nothing to enable. Quality evidence comes from the outcomes you report | Gated |
+| Trial | A bounded comparison of the saved baseline and one candidate on new tasks | Starting a trial, with its spend cap and enrollment window | Gated |
+| Promote | The winning policy becomes the choice for new tasks on that profile | An explicit promotion. Automatic promotion is a separate setting and is off by default | Gated |
+
+Task outcomes sit between Observe and Recommend. You report whether each task
+succeeded, and that report is what lets Hopscotch judge a model on your work
+rather than on its response speed alone.
+
+## Observe: group requests into workflows and tasks
+
+Observation needs no setup. Name a workflow once on the Settings screen, or
+through the management API when it is available, then send its ID with each
+request. Add a task ID when a single unit of work spans the request.
+
+```http
+POST /v1/chat/completions
+Authorization: Bearer <inference key>
+x-hopscotch-workflow-id: <workflow id>
+x-hopscotch-task-id: <task id>
+```
+
+- Send the workflow header on its own, or both headers together. A task header
+  alone is refused.
+- The headers are read on the way in and never forwarded to a provider.
+- A label never changes which model serves the request.
+- Requests without the headers appear as Unclassified, which is different from a
+  workflow whose declared type is unknown.
+
+Usage then shows the workflow beside the by-key and by-model views. Every figure
+is a measured value or it is labelled as unknown. Customer charges come from the
+same records Activity shows, so a workflow total reconciles with your balance.
+
+If observation is paused for your workspace, requests are still served. They are
+simply not labelled, exactly like untagged requests. Reads of existing workflows
+keep working.
+
+## Report task outcomes
+
+An outcome is your judgement of whether a task worked. A served request is not
+the same thing. Hopscotch records what you report. It does not check your
+application, and a missing report stays unknown rather than counting as success.
+
+**First, define how success is measured.** Give the workflow a metric definition
+before you create tasks for it. Two pairs are allowed, and each pair must match:
+
+- `application_pass` with `application_assertion`, when your application checks
+  the result. Keep the assertion in your own code and name its version in
+  `evaluatorVersion`.
+- `human_accepted` with `human_acceptance`, when a person accepts or rejects
+  the result.
+
+A task copies the definition it was created under. Changing the workflow's
+definition starts a new cohort, and older tasks keep the definition they had.
+
+**Then create a task** through the workflow, and pass the task ID with each
+inference request, as shown above.
+
+**Next, report the result** once you have checked it. Send a unique
+`Idempotency-Key` with each report:
+
+```json
+{
+  "revision": 1,
+  "expectedVersion": 1,
+  "status": "success",
+  "evaluatorKind": "application_assertion",
+  "evaluatorVersion": "checker-1"
+}
+```
+
+- `status` is `success`, `failure` or `cancelled`. A cancelled task is never
+  counted as a success.
+- To correct a report, increase `revision` and use a new key. An identical retry
+  with the same key returns the original receipt with `replay` set to true.
+- A conflict, such as a stale `expectedVersion`, a changed evaluator or a reused
+  key with different content, returns 409. Read the task again and decide
+  again. Do not increase the version blindly.
+- Use the outcome's returned version for the next step.
+
+**Finally, close the task** when the unit of work ends. Closing ends trial enrollment for
+that task. Outcomes can still arrive or be corrected for a short window after the
+close or the deadline, whichever comes first. After that window, the report is
+fixed for analysis, and a late correction is kept as an annotation.
+
+Reports are typed. There is no free text, and no prompt, response or document is
+accepted. End-user thumbs-up or retry signals are not task success unless your
+application turns them into a typed report.
+
+### Reading what your tasks cost
+
+Read a workflow's outcomes to see each version and metric cohort. Every cohort
+shows how many tasks were enrolled and how many succeeded, failed, were cancelled
+or still have no outcome. Those four always add up to the enrolled count. A task
+still open, and a task that expired without a report, are both unknown. Neither
+is dropped.
+
+- Cost per success divides the settled charge of every enrolled task, including
+  failed, cancelled and unknown ones, by the tasks that succeeded. It is shown
+  as unavailable with a reason when nothing succeeded or when settlement is
+  incomplete. A missing figure is never zero.
+- Requests sent on your own provider key carry a Hopscotch charge that can be
+  zero while the provider's spend is unknown. Such a cohort says so. Do not rank
+  it as free.
+- Task duration, request latency and first-token latency are separate measures.
+  Request durations overlap inside a task, so they are never added together. First
+  token latency is not recorded.
+
+## Classify: label a workflow from its description
+
+Classification is off until the workspace owner turns it on. It is the only stage
+that sends text outside Hopscotch, so it is the one with a consent step.
+
+- Only the owner can grant or revoke consent. Admins can edit workflows but
+  cannot turn classification on.
+- The consent screen names the destination, the one field that is sent (the
+  workflow description you wrote), the processing location and the retention
+  terms as the provider states them. Nothing is checked by default, and it is
+  not bundled with any other option.
+- The description must not contain prompts, responses, tool arguments,
+  credentials or personal data. Prompts, responses and tools are never sent.
+- A declared type always wins over an inferred one. Each label shows whether it is
+  Declared, Inferred or Corrected, and when it was last updated.
+- An inferred label is a confidence estimate for that label. It is not an accuracy
+  figure.
+
+When you revoke consent, the screen states the effect before you confirm. New
+sends stop once the revocation is confirmed. A send that has already started
+cannot be recalled, and the screen records it as in flight. Declared labels keep
+working. Inferred labels stop influencing recommendations.
+
+Pending classification has no effect on inference. If classification is paused for
+your workspace, declared types keep working, and the reason is shown on the
+workflow.
+
+## Recommend: review a suggested model
+
+A recommendation names one workflow and one profile, the baseline model, the
+candidate, the evidence window, the sample counts, the outcome coverage and when
+the evidence was read. It shows Why this candidate and What remains unknown before
+any action.
+
+- Only models already approved in that profile can be candidates. Adding a model
+  to a profile stays a separate step in the profile editor.
+- An empty list can be correct. Each excluded or ineligible candidate states its
+  reason.
+- A recommendation is not a quality claim unless the outcome evidence supports it.
+  Without quality evidence, the only action offered is to start a bounded trial.
+- Estimated means a modelled figure. Observed means a settled comparison result.
+  Use only the words the screen shows for each.
+- Stale evidence shows Refresh evidence and disables acceptance until a fresh read
+  succeeds.
+- Dismissing records your decision. Accepting takes you to trial setup and does
+  not start a trial.
+
+## Trial: compare the baseline and a candidate
+
+A trial sends a bounded share of new tasks in one profile to the candidate, and
+keeps the saved baseline for the rest. Setup shows everything before anything
+starts.
+
+- The workflow and version, the baseline, the candidate and the allocation
+- The task deadline and the fixed evaluation window
+- The minimum evidence required and the metric and evaluator it is judged by
+- The maximum experiment spend and the stop conditions
+- Provider, capability and data policy eligibility, with a reason for each refusal
+
+Saving a draft does not start the trial. Starting is a separate action, and it is
+disabled until every limit is valid. Limits are never filled in from a blank field.
+You cannot change the outcome definition or the success threshold while a trial
+runs.
+
+What a trial does and does not touch:
+
+- Tasks already assigned keep their arm for their whole life.
+- Requests that do not carry a task in an enrolled profile are not affected.
+- A request for a direct model that carries an enrolled task ID is rejected.
+- Nothing is replayed and no shadow request is sent.
+
+While a trial runs, progress shows the task counts for each arm, the terminal
+outcomes, the unknowns, settlement coverage, customer charges, latency and error
+rates, the stop conditions and when the next evaluation is due. Progress follows
+the fixed schedule. A favourable early reading does not declare a winner.
+
+When the window closes, the result is one of three states: Eligible to promote,
+Rejected or Inconclusive. Each one shows the gate results behind it. Unknown
+outcomes stay unknown in the counts. A separate sensitivity view shows the
+pessimistic bounds for those unknowns. Those bounds are analysis, not rewritten
+outcomes.
+
+**Pause and roll back are different actions.** Pause ends new enrollment, and
+tasks already assigned finish on their arm. Roll back restores the saved baseline
+for new tasks. Neither one undoes a response or the usage already settled. A
+stopped trial does not restart by itself.
+
+## Promote: adopt a winner
+
+Promotion is available only for a trial that is Eligible to promote at the moment
+you act. Otherwise the baseline stays in place.
+
+- A promotion creates a new policy version for new tasks on that profile. The
+  original trial record is kept as it was.
+- Automatic promotion is a per-profile setting. It is off by default and needs its
+  own approval and its own monitoring spend cap, with an expiry date. It does not
+  reuse the spend cap of the trial.
+- A promoted policy is monitored against the baseline it replaced. If quality drops,
+  latency or errors breach their limits, outcomes go missing, the policy goes stale
+  or the monitoring cap is reached, new tasks roll back to the baseline.
+- A rollback never restarts on its own. Renewing requires a fresh eligible trial.
+
+## What unavailable looks like, surface by surface
+
+Every stage that is off for your workspace shows one of these states. Each one
+says why and what you can do next. None of them shows a blank table or a zero.
+
+| Surface | What you see | What you can do |
+|---|---|---|
+| Usage, Workloads | The reason the stage is off, beside your ordinary usage, which still loads | Read usage. Ask an owner or admin to set up the missing part |
+| Settings, workflow registry | Workflows you can read, with writes unavailable and the reason stated | Read the list. An authorised manager can create or edit workflows |
+| Workflow outcomes | The reason outcomes are unavailable, or the cohort with its unknowns counted | Read the cohort. Report outcomes if you hold the right permission |
+| Classification | Declared, Pending, Unknown or Unavailable, with the exact cause | Declare a type, or ask the owner to resolve the cause |
+| Recommendations | Stale, ineligible or excluded candidates, each with its reason | Refresh evidence, dismiss, or start a bounded trial when offered |
+| Routing profile, trials | Draft, Running, Paused, Rolled back, or the final result, with the reason | Review, pause or roll back, where your role allows |
+| Management API | A closed door answers 404, the same answer as a route that does not exist | Check that the feature is available to your workspace |
+| Inference requests | Served normally. A paused observation only drops the label | Keep sending requests. Add headers only when labels are on |
+| Permissions | Forbidden, with no detail about resources you cannot see | Use a screen your role allows |
+
+## Refusals you may see
+
+- `observation_disabled` (409): observation is paused for your workspace. Management
+  writes are refused with this code. Requests are still served, unlabelled. Reads
+  of existing workflows and tasks keep working.
+- `classification_disabled` (409): classification is paused. Declared types keep
+  working.
+- `experiment_suspended`: trials are paused for your workspace. Tasks already
+  assigned continue on their stored arm.
+- `task_required`: the profile is in a trial and the request carried no valid task.
+  Send the task headers for a task in that trial, or use a profile outside it.
+- A 409 on a write means someone changed the same record after you read it. Read it
+  again, then decide again. Nothing retries the write for you.
+
+## Pause, rollback and deletion
+
+Deletion is owner-only. It stops new classifier sends and new trial enrollment
+right away, and it rolls back new tasks on affected profiles. It then clears
+descriptions and feature details on a schedule stated on the receipt. Usage and
+financial records keep their existing retention, and no task text is copied into
+them. The receipt lists only the metadata it contains. Requests already sent to a
+classifier are reported as in flight, and they cannot be recalled.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Workload insights" href="/manage/workload-insights">
+    What is built today: the workflow registry, and what is still to come.
+  </Card>
+  <Card title="Monitor usage" href="/manage/monitor-usage">
+    The usage screen as it stands today, by key and by model.
+  </Card>
+  <Card title="Management API" href="/manage/management-api">
+    Where the workflow and outcome endpoints will live.
+  </Card>
+  <Card title="Routing profiles" href="/features/routing-profiles">
+    The profile settings that a trial and a promotion change.
+  </Card>
+</CardGroup>

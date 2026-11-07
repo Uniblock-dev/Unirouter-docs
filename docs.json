@@ -135,6 +135,14 @@
             ]
           },
           {
+            "group": "Step-by-step journeys",
+            "pages": [
+              "features/routing-journey",
+              "features/guardrails-journey",
+              "manage/stored-request-data"
+            ]
+          },
+          {
             "group": "Try it",
             "pages": [
               "features/playground"

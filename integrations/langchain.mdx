@@ -94,14 +94,12 @@ forwarded here as you sent it, so this reaches the provider rather than us, and
 what it does there is the provider's answer to give. If a provider rejects it,
 setting `stream_usage=False` is the lever.
 
-**Embeddings are a separate class with one more setting.**
-`OpenAIEmbeddings` takes the same `base_url` alias and defaults to an OpenAI
-embedding model name with no provider in it. This API serves
-[`POST /v1/embeddings`](/features/completions-and-embeddings), so a vector
-store, retriever or memory built on that class works here once you give it a
-pinned embeddings id such as `openai/text-embedding-3-small`. Leave the model
-argument at its default and the request is refused with `model_id_not_pinned`
-before anything is sent, which is the same rule `ChatOpenAI` is under.
+**Embeddings are not served here yet.** `OpenAIEmbeddings` is a separate class
+and posts to `/embeddings`. This API does not serve
+[`POST /v1/embeddings`](/features/completions-and-embeddings#embeddings) yet and
+has no date to give, so a vector store, retriever or memory built on that class
+cannot use this base URL for its embeddings. Point that class at a provider you
+call directly.
 
 **Nothing calls the catalog.** `ChatOpenAI` does not ask `GET /v1/models` to
 validate a model name, in either language.
@@ -159,11 +157,10 @@ Nothing on this page has been executed, because the base URL this site prints is
 not yet a host that answers.
 
 **Not checked either.** Which LangChain flows reach `OpenAIEmbeddings` by
-default. That the class exists, takes the same setting, and defaults to a bare
-embedding model name was read from its source; which vector store, memory or
-retriever defaults pull it in without being asked was not traced, so the
-paragraph above tells you which class needs the pinned id rather than naming
-the flows that reach it.
+default. That the class exists and defaults to a bare embedding model name was
+read from its source; which vector store, memory or retriever defaults pull it
+in without being asked was not traced, so the paragraph above tells you which
+class cannot use this base URL rather than naming the flows that reach it.
 
 **And not checked.** What a provider does with the `stream_options` that recent
 Python versions send. We forward the body as sent, so this is a question about
