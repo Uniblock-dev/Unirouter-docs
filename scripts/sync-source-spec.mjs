@@ -4,7 +4,18 @@
  * tells a writer what changed on the public surface.
  *
  *   node scripts/sync-source-spec.mjs --source ../Gateway-LLM
- *   node scripts/sync-source-spec.mjs --source ../Gateway-LLM --write-lock
+ *   node scripts/sync-source-spec.mjs --source ../Gateway-LLM --ref origin/main
+ *   node scripts/sync-source-spec.mjs --source ../Gateway-LLM --ref origin/main --write-lock
+ *   node scripts/sync-source-spec.mjs --source ../Gateway-LLM --worktree
+ *
+ * The spec is read from a git ref in the source checkout, not from its working
+ * tree, because a working tree can sit on any branch with any edits. --ref
+ * defaults to origin/develop (the sync point). Production runs origin/main, so
+ * pass --ref origin/main when the question is what production exposes.
+ * --worktree opts back into reading the file from disk.
+ *
+ * Read-only against the source checkout: only `git rev-parse` and `git show`
+ * are run there, and nothing is written into it.
  *
  * Two files come out of this, and the difference between them is the point:
  *
@@ -25,6 +36,7 @@
  * committed lock plus the committed artifact are what CI has, and that is
  * deliberate.
  */
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -42,13 +54,39 @@ if (!source) {
   process.exit(1);
 }
 
-const specPath = join(source, ...SOURCE_SPEC_RELATIVE.split('/'));
-if (!existsSync(specPath)) {
-  console.error(`No control-plane spec at ${specPath}.`);
+const useWorktree = flag('worktree');
+const ref = option('ref', 'origin/develop');
+if (useWorktree && option('ref') !== undefined) {
+  console.error('Pass either --ref or --worktree, not both. --worktree reads whatever is on disk.');
   process.exit(1);
 }
 
-const spec = JSON.parse(readFileSync(specPath, 'utf8'));
+let raw;
+let sourceLabel;
+if (useWorktree) {
+  const specPath = join(source, ...SOURCE_SPEC_RELATIVE.split('/'));
+  if (!existsSync(specPath)) {
+    console.error(`No control-plane spec at ${specPath}.`);
+    process.exit(1);
+  }
+  raw = readFileSync(specPath, 'utf8');
+  sourceLabel = `working tree at ${specPath}`;
+} else {
+  const sha = gitInSource(['rev-parse', '--verify', '--quiet', `${ref}^{commit}`], source)?.trim();
+  if (!sha) {
+    console.error(`Ref ${ref} does not resolve in ${source}. Fetch it there first; this script does not fetch.`);
+    process.exit(1);
+  }
+  raw = gitInSource(['show', `${ref}:${SOURCE_SPEC_RELATIVE}`], source, { maxBuffer: 512 * 1024 * 1024 });
+  if (raw === null) {
+    console.error(`No control-plane spec at ${SOURCE_SPEC_RELATIVE} on ${ref} (${sha}).`);
+    process.exit(1);
+  }
+  sourceLabel = `${ref} (${sha}) at ${SOURCE_SPEC_RELATIVE}`;
+}
+report.note(`read ${sourceLabel}`);
+
+const spec = JSON.parse(raw);
 writeFileSync(paths.sourceSpecLocal, `${JSON.stringify(spec, null, 2)}\n`, 'utf8');
 report.note(`wrote api-reference/.source-spec.json (gitignored, ${Object.keys(spec.paths ?? {}).length} paths across every surface)`);
 
@@ -105,6 +143,22 @@ function publicInventory(spec) {
     }
   }
   return Object.fromEntries(Object.entries(operations).sort(([a], [b]) => a.localeCompare(b)));
+}
+
+/**
+ * Runs read-only git against the source checkout. Returns stdout, or null when
+ * git fails (an unknown ref, or a path that is not on that ref).
+ */
+function gitInSource(args, cwd, options = {}) {
+  try {
+    return execFileSync('git', ['-C', cwd, ...args], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+      ...options,
+    });
+  } catch {
+    return null;
+  }
 }
 
 function compare(before, after) {
