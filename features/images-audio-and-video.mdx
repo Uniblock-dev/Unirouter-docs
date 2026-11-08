@@ -2,15 +2,14 @@
 title: "Images, audio and video"
 description: "Image generation and editing, speech, transcription, translation and video jobs, live in production on the same key and balance, and how each one is billed."
 status: partial
-gates: ["52.4", "72.5"]
+gates: ["72.5"]
 ---
 
 The image, audio and video endpoints are live in production. They take the same
-key as chat completions and draw on the same balance. Full reference
-documentation for them is coming, so this page says what each endpoint is and
-how it is billed, and does not yet give request and response schemas. The
-realtime endpoint is not open yet, and [below](#realtime) says what a call to it
-returns.
+key as chat completions and draw on the same balance. This page says what each
+endpoint is and how it is billed, and links the reference page for each one,
+which gives its request body, its reply and its refusals. The realtime endpoint
+is not open yet, and [below](#realtime) says what a call to it returns.
 
 ## The endpoints
 
@@ -25,6 +24,16 @@ returns.
 | `GET /v1/videos/{id}` | Read a job you created | Settles the job when it reaches a final state |
 | `GET /v1/videos/{id}/content` | Stream the finished video's bytes | Nothing further |
 | `DELETE /v1/videos/{id}` | Cancel or delete a job | A cancelled job is charged nothing |
+
+The first eight rows link to their reference pages: [Create images](/api-reference/images/generate-images),
+[Edit an image](/api-reference/images/edit-image),
+[Create speech](/api-reference/audio/create-speech),
+[Create a transcription](/api-reference/audio/create-transcription),
+[Create a translation](/api-reference/audio/create-translation),
+[Create a video](/api-reference/videos/create-video),
+[Retrieve a video job](/api-reference/videos/retrieve-video) and
+[Download video content](/api-reference/videos/download-video-content). The
+delete endpoint does not have a reference page yet.
 
 Listing videos is not part of the shape and will stay a 404.
 
@@ -42,15 +51,15 @@ provider's rate with nothing added.
   you declare and an estimate from the file's size, and settles on the seconds
   the provider reports.
 - A video job holds `seconds` times the per-second rate for the `size` you
-  asked for, with `seconds` defaulting to four if you omit it, and the hold lives
+  asked for, with `seconds` defaulting to 4 if you omit it, and the hold lives
   for the length of the job. A job that completes is charged for the seconds
   delivered, up to what you asked for. A job that fails or is cancelled is
-  charged nothing. A job still open three hours after it was created is treated
-  as expired and charged its full hold, so poll it.
+  charged nothing. A job still open 3 hours after it was created is treated as
+  expired and charged its full hold, so poll it.
 
 A request for a model with no published rate in the unit it needs is refused
 with HTTP 503 and the code `model_not_priceable` rather than served free or at
-a guessed price. The multipart doors share the eight MiB body cap every
+a guessed price. The multipart doors share the 8 MiB body cap every
 endpoint has.
 
 Only the account that created a video job can read it, fetch its content or
