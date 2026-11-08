@@ -97,7 +97,9 @@ codes differ in whether waiting helps: `balance_unavailable`,
 `model_not_priceable` and `model_pricing_unreadable` clear on their own, while
 `paused_by_owner` means a person paused the account and only a person can unpause
 it. Retrying that one on a timer will spend your backoff budget on a state no
-amount of waiting changes.
+amount of waiting changes. `provider_account_unavailable` is the exception to
+"ours": a provider has restricted this workspace, and the message names that
+provider and says what to do next. Nothing is charged for it.
 
 ## What an error never contains
 
@@ -136,6 +138,9 @@ from it rather than from a description of what the screen said.
   model. If it says we cannot reach it, or says neither, retry later, because
   the request itself is fine.
 - `503` with `paused_by_owner`: do not retry on a timer.
+- `503` with `provider_account_unavailable`: read the message. It names the
+  provider that has restricted this workspace, so call a model from another
+  provider, or contact support about the restriction.
 - Other `503`, and `500`: retry with backoff. If it persists, quote a request id.
 - `504`: the request ran past the 540 second limit. Retrying the same work
   unchanged will most likely hit the same limit, so split it or stream it.

@@ -32,13 +32,15 @@ exact about each of them rather than leaving you to find the edges by calling.
 | `/v1/models/{id}` | `GET` | Serves. |
 | `/v1/usage/{id}` | `GET` | Serves. See [Usage lookup](/features/usage-lookup). |
 
-That table is the whole documented surface, and it is also the whole served
-surface in production today, with one exception: `POST /v1/systemone` serves a
-partner's typed-judgment API and is not documented here yet.
+That table is the whole documented surface on this page. Two families are served
+in production and documented elsewhere: the image, audio and video endpoints, and
+`POST /v1/systemone`, which serves a partner's typed-judgment API and is not
+documented here yet.
 
-**Built and closed.** The image, audio, video and realtime endpoints exist and
-answer the 404 below in production until their doors open. See
-[Images, audio and video](/features/images-audio-and-video) for what is coming.
+**Live, and realtime still closed.** The image, audio and video endpoints
+serve in production. See [Images, audio and video](/features/images-audio-and-video)
+for what each one does and how it is billed. The realtime endpoint,
+`GET /v1/realtime`, is not open in any environment yet and answers the 404 below.
 
 ## What a call to a path we do not serve returns
 
@@ -48,7 +50,7 @@ so it fails the same way every time rather than in a new way per path. It is a
 `endpoint_not_supported`:
 
 ```bash
-curl https://api.hopscotchlabs.ai/v1/images/generations \
+curl https://api.hopscotchlabs.ai/v1/rerank \
   -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
   -H "Content-Type: application/json" \
   -d '{"model": "openai/gpt-4o-mini", "prompt": "hello"}'
@@ -57,7 +59,7 @@ curl https://api.hopscotchlabs.ai/v1/images/generations \
 ```json 404
 {
   "error": {
-    "message": "POST /v1/images/generations is not supported in this release.",
+    "message": "POST /v1/rerank is not supported in this release.",
     "type": "invalid_request_error",
     "param": null,
     "code": "endpoint_not_supported",
