@@ -564,3 +564,28 @@ claims:
     gate: "spec-subscription-plans"
     used_by:
       - manage/subscriptions-and-seats
+
+  # Image, audio and video (features/images-audio-and-video.mdx), 2026-11-07.
+  - id: media-body-cap-mib
+    value: "8"
+    means: "The request body cap, in MiB, that the multipart media doors share with the other inference endpoints."
+    source: "services/control-plane/src/inference/requestBody.ts (MAX_INFERENCE_BODY_BYTES = 8 * 1024 * 1024)"
+    status: shipped
+    used_by:
+      - features/images-audio-and-video
+
+  - id: video-default-seconds
+    value: "4"
+    means: "How many seconds a video job is held for when the request omits seconds."
+    source: "services/control-plane/src/money/flows/admission/unitHold.ts (DEFAULT_VIDEO_SECONDS = 4)"
+    status: shipped
+    used_by:
+      - features/images-audio-and-video
+
+  - id: video-job-deadline-hours
+    value: "3"
+    means: "How many hours after creation an open video job is treated as expired and charged its full hold."
+    source: "services/control-plane/src/money/core/deadline.ts (VIDEO_JOB_DEADLINE_MS = 3 * 60 * 60 * 1000)"
+    status: shipped
+    used_by:
+      - features/images-audio-and-video
