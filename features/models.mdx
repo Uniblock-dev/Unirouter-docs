@@ -111,7 +111,9 @@ Every id the list returns is a string you can send as it stands. A catalog row
 that has no provider identity behind it is left out of the answer rather than
 rendered as a bare id, because a bare id is not something the request path
 accepts: an entry you could not call would be worse than an entry that is
-missing.
+missing. For the same reason a model that names no endpoint it can be called
+on, such as chat or embeddings, is left out too, even when it already carries a
+price.
 
 ## A model is offered only when it is live
 
