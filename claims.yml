@@ -564,3 +564,116 @@ claims:
     gate: "spec-subscription-plans"
     used_by:
       - manage/subscriptions-and-seats
+
+  # Videos (features/videos.mdx), 2026-11-08. Per-model durations, sizes and
+  # prompt caps, verified against the video handlers on origin/main. Sizes and
+  # model ids live in code spans on the page and are exempt from this check;
+  # only the digit-bearing limits are registered here.
+  - id: video-seconds-platform-minimum
+    value: "1"
+    means: "The smallest whole seconds a video create may name. The platform refuses less before anything is held."
+    source: "services/control-plane/src/money/flows/admission/unitHold.ts (videoHold refuses parsed < 1)"
+    status: shipped
+
+  - id: video-seconds-two
+    value: "2"
+    means: "Seedance 1.0 renders from 2 seconds and Runway renders from 2 seconds."
+    source: "services/gateway/src/providers/byteplus/videos.ts (SEEDANCE_MIN_SECONDS); services/gateway/src/providers/runway/videos.ts (RUNWAY_MODELS minSeconds)"
+    status: shipped
+
+  - id: video-job-deadline-hours
+    value: "3"
+    means: "A video job still open 3 hours after create is expired and charged its full hold."
+    source: "services/control-plane/src/money/core/deadline.ts (VIDEO_JOB_DEADLINE_MS); services/control-plane/src/video/jobSettlement.ts (settleObservedVideoJob)"
+    status: shipped
+
+  - id: video-kling-min-seconds
+    value: "3"
+    means: "Kling renders from 3 seconds."
+    source: "services/gateway/src/providers/fal-ai/videos.ts (secondsRange(3, 15))"
+    status: shipped
+
+  - id: video-seconds-default
+    value: "4"
+    means: "The seconds a video create asks for when it names none. Models that require a duration refuse an omission instead of taking it."
+    source: "services/control-plane/src/money/flows/admission/unitHold.ts (DEFAULT_VIDEO_SECONDS)"
+    status: shipped
+
+  - id: video-seconds-five
+    value: "5"
+    means: "Wan 2.2 renders exactly 5 seconds; Luma Ray and Wan v2.6 count 5 among their durations; a Runway reference image may be at most 5 MiB as a data URI."
+    source: "services/gateway/src/providers/dashscope/media.ts (seconds !== 5 refused); services/gateway/src/providers/luma/videos.ts (LUMA_VIDEO_SECONDS); services/gateway/src/providers/fal-ai/videos.ts (WAN_T2V seconds); services/gateway/src/providers/runway/videos.ts (MAX_IMAGE_DATA_URI_LENGTH)"
+    status: shipped
+
+  - id: video-seconds-six
+    value: "6"
+    means: "Hailuo renders 6 seconds at either resolution."
+    source: "services/gateway/src/providers/minimax/videos.ts (SECONDS_AT)"
+    status: shipped
+
+  - id: video-mebibyte-cap
+    value: "8"
+    means: "The request body cap, and the total a Wan 2.2 reference upload may reach, in MiB."
+    source: "services/control-plane/src/inference/requestBody.ts (MAX_INFERENCE_BODY_BYTES); services/gateway/src/providers/dashscope/media.ts (MAX_UPLOAD_BYTES)"
+    status: shipped
+    note: "The digit spelling of request-body-max-mebibytes. Never publish it as a rounded 'about 8 MB'."
+
+  - id: video-seconds-ten
+    value: "10"
+    means: "Hailuo renders 10 seconds at 768P sizes; Luma Ray, Wan v2.6 and Runway count 10 among their durations."
+    source: "services/gateway/src/providers/minimax/videos.ts (SECONDS_AT); services/gateway/src/providers/luma/videos.ts (LUMA_VIDEO_SECONDS); services/gateway/src/providers/fal-ai/videos.ts (WAN_T2V seconds); services/gateway/src/providers/runway/videos.ts (RUNWAY_MODELS maxSeconds)"
+    status: shipped
+
+  - id: video-seconds-twelve
+    value: "12"
+    means: "Seedance 1.0 and Seedance 1.5 Pro render up to 12 seconds."
+    source: "services/gateway/src/providers/byteplus/videos.ts (SEEDANCE_MAX_SECONDS, seedanceLimits)"
+    status: shipped
+
+  - id: video-seconds-fifteen
+    value: "15"
+    means: "Seedance 2.0, its fast and mini, and Kling render up to 15 seconds; Wan v2.6 counts 15 among its durations."
+    source: "services/gateway/src/providers/byteplus/videos.ts (seedanceLimits); services/gateway/src/providers/fal-ai/videos.ts (secondsRange(3, 15), WAN_T2V seconds)"
+    status: shipped
+
+  - id: video-seconds-thirty
+    value: "30"
+    means: "Seedance 2.5 renders up to 30 seconds."
+    source: "services/gateway/src/providers/byteplus/videos.ts (seedanceLimits)"
+    status: shipped
+
+  - id: video-luma-short-edge-540
+    value: "540"
+    means: "The smallest short edge, in pixels, a Luma Ray size may carry."
+    source: "services/gateway/src/providers/luma/videos.ts (isVideoSize)"
+    status: shipped
+
+  - id: video-luma-short-edge-720
+    value: "720"
+    means: "A Luma Ray size may carry a 720 pixel short edge."
+    source: "services/gateway/src/providers/luma/videos.ts (isVideoSize)"
+    status: shipped
+
+  - id: video-luma-short-edge-1080
+    value: "1080"
+    means: "The largest short edge, in pixels, a Luma Ray size may carry."
+    source: "services/gateway/src/providers/luma/videos.ts (isVideoSize)"
+    status: shipped
+
+  - id: video-runway-prompt-max
+    value: "1000"
+    means: "The longest prompt Runway accepts, in UTF-16 code units."
+    source: "services/gateway/src/providers/runway/videos.ts (MAX_PROMPT_LENGTH)"
+    status: shipped
+
+  - id: video-hailuo-prompt-max
+    value: "2000"
+    means: "The longest prompt Hailuo accepts, in characters."
+    source: "services/gateway/src/providers/minimax/videos.ts (prompt.length > 2000 refused)"
+    status: shipped
+
+  - id: video-kling-prompt-max
+    value: "2500"
+    means: "The longest prompt Kling accepts, in UTF-16 code units."
+    source: "services/gateway/src/providers/fal-ai/videos.ts (KLING_MAX_PROMPT_LENGTH)"
+    status: shipped
