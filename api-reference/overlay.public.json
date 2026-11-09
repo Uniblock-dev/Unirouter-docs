@@ -29,7 +29,11 @@
     "doorRules": "services/control-plane/src/inference/doorRules.ts (applyDoorRules, refusal)",
     "messagesCredential": "services/control-plane/src/middleware/customerAuth.ts (credentialOf, decide)",
     "usageReadback": "services/control-plane/src/usage/keyReadback.ts (KeyUsageBody), services/control-plane/src/apiApp.ts (the /usage/* handler)",
-    "unpinnedModel": "services/control-plane/src/providers/upstream.ts (unpinnedModelMessage, the endpoint-family refusal)"
+    "unpinnedModel": "services/control-plane/src/providers/upstream.ts (unpinnedModelMessage, the endpoint-family refusal)",
+    "videoDoors": "services/control-plane/src/video/doors.ts (serveVideoFollowUp, openVideoJob, publicJobResponse), services/control-plane/src/video/publicJob.ts (publicVideoJson)",
+    "videoSettlement": "services/control-plane/src/video/jobSettlement.ts (settleObservedVideoJob, proratedCharge), services/control-plane/src/video/jobs.ts (recordVideoJob, readVideoJobByIdForAccount), services/control-plane/src/money/core/deadline.ts (VIDEO_JOB_DEADLINE_MS)",
+    "videoHold": "services/control-plane/src/money/flows/admission/unitHold.ts (videoHold, DEFAULT_VIDEO_SECONDS), services/control-plane/src/money/flows/admission/unitHoldVideoTiers.ts (videoSecondCandidates, heldVideoSeconds)",
+    "videoModels": "services/gateway/src/providers/byteplus/videos.ts (seedanceLimits), services/gateway/src/providers/fal-ai/videos.ts (FAL_VIDEO_MODELS), services/gateway/src/providers/minimax/videos.ts, services/gateway/src/providers/dashscope/media.ts, services/gateway/src/providers/google-vertex-ai/videos.ts, services/gateway/src/providers/luma/videos.ts (LUMA_VIDEO_SECONDS), services/gateway/src/providers/runway/videos.ts (RUNWAY_MODELS)"
   },
   "info": {
     "title": "Hopscotch",
@@ -731,6 +735,114 @@
           },
           "uniblock": {
             "$ref": "#/components/schemas/ModelDetailExtension"
+          }
+        }
+      },
+      "VideoCreateRequest": {
+        "type": "object",
+        "description": "Create a video job. The body may be JSON or multipart/form-data; an input_reference image rides in the form.",
+        "required": [
+          "model",
+          "size"
+        ],
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "The model to call. A provider-pinned id, `{provider}/{model}`, is split once on the first slash. A routing-profile slug, `profile/{identifier}`, tries that profile's models in your own order. `unirouter/auto`, or its second spelling `hopscotch/auto`, names whichever route your workspace made its default. A bare model id is refused with 400 and the code `model_id_not_pinned`. `GET /v1/models` lists the exact strings this key can call.",
+            "example": "openai/sora-2"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Required for text-to-video. A model that renders from an image permits an omitted prompt when `input_reference` is uploaded.",
+            "example": "A paper boat drifting down a rainy street."
+          },
+          "seconds": {
+            "type": "string",
+            "description": "Whole seconds of video, 1 or more, as decimal digits without whitespace, hexadecimal or exponent notation (such as `\"8\"`); JSON also accepts a positive safe integer. Absent, 4. A hold beyond the safe money range is refused with 400 naming `seconds` and the cap at the matching published rate, before any credit is held. A create naming a duration the model does not publish is refused 400 before anything is held.",
+            "example": "8"
+          },
+          "size": {
+            "type": "string",
+            "description": "The resolution, such as `\"1280x720\"`. Required: a create that names none is refused before anything is held. It must have a per-second rate on the model; one without is refused before anything is held. A create naming a size the model does not publish is refused 400 before anything is held.",
+            "example": "1280x720"
+          },
+          "input_reference": {
+            "type": "string",
+            "format": "binary",
+            "description": "A reference image, sent as a multipart file part under this name. A model that renders from an image only requires it, and with an accepted image reference `prompt` is optional. A model that renders from text only refuses it. Each model accepts only the image forms and sizes it publishes."
+          }
+        }
+      },
+      "VideoJob": {
+        "type": "object",
+        "description": "One video job, as the provider reports it, with external URLs omitted and `model` rewritten to the public id the create returned. Providers report different extra fields; only the fields below are promised.",
+        "required": [
+          "id",
+          "object",
+          "model",
+          "status"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The job id the create answered. Pass it to the follow-up paths.",
+            "example": "video_123"
+          },
+          "object": {
+            "type": "string",
+            "enum": [
+              "video"
+            ]
+          },
+          "model": {
+            "type": "string",
+            "description": "The public `provider/model` id the create returned, so a poll names the model exactly as the create did.",
+            "example": "openai/sora-2"
+          },
+          "status": {
+            "type": "string",
+            "description": "Where the job stands. A provider that answers `succeeded` means completed.",
+            "enum": [
+              "queued",
+              "in_progress",
+              "completed",
+              "failed",
+              "cancelled",
+              "succeeded"
+            ]
+          },
+          "progress": {
+            "type": "integer",
+            "description": "How far along the provider says the job is, 0 to 100."
+          },
+          "created_at": {
+            "type": "integer",
+            "description": "When the job was created, in Unix seconds.",
+            "nullable": true
+          },
+          "size": {
+            "type": "string",
+            "description": "The requested size, in OpenAI `WIDTHxHEIGHT` spelling.",
+            "example": "1280x720"
+          },
+          "seconds": {
+            "type": "string",
+            "description": "The seconds of video, as a decimal string. A completed job reports what it rendered; settlement never charges above what the hold covered.",
+            "example": "8"
+          },
+          "error": {
+            "type": "object",
+            "description": "Present when the job failed: the provider's reason, with a stable `code` and a prose `message`.",
+            "properties": {
+              "code": {
+                "type": "string",
+                "example": "video_generation_failed"
+              },
+              "message": {
+                "type": "string"
+              }
+            }
           }
         }
       }
@@ -4125,19 +4237,1210 @@
       "reason": "POST /v1/images/generations: Story 50.6's image and audio door, documented in the source spec under customerApiKey. It is live in production. fiveDoorsEnabled in services/control-plane/src/public/routes.ts reads FIVE_DOORS_ENABLED === 'true', and services/control-plane/wrangler.toml sets that flag to \"true\" under [env.production.vars] on main, so the path is served there and no longer answers the 404 endpoint_not_supported (SF-706). It stays blocked on this site only until a documentation pass publishes it: per-unit pricing, the multipart body and its 8 MiB cap, and the binary audio reply each need a page, and every example has to be transcribed from the handler. Recorded in the internal site's unresolved-findings.md as SF-398, SF-420 and SF-706."
     },
     "/v1/videos": {
-      "classification": "blocked",
-      "gate": "71.6",
-      "reason": "POST /v1/videos: Story 71.6's video door (OpenAI Sora shape), documented in the source spec under customerApiKey. It is live in production. videoDoorsEnabled in services/control-plane/src/public/routes.ts reads VIDEO_DOORS_ENABLED === 'true', and services/control-plane/wrangler.toml sets that flag to \"true\" under [env.production.vars] on main, so the path is served there and no longer answers the 404 endpoint_not_supported (SF-706). It stays blocked on this site only until a documentation pass publishes it: the per-second hold sized from `seconds` and `size`, the three-hour full-hold expiry, the rule that a follow-up answers only the account that created the job, and the binary content stream each need a page, and every example has to be transcribed from services/control-plane/src/video/doors.ts. Recorded in the internal site's unresolved-findings.md as SF-419, SF-428 and SF-706."
+      "classification": "public",
+      "post": {
+        "operationId": "createVideo",
+        "summary": "Create a video",
+        "description": "Create a video job, in OpenAI's Sora shape (`client.videos.create`), and answer the provider's job object. A hold of `seconds` (4 when absent) times the model's per-second rate for the requested `size` is taken before anything is sent to the provider, and stays open until the job ends: a completed job is charged the seconds the provider reports, never above the hold; a failed or provider-confirmed cancelled job is charged nothing; a job not finished three hours after create is charged its full hold. One usage row is written per job, when it settles. The hold is zero on a workspace-owned credential. A model whose rates are duration tiers holds the requested seconds at the tier equal to them, and at the dearest tier when the seconds name none, so a hold never undercharges. A completed job reporting zero seconds releases the hold and records served usage at zero charge; absent or unreadable seconds charge the full hold. Video usage is timestamped when the job settles, so its usage period follows the settled charge. The body may be JSON or multipart/form-data (an `input_reference` image rides in the form) and is capped at 8 MiB; a larger body is refused 413 before any hold. The job belongs to the account that created it: the follow-up paths answer only that account. Listing (`GET /v1/videos`) and remix are not served. Each model accepts only the durations and sizes it publishes: a create naming anything else is refused 400 before anything is held. `GET /v1/models` lists the exact strings this key can call.",
+        "tags": [
+          "Videos"
+        ],
+        "security": [
+          {
+            "customerApiKey": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "https://api.hopscotchlabs.ai",
+            "description": "Production"
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VideoCreateRequest",
+                "properties": {
+                  "model": {
+                    "description": "The model to call. A provider-pinned id, `{provider}/{model}`, is split once on the first slash. A routing-profile slug, `profile/{identifier}`, tries that profile's models in your own order. `unirouter/auto`, or its second spelling `hopscotch/auto`, names whichever route your workspace made its default. A bare model id is refused with 400 and the code `model_id_not_pinned`. `GET /v1/models` lists the exact strings this key can call."
+                  },
+                  "prompt": {
+                    "description": "Required for text-to-video. A model that renders from an image permits an omitted prompt when `input_reference` is uploaded."
+                  },
+                  "seconds": {
+                    "description": "Whole seconds of video, 1 or more, as decimal digits without whitespace, hexadecimal or exponent notation (such as `\"8\"`); JSON also accepts a positive safe integer. Absent, 4. A hold beyond the safe money range is refused with 400 naming `seconds` and the cap at the matching published rate, before any credit is held. A create naming a duration the model does not publish is refused 400 before anything is held."
+                  },
+                  "size": {
+                    "description": "The resolution, such as `\"1280x720\"`. Required: a create that names none is refused before anything is held. It must have a per-second rate on the model; one without is refused before anything is held. A create naming a size the model does not publish is refused 400 before anything is held."
+                  },
+                  "input_reference": {
+                    "description": "A reference image, sent as a multipart file part under this name. A model that renders from an image only requires it, and with an accepted image reference `prompt` is optional. A model that renders from text only refuses it. Each model accepts only the image forms and sizes it publishes."
+                  }
+                }
+              },
+              "example": {
+                "model": "openai/sora-2",
+                "prompt": "A paper boat drifting down a rainy street.",
+                "seconds": "8",
+                "size": "1280x720"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/VideoCreateRequest",
+                "properties": {
+                  "model": {
+                    "description": "The model to call. A provider-pinned id, `{provider}/{model}`, is split once on the first slash. A routing-profile slug, `profile/{identifier}`, tries that profile's models in your own order. `unirouter/auto`, or its second spelling `hopscotch/auto`, names whichever route your workspace made its default. A bare model id is refused with 400 and the code `model_id_not_pinned`. `GET /v1/models` lists the exact strings this key can call."
+                  },
+                  "prompt": {
+                    "description": "Required for text-to-video. A model that renders from an image permits an omitted prompt when `input_reference` is uploaded."
+                  },
+                  "seconds": {
+                    "description": "Whole seconds of video, 1 or more, as decimal digits without whitespace, hexadecimal or exponent notation (such as `\"8\"`); JSON also accepts a positive safe integer. Absent, 4. A hold beyond the safe money range is refused with 400 naming `seconds` and the cap at the matching published rate, before any credit is held. A create naming a duration the model does not publish is refused 400 before anything is held."
+                  },
+                  "size": {
+                    "description": "The resolution, such as `\"1280x720\"`. Required: a create that names none is refused before anything is held. It must have a per-second rate on the model; one without is refused before anything is held. A create naming a size the model does not publish is refused 400 before anything is held."
+                  },
+                  "input_reference": {
+                    "description": "A reference image, sent as a multipart file part under this name. A model that renders from an image only requires it, and with an accepted image reference `prompt` is optional. A model that renders from text only refuses it. Each model accepts only the image forms and sizes it publishes."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The provider's video job object (id, status, progress), with external URLs omitted. A recorded job is charged when a terminal status is observed. If the provider returns no readable job id or an id already recorded for that provider, the full hold is charged immediately and usage is recorded under this create request's unique request id.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-request-id": {
+                "$ref": "#/responseHeaders/SdkRequestId"
+              },
+              "x-hopscotch-provider": {
+                "$ref": "#/responseHeaders/Provider"
+              },
+              "x-hopscotch-retry-attempt-count": {
+                "$ref": "#/responseHeaders/RetryAttemptCount"
+              },
+              "x-hopscotch-cache-status": {
+                "$ref": "#/responseHeaders/CacheStatus"
+              },
+              "x-hopscotch-trace-id": {
+                "$ref": "#/responseHeaders/TraceId"
+              },
+              "x-hopscotch-served-by": {
+                "$ref": "#/responseHeaders/ServedBy"
+              },
+              "x-hopscotch-served-via": {
+                "description": "Present, with the value `backup`, when a backup route served this request. Absent on every other response, and never sent with any other value, so a client that has never read it sees nothing change about an ordinary request. The provider named on x-hopscotch-provider and in the body is still the one you asked for.",
+                "$ref": "#/responseHeaders/ServedVia"
+              },
+              "x-hopscotch-redirected-from": {
+                "description": "Present only when a sunset redirect served this request. The retiring model id requested, including a profile member redirected to its successor.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/retiring-model"
+                }
+              },
+              "x-hopscotch-served-model": {
+                "description": "The successor model that actually answered a sunset redirect, priced and admitted under that model. Present for JSON and streamed replies.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/successor-model"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VideoJob"
+                },
+                "example": {
+                  "id": "video_123",
+                  "object": "video",
+                  "model": "openai/sora-2",
+                  "status": "queued",
+                  "progress": 0,
+                  "created_at": 1788998400,
+                  "size": "1280x720",
+                  "seconds": "8"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request cannot be served as sent. `model` and `size` are required, and `seconds` must be a whole number of seconds, 1 or more. A refusal the provider made about this request is relayed with the provider's own status and its own sentence, so a parameter it requires and did not get reads as what it is rather than as a fault on this platform.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "missing_model": {
+                    "summary": "No model named",
+                    "value": {
+                      "error": {
+                        "message": "You must provide a model parameter naming the model to call. It is read to work out what the request could cost before it is sent.",
+                        "type": "invalid_request_error",
+                        "param": "model",
+                        "code": null,
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "missing_size": {
+                    "summary": "No size named",
+                    "value": {
+                      "error": {
+                        "message": "\"size\" must be a resolution such as \"1280x720\" for \"MODEL_ID\". No credit was held and nothing was sent.",
+                        "type": "invalid_request_error",
+                        "param": "size",
+                        "code": null,
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "bad_seconds": {
+                    "summary": "Seconds are not a whole number of 1 or more",
+                    "value": {
+                      "error": {
+                        "message": "\"seconds\" must be a whole number of seconds, 1 or more, for \"MODEL_ID\". No credit was held and nothing was sent.",
+                        "type": "invalid_request_error",
+                        "param": "seconds",
+                        "code": null,
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No key, a scheme other than Bearer, a key of the wrong shape, or a key we reject. An unknown key and a revoked key are answered with one identical message on purpose.\n\nA key past its own expiry date is refused here too, with code `key_expired` and a message naming the date. It is checked before the per-minute rate limiter, so an expired key never consumes that allowance. Expired keys are not renewed: create a new one.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Incorrect API key provided.",
+                    "type": "authentication_error",
+                    "param": null,
+                    "code": "invalid_api_key",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The request will not be paid for, and nothing was charged. Code `insufficient_credit` is the workspace being out of credit, which stops every key on it. Code `key_limit_exceeded` is the sending key reaching its own credit limit, which leaves every other key in the workspace serving normally; it is refused before any credit is held, and the message names what that key has settled and holds inside its current window.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "insufficient_credit": {
+                    "summary": "The workspace is out of credit",
+                    "value": {
+                      "error": {
+                        "message": "This account has 54 minor units available and the request needs 55 held.",
+                        "type": "insufficient_quota",
+                        "param": null,
+                        "code": "insufficient_credit",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "key_limit_exceeded": {
+                    "summary": "This key is at its own limit",
+                    "value": {
+                      "error": {
+                        "message": "This key may spend $20.00 in its current window and has $18.40 settled and $1.70 held against that, so a request needing $0.30 more is refused. Nothing was charged for it and no credit was held. The limit belongs to this key alone, so other keys in the workspace are unaffected. This limit resets monthly on UTC calendar windows, so requests are admitted again when the window rolls. It can also be raised or removed on the Keys screen.",
+                        "type": "insufficient_quota",
+                        "param": null,
+                        "code": "key_limit_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Refused for a setting the caller owns rather than anything about the model, and `code` names which. A key whose account staff have suspended is refused with code `account_suspended`, before any credit is held or any provider is called; contact support, because retrying will not change the answer.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
+                    "type": "permission_error",
+                    "param": null,
+                    "code": "account_suspended",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The model cannot be served, and the two cases are told apart by `code`. `model_not_found` means the id is in no catalog at all, which is what a typo produces, so check the spelling or list what this key can call with `GET /v1/models`. `model_not_available` means the id is catalogued and is not being served right now, either on this endpoint or at all, so retrying later is worth more than changing the request. No provider was called either way.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "model_not_found": {
+                    "summary": "No model of that id exists",
+                    "value": {
+                      "error": {
+                        "message": "The model \"MODEL_ID\" does not exist. Check the spelling, or list the models this key can call with GET /v1/models.",
+                        "type": "not_found_error",
+                        "param": null,
+                        "code": "model_not_found",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "model_not_available": {
+                    "summary": "Known to us, and not being served right now",
+                    "value": {
+                      "error": {
+                        "message": "The model \"MODEL_ID\" is not currently available. It is known to this platform and is not being served right now, so retrying later is worth more than changing the request.",
+                        "type": "not_found_error",
+                        "param": null,
+                        "code": "model_not_available",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The workflow named by x-hopscotch-workflow-id is archived and takes no new requests. Checked before any hold or provider call.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            }
+          },
+          "413": {
+            "description": "The request body is larger than the 8388608 byte maximum this API accepts, so it was refused at the door. A body that declares its length is refused without a byte being read; one that declares none is read only as far as the ceiling and then abandoned. Nothing was parsed, no credit was held, no model was called and nothing was charged.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "payload_too_large": {
+                    "summary": "The request body is over the ceiling",
+                    "value": {
+                      "error": {
+                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "type": "invalid_request_error",
+                        "param": null,
+                        "code": "payload_too_large",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "A limit refused the request. `rate_limit_exceeded` is this key's own request rate and carries `Retry-After`. `spend_rate_exceeded` is the account spend rate cap, which counts the credit held for requests rather than the credit they settle at, and carries `Retry-After`. `upstream_rate_limited` is the model's provider rate-limiting the call: nothing about the request is wrong, nothing is charged, and it carries `Retry-After`.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "Retry-After": {
+                "description": "Seconds to wait. Present on `rate_limit_exceeded`, `spend_rate_exceeded` and `upstream_rate_limited`.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "example": 17
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "rate_limit_exceeded": {
+                    "summary": "This key's request rate",
+                    "value": {
+                      "error": {
+                        "message": "Rate limit reached for this key. Try again in 12 seconds. Request id REQUEST_ID.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "rate_limit_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "spend_rate_exceeded": {
+                    "summary": "The account spend rate cap",
+                    "value": {
+                      "error": {
+                        "message": "This account has already reserved 5000 minor units in the last 60 seconds, which is at its ceiling of 5000. Requests are admitted again within 60 seconds of the earliest reservation counted, with nothing to do in the meantime.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "spend_rate_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "upstream_rate_limited": {
+                    "summary": "The model's provider rate-limited the call",
+                    "value": {
+                      "error": {
+                        "message": "The provider serving this model is rate-limiting requests right now. Nothing was charged. Retry after the number of seconds in the Retry-After header. Quote the request id if you contact support.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "upstream_rate_limited",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A fault on our side. The request id is the one thing worth keeping.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "The server had an error while processing your request. Sorry about that! Quote the request id if you contact support.",
+                    "type": "api_error",
+                    "param": null,
+                    "code": null,
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Ours rather than yours, and `code` names the condition. `paused_by_owner` clears only when somebody lifts the pause, so retrying on a timer will not help. `balance_unavailable` (we could not read the balance, so the request was refused rather than served unmetered), `model_not_priceable` and `model_pricing_unreadable` (a model we list could not be priced for this call) and `no_provider_configured` (we are not currently configured to serve this) all clear without you doing anything.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "paused_by_owner": {
+                    "summary": "Somebody pressed Pause",
+                    "value": {
+                      "error": {
+                        "message": "Every request on this account is paused, because somebody with access to it pressed Pause in the dashboard. Nothing was charged for this request and no credit was held for it. It is retryable, and it will be refused the same way until the pause is lifted, so retrying on a timer will not clear it. Requests start working again the moment the pause is lifted from the same control, with nothing else to do and nothing to re-create.",
+                        "type": "server_error",
+                        "param": null,
+                        "code": "paused_by_owner",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "balance_unavailable": {
+                    "summary": "We could not read the balance",
+                    "value": {
+                      "error": {
+                        "message": "Your credit balance could not be checked while this request was running, so it was stopped rather than left unwatched. This is a fault on our side rather than a problem with your account, and it does not mean you are out of credit. Try again shortly.",
+                        "type": "server_error",
+                        "param": null,
+                        "code": "balance_unavailable",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "The request ran past the request deadline and was terminated.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This request ran longer than the 540 second limit and was terminated. Reduce the amount of work in one call, or stream the response, and try again.",
+                    "type": "server_error",
+                    "param": null,
+                    "code": "request_deadline_exceeded",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "/v1/videos/{id}": {
-      "classification": "blocked",
-      "gate": "71.6",
-      "reason": "GET and DELETE /v1/videos/{id}: Story 71.6's video door (OpenAI Sora shape), documented in the source spec under customerApiKey. It is live in production. videoDoorsEnabled in services/control-plane/src/public/routes.ts reads VIDEO_DOORS_ENABLED === 'true', and services/control-plane/wrangler.toml sets that flag to \"true\" under [env.production.vars] on main, so the path is served there and no longer answers the 404 endpoint_not_supported (SF-706). It stays blocked on this site only until a documentation pass publishes it: the per-second hold sized from `seconds` and `size`, the three-hour full-hold expiry, the rule that a follow-up answers only the account that created the job, and the binary content stream each need a page, and every example has to be transcribed from services/control-plane/src/video/doors.ts. Recorded in the internal site's unresolved-findings.md as SF-419, SF-428 and SF-706."
+      "classification": "public",
+      "get": {
+        "operationId": "retrieveVideo",
+        "summary": "Retrieve a video job",
+        "description": "Read back the provider's current job object for a video job, for the account that created it. A terminal status seen here settles the job's money once; the read itself writes no usage row and is charged nothing. Charging reads the seconds the provider reports for the finished render, never the requested duration; where the provider reports none, the full hold is charged. External delivery URLs are omitted from the answer; download finished bytes through `GET /v1/videos/{id}/content`.",
+        "tags": [
+          "Videos"
+        ],
+        "security": [
+          {
+            "customerApiKey": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "https://api.hopscotchlabs.ai",
+            "description": "Production"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The video job id the create answered.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "video_123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The provider's video job object with external URLs omitted and its `model` field rewritten to the public id the create returned (`provider/model`).",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VideoJob"
+                },
+                "example": {
+                  "id": "video_123",
+                  "object": "video",
+                  "model": "openai/sora-2",
+                  "status": "in_progress",
+                  "progress": 40,
+                  "created_at": 1788998400,
+                  "size": "1280x720",
+                  "seconds": "8"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No key, a scheme other than Bearer, a key of the wrong shape, or a key we reject. An unknown key and a revoked key are answered with one identical message on purpose.\n\nA key past its own expiry date is refused here too, with code `key_expired` and a message naming the date. It is checked before the per-minute rate limiter, so an expired key never consumes that allowance. Expired keys are not renewed: create a new one.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Incorrect API key provided.",
+                    "type": "authentication_error",
+                    "param": null,
+                    "code": "invalid_api_key",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No video with this id is visible to this key: a video another account made and an id that never existed answer identically, and the provider is not called.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "No video \"video_123\" is visible to this key. A video made by another account and an id that never existed answer identically.",
+                    "type": "invalid_request_error",
+                    "param": "video_id",
+                    "code": "video_not_found",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "A limit refused the request. `rate_limit_exceeded` is this key's own request rate and carries `Retry-After`. `spend_rate_exceeded` is the account spend rate cap, which counts the credit held for requests rather than the credit they settle at, and carries `Retry-After`. `upstream_rate_limited` is the model's provider rate-limiting the call: nothing about the request is wrong, nothing is charged, and it carries `Retry-After`.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "Retry-After": {
+                "description": "Seconds to wait. Present on `rate_limit_exceeded`, `spend_rate_exceeded` and `upstream_rate_limited`.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "example": 17
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "rate_limit_exceeded": {
+                    "summary": "This key's request rate",
+                    "value": {
+                      "error": {
+                        "message": "Rate limit reached for this key. Try again in 12 seconds. Request id REQUEST_ID.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "rate_limit_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "spend_rate_exceeded": {
+                    "summary": "The account spend rate cap",
+                    "value": {
+                      "error": {
+                        "message": "This account has already reserved 5000 minor units in the last 60 seconds, which is at its ceiling of 5000. Requests are admitted again within 60 seconds of the earliest reservation counted, with nothing to do in the meantime.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "spend_rate_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "upstream_rate_limited": {
+                    "summary": "The model's provider rate-limited the call",
+                    "value": {
+                      "error": {
+                        "message": "The provider serving this model is rate-limiting requests right now. Nothing was charged. Retry after the number of seconds in the Retry-After header. Quote the request id if you contact support.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "upstream_rate_limited",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The provider holding the job could not be reached (`provider_unavailable`), or the answer it gave could not be read (`invalid_provider_response`). Nothing was charged.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "provider_unavailable": {
+                    "summary": "The provider could not be reached",
+                    "value": {
+                      "error": {
+                        "message": "The provider that holds this video could not be reached. Nothing was charged; try again shortly.",
+                        "type": "api_error",
+                        "param": null,
+                        "code": "provider_unavailable",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "invalid_provider_response": {
+                    "summary": "The provider's answer could not be read",
+                    "value": {
+                      "error": {
+                        "message": "The video response could not be read.",
+                        "type": "api_error",
+                        "param": null,
+                        "code": "invalid_provider_response",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteVideo",
+        "summary": "Delete a video job",
+        "description": "Ask the provider to cancel or delete a video job, for the account that created it. The hold is released at no charge only when the provider's answer confirms the job cancelled; an answer reporting it completed is charged as completed; an answer stating no status leaves the full hold open until a terminal status is observed or the three-hour deadline expires it at the full hold. Deletion alone does not confirm cancellation. A model whose provider serves no cancellation through this door answers 400 and the hold stays open for the job's eventual terminal poll.",
+        "tags": [
+          "Videos"
+        ],
+        "security": [
+          {
+            "customerApiKey": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "https://api.hopscotchlabs.ai",
+            "description": "Production"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The video job id the create answered.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "video_123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The provider's answer, relayed, with its `model` field rewritten to the public id the create returned (`provider/model`).",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VideoJob"
+                },
+                "example": {
+                  "id": "video_123",
+                  "object": "video",
+                  "model": "openai/sora-2",
+                  "status": "cancelled",
+                  "progress": 0,
+                  "created_at": 1788998400,
+                  "size": "1280x720",
+                  "seconds": "8"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The provider serves no cancellation for this job through this door. Its answer is relayed with its own status and sentence, and the hold stays open for the job's eventual terminal poll.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Wan content downloads and cancellation are unsupported.",
+                    "type": "invalid_request_error",
+                    "param": "video_id",
+                    "code": "invalid_value",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No key, a scheme other than Bearer, a key of the wrong shape, or a key we reject. An unknown key and a revoked key are answered with one identical message on purpose.\n\nA key past its own expiry date is refused here too, with code `key_expired` and a message naming the date. It is checked before the per-minute rate limiter, so an expired key never consumes that allowance. Expired keys are not renewed: create a new one.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Incorrect API key provided.",
+                    "type": "authentication_error",
+                    "param": null,
+                    "code": "invalid_api_key",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No video with this id is visible to this key: a video another account made and an id that never existed answer identically, and the provider is not called.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "No video \"video_123\" is visible to this key. A video made by another account and an id that never existed answer identically.",
+                    "type": "invalid_request_error",
+                    "param": "video_id",
+                    "code": "video_not_found",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "A limit refused the request. `rate_limit_exceeded` is this key's own request rate and carries `Retry-After`. `spend_rate_exceeded` is the account spend rate cap, which counts the credit held for requests rather than the credit they settle at, and carries `Retry-After`. `upstream_rate_limited` is the model's provider rate-limiting the call: nothing about the request is wrong, nothing is charged, and it carries `Retry-After`.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "Retry-After": {
+                "description": "Seconds to wait. Present on `rate_limit_exceeded`, `spend_rate_exceeded` and `upstream_rate_limited`.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "example": 17
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "rate_limit_exceeded": {
+                    "summary": "This key's request rate",
+                    "value": {
+                      "error": {
+                        "message": "Rate limit reached for this key. Try again in 12 seconds. Request id REQUEST_ID.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "rate_limit_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "spend_rate_exceeded": {
+                    "summary": "The account spend rate cap",
+                    "value": {
+                      "error": {
+                        "message": "This account has already reserved 5000 minor units in the last 60 seconds, which is at its ceiling of 5000. Requests are admitted again within 60 seconds of the earliest reservation counted, with nothing to do in the meantime.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "spend_rate_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "upstream_rate_limited": {
+                    "summary": "The model's provider rate-limited the call",
+                    "value": {
+                      "error": {
+                        "message": "The provider serving this model is rate-limiting requests right now. Nothing was charged. Retry after the number of seconds in the Retry-After header. Quote the request id if you contact support.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "upstream_rate_limited",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The provider holding the job could not be reached (`provider_unavailable`), or the answer it gave could not be read (`invalid_provider_response`). Nothing was charged.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "provider_unavailable": {
+                    "summary": "The provider could not be reached",
+                    "value": {
+                      "error": {
+                        "message": "The provider that holds this video could not be reached. Nothing was charged; try again shortly.",
+                        "type": "api_error",
+                        "param": null,
+                        "code": "provider_unavailable",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "invalid_provider_response": {
+                    "summary": "The provider's answer could not be read",
+                    "value": {
+                      "error": {
+                        "message": "The video response could not be read.",
+                        "type": "api_error",
+                        "param": null,
+                        "code": "invalid_provider_response",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "/v1/videos/{id}/content": {
-      "classification": "blocked",
-      "gate": "71.6",
-      "reason": "GET /v1/videos/{id}/content: Story 71.6's video door (OpenAI Sora shape), documented in the source spec under customerApiKey. It is live in production. videoDoorsEnabled in services/control-plane/src/public/routes.ts reads VIDEO_DOORS_ENABLED === 'true', and services/control-plane/wrangler.toml sets that flag to \"true\" under [env.production.vars] on main, so the path is served there and no longer answers the 404 endpoint_not_supported (SF-706). It stays blocked on this site only until a documentation pass publishes it: the per-second hold sized from `seconds` and `size`, the three-hour full-hold expiry, the rule that a follow-up answers only the account that created the job, and the binary content stream each need a page, and every example has to be transcribed from services/control-plane/src/video/doors.ts. Recorded in the internal site's unresolved-findings.md as SF-419, SF-428 and SF-706."
+      "classification": "public",
+      "get": {
+        "operationId": "downloadVideo",
+        "summary": "Download video content",
+        "description": "Stream the finished video's bytes for a job the provider reports completed, for the account that created it. The query string is forwarded, so a variant rides on the URL. This platform stores no video: the provider's own download window applies. A model whose provider serves no download through this door answers 400.",
+        "tags": [
+          "Videos"
+        ],
+        "security": [
+          {
+            "customerApiKey": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "https://api.hopscotchlabs.ai",
+            "description": "Production"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The video job id the create answered.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "video_123"
+          },
+          {
+            "name": "variant",
+            "in": "query",
+            "required": false,
+            "description": "Forwarded to the provider unchanged.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "thumbnail"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The video (or the requested variant) bytes, streamed from the provider.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            }
+          },
+          "400": {
+            "description": "The provider serves no download for this job through this door. Its answer is relayed with its own status and sentence.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Wan content downloads and cancellation are unsupported.",
+                    "type": "invalid_request_error",
+                    "param": "video_id",
+                    "code": "invalid_value",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No key, a scheme other than Bearer, a key of the wrong shape, or a key we reject. An unknown key and a revoked key are answered with one identical message on purpose.\n\nA key past its own expiry date is refused here too, with code `key_expired` and a message naming the date. It is checked before the per-minute rate limiter, so an expired key never consumes that allowance. Expired keys are not renewed: create a new one.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Incorrect API key provided.",
+                    "type": "authentication_error",
+                    "param": null,
+                    "code": "invalid_api_key",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No video with this id is visible to this key: a video another account made and an id that never existed answer identically, and the provider is not called.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "No video \"video_123\" is visible to this key. A video made by another account and an id that never existed answer identically.",
+                    "type": "invalid_request_error",
+                    "param": "video_id",
+                    "code": "video_not_found",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The provider does not report the job completed, so there are no bytes to serve.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Video \"video_123\" has no content: the provider reports it in_progress, and content is served only for a completed video.",
+                    "type": "invalid_request_error",
+                    "param": "video_id",
+                    "code": "video_not_completed",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "A limit refused the request. `rate_limit_exceeded` is this key's own request rate and carries `Retry-After`. `spend_rate_exceeded` is the account spend rate cap, which counts the credit held for requests rather than the credit they settle at, and carries `Retry-After`. `upstream_rate_limited` is the model's provider rate-limiting the call: nothing about the request is wrong, nothing is charged, and it carries `Retry-After`.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "Retry-After": {
+                "description": "Seconds to wait. Present on `rate_limit_exceeded`, `spend_rate_exceeded` and `upstream_rate_limited`.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "example": 17
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "rate_limit_exceeded": {
+                    "summary": "This key's request rate",
+                    "value": {
+                      "error": {
+                        "message": "Rate limit reached for this key. Try again in 12 seconds. Request id REQUEST_ID.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "rate_limit_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "spend_rate_exceeded": {
+                    "summary": "The account spend rate cap",
+                    "value": {
+                      "error": {
+                        "message": "This account has already reserved 5000 minor units in the last 60 seconds, which is at its ceiling of 5000. Requests are admitted again within 60 seconds of the earliest reservation counted, with nothing to do in the meantime.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "spend_rate_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "upstream_rate_limited": {
+                    "summary": "The model's provider rate-limited the call",
+                    "value": {
+                      "error": {
+                        "message": "The provider serving this model is rate-limiting requests right now. Nothing was charged. Retry after the number of seconds in the Retry-After header. Quote the request id if you contact support.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "upstream_rate_limited",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The provider holding the job could not be reached (`provider_unavailable`), or the answer it gave could not be read (`invalid_provider_response`). Nothing was charged.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "provider_unavailable": {
+                    "summary": "The provider could not be reached",
+                    "value": {
+                      "error": {
+                        "message": "The provider that holds this video could not be reached. Nothing was charged; try again shortly.",
+                        "type": "api_error",
+                        "param": null,
+                        "code": "provider_unavailable",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "invalid_provider_response": {
+                    "summary": "The provider's answer could not be read",
+                    "value": {
+                      "error": {
+                        "message": "The video response could not be read.",
+                        "type": "api_error",
+                        "param": null,
+                        "code": "invalid_provider_response",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "/v1/organization/workload-insights/summary": {
       "classification": "blocked",
@@ -4275,6 +5578,10 @@
     {
       "name": "Usage",
       "description": "What one request recorded and what it cost."
+    },
+    {
+      "name": "Videos",
+      "description": "Video jobs: create, poll, download, delete."
     }
   ],
   "exampleVerification": {
@@ -4390,6 +5697,31 @@
         "example": "GET /v1/usage/{id} 400 missing_required_parameter, 404 request_not_found, 405, 429, and 401/403/500",
         "shapeFrom": "The api.get(\"/usage/*\") handler in services/control-plane/src/apiApp.ts; services/control-plane/src/public/routes.ts for the 405.",
         "note": "The 400 and 404 sentences are transcribed verbatim, with the id substituted. Whether the 400 is reachable through the route boundary is not established. Needs a live transcript per status."
+      },
+      {
+        "example": "POST /v1/videos 200",
+        "shapeFrom": "Job object fields from the provider video handlers named in sourceOfTruth.videoModels, model rewritten to the public id per services/control-plane/src/video/doors.ts withPublicModel, external URLs omitted per publicVideoJson",
+        "note": "Field values are illustrative. Needs a live 200 transcript."
+      },
+      {
+        "example": "POST /v1/videos 400 size/seconds",
+        "shapeFrom": "Message strings transcribed verbatim from services/control-plane/src/money/flows/admission/unitHold.ts videoHold; the model id is a placeholder",
+        "note": "Needs a live transcript per refusal."
+      },
+      {
+        "example": "GET /v1/videos/{id} 200",
+        "shapeFrom": "Same job object as the create; a mid-flight poll",
+        "note": "Field values are illustrative. Needs a live 200 transcript."
+      },
+      {
+        "example": "GET /v1/videos/{id} 404, GET /v1/videos/{id}/content 409, follow-up 502s",
+        "shapeFrom": "Message strings transcribed verbatim from services/control-plane/src/video/doors.ts videoNotFound, serveVideoFollowUp and providerUnreachable; the job id and the reported status are placeholders",
+        "note": "Needs a live transcript per status."
+      },
+      {
+        "example": "DELETE /v1/videos/{id} 200 and the 400 on DELETE and content",
+        "shapeFrom": "The 200 relays the provider's answer per services/control-plane/src/video/doors.ts; the 400 sentence is the DashScope media handler's relayed refusal in services/gateway/src/providers/dashscope/media.ts",
+        "note": "Field values are illustrative and the relayed 400 sentence is unconfirmed at the public boundary. Needs a live transcript per status."
       }
     ]
   }

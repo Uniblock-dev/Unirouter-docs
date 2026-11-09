@@ -1,0 +1,249 @@
+---
+title: "Videos"
+description: "Start a video job, poll it, download the finished bytes: request fields, per-model limits, and how a job is held and settled."
+status: write-now
+gates: []
+---
+
+import BaseUrl from '/snippets/base-url.mdx';
+import RequestIdNote from '/snippets/request-id-note.mdx';
+
+Video is an asynchronous job, in OpenAI's Sora shape. You create a job, poll
+it until the provider reports it finished, then download the bytes. It takes
+the same key and the same `provider/model` ids as chat completions, draws on
+the same balance, and lands in Activity and on your statement like any other
+request. There are four doors: create, read, content and delete. Listing jobs
+is not served and keeps its 404, and neither is remix.
+
+<BaseUrl />
+
+## Create a video
+
+`POST /v1/videos` starts one job and answers the provider's job object for it,
+with external URLs omitted. The body may be JSON or multipart form data. Send
+JSON for text to video. Send multipart when the create carries an
+`input_reference` image, which rides in the form as a file part under that
+name. The body is capped at 8 MiB either way; a larger body is refused 413
+before any hold is taken.
+
+<CodeGroup>
+
+```bash curl
+curl https://api.hopscotchlabs.ai/v1/videos \
+  -H "Authorization: Bearer [REDACTED]" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "openai/sora-2",
+    "prompt": "A paper boat drifting down a rainy street.",
+    "seconds": "8",
+    "size": "1280x720"
+  }'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://api.hopscotchlabs.ai/v1",
+    api_key="ub_live_YOUR_KEY_HERE",
+)
+
+job = client.videos.create(
+    model="openai/sora-2",
+    prompt="A paper boat drifting down a rainy street.",
+    seconds="8",
+    size="1280x720",
+)
+print(job.id, job.status)
+```
+
+```typescript Node
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "https://api.hopscotchlabs.ai/v1",
+  apiKey: "ub_live_YOUR_KEY_HERE",
+});
+
+const job = await client.videos.create({
+  model: "openai/sora-2",
+  prompt: "A paper boat drifting down a rainy street.",
+  seconds: "8",
+  size: "1280x720",
+});
+console.log(job.id, job.status);
+```
+
+</CodeGroup>
+
+A multipart create names the same fields, with the image as a file part:
+
+```bash curl
+curl https://api.hopscotchlabs.ai/v1/videos \
+  -H "Authorization: Bearer [REDACTED]" \
+  -F "model=minimax/MiniMax-Hailuo-2.3-Fast" \
+  -F "seconds=6" \
+  -F "size=1366x768" \
+  -F "input_reference=@frame.png;type=image/png"
+```
+
+The five fields:
+
+- `model` is required. It takes the same three forms as any other door: a
+  provider-pinned id, a routing-profile slug, or the workspace default.
+  A bare id is refused 400 with the code `model_id_not_pinned`.
+  [`GET /v1/models`](/features/models) lists the exact strings this key can
+  call, and a model is offered only while it would serve on call.
+- `prompt` is required for text to video. A model that renders from an image
+  permits an omitted prompt when `input_reference` is uploaded. Each model
+  states its own length limit; the table below lists the stated ones.
+- `seconds` is whole seconds of video, 1 or more, as decimal digits such as
+  `"8"`; JSON also accepts a positive safe integer. Absent, it is 4. An
+  explicit null is refused. Each model accepts only the durations it
+  publishes: a create naming anything else is refused 400 before anything is
+  held.
+- `size` is required, as `WIDTHxHEIGHT` in pixels, such as `"1280x720"`. It
+  must have a per-second rate on the model; a size without one is refused
+  before anything is held, and so is a size the model does not publish.
+- `input_reference` is a reference image, multipart only. A model that
+  renders from an image only requires it; a model that renders from text
+  only refuses it. Each model accepts only the image forms and sizes it
+  publishes, listed below.
+
+A refusal the provider made about the request is relayed with the provider's
+own status and its own sentence, so a parameter it requires and did not get
+reads as what it is rather than as a fault on this platform.
+
+## Durations, sizes and sound per model
+
+Match the model half of your pinned id against the first column.
+`GET /v1/models` lists the exact strings this key can call, and that list is
+authoritative where this table and the catalog disagree. Unknown means the
+serving code states no rule; the provider's own refusal arrives relayed.
+
+| Model | Seconds | Size | Prompt | Reference image | Sound |
+|---|---|---|---|---|---|
+| `Sora 2` (`openai/sora-2`) | 1 or more, 4 when absent | Required | Unknown | Unknown | Unknown |
+| `Seedance 1.0` (any other id containing `seedance-`) | 2 to 12 | `854x480`, `480x854`, `1280x720`, `720x1280`, `1920x1080`, `1080x1920` | Required | Optional image | Silent |
+| `Seedance 1.5 Pro` (id containing `seedance-1-5`) | 4 to 12 | Same six as `Seedance 1.0` | Required | Optional image | With sound |
+| `Seedance 2.0` (id containing `seedance-2-0`) | 4 to 15 | Same six, plus `3840x2160` and `2160x3840` | Required | Optional image | With sound |
+| `Seedance 2.0` fast and mini (id containing `seedance-2-0-fast` or `seedance-2-0-mini`) | 4 to 15 | `854x480`, `480x854`, `1280x720`, `720x1280` | Required | Optional image | With sound |
+| `Seedance 2.5` (id containing `seedance-2-5`) | 4 to 30 | Same six as `Seedance 1.0` | Required | Optional image | With sound |
+| `Hailuo 02` and `2.3` (id starting with `MiniMax-Hailuo-`) | 6 or 10 at `1366x768`, 6 at `1920x1080`; required | `1366x768`, `1920x1080` | Required unless an image is uploaded; 2000 characters at most | Optional first frame; required for `MiniMax-Hailuo-2.3-Fast` | Unknown |
+| `Wan 2.2` text to video (`wan2.2-t2v-plus`) | Exactly 5; required | `832x480`, `480x832`, `624x624`, `1920x1080`, `1080x1920`, `1440x1440`, `1632x1248`, `1248x1632` | Required | Refused | Unknown |
+| `Wan 2.2` image to video (`wan2.2-i2v-plus`) | Exactly 5; required | Same eight as the text to video model | Required | Required: PNG, JPEG or WebP, uploads totalling at most 8 MiB | Unknown |
+| `Kling v3 pro` | 3 to 15, 4 when absent | `1280x720`, `720x1280`, `960x960` | Required; 2500 characters at most | Refused | Silent |
+| `Wan v2.6` | 5, 10 or 15; required | `1280x720`, `720x1280`, `720x720`, `960x720`, `720x960`, `1920x1080`, `1080x1920`, `1080x1080`, `1440x1080`, `1080x1440` | Required | Refused | Silent |
+| `Veo` | 1 or more, 4 when absent | `1280x720`, `720x1280`, `1920x1080`, `1080x1920` | Required | Optional image | Unknown |
+| `Luma Ray` (`ray-3.2`) | 5 or 10; required | Any size whose short edge is 540, 720 or 1080 and whose shape is `1:1`, `4:3`, `3:4`, `16:9`, `9:16` or `21:9` | Required | Refused | Unknown |
+| `Runway Gen 4 Turbo` (`gen4_turbo`) | 2 to 10 | `1280x720`, `720x1280`, `1104x832`, `832x1104`, `960x960`, `1584x672` | Optional | Required image, at most 5 MiB as a data URI | Unknown |
+| `Runway Gen 4.5` (`gen4.5`) | 2 to 10 | Same six for image to video, plus `1280x720` and `720x1280` for text to video | Required; 1000 characters at most | Optional image, at most 5 MiB as a data URI | Unknown |
+
+Where a model requires a duration, omitting `seconds` does not fall back to
+4: the create is refused 400 and nothing is held.
+
+## First frame and last frame
+
+There is no last-frame field: the request carries five fields and none names
+a last frame, so no served model takes one. The first frame is
+`input_reference`: on a model that accepts it, the uploaded image becomes the
+first frame of the render. Whether a model requires, permits or refuses the
+image is in the table above.
+
+## The life of a job
+
+A create takes a hold of `seconds` (4 when absent) times the model's
+per-second rate for the requested `size`, before anything is sent to the
+provider. On a workspace-owned credential the hold is zero. On a Seedance
+model the hold covers one second more than requested, because the render is
+billed a frame past the seconds; what the job does not use is returned when
+it settles. The hold stays open until the job ends.
+
+Poll the job with `GET /v1/videos/{id}`:
+
+```bash curl
+curl https://api.hopscotchlabs.ai/v1/videos/video_123 \
+  -H "Authorization: Bearer [REDACTED]"
+```
+
+The answer is the provider's current job object: `id`, `status`
+(`queued`, `in_progress`, `completed`, `failed` or `cancelled`), `progress`,
+and the `seconds` and `size` the job carries. Its `model` field is rewritten
+to the public id the create returned, and external URLs are omitted. A
+terminal status seen on a poll settles the job's money once; the read itself
+writes no usage row and is charged nothing. One usage row is written per job,
+when it settles, timestamped then.
+
+What the job settles at:
+
+- Completed: the seconds the provider reports, never above the hold. A job
+  reporting zero seconds releases the hold and records served usage at zero
+  charge; absent or unreadable seconds charge the full hold.
+- Failed, or cancelled with the provider's confirmation: nothing.
+- Still open 3 hours after create: expired, charged its full hold. You do
+  not need to poll for the job to settle, but poll to learn the outcome.
+
+Only the account that created a job can read it, fetch its content or cancel
+it. Any other key, and an id that never existed, get the same 404 with the
+code `video_not_found`, and the provider is not called.
+
+When the provider reports the job completed, download the bytes:
+
+```bash curl
+curl https://api.hopscotchlabs.ai/v1/videos/video_123/content \
+  -H "Authorization: Bearer [REDACTED]" \
+  -o video.mp4
+```
+
+The content door streams the provider's bytes with their content type,
+length and disposition. The query string is forwarded, so a variant rides on
+the URL. This platform stores no video, so the provider's own download
+window applies. Asking for content before the job completes answers 409 with
+the code `video_not_completed`.
+
+To cancel, delete the job:
+
+```bash curl
+curl -X DELETE https://api.hopscotchlabs.ai/v1/videos/video_123 \
+  -H "Authorization: Bearer [REDACTED]"
+```
+
+The delete is forwarded to the provider as a cancellation or deletion
+request, and its answer is relayed. The hold is released at no charge only
+when the provider's answer confirms the job cancelled; an answer reporting
+it completed is charged as completed; an answer stating no status leaves the
+full hold open until a terminal status is observed or the 3 hour deadline
+expires it at the full hold. Deletion alone does not confirm cancellation.
+
+Two `Wan 2.2` models are the exception to the follow-ups above: content and
+delete answer 400 there, because the provider serves neither through this
+door. The source specification says a finished Wan job's poll answer
+supplies the expiring `video_url` instead, but the control plane strips
+every external URL from every job object before answering, a behavior the
+video-doors suite pins, so the handler wins and the specification sentence
+is stale. The effect is that the bytes of a finished `Wan 2.2` job cannot be
+fetched through this API today; its poll still reports the job.
+
+## Refusals
+
+A create for a model the catalog does not list answers 404
+`model_not_available`, like any other door. A follow-up for a job this
+account did not create answers 404 `video_not_found`. Content for a job that
+is not completed answers 409 `video_not_completed`. A provider that cannot
+be reached answers 502 `provider_unavailable`, and an answer that cannot be
+read answers 502 `invalid_provider_response`; neither charges anything. See
+[Errors](/api-reference/errors) for the envelope every one of these arrives
+in.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Images, audio and video" href="/features/images-audio-and-video">
+    The sibling endpoints and how each unit is billed.
+  </Card>
+  <Card title="Credits and billing" href="/manage/credits-and-billing">
+    How a hold becomes a charge.
+  </Card>
+</CardGroup>
+
+<RequestIdNote />

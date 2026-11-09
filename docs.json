@@ -122,7 +122,8 @@
               "features/responses-api",
               "features/completions-and-embeddings",
               "features/anthropic-messages",
-              "features/usage-lookup"
+              "features/usage-lookup",
+              "features/videos"
             ]
           },
           {
