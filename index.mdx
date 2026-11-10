@@ -5,17 +5,11 @@ status: write-now
 gates: []
 ---
 
-Hopscotch Gateway is an OpenAI-compatible LLM router. You change one base URL and
-one API key, keep the OpenAI SDK you already use, and call models across
-providers on a single prepaid balance. We hold the provider accounts and meter
-the requests, so you never hold a provider credential.
+Hopscotch Gateway is an OpenAI-compatible router. Change the base URL and the API key in the OpenAI SDK you already use, and that one client reaches models from many providers.
 
-## The two lines that change
+```python Python
+from openai import OpenAI
 
-Point your existing client at `https://api.hopscotchlabs.ai` and give it a Hopscotch
-key. Nothing else in your code moves.
-
-```python Python {2-3}
 client = OpenAI(
     base_url="https://api.hopscotchlabs.ai/v1",
     api_key="ub_live_YOUR_KEY_HERE",
@@ -25,54 +19,50 @@ response = client.chat.completions.create(
     model="openai/gpt-4o-mini",
     messages=[{"role": "user", "content": "Say hi in five words."}],
 )
+
+print(response.choices[0].message.content)
 ```
 
-Model ids are `provider/model`, so the id you send says which provider serves it. A bare model
-name with no provider is refused rather than routed for you.
+Model ids are `provider/model`, so the id you send says which provider serves it. A bare model name with no provider is refused rather than routed for you.
 
-## What it costs
+Credit is prepaid. Requests are charged at the provider's rate, with no markup on top.
 
-Credit is prepaid. The platform fee is added when you buy credit, and requests
-take the provider's rate at face value with no markup on top. The fee is
-currently 0%, so buying 100 credits charges 100.00 and grants 100 credits, all
-100 of which are spendable. The rate that applies to a purchase is fixed when
-you start checkout.
-
-## Start here
-
-<CardGroup cols={2}>
-  <Card title="Quickstart" icon="player-play" href="/get-started/quickstart">
+<CardGroup cols={1}>
+  <Card title="Start with the Quickstart" icon="player-play" href="/get-started/quickstart">
     Get a key, set the base URL, and send your first chat completion.
-  </Card>
-  <Card title="OpenAI compatibility" icon="plug" href="/get-started/openai-compatibility">
-    Which endpoints exist today, what is additive, and what is refused.
   </Card>
 </CardGroup>
 
-## Then find your section
+## What you get
+
+<CardGroup cols={2}>
+  <Card title="Routing profiles" icon="route" href="/features/routing-profiles">
+    An ordered list of your own models, requested as one profile identifier, so the fallback order lives in one place.
+  </Card>
+  <Card title="Bring your own key" icon="key" href="/features/bring-your-own-key">
+    Use your own provider credential so the provider bills you directly.
+  </Card>
+  <Card title="Guardrails" icon="shield-check" href="/features/guardrails">
+    A named rule set attached to API keys: spend caps, allowed providers and models, and token ceilings.
+  </Card>
+  <Card title="Coding harnesses" icon="terminal-2" href="/integrations/coding-harnesses">
+    Point the coding agents you already use at the gateway, with the settings each one needs.
+  </Card>
+</CardGroup>
+
+## Find your section
 
 <CardGroup cols={2}>
   <Card title="Features" icon="stack-2" href="/features/overview">
-    Models, streaming, tools, structured outputs, caching, routing, guardrails, and the five endpoints.
+    Models, streaming, tools, caching, routing and the endpoints.
   </Card>
-  <Card title="Manage & monitor" icon="gauge" href="/manage/overview">
-    Usage, credit and spend controls, workspace members, zero data retention, and the data stance.
+  <Card title="Manage" icon="gauge" href="/manage/overview">
+    Credit, spend controls, usage, workspace members and data.
   </Card>
   <Card title="Integrations" icon="plug-connected" href="/integrations/overview">
-    Official SDKs, the frameworks built on them, and coding agents.
+    Official SDKs, frameworks and coding agents.
   </Card>
   <Card title="API reference" icon="code" href="/api-reference/introduction">
-    The wire contract: endpoints, headers, and the error envelope.
+    Endpoints, headers and the error envelope.
   </Card>
 </CardGroup>
-
-## What is not here
-
-There is no self-hosted or downloadable version of the gateway. The product is
-hosted: we hold the provider accounts, meter the requests, and sell prepaid
-credit, and none of that works from a copy running somewhere else.
-
-There is no static list of providers or models on this site, because that set is
-a live fact rather than a documentation fact. Ask
-[`GET /v1/models`](/api-reference/introduction) or read the model list in the
-[dashboard](https://platform.hopscotchlabs.ai) instead of a page that would go stale.

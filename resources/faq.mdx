@@ -46,6 +46,19 @@ against the production hostname, so we describe that as instructions rather than
 as a certification.
 </Accordion>
 
+<Accordion title="Why was my sign-up refused?">
+If the browser check on the sign-up form fails, sign-up is refused with HTTP 403
+and the code `signup_turnstile_failed`, with the message "We could not confirm you
+are not a bot. Reload the page and try again." Reload the page and submit the form
+again.
+</Accordion>
+
+<Accordion title="Can I self-host the gateway?">
+No. There is no self-hosted or downloadable version of the gateway. The product is
+hosted: we hold the provider accounts, meter the requests, and sell prepaid
+credit, and none of that works from a copy running somewhere else.
+</Accordion>
+
 </AccordionGroup>
 
 ## Features
