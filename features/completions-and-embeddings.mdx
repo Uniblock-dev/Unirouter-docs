@@ -73,7 +73,7 @@ The body is forwarded as you sent it, under the same rules as chat: two fields
 are read to size what the request could cost, `model` and `max_tokens`, and
 the handful of request fields we do not meter on our own provider credentials
 are refused with a 400 that names the field in `param`. The list is the one on
-[OpenAI compatibility](/get-started/openai-compatibility#request-parameters),
+[OpenAI compatibility](/get-started/migrate-from-openai#request-bodies-and-parameters),
 and it applies only when the request is served on our credentials: on your own
 provider key the body is forwarded byte for byte.
 
@@ -105,7 +105,7 @@ dashboard or from the API with the request id every response carries. See
 ## Next
 
 <CardGroup cols={2}>
-  <Card title="OpenAI compatibility" href="/get-started/openai-compatibility">
+  <Card title="OpenAI compatibility" href="/get-started/migrate-from-openai">
     The full list of endpoints, the fields we refuse, and the headers we add.
   </Card>
   <Card title="Models" href="/features/models">

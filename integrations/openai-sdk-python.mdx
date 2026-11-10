@@ -67,7 +67,7 @@ base URL reaches a path this API does not serve yet, and the SDK turns the
 `404` into `openai.NotFoundError`. That is worth knowing because it is the one
 shape of failure that looks like a configuration mistake and is not: the base
 URL is right and the endpoint is absent. See
-[OpenAI compatibility](/get-started/openai-compatibility) for the list that
+[OpenAI compatibility](/get-started/migrate-from-openai) for the list that
 serves, which includes `client.completions.create(...)` and
 `client.responses.create(...)`. `client.embeddings.create(...)` is not served yet. A `404` is
 not in the SDK's retry set, so it fails on the first attempt rather than after
@@ -117,7 +117,7 @@ Branch on `type` and `code`, never on the message text. The fields are the
 contract and the sentences are prose. `APIStatusError` also has the subclasses
 you already catch, so an unpinned model id arrives as `BadRequestError` and a
 refusal for credit arrives with status `402`. Every shipped code is in
-[errors](/features/errors).
+[errors](/api-reference/errors).
 
 ## What we did not verify
 

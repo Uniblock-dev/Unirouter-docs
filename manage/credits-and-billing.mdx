@@ -1,7 +1,7 @@
 ---
 title: "Credits and billing"
 description: "How prepaid credit works: the fee is added when you buy credit, and a request deducts the provider's price with nothing added."
-status: write-now
+status: partial
 gates: ["4.27", "4.32"]
 ---
 
@@ -104,7 +104,7 @@ most it could possibly cost, and that hold comes back the moment the request
 finishes, at which point you are charged for what it actually used. A request that
 omits `max_tokens` therefore holds more than it will spend, briefly, which is also
 the reason it can meet the spend rate cap sooner. See
-[Rate limits and spend controls](/manage/rate-limits-and-spend-controls).
+[Rate limits and spend controls](/manage/spend-controls).
 
 Only one component computes an account's balance, and every screen and endpoint that
 shows your balance reads it from there. Your balance and your usage figures cannot
@@ -213,10 +213,10 @@ Link wallet changes nothing about credit you have already bought.
   <Card title="Usage and metering" href="/manage/usage-and-metering">
     What is recorded per request, and how it reconciles with your balance.
   </Card>
-  <Card title="Rate limits and spend controls" href="/manage/rate-limits-and-spend-controls">
+  <Card title="Rate limits and spend controls" href="/manage/spend-controls">
     The spend rate cap, the per key request rate, and the pause.
   </Card>
-  <Card title="Monitor usage" href="/manage/monitor-usage">
+  <Card title="Monitor usage" href="/manage/usage-and-metering">
     Reading Usage and Activity, and reconciling a statement line.
   </Card>
 </CardGroup>

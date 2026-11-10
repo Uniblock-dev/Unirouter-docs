@@ -72,7 +72,7 @@ above.
 
 The limit is counted per key and per minute, and the reset is a count of seconds.
 Over it, the request is refused as described in
-[Rate limits and spend controls](/manage/rate-limits-and-spend-controls#the-per-key-request-rate).
+[Rate limits and spend controls](/manage/spend-controls#per-key-request-rate).
 
 These three are the only rate-limit headers sent. There is no
 `x-uniblock-ratelimit-unit` header, and no input-token or output-token variants,
@@ -96,7 +96,7 @@ answered, and the `model` field in the body is unchanged.
 It is never sent with any other value, and never sent to say that a request went
 the ordinary way, so a client that has never read it sees nothing change. Treat
 it as a diagnostic like the others: read it in logs, do not branch on it. The
-same fact appears on the request's row in [Activity](/manage/view-activity), marked
+same fact appears on the request's row in [Activity](/manage/usage-and-metering), marked
 `backup` beside the provider.
 
 Nothing else from upstream reaches you. In particular, **provider rate-limit

@@ -106,7 +106,7 @@ try {
 `APIError` parses `type`, `code` and `param` off the envelope onto the error
 object itself, so you can branch without reaching for the body. Branch on those
 rather than on the message text. Every shipped code is in
-[errors](/features/errors).
+[errors](/api-reference/errors).
 
 **One caveat on that parsing.** Those properties are read from the JSON body, so
 they are `undefined` rather than wrong if a response ever arrives without one. A
@@ -121,7 +121,7 @@ raises `NotFoundError`. The base URL is not the problem when that happens.
 `client.completions.create(...)` and `client.responses.create(...)` do serve.
 `client.embeddings.create(...)` does not yet; embeddings are not served and
 there is no date. See
-[OpenAI compatibility](/get-started/openai-compatibility) for the full list.
+[OpenAI compatibility](/get-started/migrate-from-openai) for the full list.
 
 ## What we did not verify
 

@@ -61,21 +61,13 @@
             "pages": [
               "index",
               "get-started/quickstart",
-              "get-started/authentication",
-              "get-started/create-an-api-key"
+              "get-started/authentication"
             ]
           },
           {
             "group": "Coming from OpenAI",
             "pages": [
-              "get-started/openai-compatibility",
               "get-started/migrate-from-openai"
-            ]
-          },
-          {
-            "group": "Your own provider keys",
-            "pages": [
-              "get-started/add-a-provider-key"
             ]
           },
           {
@@ -88,7 +80,7 @@
         ]
       },
       {
-        "tab": "Features",
+        "tab": "Guides",
         "icon": "stack-2",
         "groups": [
           {
@@ -123,7 +115,8 @@
               "features/completions-and-embeddings",
               "features/anthropic-messages",
               "features/usage-lookup",
-              "features/videos"
+              "features/videos",
+              "features/images-audio-and-video"
             ]
           },
           {
@@ -131,16 +124,8 @@
             "pages": [
               "features/routing-profiles",
               "features/bring-your-own-key",
-              "features/guardrails",
-              "features/errors"
-            ]
-          },
-          {
-            "group": "Step-by-step journeys",
-            "pages": [
-              "features/routing-journey",
-              "features/guardrails-journey",
-              "manage/stored-request-data"
+              "get-started/add-a-provider-key",
+              "features/guardrails"
             ]
           },
           {
@@ -148,17 +133,11 @@
             "pages": [
               "features/playground"
             ]
-          },
-          {
-            "group": "Coming soon",
-            "pages": [
-              "features/images-audio-and-video"
-            ]
           }
         ]
       },
       {
-        "tab": "Manage & monitor",
+        "tab": "Manage",
         "icon": "gauge",
         "groups": [
           {
@@ -170,9 +149,7 @@
           {
             "group": "Usage",
             "pages": [
-              "manage/usage-and-metering",
-              "manage/monitor-usage",
-              "manage/view-activity"
+              "manage/usage-and-metering"
             ]
           },
           {
@@ -180,22 +157,13 @@
             "pages": [
               "manage/credits-and-billing",
               "manage/buy-credit",
-              "manage/rate-limits-and-spend-controls",
               "manage/spend-controls"
             ]
           },
           {
             "group": "Workspace",
             "pages": [
-              "manage/workspaces-and-members",
-              "manage/create-a-workspace",
-              "manage/invite-and-manage-members"
-            ]
-          },
-          {
-            "group": "Controls",
-            "pages": [
-              "manage/set-up-guardrails"
+              "manage/workspaces-and-members"
             ]
           },
           {
@@ -203,15 +171,8 @@
             "pages": [
               "manage/data-and-privacy",
               "manage/zero-data-retention",
-              "manage/security"
-            ]
-          },
-          {
-            "group": "Coming soon",
-            "pages": [
-              "manage/management-api",
-              "manage/subscriptions-and-seats",
-              "manage/workload-insights"
+              "manage/security",
+              "manage/stored-request-data"
             ]
           }
         ]
@@ -289,5 +250,50 @@
   "seo": {
     "indexing": "navigable"
   },
-  "redirects": []
+  "redirects": [
+    {
+      "source": "/manage/rate-limits-and-spend-controls",
+      "destination": "/manage/spend-controls"
+    },
+    {
+      "source": "/manage/monitor-usage",
+      "destination": "/manage/usage-and-metering"
+    },
+    {
+      "source": "/manage/view-activity",
+      "destination": "/manage/usage-and-metering"
+    },
+    {
+      "source": "/manage/create-a-workspace",
+      "destination": "/manage/workspaces-and-members"
+    },
+    {
+      "source": "/manage/invite-and-manage-members",
+      "destination": "/manage/workspaces-and-members"
+    },
+    {
+      "source": "/features/guardrails-journey",
+      "destination": "/features/guardrails"
+    },
+    {
+      "source": "/manage/set-up-guardrails",
+      "destination": "/features/guardrails"
+    },
+    {
+      "source": "/features/routing-journey",
+      "destination": "/features/routing-profiles"
+    },
+    {
+      "source": "/get-started/openai-compatibility",
+      "destination": "/get-started/migrate-from-openai"
+    },
+    {
+      "source": "/get-started/create-an-api-key",
+      "destination": "/get-started/authentication"
+    },
+    {
+      "source": "/features/errors",
+      "destination": "/api-reference/errors"
+    }
+  ]
 }

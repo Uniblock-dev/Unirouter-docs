@@ -36,7 +36,7 @@ time the catalog changed.
 `POST /v1/chat/completions`, `GET /v1/models` and `GET /v1/models/{id}`. Those
 are the operations this site documents and the API reference publishes. A path
 this site does not document is one we make no promise about, in either
-direction. See [OpenAI compatibility](/get-started/openai-compatibility).
+direction. See [OpenAI compatibility](/get-started/migrate-from-openai).
 </Accordion>
 
 <Accordion title="Do the official OpenAI SDKs work?">
@@ -166,7 +166,7 @@ refusal. See [Errors](/api-reference/errors).
 `spend_rate_exceeded` is your account spend rate cap, which also carries
 `Retry-After`, and the lever for it is
 sending `max_tokens`. See
-[Rate limits and spend controls](/manage/rate-limits-and-spend-controls).
+[Rate limits and spend controls](/manage/spend-controls).
 </Accordion>
 
 <Accordion title="Why does sending max_tokens help?">
@@ -181,7 +181,7 @@ On the Activity screen, one row per request. The usage record is the authority o
 what a request cost, not a rate in the catalog. The `usage.estimated_cost` in a
 response body is the provider's own estimate, passed through. It is not what
 Hopscotch charges. See
-[View activity](/manage/view-activity).
+[View activity](/manage/usage-and-metering).
 </Accordion>
 
 <Accordion title="Can I use my own provider key?">
