@@ -51,16 +51,17 @@ const client = new OpenAI({
 | `/v1/chat/completions` | `POST` | Serves. Streaming and non-streaming. |
 | `/v1/responses` | `POST` | Serves. Streaming and non-streaming. See [Responses API](/features/responses-api). |
 | `/v1/completions` | `POST` | Serves. Streaming and non-streaming. See [Completions and embeddings](/features/completions-and-embeddings). |
-| `/v1/embeddings` | `POST` | Not served yet, no date. A call is refused with a 404 `not_found_error`. See [Completions and embeddings](/features/completions-and-embeddings#embeddings). |
 | `/v1/messages` | `POST` | Serves the Anthropic Messages format. See [Anthropic Messages API](/features/anthropic-messages). |
 | `/v1/models` | `GET` | Serves. |
 | `/v1/models/{id}` | `GET` | Serves. |
 | `/v1/usage/{id}` | `GET` | Serves. See [Usage lookup](/features/usage-lookup). |
+| `/v1/videos` | `POST` | Serves. Creates a video job. See [Videos](/features/videos). |
+| `/v1/videos/{id}` | `GET`, `DELETE` | Serves. Reads or cancels a job. See [Videos](/features/videos). |
+| `/v1/videos/{id}/content` | `GET` | Serves. Streams a finished video. See [Videos](/features/videos). |
 
-Two families are served in production and documented elsewhere: the image, audio and video endpoints, and
-`POST /v1/systemone`, which serves a partner's typed-judgment API and is not documented here yet. The image,
-audio and video endpoints are described on [Images, audio and video](/features/images-audio-and-video). The
-realtime endpoint, `GET /v1/realtime`, is not open in any environment yet and answers the 404 below.
+The table lists the paths this site publishes. Other paths, including the image and audio endpoints,
+`POST /v1/embeddings`, `POST /v1/systemone` and the realtime endpoint, are not documented on this site, so
+treat any call to them as unanswered here. A path this release does not serve answers the 404 below.
 
 ### What a call to a path we do not serve returns
 

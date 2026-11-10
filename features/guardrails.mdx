@@ -61,7 +61,7 @@ guardrail with no rules at all is legal: it governs its keys and caps nothing.
 | Region | The key may only be served from providers recorded in these regions: `us`, `eu`, `uk`, `apac` or `global`. |
 | Token limit | An input ceiling and an output ceiling per request, as a preset tier or an explicit figure. |
 | Injection patterns | Regular expressions that, if the prompt matches, stop the request. |
-| Sensitive data | Detectors for an email address, an IP address or a password pair that, if the prompt matches, stop the request. |
+| Sensitive data | Detectors for an email address, an IP address, or a name such as `password` or `api_key` written beside its value, that stop the request if the prompt matches. |
 
 The vocabulary is closed. A rule name the product does not know is refused when you save, and the
 refusal lists the nine it does know.
@@ -179,8 +179,9 @@ You need to be the owner or an admin. Have the key you want to govern created fi
     Workspace default inherits whatever the workspace has set.
   </Step>
   <Step title="Turn on sensitive-data detectors">
-    Under **Sensitive-data detection**, switch on any of the three detectors, **email**,
-    **IP address** and **password pair**. A request whose prompt carries one of them is refused before it is
+    Under **Sensitive-data detection**, switch on any of **Email addresses**, **IP addresses**, or
+    **Passwords, secrets and API keys**. The last one matches a name such as `password` or `api_key`
+    written beside its value. A bare key with no name beside it is not matched. A request whose prompt carries one of them is refused before it is
     sent. The screen says how much each rule adds to a request once it has measured it.
   </Step>
   <Step title="Create">
