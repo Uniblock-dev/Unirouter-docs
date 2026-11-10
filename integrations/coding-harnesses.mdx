@@ -9,17 +9,7 @@ type: integration
 import { FeatureStatus } from '/snippets/feature-status.mdx';
 import BaseUrl from '/snippets/base-url.mdx';
 
-A coding harness is an agent that edits your code: an editor extension, or a CLI
-that runs in your repository. Most of them take a custom OpenAI-compatible base
-URL, and pointing one here is two settings and one edit you would not guess.
-
-Most, not all. Which wire protocol a harness speaks is the first thing to
-settle, because it decides whether the rest of this page applies to yours at
-all.
-
-This page carries the things that are true of every one of them. The per-harness
-pages carry only the settings and the surprises specific to that harness, which
-is why they are short.
+A coding harness is an agent that edits your code, as an editor extension or a CLI. Most take a custom OpenAI-compatible base URL. This page covers what is true of all of them. Each per-harness page covers only its own settings and surprises.
 
 <FeatureStatus
   missing="a proof run of any harness against the production hostname"
@@ -28,55 +18,25 @@ is why they are short.
 
 <BaseUrl />
 
-Whether the value you paste ends in `/v1` differs by harness, and getting it
-wrong produces a `404` rather than an error about configuration. Each harness
-page says which form that harness wants and where we checked.
+Whether the value ends in `/v1` differs by harness. Getting it wrong produces a `404`, not a configuration error. Each harness page says which form it wants.
 
 ## Which wire your harness speaks
 
-Three protocols turn up in coding harnesses, and a base URL is only useful if
-this site publishes the one your harness sends.
+Settle this first. It decides whether the rest of this page applies.
 
-**OpenAI chat completions** is what most of them speak and what this site is
-mostly about. Cline, Continue, Aider, Zed, OpenCode, Cursor, Hermes Agent, Pi
-and DeepSeek Harness are all here.
+| Wire | Harnesses | Notes |
+|---|---|---|
+| Chat completions | Cline, Continue, Aider, Zed, OpenCode, Cursor, Hermes Agent, Pi, DeepSeek Harness | Most of this site. |
+| Responses API | Codex CLI | Codex has no other wire, since its project removed the chat setting. This API serves `POST /v1/responses`. |
+| Anthropic Messages | Claude Code | [`POST /v1/messages`](/features/anthropic-messages). The base URL is an origin, with no `/v1`. |
 
-**The OpenAI Responses API** is what Codex CLI speaks, and Codex speaks nothing
-else: the release that could use chat completions is several behind, and its
-own project removed the setting. This API serves that endpoint too, so
-Codex has a surface here to talk to, and its page is the one to read. Three of
-the harnesses here let you pick the wire per provider rather than shipping one:
-Hermes Agent, Pi and DeepSeek Harness each take a protocol field beside the base
-URL, and each of their pages says which value to give it.
+Hermes Agent, Pi and DeepSeek Harness let you pick the wire per provider. T3 Code and Gas Town speak none of these and inherit their child's.
 
-**The Anthropic Messages API** is what Claude Code speaks, and it has no
-OpenAI-compatible mode. This API serves that wire at
-[`POST /v1/messages`](/features/anthropic-messages), so Claude Code is pointed
-here with a base URL that is an origin rather than an origin plus `/v1`. Its
-page has the settings.
+## Pin the model id
 
-A harness that only orchestrates other harnesses, like T3 Code or Gas Town,
-speaks none of them itself and inherits whichever its child does.
+Every harness ships a bare OpenAI-style default model name. This API refuses it with `400` and the code `model_id_not_pinned`, on the first request. Accepted forms are `provider/model`, where the part before the first slash names the serving provider, and `profile/` plus a routing profile slug. [Models](/features/models) lists them all.
 
-## Pin the model id before anything else
-
-Every harness ships with a default model name, and every one of those defaults
-is a bare OpenAI-style name. This API does not accept one. The two forms the
-refusal below names are `provider/model`, where the part before the first slash
-names the provider that will serve the request, and a `profile/` slug naming one
-of your workspace's routing profiles. They are not a closed list: [Models](/features/models) carries every
-accepted form of a `model` field and is the page to read before assuming one is
-invalid.
-
-There is a third form, and for a coding harness it is usually the right one:
-`unirouter/auto`. It is a fixed string meaning whichever route your workspace
-made its default, so it goes into a config file once and the model behind it
-changes on the Routing screen instead. That matters more here than elsewhere,
-because a harness config file is exactly the kind of thing nobody edits twice.
-[Routing profiles](/features/routing-profiles) covers it.
-
-So `gpt-4o` is refused, before anything is looked up, with `400` and the code
-`model_id_not_pinned`:
+For a harness, use `unirouter/auto`. It means whichever route your workspace made its default, so the model changes on the Routing screen rather than in a config file. [Routing profiles](/features/routing-profiles) covers it.
 
 ```json 400
 {
@@ -90,155 +50,51 @@ So `gpt-4o` is refused, before anything is looked up, with `400` and the code
 }
 ```
 
-This is the first thing that will fail, and it fails on the first request. The
-fix is one edit per harness, and the edit is in a different place in each of
-them.
-
-Two things make it more than one edit. A harness that names several models names
-them separately: a main model, a smaller model for commit messages or titles, a
-model for applying edits. Each of those is its own setting and each needs its own
-pinned id. And a harness that offers a fixed dropdown of vendor model names
-rather than a free-text field cannot be pointed at an id of this shape at all;
-the per-harness pages say which kind each one is.
+Each harness needs one edit, in a different place. A harness with several models (main, commit messages or titles, applying edits) needs each pinned. A harness with a fixed dropdown of vendor names cannot take this id shape, and its page says so.
 
 ## Embeddings are not served yet
 
-Embeddings are not served yet, and we have no date to give. A call to
-`POST /v1/embeddings` is refused with a 404 `not_found_error`. What follows
-decides which of your harness's features depend on an endpoint this API does not
-serve.
+Embeddings are not served yet, and we have no date to give. `POST /v1/embeddings` is refused with a 404 `not_found_error`.
 
-Any harness feature that builds an index of your repository to search it by
-meaning rather than by text calls an embeddings endpoint, and those are the
-features to point somewhere you can rely on. In practice that is:
+Features that index your repository by meaning call an embeddings endpoint. These are codebase indexing, retrieval over ingested documentation, memory that recalls earlier sessions by similarity, and reranking. Harnesses that read files, grep, walk the syntax tree or ask a language server do not need one.
 
-- Codebase indexing, and whatever the harness calls the question that searches
-  it. A feature you invoke as an at-mention of your codebase is usually this.
-- Retrieval over documentation the harness has ingested.
-- A long-term memory that recalls earlier sessions by similarity.
-- Reranking, on the harnesses that have it, which is usually not an
-  OpenAI-shaped endpoint at all and is not a surface this site documents
-  either.
-
-What does work, and works without touching any of this, is every harness whose
-context comes from reading files, grepping them, walking the syntax tree, or
-asking a language server. That is most of what a modern coding
-agent does. The harnesses documented here fall into
-three groups, and each page says which one it is in: confirmed to call no
-embeddings endpoint at all, confirmed to have an embeddings role you must point
-elsewhere, or no embeddings feature found in its own documentation without our
-auditing it for one.
-
-**If your harness configures its embedding model separately from its chat model,
-which several do, leave that setting pointed wherever it already points and
-change only the chat model.** That is the practical advice on this page, and it is the one to
-follow.
+Each harness page says whether it calls no embeddings endpoint, has an embeddings role to point elsewhere, or has no embeddings feature in its own documentation. If a harness sets its embedding model separately, leave that setting alone and change only the chat model.
 
 ## A harness spends faster than a chat client
 
-Credit is prepaid, and the limit a coding harness reaches first is the account
-spend rate cap rather than the balance. Understanding why takes one fact: **the
-cap counts credit held, not credit spent.**
+Credit is prepaid, and a harness usually reaches the account spend rate cap before the balance. **The cap counts credit held, not credit spent.** A request's hold is its own `max_tokens`, or else the model's published maximum output length. Nothing comes back out of the window, so a cheap request still counts for its full 60 seconds.
 
-When a request is admitted we hold the most it could possibly cost. That figure
-comes from the request's own `max_tokens` where it names one, and from the
-model's published maximum output length where it does not. The window counts what
-was held and when, and nothing comes back out of it: a request that finished
-cheaply a moment ago goes on counting for its full 60 seconds.
+A harness fires several requests at once, often without `max_tokens`. Each holds the whole published maximum, so the cap can refuse it while real spend is a fraction of that. The refusal is `429` with `spend_rate_exceeded`, and it clears 60 seconds after the earliest hold.
 
-A coding harness is the traffic shape that hits this hardest. It fires several
-requests at once, on a model with a large published maximum output, often without
-naming `max_tokens` at all. Each of those holds that whole published maximum, so
-the cap can refuse the harness while your real spending is a small fraction of
-it. The refusal is `429` with the code `spend_rate_exceeded`, and it clears
-itself 60 seconds after the earliest hold it counted.
-
-**The lever is `max_tokens`.** A harness that names a realistic output ceiling
-gets several times more requests a minute out of the same cap, and is charged
-exactly what it was before, because the charge has always been for what was
-actually produced. Where a harness exposes a maximum-output setting, set it.
-[Rate limits and spend controls](/manage/spend-controls)
-covers the cap, its default, and which limits are yours to raise.
+**The lever is `max_tokens`.** Set a realistic output ceiling wherever a harness exposes one. You get more requests a minute from the same cap, at the same charge. [Rate limits and spend controls](/manage/spend-controls) covers the cap and which limits you can raise.
 
 ### Running out part way through a session
 
-Two different things happen, and a harness will tell you about neither in a
-useful way.
+A request started when the workspace cannot cover its hold is refused with `402` and `insufficient_credit`. Nothing is charged.
 
-A request that starts when the workspace cannot cover its hold is refused with
-`402` and the code `insufficient_credit`. Nothing is charged.
+A stream already running when the credit runs out is cut. Its terminating line carries `insufficient_quota` and `balance_exhausted`, and you are charged for what was produced. There is no `data: [DONE]`. [Streaming](/features/streaming) documents the line and the other codes that end a stream.
 
-A stream already running when the credit underneath it runs out is cut. The
-terminating line carries `insufficient_quota` and the code `balance_exhausted`,
-and you are charged for what was produced before the cut and nothing more. There
-is no `data: [DONE]` after it. [Streaming](/features/streaming) documents that
-line and the two other codes that can end a stream.
-
-**An agent loop that retries on a `402` will not recover.** The condition is a
-balance, so nothing about waiting or backing off changes the answer, and a loop
-that treats every non-`200` as transient will spend its retry budget discovering
-that. If you can configure which statuses your harness retries, take `402` off
-the list. The way out is buying credit.
+**Do not retry a `402`.** The condition is a balance, so waiting changes nothing. Take `402` off any retry list you control. The way out is buying credit.
 
 ## Every turn is its own billed request
 
-A coding harness is a tool-calling loop. It sends your request with a list of
-tools, the model replies asking for a tool call, the harness runs the tool
-locally and sends the whole conversation back with the result appended. That
-repeats until the model stops asking.
+A harness is a tool-calling loop. It sends tool definitions, the model asks for a tool call, and the harness runs it locally and resends the conversation with the result.
 
-Your request body is forwarded as you sent it, so the tool fields travel and the
-model's `tool_calls` come back unchanged. **Nothing is executed on our side.** We
-carry a request and a reply; whatever the model asked for is run by the harness
-on your machine, under whatever approvals you have configured there.
+Your request is forwarded as sent, and `tool_calls` come back unchanged. **Nothing is executed on our side.** The harness runs each tool on your machine, under your approvals.
 
-The consequence to know before you see it: **each turn of that loop is a separate
-request, separately billed, and lands in Activity as its own row.** One
-instruction you gave a harness can be a dozen rows, each with its own model,
-tokens and charge, and each resending a conversation slightly longer than the
-last. That is what an agent session looks like in
-[Activity](/manage/usage-and-metering), and it is not a metering fault.
+**Each turn is a separate billed request and its own row in [Activity](/manage/usage-and-metering).** Each resends a slightly longer conversation, so one instruction can become a dozen rows. That is a session, not a metering fault.
 
-## Prompt caching is worth having here specifically
+## Prompt caching is worth having here
 
-A coding harness resends a large, stable prefix on every turn: the same system
-prompt, the same tool definitions, the same files. That is the exact shape
-caching pays off on, and it is the difference between a long agent session
-costing what it looks like it should and costing considerably more.
-
-Provider caching passes through, and reads from a cache and writes to one are
-priced as their own kinds of token rather than as plain input.
-[Models](/features/models) covers that rate vocabulary and where a charge's
-prices come from. There is nothing of ours to switch on, and whether your harness
-sends what a provider needs to cache is a question about the harness.
+A harness resends a large, stable prefix every turn. Provider caching passes through, and cache reads and writes are priced as their own token kinds. [Models](/features/models) covers those rates. There is nothing of ours to switch on. Whether your harness sends what a provider needs to cache is a question about the harness.
 
 ## Keys, and where they must not go
 
-A harness config file frequently lives in the repository, and several of the
-files named on these pages are ones people commit. Read the key from the
-environment wherever the harness supports it, and check the specific file before
-you commit it: at least two of the harnesses documented here have a project-local
-config that is designed to be checked in.
+Harness config often lives in the repository. Read the key from the environment where the harness supports it, and check each file before you commit it. At least two harnesses here have a project-local config designed to be checked in.
 
-**Do not assume `OPENAI_API_KEY` and `OPENAI_BASE_URL` work.** Those are the
-names the official OpenAI SDKs read, and a harness is not an SDK. Not one of the
-harnesses documented here takes its base URL from `OPENAI_BASE_URL` on the path
-these pages document. One of them, Hermes Agent, does read that variable, but
-only for its own direct OpenAI provider rather than for the custom endpoint you
-would configure here, which is a worse trap than ignoring it: the setting has an
-effect somewhere else. How
-each takes its key differs about as much as it can: some read no shell
-environment at all and hold the key in their own settings, one CLI reads a
-similarly named but different variable, several read a variable whose name you
-choose or interpolate one into their config file, and one reads a variable named
-after a different vendor entirely. Each page gives the form that harness
-actually uses, and none of these pages guesses.
+**Do not assume `OPENAI_API_KEY` and `OPENAI_BASE_URL` work.** A harness is not an SDK, and none of these takes its base URL from `OPENAI_BASE_URL` on the documented path. Hermes Agent reads that variable only for its direct OpenAI provider. Each page gives its own key form.
 
-A key is shown once, we keep only a hash, and a workspace holds up to 500 at a
-time. [Authentication](/get-started/authentication) covers minting, revoking and
-replacing them. For a coding harness the practical advice that follows from
-shown-once is to mint a key for the harness rather than reusing one, so revoking
-it costs you nothing else.
+A key is shown once, and we keep only a hash. A workspace holds up to 500. [Authentication](/get-started/authentication) covers minting and revoking. Mint one key per harness, so revoking one costs nothing else.
 
 ## Which models to point it at
 
@@ -249,138 +105,74 @@ curl https://api.hopscotchlabs.ai/v1/models \
   -H "Authorization: Bearer ub_live_XXXXXXXXXXXX"
 ```
 
-Every entry carries a `capabilities` block, and for a coding harness the one that
-decides everything is `tools`. **A model whose `tools` does not read `yes` will
-behave badly in a harness**, and badly rather than cleanly: the harness sends its
-tool definitions, the model answers in prose instead of a tool call, and the
-agent loop either stalls or starts inventing file edits in the chat. That is a
-worse failure than a refusal because it looks like the model being unhelpful.
-
-Check `streaming` too, since most harnesses stream by default, and `vision` if
-you paste screenshots at it. [Models](/features/models) covers the catalog, the
-capability vocabulary, and why a model appears in it at all.
-
-## What we did not verify
-
-Keep these two halves apart, because they are different kinds of claim.
-
-**What we checked, and each per-harness page names its source and date.** That a
-harness has a custom base URL setting, what that setting is called, what it
-takes, whether the harness appends `/v1` itself, whether its model field accepts
-an arbitrary string, and which of its features call which endpoints. These are
-facts about a public tool and are checkable against that tool's own documentation
-or its source.
-
-**What we did not check, on any of these pages.** That a session against this API
-succeeds. No harness on these pages has been run end to end here, because the
-hostname every page prints is not the settled customer hostname yet. Nothing here
-is a report of a working session, and where a page tells you what a setting does
-it is describing the harness rather than certifying the result.
-
-Harness configuration also churns faster than documentation does. These pages
-prefer the mechanism over the menu path for that reason, and a setting that has
-moved since the date on the page is likelier than a setting that never existed.
+Check `capabilities.tools` first. **A model whose `tools` does not read `yes` behaves badly.** It answers in prose instead of a tool call, and the loop stalls or invents file edits in the chat. That looks like unhelpfulness, which makes it worse than a refusal. Check `streaming` as well, and `vision` if you paste screenshots.
 
 ## The harnesses
 
-These reach the surface this site publishes. Each page is short because the
-shared facts are above.
-
 <CardGroup cols={2}>
   <Card title="Cline" icon="robot" href="/integrations/cline">
-    VS Code. A Base URL field, a model list it fetches from us, and model
-    metadata you have to fill in yourself.
+    VS Code. Model metadata you fill in yourself.
   </Card>
   <Card title="Continue" icon="code" href="/integrations/continue">
-    VS Code and JetBrains. Roles, one of which needs embeddings, and a model
-    name that can change which endpoint it calls.
+    VS Code and JetBrains. One role needs embeddings.
   </Card>
   <Card title="Aider" icon="terminal" href="/integrations/aider">
-    A CLI. Three separately configured models, a repository map that needs no
-    embeddings, and a provider prefix that collides with our ids.
+    A CLI. Three separately configured models.
   </Card>
   <Card title="Zed" icon="bolt" href="/integrations/zed">
-    An editor. Models declared in settings, a capability block, and a key it
-    would rather you set in the environment.
+    An editor. Models declared in settings.
   </Card>
   <Card title="OpenCode" icon="terminal" href="/integrations/opencode">
-    A CLI. One config file, a provider package you have to pick correctly, and
-    models you enumerate yourself.
+    A CLI. Models you enumerate yourself.
   </Card>
   <Card title="Codex CLI" icon="terminal" href="/integrations/codex-cli">
-    A CLI, and the only one here on the Responses API. One provider block, a
-    base URL that wants `/v1`, and no output ceiling to set.
+    A CLI on the Responses API.
   </Card>
   <Card title="Hermes Agent" icon="terminal" href="/integrations/hermes-agent">
-    A CLI, a desktop app and a set of gateways. One YAML block, a wire you
-    choose, and no output ceiling it will send.
+    A CLI, desktop app and gateways.
   </Card>
   <Card title="Pi" icon="terminal" href="/integrations/pi">
-    A CLI. One JSON entry, models you list yourself, and a real maximum output
-    per model.
+    A CLI with a real maximum output per model.
   </Card>
   <Card title="DeepSeek Harness" icon="terminal" href="/integrations/deepseek-harness">
-    A plugin runtime with a settings screen. A protocol field, a permanent
-    provider id, and compatibility switches behind the form.
+    A plugin runtime with a settings screen.
   </Card>
   <Card title="Cursor" icon="pen-to-square" href="/integrations/cursor">
-    An editor. A global override that captures its own models too, and a
-    request path that keeps Cursor's servers in it.
+    An editor whose override also captures its own models.
   </Card>
 </CardGroup>
 
-### Orchestrators
-
-Neither of these talks to a model. Each runs one of the harnesses above for
-you, so the child you pick decides everything and its page is the one that
-carries the settings.
+Orchestrators run one of the harnesses above, so the child you pick decides everything:
 
 <CardGroup cols={2}>
   <Card title="T3 Code" icon="layer-group" href="/integrations/t3-code">
-    One control surface over several agents, with environment variables it
-    injects into whichever child it launches.
+    Several agents under one control surface.
   </Card>
   <Card title="Gas Town and Gas City" icon="layer-group" href="/integrations/gas-town">
-    Many agents at once, in terminal sessions. Gas City can name the endpoint
-    once for all of them.
+    Many agents at once.
   </Card>
 </CardGroup>
 
-### The Anthropic wire
+The Anthropic wire:
 
 <CardGroup cols={2}>
   <Card title="Claude Code" icon="terminal" href="/integrations/claude-code">
-    Speaks the Anthropic Messages API, which this API serves. Two variables and
-    a pinned model id.
+    Two variables and a pinned model id.
   </Card>
 </CardGroup>
 
 ## Harnesses we looked at and did not write up
 
-Naming these is more useful than leaving them out, because the question we are
-asked is whether a harness is missing on purpose. These are, and each line says
-why. None of them has been checked to the standard the pages above are held to,
-so read this as a survey rather than as a verdict.
+Naming these shows whether a harness is missing on purpose. None has been checked to the standard above, so this is a survey, not a verdict.
 
-**Named as presets by the orchestrators, not checked by us.** Gas Town ships
-presets for Gemini's CLI, Kiro, Auggie, Amp, GitHub Copilot's CLI and Omp, and
-T3 Code drives Grok's agent. We have established nothing about whether any of
-them accepts a custom endpoint, so this site says nothing about them either
-way.
+**Gas Town presets.** Gemini's CLI, Kiro, Auggie, Amp, GitHub Copilot's CLI and Omp. T3 Code drives Grok's agent. We have not established whether any accepts a custom endpoint.
 
-**Antigravity.** Google's agent, which T3 Code can also drive. The evidence we
-found on whether it accepts an OpenAI-compatible endpoint contradicts itself,
-and the projects that make it reachable from other tools are third-party
-proxies rather than a setting in the product. `unknown` is the honest answer,
-and it stays that until somebody reads the current release rather than a forum
-thread.
+**Antigravity.** The evidence on an OpenAI-compatible endpoint contradicts itself, and the routes that reach it are third-party proxies. `unknown` stays the answer until someone reads the current release.
 
-**Editor extensions we have not reached.** Kilo Code and Roo Code are in the
-same family as [Cline](/integrations/cline) and take the same kind of
-OpenAI-compatible provider block, which makes them likely to work and does not
-make them documented.
+**Kilo Code and Roo Code.** Same family as [Cline](/integrations/cline), with the same kind of provider block. Likely to work, and not documented.
 
-If yours is on this list and you need it to be a page, the shared facts above
-are the ones that would carry over unchanged, and what a page would add is the
-name of the setting and the surprise.
+## What we did not verify
 
+**Checked.** That a harness has a custom base URL setting, its name, whether it appends `/v1`, whether its model field accepts any string, and which endpoints its features call. Each per-harness page names its source and date.
+
+**Not checked.** That a session against this API succeeds. No harness has been run end to end, because the hostname every page prints is not the settled customer hostname yet. Harness configuration churns faster than documentation, so a setting that has moved since a page's date is likelier than one that never existed.
