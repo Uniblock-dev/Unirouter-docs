@@ -182,18 +182,7 @@ working, and carry a Hopscotch `code` that says which of them happened.
 deducts the provider's own rate with nothing on top. A zero balance refuses new requests with `402` and ends in-flight
 ones. See [Credits and billing](/manage/credits-and-billing).
 
-## What carries over and what does not
-
-| What | Status |
-|---|---|
-| Your request bodies | Forwarded as you sent them, with the two named rewrites. |
-| Your response handling | The reply is the OpenAI chat completion shape. |
-| Your streaming loop | Server-sent events in the same format, ending in the same `data: [DONE]`. |
-| Your error handling | The same envelope, the same closed set of `type` values, the same statuses. |
-| Provider rate-limit headers | Not forwarded. Pace on `429` codes and `Retry-After` instead. |
-| `x-uniblock-*` headers | Not honoured in either direction. |
-
-## How to: cut over
+## How to
 
 <Steps>
   <Step title="Prefix every model id">
