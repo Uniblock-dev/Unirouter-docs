@@ -9,17 +9,16 @@ type: guide
 import OwnerOnlyNote from '/snippets/owner-only-note.mdx';
 import RequestIdNote from '/snippets/request-id-note.mdx';
 
-Several limits can refuse a request, and they answer with different codes on
-purpose: you should be able to tell "too fast for this key" from "too much spend
-attempted too quickly" from "this key is done" without asking us.
+Several limits can refuse a request, each with its own code, so you can tell "too
+fast for this key" from "too much spend attempted too quickly" from "this key is done".
 
 **Nothing is charged for a request we refuse**, whichever limit refused it.
 
 ## The controls
 
 Five controls decide how fast this workspace can spend, and when it stops. Four
-live on the **Settings** screen in the dashboard, in its **Limits** section; the
-per-member limit lives on the **Team** screen's **Spend** tab.
+live in **Settings**, under **Limits**; the per-member limit is on the **Team** screen's
+**Spend** tab.
 
 | Control | What it does | Who may read it | Who may change it |
 |---|---|---|---|
@@ -29,10 +28,9 @@ per-member limit lives on the **Team** screen's **Spend** tab.
 | Monthly member limit | Caps what one member's keys may spend in a UTC calendar month. Not available yet. | Any member | Owner |
 | Low credit notice | Emails you once when your available balance falls below a figure. | Any member | Owner |
 
-A sixth control, the [guardrail](/features/guardrails), belongs to one key
-rather than to the workspace, and has its own page. Two limits belong to a single
-key as well, covered below. The difference is the point: the rest of the workspace
-goes on serving while one key is refused.
+A [guardrail](/features/guardrails) belongs to one key rather than to the workspace,
+and two limits below also belong to a single key. Only that key is refused. The
+rest of the workspace keeps serving.
 
 <OwnerOnlyNote />
 
@@ -40,138 +38,89 @@ goes on serving while one key is refused.
 
 | Status | `code` | What ran out | What to do |
 |---|---|---|---|
-| 429 | `rate_limit_exceeded` | This key's request rate. | Wait the number of seconds in `Retry-After`. |
-| 429 | `spend_rate_exceeded` | Your spend rate cap, which counts credit held rather than credit spent. | Wait `Retry-After` seconds, up to 60, or send `max_tokens`. See below. |
-| 429 | `upstream_rate_limited` | Nothing of yours. The model's provider rate-limited the call. | Wait the number of seconds in `Retry-After`. Nothing about the request is wrong and nothing is charged. |
-| 413 | `payload_too_large` | Nothing. The request body is over the 8388608 byte maximum this API accepts. | Send fewer messages, a shorter prompt, or fewer inputs. |
+| 429 | `rate_limit_exceeded` | This key's request rate. | Wait the seconds in `Retry-After`. |
+| 429 | `spend_rate_exceeded` | Your spend rate cap, which counts credit held rather than spent. | Wait `Retry-After` seconds, up to 60, or send `max_tokens`. |
+| 429 | `upstream_rate_limited` | Nothing of yours. The model's provider rate-limited the call. | Wait the seconds in `Retry-After`. Nothing is wrong with the request and nothing is charged. |
+| 413 | `payload_too_large` | Nothing. The body is over the 8388608 byte maximum this API accepts. | Send fewer messages, a shorter prompt, or fewer inputs. |
 | 402 | `insufficient_credit` | Available credit at admission. | Buy credit. |
 | 402 | `key_limit_exceeded` | This key's own credit limit, for its current window. | Wait for the window to roll, raise the limit, or send on another key. |
-| 402 | `member_limit_exceeded` | Not available yet. Your own monthly spend limit, for the current UTC calendar month. | Ask the workspace owner to raise or clear it on the Team screen's Spend tab. Your colleagues are unaffected. |
-| 402 | `workspace_limit_exceeded` | Not available yet. The workspace's monthly spend limit, for the current UTC calendar month. | Ask the workspace owner, who sets it on the Settings screen under Limits. |
+| 402 | `member_limit_exceeded` | Not available yet. Your own monthly spend limit. | Ask the owner to raise or clear it on the Team screen's Spend tab. |
+| 402 | `workspace_limit_exceeded` | Not available yet. The workspace's monthly spend limit. | Ask the owner, who sets it on the Settings screen under Limits. |
 | 402 | `key_limit_exceeded` with a guardrail named | A spend cap set by a [guardrail](/features/guardrails) on this key. | Ask an owner or admin to change or detach the guardrail. |
 | 401 | `key_expired` | Nothing. The key's own expiry date has passed. | Create a new key. Expired keys are never renewed. |
 | 503 | `paused_by_owner` | Nothing. The workspace owner has paused requests. | Lift the pause in Settings. |
 
-Every refusal arrives in the standard error envelope, and the `code` field is the
-one to branch on. Messages are prose and may be reworded; the fields are the
-contract.
-
-One further 429 meaning is specified and not yet shipped, for a provider pool we
-are protecting, so it is absent from the table. Until it ships, treat a 429
-carrying none of the codes above as a condition to retry after a short pause, and
-quote the request id if it persists.
+Every refusal uses the standard error envelope. Branch on `code`, since messages may
+be reworded. One further 429 meaning, for a provider pool we are protecting, is specified
+but not yet shipped. Until it ships, retry a 429 with none of these codes after a short
+pause, and quote the request id if it persists.
 
 ## Pause every request
 
-Pause is the control for a runaway client, a key you are not sure about, or a
-weekend you would rather not be surprised by. It refuses requests without revoking
-anything, so lifting it starts everything again with no keys to re-create.
+Pause is the control for a runaway client or a weekend you would rather not be
+surprised by. It revokes nothing, so lifting it starts everything again.
 
-Before you press it, the screen states what it is about to do, in numbers:
+Before you press it, the screen states the effect in numbers:
 
 > Pausing refuses every request on all N live keys straight away, with nothing charged
 > for a refused request. Over the last 7 days this account made N requests, which is
-> the traffic that would have stopped. Nothing is deleted and no key is revoked, so
-> lifting the pause starts everything again with no keys to re-create.
+> the traffic that would have stopped. Nothing is deleted and no key is revoked.
 
-Both counts are your workspace's own, read at the moment the screen loads. The
-request count is the trailing seven days of what actually happened, not a forecast.
-Nobody can count future requests, so the screen quotes the honest stand-in and says
-which it is.
+The request count is the trailing seven days of actual traffic, not a forecast.
 
-While it is on, requests are refused with HTTP 503 and code `paused_by_owner`, and
-nothing is charged for them. The screen explains the state rather than only showing
-a toggle, because somebody who paused on Friday and is reading this on Monday has
-forgotten. Credit already held for requests that were running when you paused is
-still theirs.
+While paused, requests are refused with HTTP 503 and code `paused_by_owner`, and
+nothing is charged for them. Credit already held for requests that were running is
+still theirs. **Requests already in flight are not cut off.** Each finishes and is
+charged for what it really used.
 
-**Requests already in flight are not cut off.** Each finishes and is charged for
-what it really used.
-
-Any member may read whether requests are paused. Only the owner may press it or
-lift it. Lifting is a press of the same control: the next request is admitted
-immediately, with no cache to expire and no deploy involved. Your keys, your members
-and your credit are exactly as they were.
+Any member may read whether requests are paused. Only the owner may press or lift it,
+and lifting takes effect on the next request.
 
 <Note>
-  Pause is yours and only yours to lift. It is a different state from an account we
-  have suspended, which has its own answer and cannot be lifted from this screen.
+  Pause is yours to lift. It is a different state from an account we have suspended,
+  which has its own answer and cannot be lifted from this screen.
 </Note>
 
-## Set your spend rate cap
+## Spend rate cap
 
 The spend rate cap limits how much credit may be **held** per rolling 60 seconds.
 The default is 5000 minor units. Over it, requests are refused with HTTP 429 and code
-`spend_rate_exceeded`, and they are admitted again within 60 seconds with nothing for
-you to do. The refusal carries `Retry-After` in whole seconds.
+`spend_rate_exceeded`, carrying `Retry-After` in whole seconds, and they are admitted
+again within 60 seconds with nothing for you to do.
 
-<Steps>
-  <Step title="Open the Limits section in Settings">
-    Each row names the unit it is enforced in and carries a sentence saying whether it
-    is yours to move.
-  </Step>
-  <Step title="Read the ceiling">
-    The spend rate cap field states the highest value you may set yourself. Where we
-    cannot state it at that moment, the hint says so and adds that lowering your cap
-    still works.
-  </Step>
-  <Step title="Enter an amount">
-    At least 1 minor unit, which is one cent. Submitting a figure above the stated ceiling is refused, naming both
-    your figure and the highest you may set, and nothing is written.
-  </Step>
-  <Step title="Save">
-    The new cap applies to the next request on this workspace. There is nothing to
-    deploy and nothing to expire.
-  </Step>
-</Steps>
+Setting the cap is the owner's. Two rules apply:
 
-Setting the cap is the owner's. Reading the Limits section is open to every member.
-
-- **A cap of 0 is refused.** Stopping requests entirely is what the pause is for, and
-  it has its own control, its own state and its own sentence.
-- **Lowering always works.** If your cap is above the self-service ceiling, you can
-  still lower it to any figure at or above 1 minor unit. You cannot raise it further
-  until we raise the ceiling.
+- **A cap of 0 is refused.** Stopping requests entirely is what the pause is for.
+- **Lowering always works**, to any figure at or above 1 minor unit. Raising stops at
+  the self-service ceiling until we raise it.
 
 ### What it counts, which is not what you spent
 
-**The cap counts credit held, and a hold is an estimated maximum.**
+When a request is admitted we hold the most it could cost. That figure is the
+request's own `max_tokens` where it names one, and the model's published maximum
+output length where it does not. The request then settles for what it produced, and
+the rest of the hold comes back.
 
-When a request is admitted we hold the most it could possibly cost. That figure comes
-from the request's own `max_tokens` where it names one, and from the model's published
-maximum output length where it does not. The request then settles for what it actually
-produced and the rest of the hold comes straight back.
+The window counts what was held, and nothing is taken back out of it. A released,
+expired or settled hold all count for their full 60 seconds. That is deliberate: a
+leaked key making thousands of small requests holds almost nothing at any instant.
 
-The window counts what was held, when it was held, and nothing is ever taken back out
-of it. A released hold, an expired hold and a settled hold all go on counting for their
-full 60 seconds. That is deliberate: a leaked key makes requests that finish, thousands
-a minute, holding almost nothing at any one instant, and a ceiling computed from live
-holds would be a limit on concurrency that such traffic never approaches.
+Two consequences follow:
 
-Two consequences you can see:
-
-- A minute of ordinary traffic that all completed successfully still counts against the
-  ceiling for a minute afterwards.
+- A minute of ordinary traffic that all completed still counts against the ceiling
+  for a minute afterwards.
 - On an expensive model, requests that omit `max_tokens` hold the model's whole
-  published maximum output. The cap can therefore bind well below 50.00 a minute of
-  real spending, because the credit it is counting is credit you were never going to
-  spend.
+  published maximum output. The cap can bind well below 50.00 a minute of real
+  spending, because the credit it counts is credit you were never going to spend.
 
-The refusal's message says "reserved". It means held, the word the rest of this site
-uses.
-
-The cap is the control that stops a key leaked into a public repository costing you
-your whole balance in the minute before you notice. It clears itself: sixty seconds
-after the earliest hold counted, requests are admitted again. The `Retry-After` header
-is computed from that same earliest hold, so a client that backs off on it needs no
-special case for this code.
+The refusal's message says "reserved", which means held. The cap clears 60 seconds
+after the earliest hold counted, and `Retry-After` is computed from that same hold.
 
 ### The lever: send `max_tokens`
 
-The hold is the smaller of the `max_tokens` you asked for and the model's published
-maximum output length. A client that names a realistic ceiling gets several times more
-requests a minute out of the same cap **and is charged exactly what it was before**,
-because the charge has always been for what was actually produced.
+A client that names a realistic ceiling gets several times more requests a minute out
+of the same cap, **and is charged exactly what it was before**, because the charge has
+always been for what was produced.
 
 ```python Python
 completion = client.chat.completions.create(
@@ -181,80 +130,72 @@ completion = client.chat.completions.create(
 )
 ```
 
-If you are running a batch job, a load test or an evaluation sweep, this is the first
-thing to change.
+If you are running a batch job, a load test or an evaluation sweep, change this first.
 
 ### Out of credit and over the cap at the same time
 
-You are told about the balance first. An account that is both out of credit and over
-its ceiling gets the 402, because the cap clears itself in 60 seconds and telling
-someone with no credit to slow down is advice that cannot work.
+You are told about the balance first. An account both out of credit and over its
+ceiling gets the 402, because the cap clears in 60 seconds and telling someone with no
+credit to slow down is advice that cannot work.
+
+## How to
+
+### Set your spend rate cap
+
+<Steps>
+  <Step title="Open the Limits section in Settings">
+    Each row names the unit it is enforced in and says whether it is yours to move.
+  </Step>
+  <Step title="Read the ceiling">
+    The spend rate cap field states the highest value you may set yourself. Where we
+    cannot state it at that moment, the hint says so and adds that lowering still works.
+  </Step>
+  <Step title="Enter an amount">
+    At least 1 minor unit, which is one cent. A figure above the stated ceiling is refused,
+    naming both your figure and the highest you may set, and nothing is written.
+  </Step>
+  <Step title="Save">
+    The new cap applies to the next request on this workspace. There is nothing to deploy
+    and nothing to expire.
+  </Step>
+</Steps>
 
 ## Monthly limits, for the workspace or for one member
 
-Monthly limits are not available yet. The workspace limit and the
-member limit are both held until their stories are accepted. Until then, no control on
-the screen sets either limit and no request is refused by either one.
-
-When they are available, both count what has been spent from your balance in the
-current UTC calendar month, and both refuse at admission, before credit is held, so a
-request they stop costs nothing. The workspace limit is set by the owner alone, and
-setting it to zero clears it. A refused request returns 402 with the code
-`workspace_limit_exceeded`, and the Team screen's Spend tab will carry each member's
-"Monthly limit". A request stopped by a member limit returns 402 with the code
-`member_limit_exceeded`. The member's colleagues are unaffected, and so is the workspace
-limit. Neither limit will count a request served on your own provider key, because that
-request spends nothing from your balance. See [Bring your own key](/features/bring-your-own-key).
+Monthly limits are not available yet, and no request is refused by either one. When
+they are, both count spend from your balance in the current UTC calendar month and refuse
+at admission, before credit is held. The workspace limit is set by the owner alone, and
+zero clears it. A member limit stops only that member's keys. Neither counts a request
+served on your own provider key. See [Bring your own key](/features/bring-your-own-key).
 
 ## Limits that belong to one key
 
-**A key may carry its own expiry date.** A key presented after that date is refused
-with HTTP 401 and code `key_expired`, and the message names the instant it expired on,
-so a workspace holding several keys can tell which one ran out. It is checked before the
-per-key request rate, so an expired key never consumes that allowance. Nothing renews a
-key: create a new one on the Keys screen and replace the old one wherever it is
-configured.
-
-The code is its own rather than `invalid_api_key` because the two are opposite advice.
-An invalid key means the string is not a key here, and the fix is to find the right one.
-An expired key means this was your key and the date you chose has passed.
+**A key may carry its own expiry date.** A key presented after it is refused with HTTP
+401 and code `key_expired`, and the message names the instant it expired. It is checked
+before the per-key request rate. Nothing renews a key: create a new one on the Keys
+screen. The code is not `invalid_api_key` because the advice is opposite: an invalid key
+needs the right key, an expired one needs replacing.
 
 **A key may also carry its own credit limit.** A request that would take the key past
-it is refused with HTTP 402 and code `key_limit_exceeded`, before any credit is held,
-and the message names what that key has settled and holds inside its current window
-against what it may spend.
-
-That is a different refusal from `insufficient_credit`, which is the account having no
-credit and stops every key on it. A key at its own limit leaves the other keys in the
-workspace serving from the same balance, and buying credit does not clear it. What
-clears it is the window rolling, where the limit resets on a cadence, or somebody
-raising or removing it on the Keys screen. A limit set never to reset does not clear by
-waiting.
+it is refused with HTTP 402 and code `key_limit_exceeded`, before any credit is held. The
+message names what that key has settled and holds in its current window. Unlike
+`insufficient_credit`, this stops only that key, and buying credit does not clear it. The
+window rolling over clears it, or somebody raising or removing the limit on the Keys
+screen. A limit that never resets does not clear by waiting.
 
 Requests served on your own provider key do not count against a key's credit limit and
-are never refused by it. See [Bring your own key](/features/bring-your-own-key).
+are never refused by it. Nothing is charged when either limit refuses, and no credit is
+held.
 
-**Nothing is charged when either refuses**, and no credit is held.
+## Low credit notice
 
-## Choose when we warn you
-
-The low credit notice emails you once, at your verified address, when your available
-balance falls below a figure you choose.
-
-- A whole number of minor units, from 0 to 100000. 500 means 5.00.
-- **0 turns the email off**, and the screen says so in words.
-- One email per crossing. No second email is sent until the balance goes back above the
-  figure and falls below it again, and the screen says which of those three states you
-  are in.
-
-The email names the balance you hold and the threshold you set, says that requests are
-refused once credit runs out and that nothing is charged for a request we refuse, and
-points at Billing. It carries no link with a token in it.
+The low credit notice emails you once when your available balance falls below a figure
+you choose. A value of 0 turns the email off, and the screen says so in words. The setting
+and the email are described on [Buy credit](/manage/buy-credit#set-the-low-credit-notice).
 
 ## Which limits you can raise
 
-The Limits section lists your limits one unit at a time, and marks each one as yours or
-shared. The distinction is the rule, not a label:
+The Limits section marks each limit as yours or shared:
 
 > This protects your own money. You may raise it yourself, up to the limit shown.
 
@@ -264,32 +205,17 @@ applies to the spend rate cap, and
 > decision we make, not one you can make yourself.
 
 applies to the request and token rates. Raising a shared rate trades away another
-customer's room, so it is a decision made by someone weighing the whole pool. There is
-no self-service path for those figures, and there is no hidden one either. If you need
-more room, ask us.
+customer's room, so there is no self-service path. If you need more room, ask us.
 
-Two of the rows carry no figure yet, and the screen says why:
-
-> Not yet enforced. We are not checking your traffic against this figure yet.
-
-They are drawn because the units we meter you in are fixed now rather than later. A row
-with no figure means nobody is checking it, and it never means you have no room.
-
-Every row reads the same live data the platform enforces against. The self-service cap
-control is held until that story is accepted.
+Some rows read "Not yet enforced. We are not checking your traffic against this figure
+yet." A row with no figure means nobody is checking it, never that you have no room.
 
 ## Per-key request rate
 
 Each API key has a request rate, counted per minute. Over it, the request is refused
-with HTTP 429, code `rate_limit_exceeded`, and a `Retry-After` header carrying the
-number of seconds to wait. This limit is counted per key, so splitting work across two
-keys splits the counter. The figure in force is shown in the Limits section of Settings.
-
-## What each refusal costs you
-
-Nothing. A paused request, a rate-capped request and a request refused for want of
-credit are all charged nothing. That is why the pause is safe to press and the cap is
-safe to test.
+with HTTP 429 and code `rate_limit_exceeded`, with a `Retry-After` header carrying the
+seconds to wait. The count is per key, so splitting work across two keys splits the
+counter. The figure in force is shown in the Limits section of Settings.
 
 ## Next
 
