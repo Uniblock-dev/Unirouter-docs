@@ -3,6 +3,7 @@ title: "Features"
 description: "What the API can do beyond a plain chat completion, grouped by the question you arrived with."
 status: write-now
 gates: []
+type: overview
 ---
 
 This section covers what the API does once your first request works. Every page
@@ -93,7 +94,7 @@ one. Guardrails are the part that stops a key before it becomes an incident.
   <Card title="Guardrails" icon="shield-check" href="/features/guardrails">
     A spend cap, a data-retention rule and prompt checks, attached per key.
   </Card>
-  <Card title="Errors" icon="alert-triangle" href="/features/errors">
+  <Card title="Errors" icon="alert-triangle" href="/api-reference/errors">
     The error envelope, the closed set of types, and what each one asks you to do.
   </Card>
 </CardGroup>
@@ -104,8 +105,8 @@ The [playground](/features/playground) sends real requests on your workspace's
 credit, which makes it the fastest way to check whether a model does what a page
 here says it does.
 
-## Coming soon
+## Not open yet
 
-[Images, audio and video](/features/images-audio-and-video) are built and
-closed in production. That page says what each door will take, how it will be
-charged, and the 404 it answers today.
+Image and audio endpoints are built and closed in production. A call to one
+answers 404 with the code `endpoint_not_supported`, and nothing is charged.
+Video generation is open: see [Videos](/features/videos).

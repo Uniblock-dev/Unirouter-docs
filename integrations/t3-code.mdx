@@ -3,6 +3,7 @@ title: "T3 Code"
 description: "T3 Code runs other coding agents for you, so pointing it here means configuring a child agent. Which child decides whether it works."
 status: partial
 gates: ["2.3"]
+type: integration
 ---
 
 import { FeatureStatus } from '/snippets/feature-status.mdx';
@@ -110,7 +111,7 @@ model. Besides the default model there is one for generated text, which writes
 thread titles, branch names, commit messages and pull request descriptions, and
 one for the source control writer. Each is its own selection and each spends.
 The second of those runs often and quietly, which is the kind of traffic that
-turns up in [Activity](/manage/view-activity) unexplained if nobody pinned it on
+turns up in [Activity](/manage/usage-and-metering) unexplained if nobody pinned it on
 purpose.
 
 There is no separate model for applying an edit, because T3 Code does not apply
@@ -125,7 +126,7 @@ endpoint. Whether the child agent does is the child's page's answer.
 It has no maximum-output-tokens setting either. Its nearest control is when a
 conversation gets compacted. As on every other page here, that leaves requests
 holding a model's whole published maximum against your spend rate cap; see
-[rate limits and spend controls](/manage/rate-limits-and-spend-controls).
+[rate limits and spend controls](/manage/spend-controls).
 
 ## What we did not verify
 

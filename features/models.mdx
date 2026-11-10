@@ -3,200 +3,94 @@ title: "Models"
 description: "How model ids are shaped, how to discover which models are callable right now, and the vocabulary a model's rate is expressed in."
 status: partial
 gates: ["8.6", "8.7", "8.8", "8.40", "13.9", "18.58", "18.87", "22.1"]
+type: concept
 ---
 
-You name a model in the `model` field of a request, exactly as you would when
-calling OpenAI directly. The difference is that the name says which family
-serves it, so one key and one endpoint reach models from more than one place.
+You name a model in the `model` field of a request, as you would with OpenAI. The name says which
+provider serves it, so one key and one endpoint reach models from more than one place.
 
 ## Model ids
 
-A model id is written as a provider and a model name, separated by a slash:
+An id is a provider and a model name, split on the **first** slash:
 
 ```json
 { "model": "openai/gpt-4o-mini" }
 ```
 
-It is split once on the **first** slash. The part before it names the provider that serves the
-request. Everything after it is our name for that model on that provider: the provider's own id with
-the maker's namespace taken off. So a model a provider publishes as `openai/gpt-oss-120b` is called
-`groq/gpt-oss-120b` here, and one published as `Qwen/Qwen2.5-72B-Instruct` is called
-`deepinfra/Qwen2.5-72B-Instruct`. An id the provider publishes with no namespace is unchanged, which
-is most of them: `anthropic/claude-opus-4-5` is exactly what you would send anywhere else.
+The part after the slash is the provider's own id with the maker's namespace removed. A model a provider
+publishes as `openai/gpt-oss-120b` is `groq/gpt-oss-120b` here. An id with no namespace is unchanged, as in
+`anthropic/claude-opus-4-5`. Each name is fixed the first time we publish that model on that provider, so an
+id in your code stays put.
 
-You never send the provider's own spelling. We send it for you, and the maker is published beside
-the id on the models list rather than buried inside it.
+You choose the provider, and we never substitute another. A model carried by two providers is two ids with
+two prices.
 
-Each name is fixed the first time we publish that model on that provider and never recomputed, so an
-id you paste into your code does not change under you.
-
-The half after the slash may also be a shorter name we hold for the model, such as
-`anthropic/opus`. A name we recognise is served, charged and answered as the pinned id that
-`GET /v1/models` lists, which is the id the reply carries, so the answer names the model you were
-actually served rather than the name you typed. A name we do not hold changes nothing: the request
-is refused exactly as it would have been, with the `404` that names the provider and the id it does
-not serve. A name with no provider in front of it, such as a bare `opus`, is refused the same way
-any unpinned id is.
-
-The provider half is the point: you choose the host, and we never substitute a different one behind
-your back. A model carried by two providers is two ids with two prices, and the one you send is the
-one that serves you.
-
-The `model` field accepts these three forms and nothing else:
+The `model` field accepts three forms:
 
 | Form | What it does |
 |---|---|
-| `provider/model` | That model, from that provider. If that provider cannot serve it, the request fails rather than moving to another host. The half after the slash is our name for the model on that provider, or a shorter name we hold for it. |
-| `profile/{identifier}` | A [routing profile](/features/routing-profiles) you built: your own `provider/model` lines, tried in your order. |
-| `unirouter/auto` | A fixed id that means [whichever route you made your default](/features/routing-profiles), and a list we publish for your cost tier until you have one. `hopscotch/auto` is accepted as a second spelling of it. |
+| `provider/model` | That model from that provider. If it cannot serve the request, the request fails rather than moving to another host. The half after the slash may be the pinned name or a shorter name we hold, such as `anthropic/opus`, which is served and answered as the pinned id. A name we do not hold is refused with a `404` naming the provider and the id. |
+| `profile/{identifier}` | A [routing profile](/features/routing-profiles) you built. |
+| `unirouter/auto` | Whichever route you made your default, or a list we publish for your cost tier. `hopscotch/auto` is a second spelling. |
 
-A bare id such as `gpt-4o-mini` is refused with `400` and the code `model_id_not_pinned`. The message
-names both forms and points you at `GET /v1/models`.
+A bare id such as `gpt-4o-mini`, or a bare `opus`, is refused with `400` and the code `model_id_not_pinned`.
+Ask for ids rather than building them by hand.
 
-Ask for the ids rather than constructing them by hand. The set of callable
-models is a live fact, it changes without a release on our side, and an id you
-assembled from a provider's own naming may not be an id we serve.
-
-That applies to the `model` field only. The single-model lookup,
-`GET /v1/models/{id}`, is deliberately more forgiving: it also accepts the provider's own spelling
-of the id, so a link or an old usage record still opens the right model. The request path does not,
-so an id that works in a lookup is not necessarily an id you can call.
-
-This site publishes no list of models and no list of families. Any list written
-here would be wrong the first time the set changed, and a stale list of what you
-can call is worse than no list.
+The single-model lookup, `GET /v1/models/{id}`, also accepts the provider's own spelling, so an old link or
+usage record still opens. The request path does not, so an id that works in a lookup may not be callable.
+This site publishes no list of models, families or providers, because a stale list is worse than none.
 
 ## Discovering what you can call
 
-**Over the API.** `GET /v1/models` answers with an OpenAI-shaped list, so a
-client that already lists OpenAI models works unchanged:
+**Over the API.** `GET /v1/models` returns an OpenAI-shaped list. Each entry has an `id` (the value for
+`model`), its input rate and, where separate, its output rate, a context window, capabilities, the currency and the provider names behind it. `GET /v1/models/{id}` adds a short description, the request parameters with
+their bounds and defaults, and any deprecation and sunset dates with the named replacement. The description
+comes from third-party model catalogues and appears only on the single-model call.
 
 ```bash
 curl https://api.hopscotchlabs.ai/v1/models \
   -H "Authorization: Bearer ub_live_XXXXXXXXXXXX"
 ```
 
-Each entry carries an `id`, which is the value to put in `model`. Each entry also
-carries its input rate and, where the model publishes a separate one, its output
-rate, along with its context window, its capabilities, the currency the price is
-in and the provider names behind it, in the vocabulary
-below. Calling `GET /v1/models/{id}` for one model returns everything the list
-entry does, plus the fields served only when you ask for one model by name: a
-short description of it, the request parameters it accepts with their bounds and
-defaults, and its deprecation and sunset dates with the model that replaces it
-where one is named. That description comes from third-party model catalogues
-rather than from the model's own provider, which publishes none, and it only
-ever appears on the single model call, not the list.
+Percent-encode the id once or send it as it is. A double-encoded slash names no model and answers `404`.
 
-A model id contains slashes and the whole of it is the identifier, so
-percent-encode it once or send it as it is. A double-encoded slash names no
-model and answers `404`.
+**In the dashboard.** The Models screen and the [Playground](/features/playground) offer the same catalog.
+The Models screen shows one row per model and folds its providers together, with price ranges. Opening a row
+gives one line per provider with its callable id. The row itself is not callable: take the `model` value from a provider line.
 
-**In the dashboard.** The Models screen browses the same catalog without your
-having to write a request, and the playground offers the models you can send to
-as a list, so you can pick one rather than having to know an id first. See
-[Playground](/features/playground).
-
-The screen and the API answer at different grains, and it is worth knowing which
-you are reading. `GET /v1/models` lists one entry per callable id, so a model
-served by two providers is two entries. The Models screen always shows **one row per
-model** and folds those providers together: the price cells show the
-range across them, and opening the row gives a line per provider with its own
-callable id. That fold is a reading aid on the screen and nothing else. What you
-put in the `model` field is unchanged, and it is still a specific provider's id:
-there is no bare-model form, and the row you are looking at is not itself
-callable. Take the id from the provider line, or from `GET /v1/models`.
-
-Every id the list returns is a string you can send as it stands. A catalog row
-that has no provider identity behind it is left out of the answer rather than
-rendered as a bare id, because a bare id is not something the request path
-accepts: an entry you could not call would be worse than an entry that is
-missing. For the same reason a model that names no endpoint it can be called
-on, such as chat or embeddings, is left out too, even when it already carries a
-price.
+A catalog row with no provider identity is left out rather than shown as a bare id. So is a model that names no endpoint it can be called on, such as chat or embeddings, even when it carries a price.
 
 ## A model is offered only when it is live
 
-A model appears to you only when we hold a working credential of our own for it,
-it has been enabled on our side, and it carries a price we have actually decided.
-The rule behind that is a promise rather than an implementation detail: you must
-never be offered a model that would fail on call, and you must never be shown a
-model whose cost we cannot tell you.
+A model appears only when we hold a working credential of our own for it, it is enabled on our side, and it
+carries a price we have decided. You are never offered a model that would fail on call, nor one whose cost we
+cannot tell you. A model with only a placeholder price is left out and answers as unknown when named.
 
-The price half is the newer one. A model whose only price is a placeholder set
-when a provider first offered it is left out of `GET /v1/models`, left out of the
-Models screen, and answered as an unknown model if you ask for it by name. It is
-not shown with the price blank: a model you can pick and then be refused for is
-worse than a model you never saw.
+Your own key for a provider changes which credential answers your calls. It cannot add a provider or a model.
+See [Bring your own key](/features/bring-your-own-key). A request for a model that is not live, or that your
+workspace may not use, is refused with an error that names the reason. See [Errors](/api-reference/errors).
 
-Bringing your own key for a provider does not change this list. Your key only
-changes which credential answers your calls to a provider we already serve; it
-cannot add a provider or a model that is not already here. A model that is not
-live stays not live no matter whose key you hold for it. See
-[Bring your own key](/features/bring-your-own-key) for what your own key does
-change.
+## What a request costs
 
-The other half of the same rule is what happens when you name a model anyway. A
-request for a model that is not live, or that your workspace may not use, is
-refused with an error that names the reason rather than failing vaguely. See
-[Errors](/features/errors).
-
-## What a request takes from your balance
-
-A served request deducts the provider's rate at face value. There is no markup
-on a request. The platform fee is added when you buy credit, not when you spend
-it. See [Credits and billing](/manage/credits-and-billing).
-
-So the price of a model is the provider's price, and the number you should
-compare between us and calling a provider directly is the fee on the purchase,
-not the cost of the call.
+A served request deducts the provider's rate at face value, with no markup. The platform fee is added when you
+buy credit, not when you spend it. See [Credits and billing](/manage/credits-and-billing). So compare the
+purchase fee, not the call price, with calling a provider directly.
 
 ## How a model's rate is expressed
 
-A model does not have one price. It has a price per kind of token, and a kind of
-request can reprice the same tokens.
-
-The kinds of token are `input`, `cache_read`, `cache_write`, `output` and
-`reasoning`. They partition a request, so no token is priced twice and none is
-missed:
+A model has a price per kind of token. The kinds are `input`, `cache_read`, `cache_write`, `output` and
+`reasoning`, and they partition each request:
 
 ```text
 prompt     = input + cache_read + cache_write
 completion = output + reasoning
 ```
 
-`input` means the prompt tokens that were neither read from a cache nor written
-to one. This is worth reading twice if you are used to a provider's
-`prompt_tokens`, which usually includes the cached ones.
+`input` excludes cached tokens, unlike a provider's `prompt_tokens`, which usually includes them. Cache reads
+are commonly discounted, and cache writes cost more on some providers and do not exist on others. A rate can
+carry a tier, a condition under which a different price applies, such as batch or priority. The default tier
+has no conditions.
 
-Each of those earns a separate price because providers price them separately.
-Reading from a cache is commonly discounted. Writing to one is priced above
-plain input by some providers and does not exist at all on others. Reasoning
-tokens are produced in volume by some model lines and are reported inside the
-completion count by some providers.
-
-On top of the token kind, a rate can carry a tier: a condition under which a
-different price applies to the same tokens, which is how providers express
-things like batch or priority handling. The default tier is the one with no
-conditions.
-
-**A charge explains itself by naming the rates that were in force.** Rates are
-grouped into a revision, and changing any rate mints a new revision rather than
-editing the old one. A charge points at the revision that applied when it was
-made, so a request from last Tuesday is explained against last Tuesday's prices
-and a later price change cannot rewrite it.
-
-<Note>
-The rate vocabulary above is how the product expresses a model's price, and it is
-also how `GET /v1/models` and the dashboard's Models screen answer: both name a
-model's input and output rates, its context window and its capabilities in this
-same vocabulary. A rate can still change on the provider's side before a screen
-next reads it, so the way to see what a past request actually cost is your usage
-record, not a price page.
-</Note>
-
-## What is not here
-
-**A provider list.** Which providers we hold accounts with is not published. What
-we publish is which model ids you can call, which is the part that changes what
-your code does.
+A charge names the rate revision in force when it was made. Changing any rate mints a new revision, so a later
+price change cannot rewrite a past charge. The catalog describes prices in this same vocabulary, but your usage record, not the catalog, is the
+authority on what a request cost.

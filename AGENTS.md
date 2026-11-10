@@ -16,6 +16,32 @@ The story's `status` in the ticket tree `_bmad-output/initiative-gateway-llm/tic
 
 `DOCS_PLAN.md` section 13 is the register and the banned-content linter enforces it. The short version: no fork provenance, no provider topology or procurement, no provider credentials in any form, no unit economics, no staff surfaces or `/admin` routes, no signals or billing-mail ingestion, no internal architecture nouns, no unproven security claims, no unsettled strings, and no number that is not in the claims registry.
 
+## Page tone and budgets
+
+- **Gating lives in frontmatter, not in prose.** A page that is true but not yet released carries `gates:` and the release checklist holds it. Do not write "not available yet" banners or `<FeatureStatus>` tags on Get started pages or `index.mdx`.
+- **Explain a topic once, on its canonical page.** Every other page links to it. Repeating an explanation is a defect, not emphasis.
+- **Word budgets are soft and per type, see `templates/`.** Each type's budget is the "Soft word budget" comment in its template. `npm run check:budget` prints a `WARN` line for a page with no `type:`, an unknown type, a missing or out-of-order required heading, a page over its type's budget, and each gated tag in the Get started pages. It warns and never fails the build, so a warning is a prompt to fix, not a blocker.
+
+### Adding a page
+
+Every page names its `type:` in frontmatter. The template for that type is `templates/<type>.mdx`. Its `##` headings are the required headings, which must appear in that order, and its comment gives the word budget.
+
+| Type | Use for | Budget (words) | Required headings | Folders |
+|---|---|---|---|---|
+| `quickstart` | The first working request, start to finish | 500 | Before you start, Set the base URL, Send your first request, If it fails, Next | `get-started/quickstart` |
+| `guide` | A task a reader does, with steps and the refusals they meet | 1,800 | How to, Next | `features/`, `manage/`, `get-started/` how-to pages |
+| `concept` | One mechanism, explained once, with no steps | 800 | none | `features/`, `manage/` explanation pages |
+| `integration` | One external tool or framework connected to the API | 900 | What we did not verify | `integrations/` |
+| `overview` | Orientation for a section: what it holds and where to go next | 700 | none | `index`, `*/overview` |
+| `reference` | Looked up by question: parameters, errors, headers, glossary, FAQ | 3,500 | none | `api-reference/`, `resources/` |
+
+1. Copy `templates/<type>.mdx` to its new path, for example `features/new-page.mdx`.
+2. Set the title and description, then fill each heading. Delete each placeholder comment as you fill its heading.
+3. Put the page in `docs.json`, once.
+4. Run `npm run check`. A `WARN` for a missing `type:`, a missing heading or a page over budget is a prompt to fix before the pull request. The warnings do not fail the run, but fix them when you can.
+
+Templates are never published (`.mintignore`) and are excluded from the banned-content, claims, status-gate and orphan checks. A template is a file to copy, never a page.
+
 ## Rules that break a pass
 
 - **Handlers win every disagreement with an OpenAPI spec.** The spec is generated from handler code.

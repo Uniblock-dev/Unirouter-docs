@@ -3,6 +3,7 @@ title: "FAQ"
 description: "Short answers to the questions this API gets asked most, each pointing at the page that answers it properly."
 status: partial
 gates: ["2.10", "2.11", "13.9", "18.13", "18.40", "18.62"]
+type: reference
 ---
 
 Every answer here is short on purpose and links to the page that carries the
@@ -36,7 +37,7 @@ time the catalog changed.
 `POST /v1/chat/completions`, `GET /v1/models` and `GET /v1/models/{id}`. Those
 are the operations this site documents and the API reference publishes. A path
 this site does not document is one we make no promise about, in either
-direction. See [OpenAI compatibility](/get-started/openai-compatibility).
+direction. See [OpenAI compatibility](/get-started/migrate-from-openai).
 </Accordion>
 
 <Accordion title="Do the official OpenAI SDKs work?">
@@ -44,6 +45,19 @@ The instructions on this site set only the base URL and the key, which is the
 whole intended change. We have not published a proof run of an unmodified SDK
 against the production hostname, so we describe that as instructions rather than
 as a certification.
+</Accordion>
+
+<Accordion title="Why was my sign-up refused?">
+If the browser check on the sign-up form fails, sign-up is refused with HTTP 403
+and the code `signup_turnstile_failed`, with the message "We could not confirm you
+are not a bot. Reload the page and try again." Reload the page and submit the form
+again.
+</Accordion>
+
+<Accordion title="Can I self-host the gateway?">
+No. There is no self-hosted or downloadable version of the gateway. The product is
+hosted: we hold the provider accounts, meter the requests, and sell prepaid
+credit, and none of that works from a copy running somewhere else.
 </Accordion>
 
 </AccordionGroup>
@@ -124,10 +138,9 @@ addresses, IP addresses and credentials. See
 </Accordion>
 
 <Accordion title="What about images, audio and video?">
-The endpoints are built and are not open in production yet. A call to any of
-them answers 404 with the code `endpoint_not_supported` and nothing is charged.
-[Images, audio and video](/features/images-audio-and-video) says what is
-coming and how it will be priced.
+Video generation is open: see [Videos](/features/videos). The image and audio
+endpoints are built but not open in production yet. A call to one answers 404
+with the code `endpoint_not_supported`, and nothing is charged.
 </Accordion>
 
 </AccordionGroup>
@@ -153,7 +166,7 @@ refusal. See [Errors](/api-reference/errors).
 `spend_rate_exceeded` is your account spend rate cap, which also carries
 `Retry-After`, and the lever for it is
 sending `max_tokens`. See
-[Rate limits and spend controls](/manage/rate-limits-and-spend-controls).
+[Rate limits and spend controls](/manage/spend-controls).
 </Accordion>
 
 <Accordion title="Why does sending max_tokens help?">
@@ -168,7 +181,7 @@ On the Activity screen, one row per request. The usage record is the authority o
 what a request cost, not a rate in the catalog. The `usage.estimated_cost` in a
 response body is the provider's own estimate, passed through. It is not what
 Hopscotch charges. See
-[View activity](/manage/view-activity).
+[View activity](/manage/usage-and-metering).
 </Accordion>
 
 <Accordion title="Can I use my own provider key?">

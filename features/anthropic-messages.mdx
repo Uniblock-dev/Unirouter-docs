@@ -3,6 +3,7 @@ title: "Anthropic Messages API"
 description: "POST /v1/messages serves the Anthropic Messages wire on the same key and balance as everything else: what is identical, the one departure, and the SDK settings."
 status: write-now
 gates: []
+type: guide
 ---
 
 import RequestIdNote from '/snippets/request-id-note.mdx';
@@ -14,7 +15,9 @@ Anthropic's own event stream when you ask for one. It is the same key, the same
 catalog and the same balance as the OpenAI-shaped endpoints, filed under its own
 endpoint family in your usage.
 
-## Point the Anthropic SDK at it
+## How to
+
+### Point the Anthropic SDK at it
 
 Two settings change, as with the OpenAI SDKs: the base URL and the key. The
 Anthropic SDKs add `/v1/messages` themselves, so the base URL is the bare
@@ -74,7 +77,7 @@ written out. A bare Anthropic id is refused with the code
 messages family is callable here; ask [`GET /v1/models`](/features/models) for
 the exact strings.
 
-## Either credential header
+### Either credential header
 
 Anthropic's own SDKs send the key as `x-api-key`. The OpenAI SDKs and most
 other clients send `Authorization: Bearer`. On this one path both are read, so
@@ -115,7 +118,7 @@ usual missing-key 401, whose message on this path names both headers.
 
 A refusal that comes from us rather than from Anthropic, such as an unknown
 key, an empty balance, a spend cap or a guardrail, is shaped as the OpenAI
-error envelope documented on [Errors](/features/errors): an `error` object
+error envelope documented on [Errors](/api-reference/errors): an `error` object
 with `message`, `type`, `param`, `code` and `request_id`. It is not shaped as
 Anthropic's error object.
 
@@ -148,7 +151,7 @@ in `param`, and each is forwarded untouched on your own provider key.
   <Card title="Claude Code" href="/integrations/claude-code">
     Pointing the Claude Code harness at this endpoint.
   </Card>
-  <Card title="Errors" href="/features/errors">
+  <Card title="Errors" href="/api-reference/errors">
     The envelope every refusal above is shaped as, and what each code asks of you.
   </Card>
 </CardGroup>

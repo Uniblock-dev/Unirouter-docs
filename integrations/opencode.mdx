@@ -3,6 +3,7 @@ title: "OpenCode"
 description: "Add Hopscotch as a custom provider in OpenCode: the config file, the provider package that decides the endpoint, and the models you list yourself."
 status: partial
 gates: ["2.3", "2.11"]
+type: integration
 ---
 
 import { FeatureStatus } from '/snippets/feature-status.mdx';
@@ -70,7 +71,7 @@ output ceiling holds the model's whole published maximum against your balance,
 which is what makes the spend rate cap bind during an agent session. We did not
 verify what OpenCode sends when the limit is absent, and the project carries
 reports of a default that exceeds some models' real maximum, so set it. See
-[rate limits and spend controls](/manage/rate-limits-and-spend-controls).
+[rate limits and spend controls](/manage/spend-controls).
 
 ## The key, and the file that gets committed
 
@@ -88,7 +89,7 @@ export HOPSCOTCH_API_KEY=ub_live_YOUR_KEY_HERE
 A provider block also accepts `options.headers` for extra request headers. You
 need none for this API, and `x-uniblock-*` is a reserved namespace that does not
 travel inbound, so a header of that shape has no effect. See [OpenAI
-compatibility](/get-started/openai-compatibility).
+compatibility](/get-started/migrate-from-openai).
 
 ## What we did not verify
 

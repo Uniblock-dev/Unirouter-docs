@@ -3,6 +3,7 @@ title: "Request parameters"
 description: "What this API reads from a request body, what it rewrites, what it refuses on the platform's own keys, and how to find the parameters a model accepts."
 status: partial
 gates: ["13.9", "18.67", "36.17", "38.2", "38.42"]
+type: reference
 ---
 
 The body of a chat completion is OpenAI's, and it travels to the provider as you
@@ -187,7 +188,7 @@ The hold is returned in full at settlement and you are charged for what the
 request actually produced, so sending `max_tokens` never costs you the
 difference. What it changes is how much of your account spend rate cap one
 request occupies while it is in flight. See
-[Rate limits and spend controls](/manage/rate-limits-and-spend-controls).
+[Rate limits and spend controls](/manage/spend-controls).
 
 ## The parameters a given model takes
 

@@ -3,6 +3,7 @@ title: "Tool calling"
 description: "Send a tools array and read tool_calls back, exactly as you would from OpenAI. What travels, what it costs, and what this platform does not do."
 status: partial
 gates: ["18.40"]
+type: concept
 ---
 
 Tool calling here is OpenAI's tool calling. You send a `tools` array in the
@@ -104,11 +105,11 @@ paid for every one of them.
 
 Send `max_tokens` on each turn. It is what sizes the credit held while a request
 runs, and a loop holds credit several times over. See
-[Rate limits and spend controls](/manage/rate-limits-and-spend-controls).
+[Rate limits and spend controls](/manage/spend-controls).
 
 ## Errors in the middle of a loop
 
-Everything on [Errors](/features/errors) applies unchanged, and one habit is
+Everything on [Errors](/api-reference/errors) applies unchanged, and one habit is
 worth building. A loop that retries blindly on any failure can spend real credit
 turning one broken tool definition into a long conversation with itself. Branch
 on `type` and `code`: a `400` will fail identically on retry, and a `429` with

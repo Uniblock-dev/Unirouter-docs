@@ -3,6 +3,7 @@ title: "Usage lookup"
 description: "GET /v1/usage/{id} reads back the tokens, charge and outcome of one of your own requests with the API key that made it, no dashboard session needed."
 status: write-now
 gates: []
+type: guide
 ---
 
 import RequestIdNote from '/snippets/request-id-note.mdx';
@@ -14,7 +15,9 @@ same record the Activity screen reads, so the two never disagree, and it needs
 only the API key, so a job can account for its own spend without anyone
 signing in.
 
-## Read one request back
+## How to
+
+### Read one request back
 
 Take the id from the `x-hopscotch-request-id` header of the response you want
 to look up, or from `x-request-id`, which carries the same value for the
@@ -108,7 +111,7 @@ request older than that is a 404 here too; its charge stays on your statement.
   <Card title="Usage and metering" href="/manage/usage-and-metering">
     What one record holds and the outcome vocabulary.
   </Card>
-  <Card title="View activity" href="/manage/view-activity">
+  <Card title="View activity" href="/manage/usage-and-metering">
     The same record on the dashboard, with filters.
   </Card>
 </CardGroup>

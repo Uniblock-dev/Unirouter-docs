@@ -3,6 +3,7 @@ title: "Zed"
 description: "Configure Zed's openai_compatible provider against Hopscotch: api_url, the models you declare yourself, and the capability that must stay on."
 status: partial
 gates: ["2.3", "2.11"]
+type: integration
 ---
 
 import { FeatureStatus } from '/snippets/feature-status.mdx';
@@ -101,7 +102,7 @@ spend rate cap bind early. Zed's model entry carries both a `max_output_tokens`
 key and a `max_tokens_parameter` capability, and we did not verify which of them
 results in a `max_tokens` on the wire. If the cap starts refusing requests during
 an agent session, that pair is the first place to look. See [rate limits and
-spend controls](/manage/rate-limits-and-spend-controls).
+spend controls](/manage/spend-controls).
 
 ## What we did not verify
 

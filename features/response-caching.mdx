@@ -3,6 +3,7 @@ title: "Response caching"
 description: "Opt a key into response caching, see when a repeat is served from storage at no charge, bypass or purge it, and how it differs from prompt caching."
 status: blocked
 gates: ["exact-match-4", "exact-match-5", "exact-match-6", "exact-match-7", "exact-match-8", "exact-match-9", "exact-match-10", "exact-match-14", "exact-match-15"]
+type: guide
 ---
 
 Response caching answers a request from a stored copy of an earlier reply. When
@@ -23,7 +24,9 @@ in place. Outside development the switch stays visible and can be turned off,
 but it cannot be turned on, and requests are served exactly as they would be
 without the cache.
 
-## Turn it on
+## How to
+
+### Turn it on
 
 Each key has its own switch, on the key's page under **Response cache**.
 
@@ -83,7 +86,7 @@ A miss is billed exactly as it would be without the cache. A bypass is billed
 exactly as it would be without the cache. The cache never adds a charge to a
 request.
 
-## Bypass or clear the cache for one request
+### Bypass or clear the cache for one request
 
 Send these headers on a request to control the cache for that request only. An
 unrecognized value is ignored, and the request is served normally.
@@ -134,3 +137,17 @@ These are two different features, and both can apply to the same request.
 
 Matching is exact. Similar requests that are not identical are not matched, so
 the cache never answers a question with a reply written for a different one.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Prompt caching" href="/features/prompt-caching">
+    The provider's own prompt cache, which works alongside this one and reports its own counts.
+  </Card>
+  <Card title="Guardrails" href="/features/guardrails">
+    Spend caps, zero data retention and the other rules set per key.
+  </Card>
+  <Card title="Usage lookup" href="/features/usage-lookup">
+    Read back the outcome and charge of one request.
+  </Card>
+</CardGroup>

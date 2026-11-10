@@ -3,6 +3,7 @@ title: "Streaming"
 description: "Set stream to true and read server-sent events in the format your OpenAI-compatible client already reads, plus one comment line carrying the token counts."
 status: partial
 gates: ["2.7"]
+type: concept
 ---
 
 import UsageHeader from '/snippets/usage-header.mdx';
@@ -67,9 +68,7 @@ data: [DONE]
   it are unchanged; only the name after the colon moved, completing the
   retirement the response headers went through on 2026-09-14. There is no
   transition period on this one: a stream carries the new name alone. If you
-  match the line by prefix, match `:x-hopscotch-usage`. Most readers are
-  unaffected, because the specification requires a conforming client to ignore
-  any line beginning with a colon.
+  match the line by prefix, match `:x-hopscotch-usage`.
 </Warning>
 
 Everything except the `:x-hopscotch-usage` line is the standard format. That line

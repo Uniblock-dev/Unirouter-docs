@@ -1,8 +1,9 @@
 ---
 title: "Errors"
 description: "One error body for the whole API: a closed set of type values, a stable code, and the request id inside the body."
-status: write-now
+status: partial
 gates: [2.9, 9.6, 9.26, 13.9, 15.8, 21.48, 22.4, 36.17]
+type: reference
 ---
 
 import ErrorEnvelope from '/snippets/error-envelope.mdx';
@@ -16,6 +17,13 @@ contract.
 ## The body
 
 <ErrorEnvelope />
+
+Two different things can go wrong with a request, and this API keeps them apart. A **refusal** is us
+working correctly and saying no: your credit will not cover the call, your key is sending faster than
+its limit, somebody paused the account. Nothing is broken, nothing is charged, and there is something
+specific to do about it. An **error** is a fault, ours or a request we cannot serve as sent. There is
+still something to do about it, and the body says what. Both arrive in the same shape, so your client
+needs one code path for them and tells them apart on a field rather than on a status alone.
 
 Three properties of this body are worth stating because clients depend on them:
 
@@ -69,8 +77,8 @@ separates causes sharing a status.
 | 401 | `authentication_error` | `key_expired` | The key is past its own expiry date. The message names the date it expired on. Checked before the per-key rate limiter, so an expired key never consumes that allowance. Expired keys are not renewed: create a new one. |
 | 402 | `insufficient_quota` | `insufficient_credit` | The workspace cannot cover the estimated maximum cost of this request. The message names both figures. Buy credit. |
 | 402 | `insufficient_quota` | `key_limit_exceeded` | The sending key reached its own credit limit. Refused before any credit is held; other keys in the workspace are unaffected. The message names what the key has settled and holds inside its current window. |
-| 402 | `insufficient_quota` | `member_limit_exceeded` | The person this request is attributed to has reached their own monthly spend limit. Refused before any credit is held and before any provider is attempted. It stops that one person, on every key their spend answers for and in the playground, while their colleagues go on serving from the same balance. The window is the calendar month, and only the workspace owner can raise or clear the figure. |
-| 402 | `insufficient_quota` | `workspace_limit_exceeded` | The workspace has reached its own monthly spend limit, which is the widest of these four ceilings. Refused before any credit is held and before any provider is attempted, and the usage record carries a charge of 0. It stops every member, on every key that carries the projected ceiling and in the playground unconditionally, so it is the code you get when a request is past both this ceiling and a member's. The workspace owner sets the figure, and the dashboard control for it is not built yet, so ask us to change it in the meantime. |
+| 402 | `insufficient_quota` | `member_limit_exceeded` | Not available yet. The person this request is attributed to has reached their own monthly spend limit. Refused before any credit is held and before any provider is attempted. It stops that one person, on every key their spend answers for and in the playground, while their colleagues go on serving from the same balance. The window is the calendar month, and only the workspace owner can raise or clear the figure. |
+| 402 | `insufficient_quota` | `workspace_limit_exceeded` | Not available yet. The workspace has reached its own monthly spend limit, which is the widest of these four ceilings. Refused before any credit is held and before any provider is attempted, and the usage record carries a charge of 0. It stops every member, on every key that carries the projected ceiling and in the playground unconditionally, so it is the code you get when a request is past both this ceiling and a member's. The workspace owner sets the figure, and the dashboard control for it is not built yet, so ask us to change it in the meantime. |
 | 404 | `invalid_request_error` | `endpoint_not_supported` | The path is not one this release serves, whether or not it exists upstream. The message names the method and the path and says it is not supported in this release. |
 | 404 | `not_found_error` | `model_not_found` | No model of that id is in the live catalog, which is what a typo produces. Check the spelling, or list what this key can call with `GET /v1/models`. `param` is `model` on the model routes and `null` on an inference call. |
 | 404 | `not_found_error` | `model_not_available` | The id is catalogued and is not being served right now, either at all or on the endpoint you called. Told apart from `model_not_found` so a withdrawn model does not read as a typo. The status and the code are the same in every case; the **message** says which case it is, and whether waiting helps. A model the provider has retired says it is gone rather than unwell, that retrying will not bring it back, and that no change to the request reaches it. A model the provider still serves that we cannot reach right now says that instead, and says that nothing about your request is wrong. Anything else keeps the sentence this code has always carried: known here, not being served at the moment, and retrying later is worth more than changing the request. No message names a replacement model unless the provider named one itself. |
@@ -107,7 +115,7 @@ the status alone does not tell you which of the three you met.
   hold still counted in the window, so the header and the wait named in
   the message cannot disagree. Sending `max_tokens` on your requests lowers the
   estimated maximum each one holds. See
-  [Rate limits and spend controls](/manage/rate-limits-and-spend-controls).
+  [Rate limits and spend controls](/manage/spend-controls).
 - `upstream_rate_limited` is the model's provider rate-limiting the call. It is
   not your key's allowance and not your account's cap, nothing about the request
   is wrong, and nothing is charged. It carries `Retry-After` in whole seconds.
@@ -184,6 +192,40 @@ id. Read the id from the `x-hopscotch-request-id` response header instead.
 A non-streamed response that we terminate part way through does not receive an
 error body. There is nowhere to put one, so the connection errors instead. Treat a
 truncated non-streamed body as a failed request rather than a short answer.
+
+## What an error never contains
+
+Our error bodies carry the fields listed above and nothing else. No stack trace, no hostname, no internal
+identifier, no detail about the shape of our own system. That is not reticence for its own sake: none of it
+is anything you could act on, and all of it is a normal way for an error string to hand an attacker a map.
+What you get instead is the request id, and a support conversation that starts from it rather than from a
+description of what the screen said.
+
+## Retrying
+
+- `401`, `402`, `400`: do not retry unchanged. Change the key, the credit, or the request.
+- `429` with `rate_limit_exceeded`: retry after `Retry-After` seconds.
+- `429` with `spend_rate_exceeded`: retry after `Retry-After` seconds, and consider sending `max_tokens` so
+  each request holds less. The figure is the wait until the window has no counted hold left, so it agrees
+  with the wait the message names.
+- `429` with `upstream_rate_limited`: retry after `Retry-After` seconds. The figure is one we compute rather
+  than the provider's header passed through: their number where they sent one, held between one and sixty
+  seconds, and five seconds where they sent none.
+- `413` with `payload_too_large`: do not retry unchanged. Send a smaller body.
+- `429` with `provider_key_refused`: retry with backoff. It carries no `Retry-After`, but a provider's own
+  limit clears on its own.
+- `400` with `model_id_not_pinned`: do not retry unchanged. Add the provider prefix, so `gpt-4o-mini` becomes
+  `openai/gpt-4o-mini`, or send a `profile/` slug.
+- `404` with `model_not_found`: do not retry unchanged. Fix the model id.
+- `404` with `model_not_available`: read the message before you retry. If it says the provider has retired the
+  model, do not retry at all; pick another model. If it says we cannot reach it, or says neither, retry later,
+  because the request itself is fine.
+- `503` with `paused_by_owner`: do not retry on a timer.
+- `503` with `provider_account_unavailable`: read the message. It names the provider that has restricted this
+  workspace, so call a model from another provider, or contact support about the restriction.
+- Other `503`, and `500`: retry with backoff. If it persists, quote a request id.
+- `504`: the request ran past the 540 second limit. Retrying the same work unchanged will most likely hit the
+  same limit, so split it or stream it.
 
 ## Handling errors in code
 

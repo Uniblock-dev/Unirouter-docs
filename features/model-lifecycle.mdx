@@ -3,6 +3,7 @@ title: "Model lifecycle"
 description: "Models are deprecated and then stop serving. The two dates mean different things, and the catalog carries both so a shutdown is never a surprise."
 status: partial
 gates: ["18.24"]
+type: concept
 ---
 
 A model you can call today is a model somebody else is maintaining, and it will
@@ -75,7 +76,7 @@ The refusal is a `404`, and the message is what tells you which kind of nothing
 you have hit. A model the provider has **retired** says it is gone rather than
 unwell, and says that retrying will not bring it back. That is the sentence to
 branch your operational response on: no amount of backoff reaches a model that
-has been switched off. See [Errors](/features/errors).
+has been switched off. See [Errors](/api-reference/errors).
 
 The dates are the provider's, not ours, so a model can also stop earlier than its
 published sunset if the provider stops serving it. The catalog follows what is

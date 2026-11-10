@@ -3,15 +3,12 @@ title: "Codex CLI"
 description: "Point Codex at this API: the provider block, the wire protocol it is now the only client for, and the body fields refused on the platform's own keys."
 status: partial
 gates: ["2.3", "36.17", "38.42"]
+type: integration
 ---
 
 import { FeatureStatus } from '/snippets/feature-status.mdx';
 
-[Codex CLI](https://developers.openai.com/codex) is OpenAI's terminal coding
-agent, configured by one TOML file. It is the reason this API serves the
-Responses endpoint at all, and it is the only harness documented here that
-cannot use chat completions. Read [coding
-harnesses](/integrations/coding-harnesses) first.
+[Codex CLI](https://developers.openai.com/codex) is OpenAI's terminal coding agent, configured by one TOML file. It is why this API serves the Responses endpoint at all, and the only harness here that cannot use chat completions. Read [coding harnesses](/integrations/coding-harnesses) first.
 
 <FeatureStatus
   missing="a proof run of Codex CLI against the production hostname"
@@ -20,23 +17,11 @@ harnesses](/integrations/coding-harnesses) first.
 
 ## It speaks the Responses API and nothing else
 
-Codex used to offer a choice of wire protocol. It does not any more. The
-`wire_api` key accepts one value, `responses`, and the string `chat` is not a
-fallback but a startup error naming the removal. A version of Codex old enough
-to speak chat completions is old enough that its own project has stopped
-supporting the path.
-
-That makes the choice of endpoint yours to make once and never again: Codex
-posts to [`POST /v1/responses`](/api-reference/openapi.public.json), which this
-API serves. Everything below the door is shared with chat completions, so the
-same key, the same catalog, the same holds against your balance and the same
-usage rows apply. What differs is the wire, and
-[Responses](/api-reference/openapi.public.json) is the reference for it.
+The `wire_api` key accepts one value, `responses`. The string `chat` is a startup error naming the removal, not a fallback. Codex posts to [`POST /v1/responses`](/api-reference/openapi.public.json). Everything below the door is shared with chat completions: the same key, catalog, balance holds and usage rows.
 
 ## The configuration surface
 
-The file is `~/.codex/config.toml`, with a project-scoped `.codex/config.toml`
-alongside it. Add a provider and select it:
+The file is `~/.codex/config.toml`, with an optional project-scoped `.codex/config.toml`:
 
 ```toml ~/.codex/config.toml
 model_provider = "hopscotch"
@@ -53,49 +38,19 @@ wire_api = "responses"
 export HOPSCOTCH_API_KEY=ub_live_XXXXXXXXXXXX
 ```
 
-Two things about that block are easy to get wrong.
+**`base_url` must include `/v1`.** Codex appends only `/responses`, so a bare hostname receives a `404`. This is the opposite of Claude Code's convention.
 
-**`base_url` must include `/v1`.** Codex appends only `/responses` to whatever
-you give it, so a base URL that stops at the hostname posts to `/responses` and
-receives a `404`. This is the opposite of the convention Claude Code uses, and
-the two are documented side by side here for that reason.
-
-**Do not name the provider `openai`.** The built-in provider ids are reserved
-and a block of that name is ignored rather than refused, which is the kind of
-failure that costs an afternoon. Any other id works; `hopscotch` above is
-arbitrary.
+**Do not name the provider `openai`.** Built-in provider ids are reserved, and a block with that name is ignored rather than refused. Any other id works.
 
 ## The key comes from a variable you name
 
-`env_key` names the environment variable Codex reads, and it reads it at request
-time rather than caching it. There is no requirement to call it anything in
-particular, and nothing here reads `OPENAI_API_KEY` unless you point `env_key`
-at that name yourself.
+`env_key` names the variable Codex reads, at request time. Nothing reads `OPENAI_API_KEY` unless you point `env_key` at it. Codex's login flow writes `~/.codex/auth.json`, which belongs to the built-in OpenAI provider. Leave it alone and use `env_key`.
 
-Codex also has a login flow that writes a credential to `~/.codex/auth.json`.
-That path belongs to the built-in OpenAI provider and is not how a custom
-provider is authenticated; leave it alone and use `env_key`.
+## Pin the model id
 
-## Pin the model id, and prefer the fixed one
+Codex's `model` field is free text, and this API needs a provider in it, so change the default before the first request. Accepted forms are on [Models](/features/models). For a harness, `unirouter/auto` is the one to use, because the model changes on the Routing screen rather than in a TOML file. [Routing profiles](/features/routing-profiles) covers it.
 
-Codex's `model` field is free text and this API needs it to name a provider, so
-the default has to change before the first request. Every accepted form is on
-[Models](/features/models).
-
-For a harness specifically, `unirouter/auto` is the form worth reaching for. It
-is one fixed string that means whichever route your workspace made its default,
-so the model behind your editor changes on the Routing screen rather than in a
-TOML file you have to find again. [Routing
-profiles](/features/routing-profiles) covers it.
-
-A provider-pinned id works too, and if you use one, be aware of a rough edge
-that is Codex's rather than ours: a model id containing a slash is sent
-correctly but does not always appear in the `/model` picker, and the picker has
-been reported overwriting a custom provider's selection. Setting `model` in the
-file rather than choosing it in the session avoids both.
-
-There is one more model setting, `review_model`, which `/review` uses and which
-defaults to the session model. If you set it, pin it the same way.
+A provider-pinned id works too. Codex's picker does not always list an id containing a slash, and it has been reported overwriting a custom provider's selection. Setting `model` in the file avoids both. `review_model`, which `/review` uses and which defaults to the session model, takes the same pinning.
 
 <FeatureStatus
   missing="a way to stop Codex naming its own model id on the auto-review path"
@@ -104,70 +59,32 @@ defaults to the session model. If you set it, pin it the same way.
 
 ## `store` is refused on the platform's own provider keys
 
-The Responses API defaults to storing the response at the provider. On the
-platform's own provider keys this platform stores none, so `store: true` is
-refused before admission, with `400`, `code` `null`, and `param` set to `store`,
-and an omitted `store` is sent as `false`. Nothing is held against your balance
-and nothing reaches a provider. On your own provider key `store` is forwarded as
-you sent it.
+The Responses API defaults to storing responses at the provider. On the platform's own provider keys, `store: true` is refused before admission with `400`, `code` `null` and `param` set to `store`. An omitted `store` is sent as `false`. Nothing is held and nothing reaches a provider. On your own provider key, `store` is forwarded as sent.
 
-**Codex sends `store: false`, so this does not bite.** It is documented here
-because a wrapper or a script of your own that sets it will be refused, and
-because `store` is one of a short list of fields this door refuses on the
-platform's keys. The list is on [Request parameters](/api-reference/parameters#the-fields-refused-on-the-platforms-own-provider-keys).
+Codex sends `store: false`, so this does not affect it. It matters for your own wrapper or script. The fields refused on the platform's keys are listed on [Request parameters](/api-reference/parameters#the-fields-refused-on-the-platforms-own-provider-keys).
 
-## Codex sends parameters this API forwards without opinion
+## Parameters Codex sends are forwarded
 
-A Codex request carries `reasoning`, `verbosity`, `service_tier`,
-`prompt_cache_key`, `include` and `parallel_tool_calls`. Your body is forwarded
-as you sent it, so all of those travel to whichever provider serves the request,
-and none of them is rewritten or removed on the way. The one caveat is
-`service_tier`: on the platform's own provider keys a tier other than `auto` or
-`default` is refused with `400` and `param` set to `service_tier`, because a
-priority or flex tier is priced differently and this platform does not meter it
-yet. On your own provider key any tier is forwarded.
+A Codex request carries `reasoning`, `verbosity`, `service_tier`, `prompt_cache_key`, `include` and `parallel_tool_calls`. Your body is forwarded as sent, and none is rewritten.
 
-The consequence is that a provider which does not accept one of them answers
-with its own refusal, and you get that refusal relayed with the provider's own
-sentence quoted after the provider's name. It reads as a parameter problem
-because it is one. `model_reasoning_effort`, `model_verbosity` and
-`model_supports_reasoning_summaries` are the Codex settings that decide whether
-those fields are sent at all, and they are the levers to reach for when a model
-rejects one.
+The one caveat is `service_tier`. On the platform's own keys, a tier other than `auto` or `default` is refused with `400` and `param` set to `service_tier`, because this platform does not meter priority or flex pricing yet. On your own key, any tier is forwarded.
+
+A provider that rejects a field answers with its own refusal, relayed with its sentence quoted. `model_reasoning_effort`, `model_verbosity` and `model_supports_reasoning_summaries` decide whether those fields are sent, and they are the levers when a model rejects one.
 
 ## There is no output ceiling to set
 
-Codex has no maximum-output-tokens setting. It has `model_context_window`, which
-is an input-side figure, and `model_auto_compact_token_limit`, which decides
-when a conversation is compacted rather than how long a reply may be.
+Codex has no maximum-output setting. `model_context_window` is an input-side figure, and `model_auto_compact_token_limit` sets when a conversation is compacted, not how long a reply may be.
 
-That matters here because a request naming no output ceiling holds the model's
-whole published maximum against your account's spend rate cap. Codex is
-therefore one of the harnesses that will reach that cap while your real spending
-is a fraction of it, and there is no setting in Codex that changes the shape.
-[Rate limits and spend controls](/manage/rate-limits-and-spend-controls)
-covers what the cap counts and which limits are yours to raise.
+A request naming no output ceiling holds the model's whole published maximum against your spend rate cap, so Codex can reach that cap while real spend is a fraction of it. [Rate limits and spend controls](/manage/spend-controls) covers what the cap counts.
 
 ## No embeddings
 
-Codex builds its context by reading and searching files, and by compacting the
-conversation. Its client speaks to a fixed set of endpoints, none of which is an
-embeddings endpoint, so none of the failure modes on [coding
-harnesses](/integrations/coding-harnesses) applies to it.
+Codex builds context by reading and searching files and by compacting conversations. Its client calls no embeddings endpoint, so the failure modes on [coding harnesses](/integrations/coding-harnesses) do not apply to it.
 
 ## What we did not verify
 
 - That a Codex session against this API succeeds. Nothing was run.
-- Whether Codex validates the `model` string anywhere outside the provider
-  path. We read the provider code and found no allowlist there, and we did not
-  trace the whole model-resolution path.
-- The schema of `model_catalog_json`, which is the documented way to declare a
-  custom model's metadata and which may be the fix for the `/model` picker
-  behaviour described above.
-- Whether `model_supports_reasoning_summaries` suppresses the `reasoning` field
-  entirely or only its summary half.
-- Codex carries an open report of requests failing against non-OpenAI Responses
-  endpoints with an upstream error, while the same body sent by hand succeeds
-  (`openai/codex#24973`). It has no diagnosis upstream and we have not
-  reproduced it here. If a session fails in a way this page does not explain,
-  it is worth reading before assuming the fault is ours.
+- Whether Codex validates the `model` string outside the provider path. We read the provider code and found no allowlist there, but did not trace the whole resolution path.
+- The schema of `model_catalog_json`, the documented way to declare a custom model's metadata, which may fix the `/model` picker behaviour above.
+- Whether `model_supports_reasoning_summaries` suppresses the `reasoning` field entirely or only its summary half.
+- Codex has an open report of requests failing against non-OpenAI Responses endpoints while the same body sent by hand succeeds (`openai/codex#24973`). It has no upstream diagnosis, and we have not reproduced it. If a session fails in a way this page does not explain, check that report before assuming the fault is ours.

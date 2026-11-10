@@ -1,20 +1,21 @@
 ---
 title: "Authentication"
-description: "API keys end to end: the Bearer header, the key format, shown-once keys, the 500-key ceiling, and how a key ends."
+description: "API keys end to end: the Bearer header, key format, creating and copying a key, expiry, the 500 key ceiling, and how a key ends."
 status: partial
-gates: ["2.17", "3.11"]
+gates: ["2.17", "3.9", "3.10", "3.11", "3.13", "9.22", "9.23"]
+type: guide
 ---
 
-import FeatureStatus from '/snippets/feature-status.mdx';
 import AuthHeader from '/snippets/auth-header.mdx';
 import ErrorEnvelope from '/snippets/error-envelope.mdx';
 import RequestIdNote from '/snippets/request-id-note.mdx';
 
-Every request to the public API is authenticated by one API key on one header.
-There is no other credential, no session, and no signature: a key opens the door
-and nothing else does.
+Every request to the public API is authenticated by one API key on one header. There is no other
+credential, no session, and no signature: a key opens the door and nothing else does.
 
-## The header
+## How to
+
+### Send a key
 
 <AuthHeader />
 
@@ -49,14 +50,84 @@ const client = new OpenAI({
 
 </CodeGroup>
 
-The scheme must be `Bearer`. A missing header and a header using another scheme
-get the same refusal, because from our side they are the same thing: no key
-arrived.
+The scheme must be `Bearer`. A missing header and a header using another scheme get the same refusal,
+because from our side both mean no key arrived.
+
+### Create a key
+
+Keys are created in the dashboard, on the **Keys** screen, never through the API.
+
+**Who can do this:** owner, admin or developer. A viewer is refused with `Your role in this workspace
+cannot create API keys.` See [Workspaces and members](/manage/workspaces-and-members).
+
+<Steps>
+  <Step title="Open Keys in the dashboard">
+    Sign in and go to Keys. The screen lists the keys you may see, which is not always every key in the
+    workspace. See [Who can see which keys](#who-can-see-which-keys).
+  </Step>
+  <Step title="Name it">
+    Name the key for where it will be used, such as `production-api` or `ci`. The name is how you recognise
+    it later, because the secret is not shown again.
+  </Step>
+  <Step title="Create it, and copy it now">
+    The key is shown once, in full, in the form `ub_live_` followed by 43 characters, and nowhere else. Put
+    it straight into your secret manager or your deployment's environment. Copying it into a note to paste later
+    is the handling the once-only showing exists to discourage.
+  </Step>
+  <Step title="Use it">
+    Send it as a bearer token, as shown under [Send a key](#send-a-key).
+  </Step>
+</Steps>
+
+### Set an expiry and a spending limit
+
+Both are optional, and both are set on the key when you create it or later from its row. A key with neither
+never expires and spends against the workspace balance with no ceiling of its own.
+
+**Expiration** is a date. A key presented after it is refused with code `key_expired`, and the refusal names
+the instant it expired. Nothing renews an expired key: the fix is a new key.
+
+**Credit limit** is an amount this key may spend, with a **Reset** cadence beside it: never, daily, weekly or
+monthly, on UTC calendar windows. A request that would take the key past its limit is refused with code
+`key_limit_exceeded` before anything is held or charged. The refusal names what the key has settled and holds
+in its current window. Other keys in the workspace keep serving from the same balance.
+
+The cadence is available only once there is a limit for it to apply to. Emptying the amount returns the cadence
+to never, and a limit that never resets does not clear by waiting: raise it or remove it. See
+[Spend controls](/manage/spend-controls).
+
+### End a key
+
+Three things can end a key, and nothing else does. Ending a key means it stops existing and its slot frees.
+
+| Reason | What causes it | Available today |
+|---|---|---|
+| You revoke it | Somebody with access ends that key deliberately. | Yes |
+| It was replaced | Minting a replacement ends the key it replaces in the same motion. | Yes |
+| A member was removed and the person removing them chose to revoke that key | Removal asks about each key rather than deciding for you. | Yes |
+
+**Revoke** asks "Stop this key from working?" and ends the key on **Revoke it**. Nothing replaces it. **Regenerate**
+asks "Replace this key with a fresh one? The old one stops working." and, on **Regenerate it**, ends the old key and
+shows the new one once, the way a new key is shown. The old key is confirmed ended before the new one is shown, so
+you are never told a key was replaced while it still works somewhere. Regenerating needs the permission to create a
+key as well as the permission to revoke one. Both are offered to anyone who may revoke that key: an owner, an admin,
+or the developer it is accountable to.
+
+Revoking and regenerating share an account-wide churn allowance. Past it, the response is HTTP 429 with the code
+`too_many_key_operations` and a `Retry-After` header, until the window passes.
+
+Expiry is a fourth way a key **stops serving traffic**, but it does not end the key: an expired key still holds its
+slot until it is revoked or replaced, and only a new key restores traffic.
+
+A role change never revokes a key, and neither does a workspace pause: lifting a pause needs no new key.
+
+Hopscotch staff can also revoke a key, recorded against a named member of staff. We publish no figure for how quickly
+that takes effect everywhere.
 
 ## The key format
 
-A key is a non-secret prefix followed by 43 random characters from the base64url
-alphabet, which is `A-Z`, `a-z`, `0-9`, `-` and `_`.
+A key is a non-secret prefix followed by 43 random characters from the base64url alphabet: `A-Z`, `a-z`, `0-9`, `-`
+and `_`.
 
 | Prefix | Environment |
 |---|---|
@@ -64,89 +135,68 @@ alphabet, which is `A-Z`, `a-z`, `0-9`, `-` and `_`.
 | `ub_stg_` | Staging. |
 | `ub_dev_` | Development. |
 
-The prefix carries the environment for two reasons. Secret scanners can recognise
-a leaked Hopscotch key in a public repository, and a key pasted into the wrong
-configuration says out loud which environment it belongs to rather than failing
-with a puzzle.
+The prefix lets secret scanners recognise a leaked Hopscotch key in a public repository, and says which environment a
+misplaced key belongs to. The prefix and the last four characters stay visible in the dashboard, so you can tell keys
+apart; the other 39 characters are gone from our side once shown.
 
-The prefix and the last four characters are not secret and stay visible in the
-dashboard, which is how you tell two keys apart after the fact. The other 39
-characters are gone from our side the moment the key is shown.
-
-## Keys are shown once
-
-The dashboard says it plainly, and this page says the same thing: a key appears
-once and we keep only a hash, so we cannot show it to you again or recover it for
-you. Copy it into your secret store before you leave the screen.
-
-There is no recovery path, and that is a property of the design rather than a
-missing feature: what we store is a one-way hash, so a leak of our database
-yields no working key, and the same fact is what stops us reading yours back. If
-you lose a key, mint a new one. Ending the lost one is covered under
-[how a key ends](#how-a-key-ends) below, and today that is not yet something you
-can do for yourself.
+We keep only a hash, so a key cannot be shown again or recovered. That is a property of the design: a leak of our
+database yields no working key, and the same fact stops us reading yours back. If you lose a key, mint a new one and
+end the lost one, as described under [End a key](#end-a-key).
 
 ## Keys belong to the workspace
 
-A key is the workspace's, not the person's who minted it. Its spend lands on the
-workspace's balance and its requests land in the workspace's usage. That has a
-consequence worth knowing before you organise your team around it: removing the
-member who created a key does not, on its own, stop the key. Revoking is an
-explicit choice, made per key, at the moment of removal. See
-[workspaces and members](/manage/workspaces-and-members).
+A key belongs to the workspace, not to the person who minted it. Its spend lands on the workspace balance and its
+requests land in the workspace usage. Removing the member who created a key does not stop it on its own; revoking is
+a per-key choice made at the moment of removal. See [workspaces and members](/manage/workspaces-and-members).
+
+Each key has one accountable member, which says who answers for its spend. Accountability is not a permission: it does
+not say who may use the key.
 
 ## 500 live keys per workspace
 
-A workspace holds up to 500 live keys. An outstanding key reservation attached
-to an invitation occupies one of the 500 while it is outstanding, and frees it
-if the reservation is cancelled or lapses. When all 500 slots are held, minting
-refuses until a slot frees.
+A workspace holds up to 500 live keys. A request for one more at 500 is refused with: `This workspace already holds 500
+live keys, which is the maximum. Revoke one to free a slot.`
 
-500 is the ceiling on live keys, not on keys ever minted. A key that has been
-ended frees its slot.
+The ceiling counts live keys, not keys ever minted, so an ended key frees its slot. Several keys rather than one is
+deliberate: with one, a leak means an outage. With several, you can create the replacement, move traffic, and end the
+old key with nothing down in between.
 
-## How a key ends
+### Keys that arrive with an invitation
 
-<FeatureStatus
-  feature="revoking and replacing a key yourself"
-  detail="Revoke and Replace are not on the Keys screen yet, and there is no route behind them, so a key you no longer want cannot be ended by you today. The one path that ends a key now is the per-key choice made when a member is removed from the workspace. Treat a key as live for as long as it exists, and plan around the ceiling of 500 keys until the other two paths ship."
-/>
+An invitation can carry a key reservation, so a new member arrives with a key waiting for them.
 
-The set of things that may ever **end** a key, meaning the key stops existing and
-its slot frees, is closed. There are three, and this is their status today:
+- The reservation takes one of the 500 slots as soon as it is made, though the key does not exist yet. The key is
+  created once, the first time the invitee views it after accepting.
+- It is shown once, with the same sentence as any new key. If two tabs press the button together, exactly one key is
+  created, and the other tab is told the key was already shown, with its prefix and last four characters. There is no
+  second showing.
+- A reservation lapses and frees its slot if the invitation is never accepted, or if seven days pass after acceptance
+  without the key being viewed. An owner or admin can cancel an unviewed reservation. A lapse or cancellation is not a
+  revocation, because the key never existed.
 
-| Reason | What causes it | Available today |
-|---|---|---|
-| You revoke it | Somebody with access ends that key deliberately. | Not yet |
-| It was replaced | Minting a replacement ends the key it replaces in the same motion. | Not yet |
-| A member was removed and the person removing them chose to revoke that key | Removal asks about each key rather than deciding for you. | Yes |
+## Who can see which keys
 
-Expiry is a fourth way a key **stops serving traffic**, but it does not end the
-key in the sense above: an expired key still exists and still holds its slot, it
-is simply refused with `code: key_expired`. Nothing renews it, so the only way
-to keep serving traffic is a new key, and the old one continues to occupy a slot
-until it is separately revoked or replaced.
+Every key list carries this sentence:
 
-Two things that do not end a key, stated because their absence is worth knowing:
-a role change never revokes a key, and neither does a workspace pause. A pause
-stops requests while the keys stay live, so lifting it needs no new key.
+> Key lists are scoped to what each member may see. An owner or admin sees every key in the workspace; everybody
+> else sees the keys they are accountable for or named on.
 
-We do not publish a figure for how quickly ending a key takes effect everywhere.
-The mechanism that would make a global timing promise true is not built, and
-quoting a number we have not measured would be worse than saying nothing.
+When creating a key, an owner or an admin can limit it to named members. That limit decides who can see and manage the
+key, and nobody outside the list learns that it exists. A developer or viewer who tries to set a limit is refused with:
+`Only an owner or an admin can limit a key to particular members.`
 
-## The 401 responses
+The limit does not change what the key can do: on the request path a key is a bearer credential, so anybody holding the
+secret can call the API with it. The limit covers screens and management, not a per-person usage split.
 
-Refusals arrive in the OpenAI error envelope, so an OpenAI client parses them
-without changes.
+## Refusals
+
+Refusals arrive in the OpenAI error envelope, so an OpenAI client parses them without changes.
 
 <ErrorEnvelope />
 
-All four carry `"type": "authentication_error"`. The first three share
-`"code": "invalid_api_key"`; the fourth carries its own code, `key_expired`,
-because the fix is different: an invalid key means the string is not a key
-here, while an expired key was valid and just needs replacing. Branch on
-`code` rather than on the message.
+All four carry `"type": "authentication_error"`. The first three share `"code": "invalid_api_key"`. The fourth carries
+`key_expired` because the fix differs: an expired key was valid and needs replacing. Branch on `code`, never on the
+message. Every shipped code is in [Errors and refusals](/api-reference/errors).
 
 | What happened | The message |
 |---|---|
@@ -155,64 +205,38 @@ here, while an expired key was valid and just needs replacing. Branch on
 | A correctly shaped key we do not accept | `Incorrect API key provided.` |
 | A key past its own expiry date (`code: key_expired`) | Names the instant the key expired on. Checked before the per-key rate limiter, so an expired key never consumes that allowance. |
 
-The second is separated from the third on purpose. A key of the wrong shape is a
-configuration mistake, usually a key from another provider or a truncated paste,
-and saying so saves you an afternoon while telling an attacker nothing they do
-not already know about their own string.
+The second row is separate from the third on purpose: a key of the wrong shape is usually another provider's key or a
+truncated paste. The third covers both a key that never existed and one that was revoked, with one identical sentence,
+so confirming that a stolen key was once real helps only the thief.
 
-The third covers both a key that never existed and a key that was revoked, with
-one identical sentence. That is deliberate: confirming that a stolen key was once
-real is worth a great deal to whoever stole it and nothing to anybody else. Only
-our own logs tell the two apart.
-
-```json 401
-{
-  "error": {
-    "message": "Incorrect API key provided.",
-    "type": "authentication_error",
-    "param": null,
-    "code": "invalid_api_key",
-    "request_id": "00000000-0000-4000-8000-000000000000"
-  }
-}
-```
-
-## Per-key rate limiting
-
-A key carries a request rate limit, checked as the key is authenticated. Over it,
-the response is 429 with type `rate_limit_error` and code `rate_limit_exceeded`,
-and it carries a `Retry-After` header in seconds. The message names the wait:
-
-```json 429
-{
-  "error": {
-    "message": "Rate limit reached for this key. Try again in 12 seconds. Request id 00000000-0000-4000-8000-000000000000.",
-    "type": "rate_limit_error",
-    "param": null,
-    "code": "rate_limit_exceeded",
-    "request_id": "00000000-0000-4000-8000-000000000000"
-  }
-}
-```
-
-This is the limit on your key's request rate, which is ours to set and which you
-cannot raise yourself. It is a different refusal from your account spend rate cap,
-which you can raise, and the codes are distinct so your client can tell them
-apart. See [rate limits and spend controls](/manage/rate-limits-and-spend-controls).
+A key carries a request rate limit, checked as the key is authenticated. Over it, the response is 429 with type
+`rate_limit_error`, code `rate_limit_exceeded`, and a `Retry-After` header in seconds. That limit is ours to set and you
+cannot raise it. Your account spend rate cap is a different refusal, with its own codes, which you can raise. See
+[Spend controls](/manage/spend-controls).
 
 <RequestIdNote />
 
 ## Handling keys well
 
-- Keep keys in a secret store or an environment variable, never in source
-  control. The `ub_live_` prefix exists partly so that scanners catch the mistake,
-  but catching it after the fact is not the same as avoiding it.
-- Use one key per deployment or per service rather than one shared key, within the
-  ceiling of 500 keys. Usage is attributed per key, so separate keys are what make a
-  spending question answerable, and ending one then costs you one deployment
-  rather than all of them.
-- We set no expiry on a key ourselves and publish no rotation requirement, so a
-  key stays live until something on the list above ends it. You may give a key an
-  expiry date of your own, and a key past it is refused with code `key_expired`.
-  See [rate limits and spend
-  controls](/manage/rate-limits-and-spend-controls).
+- Keep keys in a secret store or an environment variable, never in source control. The `ub_live_` prefix lets scanners
+  catch a leak, but catching it after the fact is not avoiding it.
+- Use one key per deployment or service, within the 500 live keys ceiling, so ending one key costs one deployment, not
+  all of them.
+- We set no expiry on a key and publish no rotation requirement, so a key stays live until something above ends it. You
+  may give a key an expiry date of your own.
+
+## What we did not verify
+
+The create, copy-once and reserved-key flows have not been walked end to end against a deployed environment for this
+page. If a screen contradicts this page, trust the screen and tell us.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Migrate from OpenAI" href="/get-started/migrate-from-openai">
+    Two settings, and the list of what changes when you move an existing application.
+  </Card>
+  <Card title="Spend controls" href="/manage/spend-controls">
+    The workspace caps, the pause, and what each refusal costs you.
+  </Card>
+</CardGroup>

@@ -3,6 +3,7 @@ title: "Reasoning models"
 description: "Reasoning tokens are counted, priced as their own kind, and reported separately. What to send, what you are charged, and why max_tokens matters more here."
 status: partial
 gates: ["18.62"]
+type: concept
 ---
 
 Some model lines produce reasoning tokens before they answer: text the model
@@ -83,7 +84,7 @@ that ceiling is whatever the model publishes as its maximum output, which on a
 reasoning model is often large. The hold comes back in full at settlement and you
 are charged for what was produced, but while the request is in flight it occupies
 that much of your account spend rate cap. See
-[Rate limits and spend controls](/manage/rate-limits-and-spend-controls).
+[Rate limits and spend controls](/manage/spend-controls).
 
 So send `max_tokens`, and send one with room for the thinking and the answer
 both.

@@ -3,14 +3,12 @@ title: "Aider"
 description: "Point Aider at Hopscotch: the base URL flag, the three models it configures separately, and how its provider prefix collides with a pinned id."
 status: partial
 gates: ["2.3", "2.11"]
+type: integration
 ---
 
 import { FeatureStatus } from '/snippets/feature-status.mdx';
 
-[Aider](https://aider.chat) is a terminal pair-programming CLI. It runs in your
-repository, it configures more than one model, and its repository map needs no
-embeddings, which makes it one of the harnesses least likely to trip over the
-missing endpoint. Read [coding harnesses](/integrations/coding-harnesses) first.
+[Aider](https://aider.chat) is a terminal pair-programming CLI. It configures more than one model, and its repository map needs no embeddings, so it is one of the harnesses least likely to hit the missing endpoint. Read [coding harnesses](/integrations/coding-harnesses) first.
 
 <FeatureStatus
   missing="a proof run of Aider against the production hostname"
@@ -19,117 +17,59 @@ missing endpoint. Read [coding harnesses](/integrations/coding-harnesses) first.
 
 ## The configuration surface
 
-Aider takes the base URL either as a flag or from the environment:
+Aider takes the base URL as a flag or from the environment:
 
 ```bash
 export OPENAI_API_BASE=https://api.hopscotchlabs.ai/v1
 export OPENAI_API_KEY=ub_live_YOUR_KEY_HERE
 ```
 
-The flag form is `--openai-api-base`, and its own environment variable is
-`AIDER_OPENAI_API_BASE`. Note the variable name: Aider's documentation names
-`OPENAI_API_BASE`, and does not mention `OPENAI_BASE_URL`, which is the name the
-official OpenAI SDKs read. They are different strings and only the first is
-documented here, so set that one.
+The flag is `--openai-api-base`, and its own variable is `AIDER_OPENAI_API_BASE`. Aider's documentation names `OPENAI_API_BASE`, not `OPENAI_BASE_URL` (which the official SDKs read). Only the first is documented here, so set that one.
 
-**Include the version segment in the value.** Aider's own documentation gives no
-example value for a compatible endpoint, so this comes from the mechanism rather
-than from a quoted example: the endpoint path is appended to what you give it.
-The project carries a report of a version where the segment was dropped from the
-outgoing path and requests answered `404` as a result, so if every request comes
-back `404` with `endpoint_not_supported`, print the path Aider is calling before
-assuming
-the key or the model is wrong.
+**Include the version segment in the value.** Aider's documentation gives no example for a compatible endpoint, so this follows from the mechanism: the endpoint path is appended to what you give it. A reported version dropped the segment and answered `404`. If every request returns `404` with `endpoint_not_supported`, print the path Aider calls before blaming the key or the model.
 
 ## The three models
 
-This is the edit people miss on Aider specifically. It configures up to three
-models separately, and each one needs its own pinned id:
+This is the edit people miss. Aider configures up to three models separately, and each needs its own pinned id:
 
 | Setting | What it does |
 |---|---|
 | `--model` | The main model. |
-| `--editor-model` | Applies the edits in architect mode, where the main model proposes them. |
-| `--weak-model` | Commit messages and chat-history summarisation. |
+| `--editor-model` | Applies edits in architect mode, where the main model proposes them. |
+| `--weak-model` | Commit messages and chat-history summaries. |
 
-`--weak-model` and `--editor-model` fall back to defaults rather than to your
-main model in some configurations, and a default is a bare vendor name, which
-this API refuses with `model_id_not_pinned`. Set all three explicitly if you use
-architect mode or let Aider write your commit messages.
+In some configurations `--weak-model` and `--editor-model` fall back to defaults rather than your main model. A default is a bare vendor name, refused with `model_id_not_pinned`. Set all three if you use architect mode or let Aider write commit messages.
 
 ## The model id, and the prefix collision
 
-Aider's documented way of naming a model on a compatible endpoint is to prefix it
-with `openai/`. That prefix is a provider selector for the library underneath
-Aider rather than part of the model name, and it is consumed to choose the
-adapter, with the rest forwarded.
+Aider names a model on a compatible endpoint with an `openai/` prefix. That prefix selects the adapter in the library underneath Aider and is consumed, with the rest forwarded.
 
-Our ids already begin with the provider that serves them, and for models served
-by OpenAI that provider is also `openai`. So a pinned id and Aider's prefix
-convention produce a doubled first segment:
+Our ids begin with their provider, and for OpenAI-served models that provider is `openai`. So a pinned id and Aider's prefix produce a doubled first segment:
 
 ```bash
 aider --model openai/openai/gpt-4o-mini
 ```
 
-**We did not verify what reaches the wire in that case.** The library's own issue
-tracker shows doubled and ambiguous prefixes being handled inconsistently, so we
-will not tell you which of the two segments survives. What we can tell you is how
-to find out in one request: whatever you configure, a `400` with
-`model_id_not_pinned` means only one segment arrived, and a `404` with
-`model_not_found` means both did. The refusal names which, and neither costs
-anything.
-
-An id whose provider is not `openai` does not have this problem, because the
-prefix and the provider are then different strings.
+**We did not verify what reaches the wire in that case.** The library's issue tracker shows doubled prefixes handled inconsistently, so we will not say which segment survives. You can find out in one request. A `400` with `model_id_not_pinned` means one segment arrived. A `404` with `model_not_found` means both did. Neither costs anything. An id whose provider is not `openai` does not have this problem.
 
 ## The repository map does not use embeddings
 
-Aider builds its repository map with a parser and a graph ranking over your
-source files. It calls no embeddings endpoint, and the project has never shipped
-an embeddings-based index. So the feature that would break first on other
-harnesses is not a concern here, and Aider needs nothing configured for it.
+Aider builds its repository map from a parser and a graph ranking over your source. It calls no embeddings endpoint, and the project has never shipped an embeddings index. Aider needs nothing configured for it.
 
 ## Two things that spend credit quietly
 
-**Prompt caching is provider-specific, and the keepalive is extra requests.**
-Aider's `--cache-prompts` is off by default and its documentation names specific
-vendor families it works on, so whether it does anything for the model you pinned
-is a question about that model rather than about this API.
-`--cache-keepalive-pings` is the one to think about before enabling: it keeps a
-cache warm by sending periodic requests, and each of those is a request here,
-billed and recorded in [Activity](/manage/view-activity) like any other.
+**Prompt caching is provider-specific, and keepalive pings are requests.** `--cache-prompts` is off by default and names specific vendor families, so whether it helps depends on the pinned model. `--cache-keepalive-pings` sends periodic requests to keep a cache warm. Each one is billed and recorded in [Activity](/manage/usage-and-metering).
 
-**Aider does not enforce token limits.** Its documentation is explicit that it
-reports the provider's limit errors rather than pre-empting them, and that for a
-model it does not recognise it assumes an unknown context window and no cost,
-warning you once. Ours is a model it does not recognise, so expect that warning
-and expect Aider's own cost display to be empty or wrong. What a request cost is
-in your usage record.
-
-You can supply the missing figures with a model metadata file,
-`.aider.model.metadata.json`, or `--model-metadata-file`. Take the context window
-and maximum output from `GET /v1/models`, which publishes both per model.
+**Aider does not enforce token limits.** It reports the provider's limit errors rather than pre-empting them. For a model it does not recognise, it assumes an unknown context window and no cost, and warns once. Ours is unrecognised, so expect that warning and an empty or wrong cost display. Supply the missing figures with `.aider.model.metadata.json` or `--model-metadata-file`, taking the context window and maximum output from [`GET /v1/models`](/features/models), which publishes both.
 
 ## Keep the key out of the repository
 
-Aider reads `.aider.conf.yml` and `.env` from your home directory, your
-repository root and the current directory, in that order, with the later files
-overriding. Two of those three locations are inside the repository. Aider can add
-its own files to `.gitignore` for you, and the safe habit is the home-directory
-copy plus the environment variables above.
+Aider reads `.aider.conf.yml` and `.env` from your home directory, repository root and current directory, in that order, with later files overriding. Two of those three locations are inside the repository. Keep the key in the home-directory copy or the environment variables above.
 
 ## What we did not verify
 
 - That an Aider session against this API succeeds. Nothing was run.
-- What model string reaches the wire for a doubled provider prefix. Described
-  above with the way to find out.
-- Whether `--list-models` queries this API or matches against the library's own
-  local model database. Its wording suggests the local database, so do not
-  expect it to show our catalog; ask `GET /v1/models` for that.
-- Whether Aider honours `OPENAI_BASE_URL` as well as `OPENAI_API_BASE`. Only the
-  second is documented, so only the second is written above.
-- Whether the `openai` adapter path can be made to call anything other than chat
-  completions. We found no documentation either way, and this API serves only
-  chat completions among the inference endpoints, so a configuration that reached
-  another one would answer `404`.
+- What model string reaches the wire for a doubled provider prefix. The way to find out is above.
+- Whether `--list-models` queries this API or the library's local model database. Its wording suggests the local database, so ask `GET /v1/models` for our catalog.
+- Whether Aider honours `OPENAI_BASE_URL` as well as `OPENAI_API_BASE`. Only the second is documented, so only the second is written above.
+- Whether the `openai` adapter can call anything other than chat completions. We found no documentation either way. This API serves only chat completions among the inference endpoints, so a configuration that reached another would answer `404`.

@@ -26,6 +26,7 @@ include:
 
 exclude:
   - "node_modules/**"
+  - "templates/**"
 
 # Numeric shapes that are structural rather than claims. A version in a path, a
 # heading anchor, a year in a date, an HTTP status: none of these is a promise
@@ -219,8 +220,8 @@ claims:
     used_by:
       - manage/usage-and-metering
       - manage/data-and-privacy
-      - manage/monitor-usage
-      - manage/view-activity
+      - manage/usage-and-metering
+      - manage/usage-and-metering
     note: >-
       A configured value the product prints, not a promise anybody made
       (DOCS_PLAN.md section 14 item 12). Phrase it as the product does: a
@@ -236,7 +237,7 @@ claims:
     used_by:
       - manage/usage-and-metering
       - manage/data-and-privacy
-      - manage/view-activity
+      - manage/usage-and-metering
 
   - id: fee-basis-points
     value: "0"
@@ -295,7 +296,7 @@ claims:
     status: gated
     gate: epic-5
     used_by:
-      - manage/monitor-usage
+      - manage/usage-and-metering
       - manage/usage-and-metering
 
   - id: usage-range-7d
@@ -311,7 +312,7 @@ claims:
     status: gated
     gate: epic-5
     used_by:
-      - manage/monitor-usage
+      - manage/usage-and-metering
       - manage/usage-and-metering
 
   - id: activity-page-size-default
@@ -321,8 +322,8 @@ claims:
     status: gated
     gate: epic-5
     used_by:
-      - manage/monitor-usage
-      - manage/view-activity
+      - manage/usage-and-metering
+      - manage/usage-and-metering
 
   - id: activity-page-size-fifty
     value: "50"
@@ -331,8 +332,8 @@ claims:
     status: gated
     gate: epic-5
     used_by:
-      - manage/monitor-usage
-      - manage/view-activity
+      - manage/usage-and-metering
+      - manage/usage-and-metering
 
   - id: activity-page-size-hundred
     value: "100"
@@ -341,8 +342,8 @@ claims:
     status: gated
     gate: epic-5
     used_by:
-      - manage/monitor-usage
-      - manage/view-activity
+      - manage/usage-and-metering
+      - manage/usage-and-metering
     note: >-
       Registered for the record rather than because the checker asks for it: a
       bare 100 already matches the HTTP status allow pattern above, so this entry
@@ -355,7 +356,7 @@ claims:
     status: gated
     gate: epic-5
     used_by:
-      - manage/monitor-usage
+      - manage/usage-and-metering
       - manage/usage-and-metering
     note: >-
       A one year window over a retention floor well short of a year shows what
@@ -482,7 +483,7 @@ claims:
     status: blocked
     reason: "An internal figure from an unfinished measurement. Not a customer promise."
 
-  # Guardrails (features/guardrails.mdx, manage/set-up-guardrails.mdx), 2026-10-20.
+  # Guardrails (features/guardrails.mdx, features/guardrails.mdx), 2026-10-20.
   - id: guardrail-name-length
     value: "120"
     means: "The longest guardrail name, in characters."
@@ -491,7 +492,7 @@ claims:
     gate: "47.7"
     used_by:
       - features/guardrails
-      - manage/set-up-guardrails
+      - features/guardrails
 
   - id: guardrail-list-entries
     value: "100"

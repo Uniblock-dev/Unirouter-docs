@@ -1,77 +1,54 @@
 ---
 title: "Usage and metering"
-description: "What Hopscotch records for every request, what it never records, when the figures appear, and how long they are kept."
+description: "What each request records and what is never stored, how to read Usage and Activity, reconcile a statement line, and retention."
 status: partial
-gates: ["5.4", "5.11", "5.12", "18.62"]
+gates: ["5.4", "5.11", "5.12", "5.18", "18.62"]
+type: guide
 ---
 
 import RequestIdNote from '/snippets/request-id-note.mdx';
 
-Every request that reaches Hopscotch produces one usage record. That record is what
-the Usage and Activity screens read, what your totals are summed from, and what a
-charge on your statement is explained by.
-
-It holds metadata about the request. It never holds your prompt or the model's reply.
+Every request that reaches Hopscotch produces one usage record. The Usage and Activity screens read those records, your totals are summed from them, and each charge on your statement is explained by one. A record holds metadata about the request. It never holds your prompt or the model's reply.
 
 ## What one record holds
 
-These are the fields a usage record shows you, as the Activity list and the
-single request lookup return them:
-
 | Field | What it is |
 |---|---|
-| `requestId` | Our id for the request. This is the value to quote to us. |
+| `requestId` | Our id for the request. Quote this to us. |
 | `occurredAt` | When the request started, `ISO 8601`. |
-| `source` | Which door it came through: `api` or `playground`. |
-| `modelSlug` | The model that was called, as `provider/model`. |
-| `providerSlug` | Which provider answered, or null where none did. |
-| `outcome` | What became of the request. The values are a closed set, listed below. |
-| `servedOnOwnKey` | Whether this request ran on a provider key your workspace brought, rather than one of ours. |
-| `promptTokens` | Input tokens counted, or null where no count arrived. |
-| `completionTokens` | Output tokens counted, or null where no count arrived. |
-| `totalTokens` | The sum of the two, or null. |
-| `cacheReadTokens` | Input tokens served from the provider's cache, or null where the provider reported no cache accounting at all. |
-| `cacheWriteTokens` | Input tokens written into that cache, or null on the same terms. |
-| `reasoningTokens` | Reasoning tokens, which are part of `completionTokens` rather than additional to them, or null where none were reported. |
+| `source` | The door it came through: `api` or `playground`. |
+| `modelSlug` | The model called, as `provider/model`. |
+| `providerSlug` | The provider that answered, or null where none did. |
+| `outcome` | What became of the request. A closed set, listed below. |
+| `servedOnOwnKey` | Whether the request ran on a provider key your workspace brought. |
+| `promptTokens`, `completionTokens`, `totalTokens` | Input, output and their sum, or null where no count arrived. |
+| `cacheReadTokens`, `cacheWriteTokens` | Input tokens read from or written to the provider's cache, or null where the provider reported no cache accounting. |
+| `reasoningTokens` | Part of `completionTokens`, not additional to it, or null where none were reported. |
 | `streamed` | Whether the reply was streamed. |
-| `costMinor` | What this request charged, in integer minor units. Null means it was never priced. |
+| `costMinor` | What the request charged, in integer minor units. Null means it was never priced. |
 | `latencyMs` | The total time you waited, in milliseconds. |
 
-Two things about that list are worth stating plainly.
+**Null is never zero.** A count that never reached us renders as `unknown`, not `0`. A real charge beside two zeros would look like a billing bug, so an unmeasured count never renders as a measurement.
 
-**Null is never zero.** A token count that never reached us is null, and the screens
-render it as `unknown` rather than as `0`. A real charge sitting beside two zeros is
-the reading that files a billing bug, so a count that was never measured never
-renders as a measurement.
+**The list is a fence, not a sample.** Figures about our own performance and supply are not in it. Every customer-facing usage endpoint is checked against the same list.
 
-**The list is a fence, not a sample.** Figures about our own performance and our own
-supply are not in it and will not appear later by accident. Every customer facing
-usage endpoint is checked against the same list, so what you can see is decided in
-one place rather than by whichever endpoint you happen to call.
-
-**Your own key is on the record too.** A request served on a provider key your
-workspace brought is metered exactly like any other: it gets a usage record, and
-whether it ran that way is on that record. How many of your requests ran on your
-own key is counted apart from the ones we served on ours, never folded into them.
-See [Bring your own key](/features/bring-your-own-key) for what changes, and what
-does not, when a request runs on a credential you brought.
+**Your own key is metered too.** A request served on a provider key your workspace brought gets a usage record like any other, and the record says so. Those requests are counted apart from the ones we served. See [Bring your own key](/features/bring-your-own-key).
 
 ## The outcome vocabulary
 
-`outcome` answers "what became of this request". The set is closed, and it grows only
-when a feature ships that needs a new value. These are the values you may see today:
+`outcome` answers "what became of this request". The set is closed and grows only when a feature needs a new value.
 
 | Outcome | Meaning |
 |---|---|
-| `served` | The model answered and you were charged for it. |
+| `served` | The model answered and you were charged. |
 | `refused_zero_balance` | Refused at admission: not enough available credit. Charged nothing. |
 | `refused_rate_capped` | Refused by your spend rate cap. Charged nothing. |
-| `refused_paused_by_owner` | Refused because the workspace owner has paused requests. Charged nothing. |
-| `refused_model_not_live` | The model named could not be served. Charged nothing. |
+| `refused_paused_by_owner` | The owner has paused requests. Charged nothing. |
+| `refused_model_not_live` | The model could not be served. Charged nothing. |
 | `refused_not_permitted` | The caller was not allowed to make this request. Charged nothing. |
 | `refused_invalid_request` | The request could not be served as sent. Charged nothing. |
-| `refused_platform_unavailable` | We could not serve it and no provider was attempted. Charged nothing. |
-| `customer_disconnected` | You closed the connection before the provider had answered, so the request was cancelled. Charged nothing. |
+| `refused_platform_unavailable` | No provider was attempted. Charged nothing. |
+| `customer_disconnected` | You closed the connection before the provider answered. Charged nothing. |
 | `provider_failed` | A provider answered with a failure. |
 | `provider_rate_limited` | A provider refused us for rate. |
 | `terminated_zero_balance` | A stream was cut off when the credit ran out. |
@@ -82,88 +59,127 @@ when a feature ships that needs a new value. These are the values you may see to
 | `usage_not_reported_by_provider` | The provider served the request and reported no counts. |
 | `rebuilt_from_ledger` | The record was reconstructed from the transaction it caused on your statement. |
 
-The last five are the outcomes where a charge exists and final counts never did. On
-those rows the token figures read `unknown`, and the charge is what was settled
-against the hold rather than what was counted.
+The last five are outcomes where a charge exists and final counts never did. Their token figures read `unknown`, and the charge is what settled against the hold.
 
 ## What is never recorded
 
-We do not store your prompt and we do not store the model's reply. Not for API
-requests, not for playground runs, not for a request that failed. The single request
-lookup carries the sentence that says so, in these words:
+We do not store your prompt or the model's reply, for API requests, playground runs or failed requests. The single request view says so in these words:
 
-> No prompt and no response body was stored for this request; the figures here are
-> everything that exists (we never store prompts).
+> No prompt and no response body was stored for this request; the figures here are everything that exists (we never store prompts).
 
-That is the whole reason the playground has no history and no share link: there is
-nothing stored to show you. See
-[Data and privacy](/manage/data-and-privacy) for the full data stance.
+That is why the playground has no history and no share link. See [Data and privacy](/manage/data-and-privacy).
 
-## When figures appear
+## Usage
 
-Your usage figures are available within 60 seconds of a request completing. Most of
-that budget covers a request whose settlement had to retry; an ordinary request
-appears faster than that. Sixty seconds is the promise, not the typical case.
+Usage is the sign-in screen. It reads one window at a time (24 hours, 7 days, 30 days, 90 days or 1 year) and shows:
 
-Summaries carry the time of the newest request inside the window as well as the time
-we read them, because "when we looked" is never the question. The question is how
-current the figures are, and a total summed from a request that started nine minutes
-ago is stale in a way the read time cannot express.
+- **Totals**: requests, served and not served, token counts including reasoning and cache reads and writes, and the summed cost.
+- **The window immediately before it**, so a total reads as a change.
+- **A series**, by hour on the 24 hour window and by day on the longer ones. An empty bucket carries a zero.
+- **Breakdowns** by model, provider, key and member.
+- **Your balance**, read from the one component allowed to compute it.
 
-## Usage and billing agree
+**Pace.** Usage also shows the window's daily pace, the days of credit that leaves and the date the balance would run out. Changing the range changes the pace. Very low spend reads "under a cent a day", and a balance lasting beyond ten years says so instead of naming a distant date. The panel is hidden when there is nothing to project from: no spend, or a zero balance.
 
-Usage figures and your balance are the same charges, read two ways. Charges on your
-usage records and the `usage` transactions on your statement are matched against each
-other by request id, with no tolerance for a difference, and we are told when they
-disagree rather than waiting for you to find it.
+**Freshness.** The screen shows when the newest request in the window started and when the figures were read. Usage figures are available within 60 seconds of a request completing. Sixty seconds is the promise, not the typical case.
 
-One caveat is stated on the screens rather than hidden. A served request whose token
-counts never reached us is settled against its hold, and the row cannot yet say for
-how much. The totals name **how many** such requests fall in the window, so the cost
-totals read as incomplete rather than as complete-and-low. Your statement carries the
-real transactions meanwhile.
+**Windows longer than retention.** Usage records are kept for 90 days, so a 1 year window shows what is still kept, not a full year. Your statement goes back further, because transactions are never purged.
 
-The Usage and Activity screens, and the endpoints behind them, are shipped. The field
-set, the outcome vocabulary and the retention window above are what a customer reads
-today, not a preview of what is coming.
+## Activity: one row per request
 
-## What you can see of other people's requests
+Activity lists every request this workspace has made, newest first, one row per request, 25 to a page unless you choose 50 or 100. Your browser remembers that choice. Rows are ordered by time, then request id, so a row cannot cross a page boundary between two reads.
 
-Totals, the day and hour buckets, and the breakdowns by model and by provider are
-facts about the workspace, and every member of the workspace sees them whole.
+| Column | Shows |
+|---|---|
+| When | When the request started, in UTC. |
+| Door | `api` or `playground`. |
+| Model | The model asked for. |
+| Served by | The provider that answered, or **nothing**. |
+| Outcome | **served**, **provider error**, **refused**, **cancelled**, or **other** for a newer code. |
+| Tokens | The total, or **unknown**. |
+| Charge | The cost, or **unpriced** on an older row. |
+| Took | Milliseconds. |
+| Request id | The first eight characters, linking to the single request view. |
 
-Breakdowns **by key** and **by member** are scoped: an owner or admin sees every
-line, and everybody else sees only the keys they are accountable for or named on,
-plus their own row. What the workspace did is workspace knowledge. Who did it is not.
+Reading the column values:
 
-An API key is a bearer credential, so a per member figure is accountability rather
-than proof of presence: whoever holds a key spends as the member that key is
-accountable to.
+- **A `backup` mark beside the provider** means the answer came back through a backup route. The model you asked for is still the one that answered. An API caller sees the same fact in the `x-hopscotch-served-via` header, described under [Headers](/api-reference/headers).
+- **Cancelled** is a request you closed before the provider answered. It was charged nothing. The filter's provider error and refused choices leave it out. Refused and provider error rows draw in a distinct color. The exact code is on the single request view.
+- **`unknown` is not zero.** A count never reported reads `unknown`. Collapsing it into `0` would turn an outage into a page of free requests.
+- **`unpriced` is not free.** It appears only on rows recorded before 2026-09-10. Since then a served request is always charged, from the amount you accepted at admission where nothing better can be worked out. A refused request carries a real `0`, and it is an ordinary row, never hidden.
+
+### Filters
+
+The filters narrow the same list and compose. A filtered view is an address you can bookmark. A value the screen cannot read is dropped and named.
+
+| Filter | Options | Default |
+|---|---|---|
+| Model | Models this workspace has called. A renamed model still matches rows recorded under its old name. | Any model |
+| Outcome | Any outcome, served, provider error, or refused. | Any outcome |
+| From | A calendar date, inclusive, applied to when the request started, in UTC. | Empty |
+| To | A calendar date, exclusive, applied to when the request started, in UTC. | Empty |
+
+Shortcuts for the last day, week and month fill the date fields. There is no request id filter: click the truncated id in a row to reach one request.
+
+### Three ways to see no rows
+
+1. **Nothing has ever run here.** The screen invites a first request.
+2. **The filter matched nothing.** The screen offers to clear it.
+3. **The range reaches past what we keep.** The screen names the retention window.
+
+## How to
+
+### Look up one request
+
+Every response carries `x-hopscotch-request-id`, and every error envelope repeats it as `request_id`. Click the id in any row to open the single request view. It repeats the row in full, with the streamed flag and the prompt, completion and total tokens, and shows when the figures were read, separately from when the request ran.
+
+A request id from another workspace and one that never existed both find nothing, so the lookup cannot reveal whether an id exists elsewhere. A request past the 90 day window is answered by naming the window, and its transaction stays on your statement.
+
+### Reconcile a statement line with a request
+
+A `usage` line on your statement carries our request id as its cause. That is the join.
+
+<Steps>
+  <Step title="Take the request id from the statement line">
+    Every charge line names one.
+  </Step>
+  <Step title="Look it up in Activity">
+    The single request view shows the model, the outcome, the token counts and the cost for that exact request.
+  </Step>
+  <Step title="Compare the figures">
+    The charge on the usage record and the amount on the statement line match by request id, with no tolerance for a difference. If they disagree, that is a defect on our side. Quote the request id.
+  </Step>
+</Steps>
+
+Usage figures and your balance are the same charges read two ways, matched by request id with no tolerance for a difference. If they disagree we are told, rather than you having to find it.
+
+Two cases carry more than the amount:
+
+- **A charge with an explanation.** Some lines say the counts were not confirmed, the provider reported none, or the hold had expired when the charge settled.
+- **A served request with no cost figure.** When token counts never arrived, the request settles against its hold and the usage row cannot yet state the amount. The totals name how many such requests fall in the window, so they read as incomplete.
+
+## Who sees what
+
+Totals and the breakdowns by model and provider are workspace facts, and every member sees them whole. Breakdowns by key and by member are scoped: owners and admins see every line, and everybody else sees the keys they are accountable for or named on, plus their own row. A per-member figure is accountability, not proof of presence, because an API key is a bearer credential.
 
 ## How long records are kept
 
-> Usage records are kept for 90 days. The guaranteed minimum is 62 days, which is two
-> full billing months.
+> Usage records are kept for 90 days. The guaranteed minimum is 62 days, which is two full billing months.
 
-Ninety days is the window in force and it is a configured value, read by the purge
-job that enforces it and by the screens that print it, so what you read cannot drift
-from what is enforced. Sixty two days is the floor beneath it: support has to be able
-to quote a request from two full billing months back.
+Ninety days is the configured window in force, read by both the purge job and the screens. Sixty-two days is the floor beneath it, so support can quote a request from two full billing months back.
 
-When a record passes the window it is deleted. **The charge survives**: the
-transaction for that request is never purged, so a balance older than its usage records
-can still be explained line by line. A lookup for a request that has aged out names
-the retention window rather than answering as though the request never existed, and a
-date filter that reaches past the window says so rather than returning an empty list.
+When a record passes the window it is deleted. **The charge survives**, because its transaction is never purged, so a balance can still be explained line by line. A date filter that reaches past the window says so rather than returning an empty list.
+
+The Usage and Activity screens are shipped, and the fields, outcomes and window above are what customers read today.
 
 ## Next
 
 <CardGroup cols={2}>
-  <Card title="Monitor usage" href="/manage/monitor-usage">
-    Reading Usage and Activity, filtering, and looking up one request.
-  </Card>
   <Card title="Credits and billing" href="/manage/credits-and-billing">
     How charges reach your balance and your statement.
+  </Card>
+  <Card title="Data and privacy" href="/manage/data-and-privacy">
+    What is recorded about a request, what is not, and how long it is kept.
   </Card>
 </CardGroup>
 
