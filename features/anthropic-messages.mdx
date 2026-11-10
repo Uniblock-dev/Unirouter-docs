@@ -15,7 +15,9 @@ Anthropic's own event stream when you ask for one. It is the same key, the same
 catalog and the same balance as the OpenAI-shaped endpoints, filed under its own
 endpoint family in your usage.
 
-## Point the Anthropic SDK at it
+## How to
+
+### Point the Anthropic SDK at it
 
 Two settings change, as with the OpenAI SDKs: the base URL and the key. The
 Anthropic SDKs add `/v1/messages` themselves, so the base URL is the bare
@@ -75,7 +77,7 @@ written out. A bare Anthropic id is refused with the code
 messages family is callable here; ask [`GET /v1/models`](/features/models) for
 the exact strings.
 
-## Either credential header
+### Either credential header
 
 Anthropic's own SDKs send the key as `x-api-key`. The OpenAI SDKs and most
 other clients send `Authorization: Bearer`. On this one path both are read, so

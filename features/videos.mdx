@@ -18,7 +18,9 @@ is not served and keeps its 404, and neither is remix.
 
 <BaseUrl />
 
-## Create a video
+## How to
+
+### Create a video
 
 `POST /v1/videos` starts one job and answers the provider's job object for it,
 with external URLs omitted. The body may be JSON or multipart form data. Send
@@ -115,7 +117,7 @@ A refusal the provider made about the request is relayed with the provider's
 own status and its own sentence, so a parameter it requires and did not get
 reads as what it is rather than as a fault on this platform.
 
-## Durations, sizes and sound per model
+### Durations, sizes and sound per model
 
 Match the model half of your pinned id against the first column.
 `GET /v1/models` lists the exact strings this key can call, and that list is
@@ -143,7 +145,7 @@ serving code states no rule; the provider's own refusal arrives relayed.
 Where a model requires a duration, omitting `seconds` does not fall back to
 4: the create is refused 400 and nothing is held.
 
-## First frame and last frame
+### First frame and last frame
 
 There is no last-frame field: the request carries five fields and none names
 a last frame, so no served model takes one. The first frame is
@@ -151,7 +153,7 @@ a last frame, so no served model takes one. The first frame is
 first frame of the render. Whether a model requires, permits or refuses the
 image is in the table above.
 
-## The life of a job
+### The life of a job
 
 A create takes a hold of `seconds` (4 when absent) times the model's
 per-second rate for the requested `size`, before anything is sent to the

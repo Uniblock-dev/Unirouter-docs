@@ -7,50 +7,36 @@ type: guide
 ---
 
 A guardrail is a named set of rules that belongs to your workspace and applies to whichever API
-keys you attach it to. It is the way to say "this key may spend this much, may only reach these
-providers, and must never send a prompt that looks like this" once, and have every request on that
-key judged against it before anything is sent to a provider.
-
-Guardrails live on the **Guardrails** screen in the dashboard, between Keys and BYOK in the sidebar.
+keys you attach it to. Every request on those keys is judged against it before anything is sent to
+a provider. Guardrails live on the **Guardrails** screen in the dashboard, between Keys and BYOK.
 
 ## Where the policy belongs
 
-Three settings can refuse or shape a request, and they sit at different levels.
+Three settings can refuse or shape a request, at three levels.
 
 | Layer | Where it is set | What it governs |
 |---|---|---|
-| Workspace | Workspace settings | Limits and the zero-data-retention default for every key in the workspace. See [Spend controls](/manage/spend-controls) and [Zero data retention](/manage/zero-data-retention). |
-| Guardrail | Guardrails screen | A named rule set, attached to one or more keys. While attached, it replaces that key's own credit limit and zero-data-retention value. |
+| Workspace | Workspace settings | Limits and the zero-data-retention default for every key. See [Spend controls](/manage/spend-controls) and [Zero data retention](/manage/zero-data-retention). |
+| Guardrail | Guardrails screen | A named rule set attached to one or more keys. While attached, it replaces that key's own credit limit and zero-data-retention value. |
 | Key | Keys screen | A key's own expiry and credit limit, used only when no guardrail governs the key. |
 
-Use a guardrail when several keys should share one rule set, such as every production key. Use a
-key's own limit for a single key that has no shared policy. A guardrail does not change the
-workspace setting for keys it does not govern.
+A key is governed by at most one guardrail at a time, and one guardrail can govern as many keys as
+you like. Attaching a second guardrail to a key is refused rather than stacked. A guardrail does not
+change the workspace setting for keys it does not govern.
 
-## One guardrail per key
+## A guardrail replaces the key's own limits
 
-A key is governed by at most one guardrail at a time. One guardrail can govern as many keys as you
-like, so a rule set you want on every production key is written once and attached to each of them.
-Attaching a guardrail to a key that already has one is refused rather than stacked. Detach it from
-the first guardrail, then attach it to the second.
-
-## A guardrail replaces the key's own limits while attached
-
-A key can carry its own credit limit and its own zero-data-retention setting. While a guardrail
-governs the key, the guardrail's spend cap and ZDR value are the ones in force, and the key's own
-figures are kept but inert. Read that as replacement rather than as a floor or a ceiling. A guardrail
-with no spend cap governs a key with no spend cap, whatever the key said on its own. The Keys screen
-refuses to change a governed key's own limits and says so:
+While a guardrail governs a key, its spend cap and zero-data-retention value are the ones in force, and
+the key's own figures are kept but inert. This is replacement, not a floor or a ceiling: a guardrail with
+no spend cap governs a key with no spend cap. The Keys screen refuses to change a governed key's limits:
 
 > This key is governed by guardrail NAME, so its own limits cannot be changed.
 > Detach it from the guardrail first.
 
-That refusal is the signal that the guardrail, not the key, is now setting the limits.
-
 ## The rules
 
-A guardrail carries a name and any combination of the rules below. Every rule is optional, and a
-guardrail with no rules at all is legal: it governs its keys and caps nothing.
+A guardrail carries a name and any combination of these rules. Every rule is optional, and a guardrail
+with no rules is legal: it governs its keys and caps nothing.
 
 | Rule | What it does |
 |---|---|
@@ -62,55 +48,47 @@ guardrail with no rules at all is legal: it governs its keys and caps nothing.
 | Region | The key may only be served from providers recorded in these regions: `us`, `eu`, `uk`, `apac` or `global`. |
 | Token limit | An input ceiling and an output ceiling per request, as a preset tier or an explicit figure. |
 | Injection patterns | Regular expressions that, if the prompt matches, stop the request. |
-| Sensitive data | Detectors for an email address, an IP address, or a name such as `password` or `api_key` written beside its value, that stop the request if the prompt matches. |
+| Sensitive data | Detectors for an email address, an IP address, or a name such as `password` or `api_key` written beside its value. A match stops the request. |
 
-The vocabulary is closed. A rule name the product does not know is refused when you save, and the
-refusal lists the nine it does know.
+The vocabulary is closed. A rule name the product does not know is refused when you save, and the refusal
+lists the nine it does know.
 
 **What the screen can write today.** The Guardrails screen edits the name, the spend cap, the
-zero-data-retention choice and the sensitive-data detectors. The other rules appear on the form
-under a "Coming soon" heading and cannot be set from the dashboard yet. Every rule is enforced at
-request time once it is on a guardrail, so this page documents all nine.
+zero-data-retention choice and the sensitive-data detectors. The other rules sit under "Coming soon" on
+the form and cannot be set from the dashboard yet. Every rule is enforced at request time once it is on a
+guardrail.
 
 ### How each rule works
 
-**Spend cap.** The cap is a dollar figure written as text with at most two decimal places, and a
-period of `daily`, `weekly` or `monthly`. A cap with no period is refused rather than read as
-unlimited; no cap at all is written as null. It counts credit spent from your balance, so a request
-served on your own provider key never counts against it. See
-[Bring your own key](/features/bring-your-own-key). On the screen, enter an amount above zero in
-dollars, such as 100.00, with a whole number of cents. Turn **Spend cap** off for no cap.
+**Spend cap.** A dollar figure with at most two decimal places, and a period of `daily`, `weekly` or
+`monthly`. A cap with no period is refused rather than read as unlimited. The cap counts credit spent from
+your balance, so a request served on your own provider key never counts against it. See
+[Bring your own key](/features/bring-your-own-key).
 
-**Zero data retention and no training.** Both rules are about which provider may serve the key. ZDR on
-requires a provider whose published retention is zero and whose training is disabled; no training
-requires only the second half. A model the key names that no eligible provider serves is refused, and
-the request is not sent anywhere. See [Zero data retention](/manage/zero-data-retention) for how the
-workspace-wide requirement works and what we do and do not verify.
+**Zero data retention and no training.** ZDR on requires a provider whose published retention is zero and
+whose training is disabled; no training requires only the second half. A model the key names that no
+eligible provider serves is refused, and the request is not sent anywhere.
 
-**Allow lists and regions.** A provider allow list, a model allow list and a region list each hold up
-to 100 entries, each entry up to 200 characters. A region list holds at most the five region words
-above. A request for a model that is not on the model list, served by a provider not on the provider
-list, or served only from a region not on the region list, is refused before it is sent.
+**Allow lists and regions.** A provider list, a model list and a region list each hold up to 100 entries,
+each up to 200 characters. A region list holds at most the five region words above. A request outside a
+list is refused before it is sent.
 
-**Token limits.** The tiers are `low` (`8,000` tokens in, `1,000` out), `medium` (`32,000` in, `4,000`
-out) and `high` (`128,000` in, `16,000` out). An explicit ceiling is a whole number of tokens up to
-`2,000,000`. The input ceiling refuses a request whose prompt is estimated above it. The output ceiling
-never refuses: the `max_tokens` we forward is lowered to the ceiling, or to the model's own maximum if
-that is smaller, and a body that named no ceiling at all is given one. So a key under an output ceiling
-gets shorter replies rather than refusals.
+**Token limits.** The tiers are `low` (`8,000` tokens in, `1,000` out), `medium` (`32,000` in, `4,000` out)
+and `high` (`128,000` in, `16,000` out). An explicit ceiling is a whole number of tokens up to `2,000,000`.
+The input ceiling refuses a request whose estimated prompt is above it. The output ceiling never refuses:
+the `max_tokens` we forward is lowered to it, or to the model's own maximum if smaller, so a key under an
+output ceiling gets shorter replies rather than refusals.
 
 **Injection patterns and sensitive data.** An injection rule is up to 32 regular expressions, each up to
-512 characters, in a linear-time engine. A pattern that would match the empty string is refused at save
-time because it would refuse every request. A sensitive-data rule names up to three detectors from the
-closed set `email`, `ip_address` and `password_pair`. Both rules scan the prompt and stop the request
-before any provider sees it. The refusal names the guardrail and says which detector matched. It never
-echoes the matched text or the pattern, so the refusal cannot be used to read the guardrail back.
+512 characters, run in a linear-time engine. A pattern that matches the empty string is refused at save time.
+A sensitive-data rule names up to three detectors from the closed set `email`, `ip_address` and
+`password_pair`. Both rules stop the request before any provider sees it. The refusal names the guardrail and
+the detector, and never echoes the matched text or the pattern.
 
 ## What a refused request sees
 
-Every guardrail refusal is an error in the OpenAI envelope, with a code you can branch on, and nothing is
-charged or held for a request a guardrail stops. The message always names the guardrail, so a developer
-holding a key can tell the workspace which rule to change.
+Every guardrail refusal is an error in the OpenAI envelope, with a code you can branch on. Nothing is charged
+or held for a request a guardrail stops, and the message always names the guardrail.
 
 | Rule | Status | `type` | `code` |
 |---|---|---|---|
@@ -122,137 +100,98 @@ holding a key can tell the workspace which rule to change.
 | Injection pattern | 403 | `permission_error` | `injection_pattern_matched` |
 | Sensitive data | 403 | `permission_error` | `sensitive_data_matched` |
 
-The spend cap reuses the code a key's own credit limit uses, because to the caller it is the same
-event: this key may not spend more right now. The message tells the two apart by naming the guardrail.
-A cap message reads, for example, "This key may spend a dollar amount in its current window ... This cap is set
-by guardrail \"prod-agents\", not on the key itself: the workspace can change or detach it on the
-Guardrails screen." An injection message reads "This request's prompt matched an injection pattern set
-by the guardrail \"prod-agents\", so it was not sent to a provider."
+The spend cap reuses the code a key's own credit limit uses, because to the caller it is the same event. The
+message names the guardrail to tell them apart: "This cap is set by guardrail \"prod-agents\", not on the key
+itself."
 
-The rules are checked in a fixed order: which providers may serve the key first, then the injection
-patterns, then the sensitive-data detectors, then the token ceiling and the spend cap. A request that
-breaks two rules is refused for the first one in that order, and a request refused for an earlier rule
-will not show the later one until the earlier one is fixed.
+Rules are checked in a fixed order: which providers may serve the key, then injection patterns, then
+sensitive-data detectors, then the token ceiling and the spend cap. A request that breaks two rules is refused
+for the first in that order.
 
-One more code exists, and it is ours rather than yours. If a token limit, an injection rule or a
-sensitive-data rule cannot be read when a request arrives, the request is refused with HTTP 503 and a
-code ending in `_unreadable`, rather than served as if the rule were absent. The message says so and that
-nothing was sent. Re-saving the guardrail republishes it.
+If a token limit, an injection rule or a sensitive-data rule cannot be read when a request arrives, the request
+is refused with HTTP 503 and a code ending in `_unreadable`, not served as if the rule were absent. Nothing is
+sent. Re-saving the guardrail republishes it.
 
 ## Who can manage guardrails
 
-Every member can see the workspace's guardrails and which of the keys they can see each one governs.
-Creating, editing, deleting, attaching and detaching take owner or admin. A developer or viewer who tries
-gets the product's usual refusal: your role in this workspace does not allow that. See
-[Workspaces and members](/manage/workspaces-and-members) for the role table. With no guardrails yet, the
-screen reads: "Owners and admins set guardrails. Your keys run without caps until they do."
-
-Guardrails can also be managed through the management API. The same create, replace, delete, attach and
-detach operations exist as endpoints for a workspace admin key, and they are not published yet because
-the admin key that calls them is not available to customers. When it is, the endpoints join the API
-reference. See [Management API](/manage/management-api) for what is coming and when.
+Every member can see the guardrails and the keys each governs. Creating, editing, deleting,
+attaching and detaching take owner or admin. See [Workspaces and members](/manage/workspaces-and-members).
+The management API has the same operations, not yet published because its admin key is not available to customers. See [Management API](/manage/management-api).
 
 ## How to
 
 ### 1. Set up a guardrail
 
-You need to be the owner or an admin. Have the key you want to govern created first. See
+You need to be the owner or an admin, and the key you want to govern must already exist. See
 [Authentication](/get-started/authentication).
 
 <Steps>
   <Step title="Open Guardrails">
-    Open **Guardrails** in the sidebar, between Keys and BYOK. With nothing created yet the screen reads
-    "Nothing's fenced in yet" and points you at the create control, top right.
+    Open **Guardrails** in the sidebar. With none yet, the screen reads "Nothing's fenced in yet" and points
+    you at the create control, top right.
   </Step>
   <Step title="Name it">
-    The name is how you will pick the guardrail out of a list and how a refusal names it to a developer,
-    so make it say what it is for. Names are unique within a workspace, ignoring case, and are at most 120
-    characters.
+    Names are unique within a workspace, ignoring case, and at most 120 characters. Make it say what the guardrail is for.
   </Step>
   <Step title="Set a spend cap, or leave it off">
-    Turn **Spend cap** on and enter an **Amount** in dollars, such as 100.00, and a **Period** of Daily,
-    Weekly or Monthly. The amount is a whole number of cents above zero. With the cap off, the guardrail
-    caps nothing, whatever the key's own limit said.
+    Turn **Spend cap** on, enter an **Amount** in dollars such as 100.00, and choose a **Period**: Daily, Weekly
+    or Monthly. The amount is a whole number of cents above zero. With the cap off, the guardrail caps nothing.
   </Step>
   <Step title="Choose the zero-data-retention setting">
-    Under **Privacy**, pick **Workspace default**, **On** or **Off**. On routes the governed keys only to
+    Under **Privacy**, pick **Workspace default**, **On** or **Off**. On routes governed keys only to
     providers recorded as zero-data-retention. Off replaces the workspace setting with off for these keys.
-    Workspace default inherits whatever the workspace has set.
   </Step>
   <Step title="Turn on sensitive-data detectors">
-    Under **Sensitive-data detection**, switch on any of **Email addresses**, **IP addresses**, or
-    **Passwords, secrets and API keys**. The last one matches a name such as `password` or `api_key`
-    written beside its value. A bare key with no name beside it is not matched. A request whose prompt carries one of them is refused before it is
-    sent. The screen says how much each rule adds to a request once it has measured it.
+    Under **Sensitive-data detection**, switch on **Email addresses**, **IP addresses**, or **Passwords, secrets
+    and API keys**. The last matches a name such as `password` written beside its value; a bare key is not matched.
   </Step>
   <Step title="Create">
-    Press **Create guardrail**. The guardrail appears as a card with its spend cap and ZDR choice on its
-    first lines and nothing attached yet.
+    Press **Create guardrail**. The card appears with nothing attached yet.
   </Step>
 </Steps>
 
-The form also lists Provider selection, Model selection, No training, Regions, Token limits and Injection
-checks under a "Coming soon" heading. Those rules are enforced when a guardrail carries them, and the
-screen cannot write them yet.
+The form lists Provider selection, Model selection, No training, Regions, Token limits and Injection checks
+under "Coming soon". Those rules are enforced when a guardrail carries them, and the screen cannot write them yet.
 
 ### 2. Attach it to a key
 
-There are two ways in, and they do the same thing.
+Attach from either side; both do the same thing.
 
-- **From the guardrail.** On the guardrail's card, open **Keys this guardrail governs** and tick the keys.
-  A tick that will not save says so: "The save did not finish, so the ticks above show where it stands."
-- **From the key.** On the **Keys** screen, each key you can see has a Guardrail cell reading "None" or the
-  guardrail's name. Open **Attach to...** and choose the guardrail. The cell is only offered to owners and
-  admins.
+- **From the guardrail.** On the card, open **Keys this guardrail governs** and tick the keys. A tick that will not save reads: "The save did not finish, so the ticks above show where it stands."
+- **From the key.** On the **Keys** screen, open the key's Guardrail cell, then **Attach to...** and choose the
+  guardrail. Only owners and admins are offered the cell.
 
-Attaching a second guardrail to a key is refused: `This key is already governed by guardrail NAME. Detach
-it from that one before attaching it here.` Once attached, the key's own **Edit limits** control refuses to
-change its credit limit, naming the guardrail, until you detach it.
+Once attached, the key's **Edit limits** control refuses to change its credit limit, naming the guardrail, until
+you detach it. A second attachment is refused: `This key is already governed by guardrail NAME. Detach it from
+that one before attaching it here.`
 
 ### 3. Edit or delete a guardrail
 
-**Edit** on the card opens the same form. Saving replaces the whole guardrail, name included, and every
-attached key picks the change up before the save is reported done.
+**Edit** opens the same form. Saving replaces the whole guardrail, name included, and every attached key picks
+up the change before the save is reported done.
 
-**Delete** sits behind a confirm. A guardrail that still governs keys cannot be deleted. The refusal counts
-and names the keys: `This guardrail still governs 2 keys: prod-api, prod-worker. Detach them before deleting
-it.` Detach each key first, from either side, then delete.
-
-The screen refuses these entries: a save with no name; a name already used in the workspace (`This workspace
-already holds a guardrail named "NAME". Names are unique per workspace, ignoring case.`); a spend cap of zero
-or with more than two decimals (enter an amount above zero, like 100.00, or turn Spend cap off).
+**Delete** is behind a confirm, and a guardrail that still governs keys cannot be deleted. The refusal names them:
+`This guardrail still governs 2 keys: prod-api, prod-worker. Detach them before deleting it.` The screen also
+refuses a save with no name, a name already used in the workspace (`This workspace already holds a guardrail named "NAME". Names are unique per workspace, ignoring case.`),
+and a spend cap of zero or with more than two decimals.
 
 ### 4. Find the block in Activity
 
-Refused requests are ordinary rows on the Activity screen, not hidden and not grouped. To find the blocks on
-a key, open **Activity**, filter by the key's model or date as needed, and set the outcome filter to
-**refused**. The rows show the refusal beside the key and the model, and the charge reads zero. Open one row
-to see the single request view, which keeps the exact code and the guardrail name. The error the caller
-received carries the same request id. See [View activity](/manage/usage-and-metering#look-up-one-request).
-
-When two rules would both refuse a request, the first in the fixed order wins. A refused request can also be
-a platform problem rather than a policy problem: a `_unreadable` 503 means the rule could not be read, and
-re-saving the guardrail clears it.
+Refused requests are ordinary rows in **Activity**. Open it, filter by key, model or date, and set
+the outcome filter to **refused**. The charge reads zero. Open a row to see the exact code and the guardrail name.
+The caller's error carries the same request id. See [View activity](/manage/usage-and-metering#look-up-one-request).
 
 ### 5. Fix a policy after a false positive
 
-A false positive is a request the guardrail refused that should have been served. Work out which rule refused
-it before changing anything: the code in Activity, or the error the caller received, names the rule, and the
-message names the guardrail. Then pick the smallest change that lets the request through.
+A false positive is a request the guardrail refused that should have been served. First find the rule: its code names it in Activity or in the caller's error. Then make the smallest change:
 
-- **Spend cap.** Raise the amount or change the period on the guardrail's card, or turn the cap off. Saving
-  replaces the whole guardrail, and every attached key picks up the change before the save is reported as done.
-- **Zero data retention.** Set the guardrail's privacy choice to workspace default or off, if the key should not
-  require retention-only providers.
-- **Sensitive-data detectors.** Switch off the detector that matched, on the guardrail's edit form.
-- **Injection patterns and allow lists.** These cannot be edited on the screen yet. Until they can, detaching the
-  key from the guardrail lifts all of its rules from that key, and the key then runs on its own limits. Detach
-  it from the guardrail's card or from the key's row on the Keys screen, and re-attach once the rule is changed
-  in a supported place.
+- **Spend cap.** Raise the amount or change the period, or turn the cap off.
+- **Zero data retention.** Set the privacy choice to workspace default or off.
+- **Sensitive-data detectors.** Switch off the detector that matched.
+- **Injection patterns and allow lists.** These cannot be edited on the screen yet. Detach the key to lift all of its
+  rules; it then runs on its own limits. Re-attach once the rule is changed in a supported place.
 
-Check the fix by sending the same request again and watching Activity. A fixed request shows as served. If it is
-still refused, the code will tell you which rule is still in the way. Do not switch a rule off to hide a real
-problem. Each refusal is recorded in Activity, so a rule that was loosened to stop noise leaves a trail there.
+Send the same request again and watch Activity. If it is still refused, the code names the rule still in the way. 
 
 ## Next
 
