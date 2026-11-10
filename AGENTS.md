@@ -16,6 +16,12 @@ The story's `status` in the ticket tree `_bmad-output/initiative-gateway-llm/tic
 
 `DOCS_PLAN.md` section 13 is the register and the banned-content linter enforces it. The short version: no fork provenance, no provider topology or procurement, no provider credentials in any form, no unit economics, no staff surfaces or `/admin` routes, no signals or billing-mail ingestion, no internal architecture nouns, no unproven security claims, no unsettled strings, and no number that is not in the claims registry.
 
+## Page tone and budgets
+
+- **Gating lives in frontmatter, not in prose.** A page that is true but not yet released carries `gates:` and the release checklist holds it. Do not write "not available yet" banners or `<FeatureStatus>` tags on Get started pages or `index.mdx`.
+- **Explain a topic once, on its canonical page.** Every other page links to it. Repeating an explanation is a defect, not emphasis.
+- **Word budgets are soft.** `get-started/quickstart` stays under 500 words. Every other page stays under 1,200. `npm run check:budget` prints a `WARN` line for each page over budget and for each gated tag in the Get started pages. It warns and never fails the build, so a warning is a prompt to cut, not a blocker.
+
 ## Rules that break a pass
 
 - **Handlers win every disagreement with an OpenAPI spec.** The spec is generated from handler code.
