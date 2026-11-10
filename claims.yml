@@ -26,6 +26,7 @@ include:
 
 exclude:
   - "node_modules/**"
+  - "templates/**"
 
 # Numeric shapes that are structural rather than claims. A version in a path, a
 # heading anchor, a year in a date, an HTTP status: none of these is a promise

@@ -55,7 +55,7 @@ const navPages = collectNavPages(docs.navigation);
 const onDisk = [];
 for await (const entry of glob('**/*.mdx', { cwd: REPO_ROOT })) {
   const rel = entry.split('\\').join('/');
-  if (rel.startsWith('node_modules/') || rel.startsWith('snippets/')) continue;
+  if (rel.startsWith('node_modules/') || rel.startsWith('snippets/') || rel.startsWith('templates/')) continue;
   onDisk.push(rel);
 }
 onDisk.sort();
