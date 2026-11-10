@@ -121,7 +121,7 @@ So a Hermes request arrives here naming no `max_tokens`, and a request that
 names none holds the model's whole published maximum against your account spend
 rate cap. There is no setting on the harness side to improve that. What is left
 is the account side: [rate limits and spend
-controls](/manage/rate-limits-and-spend-controls) covers the cap, its default,
+controls](/manage/spend-controls) covers the cap, its default,
 and which limits are yours to raise. `context_length` on the provider entry is
 not this lever. It sizes the whole conversation window and decides when Hermes
 compresses history, which changes how much you send rather than how much is
@@ -131,7 +131,7 @@ held.
 
 Every coding harness turns one instruction into several billed requests. Hermes
 has two multipliers on top of the ordinary tool-calling loop, and both are worth
-knowing before you read [Activity](/manage/view-activity).
+knowing before you read [Activity](/manage/usage-and-metering).
 
 **Delegation.** Hermes can dispatch subagents to run workstreams in parallel.
 Each subagent is its own conversation against the same key, so a delegated fan

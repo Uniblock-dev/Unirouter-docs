@@ -1,28 +1,26 @@
 ---
 title: "Migrate from OpenAI"
-description: "A checklist for moving an application that already calls OpenAI: what changes, what does not, and the one change that is not optional."
+description: "What OpenAI-compatible means here, the endpoints that exist, what changes when you move an app, and a checklist to cut over."
 status: partial
-gates: ["2.3", "2.10", "2.11", "13.9"]
+gates: ["2.3", "2.10", "2.11", "2.31", "13.9"]
 ---
 
 import BaseUrl from '/snippets/base-url.mdx';
-import FeatureStatus from '/snippets/feature-status.mdx';
 
-<FeatureStatus
-  feature="the official-SDK compatibility proof"
-  detail="This page changes two settings on an official OpenAI SDK and nothing else. We have not yet published a proof run of an unmodified SDK against the production hostname, so read this as instructions rather than as a certification."
-/>
+If your application already calls OpenAI, almost all of it survives the move. "OpenAI-compatible"
+here means three specific things:
 
-If your application already calls OpenAI, almost all of it survives the move.
-This page is the short list of what does not, so you find the edges by reading
-rather than by deploying.
+1. The request and response bodies are OpenAI's, and travel unchanged but for two rewrites named below.
+2. Errors arrive in the OpenAI error envelope, so your existing error handling parses them.
+3. What we add is additive: extra response headers and one SSE comment line, both of which a compliant
+   client ignores.
 
 ## The two settings
 
 <BaseUrl />
 
-Your client keeps its own name for these. Change the base URL and change the key,
-and leave the rest of your client configuration where it is.
+Your client keeps its own name for these. Change the base URL and change the key, and leave the rest of
+your client configuration where it is.
 
 <CodeGroup>
 
@@ -46,90 +44,171 @@ const client = new OpenAI({
 
 </CodeGroup>
 
-## The one change that is not optional
+## The endpoints that exist today
 
-**Every model id gains a provider in front of it.** `gpt-4o-mini` becomes
-`openai/gpt-4o-mini`. This is the change that breaks an otherwise untouched
-application, and it breaks loudly rather than quietly: a bare id is refused with
-`400` and the code `model_id_not_pinned`, naming the forms it will accept.
+| Endpoint | Method | Status |
+|---|---|---|
+| `/v1/chat/completions` | `POST` | Serves. Streaming and non-streaming. |
+| `/v1/responses` | `POST` | Serves. Streaming and non-streaming. See [Responses API](/features/responses-api). |
+| `/v1/completions` | `POST` | Serves. Streaming and non-streaming. See [Completions and embeddings](/features/completions-and-embeddings). |
+| `/v1/embeddings` | `POST` | Not served yet, no date. A call is refused with a 404 `not_found_error`. See [Completions and embeddings](/features/completions-and-embeddings#embeddings). |
+| `/v1/messages` | `POST` | Serves the Anthropic Messages format. See [Anthropic Messages API](/features/anthropic-messages). |
+| `/v1/models` | `GET` | Serves. |
+| `/v1/models/{id}` | `GET` | Serves. |
+| `/v1/usage/{id}` | `GET` | Serves. See [Usage lookup](/features/usage-lookup). |
 
-That refusal is deliberate. A bare id would have to be resolved to some provider
-we happen to carry it under, and picking one for you is a decision about price
-and about who sees your prompt that we are not willing to make on your behalf.
+Two families are served in production and documented elsewhere: the image, audio and video endpoints, and
+`POST /v1/systemone`, which serves a partner's typed-judgment API and is not documented here yet. The image,
+audio and video endpoints are described on [Images, audio and video](/features/images-audio-and-video). The
+realtime endpoint, `GET /v1/realtime`, is not open in any environment yet and answers the 404 below.
 
-Find the ids you can call with `GET /v1/models`, or on the Models screen in the
-dashboard. Do not assemble them by hand from a provider's own naming. See
-[Models](/features/models).
+{/* CONFLICT, unresolved: the Migrate source said the operations this site documents are chat
+completions and the model catalog reads, and that anything else is undocumented. The
+Compatibility source documents the table above. The table is kept here; the narrower list is not.
+Reported to the owner. */}
+
+### What a call to a path we do not serve returns
+
+A path under `/v1` that this release does not serve is refused at one boundary, so it fails the same way
+every time. It is a 404 in the OpenAI envelope, with type `invalid_request_error` and code
+`endpoint_not_supported`. A method we do not serve on a path we do is a `405` with the code
+`method_not_allowed` and an `Allow` header naming the methods that are served. A `GET` on
+`/v1/chat/completions` is the everyday example.
+
+## Model ids
+
+Models are named `provider/model`, for example `openai/gpt-4o-mini`. The id is split once on the first
+slash: the part before it names the provider that will serve the request, and everything after it is our name
+for that model on that provider. The provider is still sent its own spelling, by us and not by you. The same
+model carried by two providers is two ids, and you choose which one you send.
+
+Every model id gains a provider in front of it. This is the one change that is not optional, and it breaks
+loudly rather than quietly. A bare OpenAI-style name such as `gpt-4o-mini` is not a Hopscotch model id. It is
+refused with `400` and the code `model_id_not_pinned`, naming both accepted forms. That refusal is deliberate:
+a bare id would have to be resolved to some provider we happen to carry it under, and picking one for you is a
+decision about price and about who sees your prompt that we are not willing to make on your behalf.
+
+Find the ids you can call with `GET /v1/models`, or on the Models screen in the dashboard. Do not assemble them
+by hand from a provider's own naming. See [Models](/features/models).
 
 ```bash
 curl https://api.hopscotchlabs.ai/v1/models \
   -H "Authorization: Bearer ub_live_YOUR_KEY_HERE"
 ```
 
-## What carries over untouched
+## Request bodies and parameters
 
-| What | Why it survives |
+The chat completion body is forwarded as you sent it. There is no request schema of ours in front of it and no
+allowlist of parameters, so a parameter your client already sends works without waiting for us to add it. A body
+the provider rejects comes back as the provider's own OpenAI-shaped error. `max_tokens`, `temperature`, `tools`,
+`response_format`, and the rest travel in the body.
+
+Two fields are read on the way through, both to work out what the request could cost before it is sent: `model`,
+and `max_tokens` or `max_completion_tokens`. Reading one does not change it.
+
+Two rewrites exist, and they are the whole list. A request naming a routing profile or `unirouter/auto` has its
+`model` replaced with the model being tried on that attempt, because that is what a route means. And a request
+that names no output ceiling, sent to a provider whose own API refuses a request without one, has `max_tokens`
+filled in with the model's published maximum output, which is the figure credit was already being held against.
+Every other provider is sent your body without the field. [Request parameters](/api-reference/parameters) covers
+both in full.
+
+Nothing Hopscotch-specific belongs in a request. There is no parameter of ours to send, and no header can change how
+a request is served.
+
+**`max_tokens` is worth sending even though it is optional.** It is what sizes the amount we hold against your
+balance before the call, so a request without it is held at the model's published maximum output and reaches your
+account spend rate cap sooner. See [Spend controls](/manage/spend-controls).
+
+## Request headers
+
+Send `Authorization` and `Content-Type`. Nothing else you send is forwarded: the request we make on your behalf is
+built from your request body and our own provider credential, with a fresh header set. Organisation and project
+headers do not travel.
+
+`x-uniblock-*` is our reserved namespace on both directions of the wire. Sending one has no effect for the same
+reason: it does not travel.
+
+## Response differences
+
+All of these are additions to an otherwise unchanged OpenAI response.
+
+**The request id.** Every response, success or error, carries `x-hopscotch-request-id`, and the same value on
+`x-request-id`, which is the header the OpenAI SDKs already read. On an error, the id also appears as `request_id`
+inside the `error` object. That fifth field inside `error` is the one shape difference from OpenAI's envelope, and
+it is inside `error` rather than beside it precisely so that an SDK reading the fields it knows ignores it safely.
+
+**Diagnostic headers.** A short allowlist describes how the request was served:
+
+| Header | What it says |
 |---|---|
-| Your request bodies | Forwarded as you sent them, with two named exceptions: `model` is replaced with the model being tried when you asked for a route rather than a model, and `max_tokens` is filled in when you named no ceiling and the provider's own API refuses a request without one. Nothing else is parsed or rebuilt. See [Request parameters](/api-reference/parameters). |
+| `x-hopscotch-provider` | Which provider family answered. |
+| `x-hopscotch-retry-attempt-count` | How many attempts it took, so a slow success has a visible reason. |
+| `x-hopscotch-cache-status` | Whether the reply came from cache rather than from the provider. |
+| `x-hopscotch-trace-id` | A second internal id, distinct from your request id. |
+| `x-hopscotch-served-by` | The full id, `{provider}/{model}`, of the model that actually answered. |
+
+Each of these, and the request id above, was also sent under an `x-uniblock-` name until 2026-09-14. That spelling
+was retired and is no longer written, so read the `x-hopscotch-` name, or `x-request-id` for the id. See
+[Headers](/api-reference/headers).
+
+**Provider rate-limit headers are not forwarded.** Nothing else the provider sets travels onward. If you currently
+read the remaining-requests and reset headers that a provider sets, those are absent here, because they describe a
+pool we hold rather than a limit that applies to you. Your own limits arrive as 429 responses with codes you can
+branch on, documented in [Spend controls](/manage/spend-controls).
+
+**One extra line on a stream.** A streamed reply carries one extra line immediately before `data: [DONE]`, starting
+with a colon:
+
+```text
+:x-hopscotch-usage {"v":1,...}
+```
+
+The SSE specification requires a parser to ignore a line starting with a colon, so the OpenAI SDKs skip it and a
+conforming client never sees it. [Streaming](/features/streaming) documents its fields. A non-streamed reply carries
+no equivalent header today. The counts are read on our side and become your usage record.
+
+**One extra field in an error.** The error object carries `request_id` alongside the fields OpenAI defines. It is
+inside `error` rather than beside it so that a client reading only the fields it knows ignores it safely.
+
+## Errors and billing
+
+Status codes and the closed set of `type` values are OpenAI's. Branch on `type` and `code`, never on the message text:
+the fields are the contract and the sentences are prose that may be reworded. Every shipped code and its status is in
+[Errors and refusals](/api-reference/errors).
+
+Some of our refusals are about billing rather than about your request: not enough credit, or an account spend rate cap.
+Those reuse OpenAI's own `insufficient_quota` and `rate_limit_error` types, so the branch your client already has keeps
+working, and carry a Hopscotch `code` that says which of them happened.
+
+**Billing.** Credit is prepaid and the platform fee is added when you buy credit, not when you spend it, so a request
+deducts the provider's own rate with nothing on top. A zero balance refuses new requests with `402` and ends in-flight
+ones. See [Credits and billing](/manage/credits-and-billing).
+
+## What carries over and what does not
+
+| What | Status |
+|---|---|
+| Your request bodies | Forwarded as you sent them, with the two named rewrites. |
 | Your response handling | The reply is the OpenAI chat completion shape. |
 | Your streaming loop | Server-sent events in the same format, ending in the same `data: [DONE]`. |
 | Your error handling | The same envelope, the same closed set of `type` values, the same statuses. |
-| `max_tokens`, `temperature`, `tools`, `response_format`, and the rest | Parameters travel in the body, which is what gets forwarded. |
+| Provider rate-limit headers | Not forwarded. Pace on `429` codes and `Retry-After` instead. |
+| `x-uniblock-*` headers | Not honoured in either direction. |
 
-## What is different
-
-**Endpoints.** The operations this site documents are
-`POST /v1/chat/completions`, `GET /v1/models` and `GET /v1/models/{id}`. That is
-the inventory to port against: if your application calls anything else, this site
-does not yet describe what it does here, so treat those call sites as unanswered
-rather than as either working or refused. See
-[OpenAI compatibility](/get-started/openai-compatibility).
-
-**Headers you send.** Only `Authorization` and `Content-Type` are read. Nothing
-else you send reaches the provider, because the upstream request is built from
-your body and our own credential with a fresh header set. Organisation and
-project headers, and anything in the `x-uniblock-*` namespace, do not travel.
-
-**Headers you receive.** Provider rate-limit headers are not forwarded, so if you
-currently read remaining-requests and reset headers to pace yourself, that input
-is gone. Your own limits arrive as `429` responses carrying codes you can branch
-on, and the per-key one carries `Retry-After`. See
-[Rate limits and spend controls](/manage/rate-limits-and-spend-controls).
-
-**One extra line on a stream.** A streamed reply carries a
-`:x-hopscotch-usage` comment line immediately before `data: [DONE]`. The
-server-sent events specification requires a parser to ignore a line starting
-with a colon, so a conforming client never sees it. See
-[Streaming](/features/streaming).
-
-**One extra field in an error.** The error object carries `request_id` alongside
-the fields OpenAI defines. It is inside `error` rather than beside it so that a
-client reading only the fields it knows ignores it safely.
-
-**Billing.** Credit is prepaid and the platform fee is added when you buy credit,
-not when you spend it, so a request deducts the provider's own rate with nothing
-on top. A zero balance refuses new requests with `402` and ends in-flight ones.
-See [Credits and billing](/manage/credits-and-billing).
-
-**`max_tokens` is worth sending even where you left it out before.** It sizes
-what we hold against your balance while a request runs, so a request without it
-is held at the model's published maximum output and reaches your account spend
-rate cap sooner.
-
-## A checklist
+## How to: cut over
 
 <Steps>
   <Step title="Prefix every model id">
-    Search your code for model names and put the provider in front of each one.
-    This is the step that fails the first request if you skip it.
+    Search your code for model names and put the provider in front of each one. This is the step that fails the
+    first request if you skip it.
   </Step>
   <Step title="Point the client at the base URL and swap the key">
-    Two settings, both above. Keep the key in the environment rather than in
-    source.
+    Two settings, both above. Keep the key in the environment rather than in source.
   </Step>
   <Step title="Find any call to an endpoint this site does not document">
-    Anything beyond chat completions and the two catalog reads is undocumented
-    here. Decide what those call sites do before you cut over rather than after.
+    Anything beyond the table above is undocumented here. Decide what those call sites do before you cut over
+    rather than after, and treat them as unanswered rather than as either working or refused.
   </Step>
   <Step title="Stop reading provider rate-limit headers">
     If your pacing depends on them, move it onto `429` codes and `Retry-After`.
@@ -138,23 +217,35 @@ rate cap sooner.
     Especially on any call path that currently omits it.
   </Step>
   <Step title="Log the request id">
-    `x-request-id` is the header the official SDKs already surface on their error
-    objects, so this is usually a one-line change. Without it, a support
-    conversation starts from a description rather than from a request.
+    `x-request-id` is the header the official SDKs already surface on their error objects, so this is usually a
+    one-line change. Without it, a support conversation starts from a description rather than from a request.
   </Step>
   <Step title="Buy credit before you cut over">
-    A verified account with a zero balance refuses every request, which is a
-    confusing first result if you were not expecting it.
+    A verified account with a zero balance refuses every request, which is a confusing first result if you were not
+    expecting it.
   </Step>
 </Steps>
 
-## What this page does not cover
+## What we do not claim
 
-**Moving from another router.** The differences that matter would be differences
-from that product's behaviour, and we do not document other people's products
-from the outside.
+- We have not yet published a proof run of an unmodified official SDK against the production hostname. The
+  instructions on this page set only `base_url` and `api_key`, which is the whole intended change. Read this page as
+  instructions rather than as a certification, and we will say so as a tested result once that run exists.
+- We make no statement here about behaviour under concurrency, latency added by the hop, throughput, or availability.
+  No figure for any of those has been measured in a way we are willing to publish.
+- Moving from another router is not documented here. The differences that matter would be differences from that
+  product's behaviour, and we do not document other people's products from the outside.
 
-**Anything about speed or availability.** No figure for latency added by the hop,
-for throughput, or for availability has been measured here in a way we are
-willing to publish, so this page makes no claim about how the move affects any of
-them.
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Authentication" href="/get-started/authentication">
+    The Bearer header, key format, and how a key ends.
+  </Card>
+  <Card title="Models" href="/features/models">
+    The ids you can call, and how a model id is shaped.
+  </Card>
+  <Card title="Errors and refusals" href="/api-reference/errors">
+    The envelope and the full table of codes.
+  </Card>
+</CardGroup>

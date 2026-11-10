@@ -111,7 +111,7 @@ except ModelHTTPError as error:
 `headers` is `None` when the provider supplied none, so the guard above is not
 decoration. Our error envelope arrives in `body`, so read `type` and `code` out
 of it rather than matching on the message text. Every shipped code is in
-[errors](/features/errors).
+[errors](/api-reference/errors).
 
 `UnexpectedModelBehavior` is a different thing and is not an HTTP failure: it is
 raised when a reply is not the shape the library expected. A refusal from us

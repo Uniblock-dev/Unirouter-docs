@@ -17,6 +17,13 @@ contract.
 
 <ErrorEnvelope />
 
+Two different things can go wrong with a request, and this API keeps them apart. A **refusal** is us
+working correctly and saying no: your credit will not cover the call, your key is sending faster than
+its limit, somebody paused the account. Nothing is broken, nothing is charged, and there is something
+specific to do about it. An **error** is a fault, ours or a request we cannot serve as sent. There is
+still something to do about it, and the body says what. Both arrive in the same shape, so your client
+needs one code path for them and tells them apart on a field rather than on a status alone.
+
 Three properties of this body are worth stating because clients depend on them:
 
 - `param` and `code` are always present. When there is nothing to say they are
@@ -94,6 +101,10 @@ A request that never reached a model is not charged for, and the credit held for
 it is returned. A request terminated part way through is charged for what was
 produced before it was cut and no more.
 
+{/* CONFLICT, unresolved: the 402 workspace_limit_exceeded row above says the dashboard control
+for the workspace monthly limit "is not built yet, so ask us to change it". The Spend controls page
+describes that control on the Settings screen under Limits as shipped. Reported to the owner. */}
+
 ### Rate limits and spend refusals
 
 Three codes share `429`, and they call for different behaviour. Read the code:
@@ -107,7 +118,7 @@ the status alone does not tell you which of the three you met.
   hold still counted in the window, so the header and the wait named in
   the message cannot disagree. Sending `max_tokens` on your requests lowers the
   estimated maximum each one holds. See
-  [Rate limits and spend controls](/manage/rate-limits-and-spend-controls).
+  [Rate limits and spend controls](/manage/spend-controls).
 - `upstream_rate_limited` is the model's provider rate-limiting the call. It is
   not your key's allowance and not your account's cap, nothing about the request
   is wrong, and nothing is charged. It carries `Retry-After` in whole seconds.
@@ -184,6 +195,40 @@ id. Read the id from the `x-hopscotch-request-id` response header instead.
 A non-streamed response that we terminate part way through does not receive an
 error body. There is nowhere to put one, so the connection errors instead. Treat a
 truncated non-streamed body as a failed request rather than a short answer.
+
+## What an error never contains
+
+Our error bodies carry the fields listed above and nothing else. No stack trace, no hostname, no internal
+identifier, no detail about the shape of our own system. That is not reticence for its own sake: none of it
+is anything you could act on, and all of it is a normal way for an error string to hand an attacker a map.
+What you get instead is the request id, and a support conversation that starts from it rather than from a
+description of what the screen said.
+
+## Retrying
+
+- `401`, `402`, `400`: do not retry unchanged. Change the key, the credit, or the request.
+- `429` with `rate_limit_exceeded`: retry after `Retry-After` seconds.
+- `429` with `spend_rate_exceeded`: retry after `Retry-After` seconds, and consider sending `max_tokens` so
+  each request holds less. The figure is the wait until the window has no counted hold left, so it agrees
+  with the wait the message names.
+- `429` with `upstream_rate_limited`: retry after `Retry-After` seconds. The figure is one we compute rather
+  than the provider's header passed through: their number where they sent one, held between one and sixty
+  seconds, and five seconds where they sent none.
+- `413` with `payload_too_large`: do not retry unchanged. Send a smaller body.
+- `429` with `provider_key_refused`: retry with backoff. It carries no `Retry-After`, but a provider's own
+  limit clears on its own.
+- `400` with `model_id_not_pinned`: do not retry unchanged. Add the provider prefix, so `gpt-4o-mini` becomes
+  `openai/gpt-4o-mini`, or send a `profile/` slug.
+- `404` with `model_not_found`: do not retry unchanged. Fix the model id.
+- `404` with `model_not_available`: read the message before you retry. If it says the provider has retired the
+  model, do not retry at all; pick another model. If it says we cannot reach it, or says neither, retry later,
+  because the request itself is fine.
+- `503` with `paused_by_owner`: do not retry on a timer.
+- `503` with `provider_account_unavailable`: read the message. It names the provider that has restricted this
+  workspace, so call a model from another provider, or contact support about the restriction.
+- Other `503`, and `500`: retry with backoff. If it persists, quote a request id.
+- `504`: the request ran past the 540 second limit. Retrying the same work unchanged will most likely hit the
+  same limit, so split it or stream it.
 
 ## Handling errors in code
 

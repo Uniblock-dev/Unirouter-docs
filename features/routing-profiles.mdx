@@ -1,29 +1,103 @@
 ---
 title: "Routing profiles"
-description: "An ordered list of your own models, requested as profile/<identifier> in the model field, so a fallback order lives in one place."
-status: write-now
-gates: [2.9, 13.8, 13.9]
+description: "Your ordered model list, requested as profile/<identifier>, or hopscotch/auto. Set backups, and see which model served each request."
+status: partial
+gates: [2.9, 5.11, 5.12, 5.18, 13.8, 13.9]
 ---
 
-A routing profile is your own ordered list of models, saved once and requested
-as if it were a single model. Put its identifier in the `model` field and the
-order you set is the order that gets tried.
+A routing profile is your own ordered list of models, saved once and requested as if it were a
+single model. Put its identifier in the `model` field and the order you set is the order that gets
+tried. Automatic routing gives a request a list of models to try, in order, rather than one fixed
+model.
+
+## Choose a route
+
+Send one of two kinds of value in the `model` field.
+
+| Value | Use it when | Who sets the order |
+|---|---|---|
+| `hopscotch/auto` | You want the default route for your workspace and are happy for it to change on the Routing screen without a code change. | Your default route. Until you set one, the list for your cost tier. |
+| `profile/<identifier>` | You want a fixed order of models that you control, under an identifier that never changes. | You, in the profile. |
+
+`unirouter/auto` is the canonical spelling of the automatic route and `hopscotch/auto` is accepted as
+a second spelling that resolves identically, so either works in the same field. Once it resolves,
+everything after that is the ordinary route path: the same order, the same failover, and the same
+charge for the step that answered.
+
+A workspace that has never chosen a default route still gets an answer from `hopscotch/auto`, from a
+list published for your **cost tier**. There are three tiers, `low`, `balanced` and `high`, and a
+workspace that has never chosen is on `balanced`. The tier is a shortlist and not a ceiling: `low` is
+cheaper because the models on it are cheaper, and nothing about the tier limits what a request may
+spend. Setting a default route of your own takes the id off our lists entirely, and yours answers
+instead.
+
+The automatic route refuses rather than falling back. It never quietly serves you from a dearer tier
+than the one you picked: if the tier you are on has no list, or nothing on it can be served at that
+moment, the request is refused with `404` `model_not_available`, and the message names your tier and
+both ways out. It never falls back to a tier or a route you did not choose.
 
 ## What a profile is
 
-- A **name**, which is for you. It is what you pick it out of a list by, and
-  you can change it whenever you like.
-- An **identifier**, which is what your code sends. See below for why it never
-  changes.
+- A **name**, which is for you. It is what you pick it out of a list by, and you can change it whenever
+  you like.
+- An **identifier**, which is what your code sends. It never changes.
 - An **ordered list of models**: one primary, and up to four backups.
 
-A profile is created, renamed, and archived from your workspace's Profiles
-screen.
+A profile is created, renamed, replaced and archived from your workspace's **Profiles** screen. Creating a
+profile, renaming it, replacing its model list, or archiving it all take the same permission: only the
+workspace owner and admins may do them. Any member of the workspace, including a developer or a viewer,
+may see the profiles that exist and request them. See [Workspaces and members](/manage/workspaces-and-members)
+for the full role table.
+
+### The identifier does not change
+
+A profile's name is yours to change at any time. Its identifier is not: once a profile is created, its
+identifier is fixed for the life of that profile.
+
+The reason is what each one is for. The name is how you find a profile in a list, and nothing downstream
+should care if you rename it as your own vocabulary changes. The identifier is what is already sitting in
+your code, in a CI config, in a teammate's script you will never read. If `profile/nightly-batch` could be
+pointed at a different identifier later, the same three words your code sends today could come to mean a
+different list of models tomorrow, with nothing in your code telling you it happened. Fixing the identifier
+is what keeps that from being possible.
+
+Archiving a profile does not free its identifier, either. Once an identifier has been used in a workspace, a
+new profile cannot claim it again. There is no way to restore an archived profile: only to create a new one,
+under a new identifier.
+
+### What the order means
+
+A profile's models are tried strictly in the order you set. A request goes to the first model in the list.
+It moves to the next model only when the attempt fails because that model could not serve it, rather than a
+fault in the request. Any other failure, such as a malformed body, comes back to you as it is: trying the
+same bad request against a different model would not fix it.
+
+A model in your list that cannot be served at all right now is skipped rather than counted as a failed
+attempt, as long as at least one model in the list still can be. Only when every model you named is
+unreachable does the request come back as a refusal. A member skipped along the way is not reported
+individually; the refusal is about the profile as a whole.
+
+### Which key a route runs on
+
+A route can also say whose provider key its steps run on, which matters only if you have
+[brought your own key](/features/bring-your-own-key) for a provider we carry. The choice is per route and has
+three values: follow your workspace's own rule, which is what every route does unless you say otherwise; run
+on your own key; or run on ours. It is the way to keep one route off your own provider quota while the rest of
+your traffic stays on it. A step that cannot honour the choice is skipped, with the reason recorded, rather
+than served on the other key.
+
+## Limits
+
+| | |
+|---|---|
+| Models per profile | 1 to 5. One primary, up to four backups. Each must be a model you can currently call, and none may be named twice. |
+| Identifier | 1 to 40 characters: lowercase letters, digits, and dashes, and it cannot start or end with a dash. |
+| Name | 1 to 120 characters. |
+| Profiles per workspace | 20 live at a time. Archiving one frees a slot, not its identifier. |
 
 ## Requesting a profile
 
-Put `profile/` and the identifier in the `model` field, exactly where a model
-id would otherwise go:
+Put `profile/` and the identifier in the `model` field, exactly where a model id would otherwise go:
 
 ```bash
 curl https://api.hopscotchlabs.ai/v1/chat/completions \
@@ -35,141 +109,87 @@ curl https://api.hopscotchlabs.ai/v1/chat/completions \
   }'
 ```
 
-```python Python
-completion = client.chat.completions.create(
-    model="profile/customer-support",
-    messages=[{"role": "user", "content": "Say hello."}],
-)
+Nothing else about the request changes. A profile is a value in the same field a model id occupies, not a
+different kind of call. See [Models](/features/models) for how a plain model id is shaped.
+
+## How to
+
+### 1. Create a profile with backups
+
+<Steps>
+  <Step title="Open Profiles">
+    Open **Profiles** and choose to create one.
+  </Step>
+  <Step title="Enter a name">
+    You can change the name later.
+  </Step>
+  <Step title="Enter an identifier">
+    It is what your code sends, and it cannot be changed after the profile exists. It follows the identifier
+    rules in the limits table above.
+  </Step>
+  <Step title="Add an ordered list of models">
+    One primary, then up to four backups. Each model must be one you can call right now, and none may appear
+    twice. A profile holds between one and five models.
+  </Step>
+  <Step title="Save">
+    You can hold up to 20 live profiles per workspace. Archiving one frees a slot, but not its identifier.
+  </Step>
+</Steps>
+
+To use the automatic route instead, set `"model": "hopscotch/auto"`. For the request body and streaming, see
+[Streaming](/features/streaming).
+
+### 2. See which model served the request
+
+There are three places to look, depending on what you have to hand.
+
+**In the response headers**, on every served response:
+
+- `x-hopscotch-served-by` gives the full `{provider}/{model}` id of the model that answered. On a streamed
+  response this is the only place that id appears.
+- `x-hopscotch-served-via` is sent only when a backup route served the request, and its value is `backup`.
+  Its absence means the ordinary route answered.
+- `x-hopscotch-request-id` (and `x-request-id`, the same value) identifies the request if you need to ask
+  about it or look it up.
+
+The full list of headers is on [Headers](/api-reference/headers).
+
+**On the Activity screen**, each request is a row. The **Served by** column shows the provider that answered,
+with a **backup** mark beside it when a backup route served the request. Click the request id to open the single
+request view. See [View activity](/manage/usage-and-metering#activity-one-row-per-request).
+
+**Through the usage lookup**, with the request id and your API key:
+
+```bash
+curl https://api.hopscotchlabs.ai/v1/usage/REQUEST_ID \
+  -H "Authorization: Bearer ub_live_YOUR_KEY_HERE"
 ```
 
-Nothing else about the request changes. A profile is a value in the same
-field a model id occupies, not a different kind of call. See
-[Models](/features/models) for how a plain model id is shaped.
+The usage record carries the model that was asked for, the outcome, the tokens and the charge. It does not name
+the model that answered, so use the headers or the Activity row for that. A lookup that finds nothing may need one
+short pause before you retry, because the record is written after the response is sent. See
+[Usage lookup](/features/usage-lookup).
 
-## The identifier does not change
+### 3. Track changes to the models behind a route
 
-A profile's name is yours to change at any time. Its identifier is not: once a
-profile is created, its identifier is fixed for the life of that profile.
+A model in a profile or a default route can be deprecated or can reach its sunset date. The catalog carries both
+dates, and `GET /v1/models` lists them so you can see what is ending before it stops answering. See
+[Model lifecycle](/features/model-lifecycle). Review your profile's model list when a date you depend on approaches,
+and replace a model with a new save on the Profiles screen.
 
-The reason is what each one is for. The name is how you find a profile in a
-list, and nothing downstream should care if you rename it as your own
-vocabulary changes. The identifier is what is already sitting in your code, in
-a CI config, in a teammate's script you will never read. If `profile/nightly-batch`
-could be pointed at a different identifier later, the same three words your
-code sends today could come to mean a different list of models tomorrow,
-with nothing in your code telling you it happened. Fixing the identifier is
-what keeps that from being possible: the name can move, so the meaning can be
-kept current; the identifier cannot, so the meaning can be trusted.
+## Refusals
 
-Archiving a profile does not free its identifier, either. Once an identifier
-has been used in a workspace, a new profile cannot claim it again.
+Each automatic or profile route has its own refusal. Branch on the `code`, not the message text. The refusals
+name the profile slug you sent and no member of it; the list behind the slug is your own document.
 
-## What the order means
+| Situation | Status | `code` | What to do |
+|---|---|---|---|
+| `profile/<identifier>` names a profile that is archived or never existed. The two are refused identically. | 503 | `no_provider_configured` | Check the identifier on the Profiles screen. Create a new profile under a new identifier if the old one is archived. |
+| None of the members of a profile can be served right now, or none of them could be routed at all. Ours to sort out where it is a routing gap. | 503 | `no_provider_configured` | Retry with backoff. Note the request id for support. |
+| `hopscotch/auto` has no list for your cost tier, or nothing on it can be served at that moment. | 404 | `model_not_available` | The message names your tier and both ways out: choose a different tier or set a default route. The route never falls back to a tier you did not pick. |
+| A model in the request has been retired by its provider. | 404 | `model_not_available` | Retrying will not help. Move to the replacement named in the catalog, if one is given. |
 
-A profile's models are tried strictly in the order you set. A request goes to
-the first model in the list. Only when that attempt answers with a status
-that means the model itself failed to serve it, rather than a fault in the
-request, does the request move on to the next model in your order, and so on.
-Any other failure, such as a malformed request, comes back to you as is:
-trying the same bad request against a different model would not fix it.
-
-A model in your list that cannot be served at all right now is skipped rather
-than counted as a failed attempt, as long as at least one model in the list
-still can be. Only when every model you named is unreachable does the request
-come back as a refusal, covered next.
-
-## An archived or unknown identifier
-
-Requesting `profile/<identifier>` for a profile that has been archived, or one
-that never existed, is refused identically either way: HTTP 503, code
-`no_provider_configured`.
-
-```json
-{
-  "error": {
-    "message": "Nobody serves \"profile/customer-support\": this workspace has no routing profile with that slug, or it has been archived. Its Profiles screen lists the ones that exist.",
-    "type": "api_error",
-    "param": null,
-    "code": "no_provider_configured",
-    "request_id": "00000000-0000-4000-8000-000000000000"
-  }
-}
-```
-
-There is no separate error for "archived" versus "never created", and there is
-no way to restore an archived profile: only to create a new one, under a new
-identifier. See [Errors and refusals](/features/errors) for the envelope every
-failing route shares.
-
-## When no model in the profile can be served
-
-A profile whose every member is out is refused rather than served, and the code
-says which kind of "out" it was. Every one of these names the profile slug you
-sent and no member of it: the list behind the slug is your own document, and your
-Profiles screen shows it in order.
-
-| Status | `code` | Meaning |
-|---|---|---|
-| 503 | `no_provider_configured` | None of the members can be served right now, or none of them could be routed at all. Ours to sort out where it is a routing gap. Retry with backoff. |
-
-A member skipped along the way is not reported individually. The refusal is about
-the profile as a whole, and the request id is what a support conversation starts
-from.
-
-## Limits
-
-| | |
-|---|---|
-| Models per profile | 1 to 5. One primary, up to four backups. Each must be a model you can currently call, and none may be named twice. |
-| Identifier | 1 to 40 characters: lowercase letters, digits, and dashes, and it cannot start or end with a dash. |
-| Name | 1 to 120 characters. |
-| Profiles per workspace | 20 live at a time. Archiving one frees a slot, not its identifier. |
-
-## The fixed id `unirouter/auto`
-
-`unirouter/auto` is one string you can put in a client's configuration and leave
-there. It names whichever of your routes you have made the default, so the route
-behind it changes on the Routing screen without touching the code that calls us.
-`hopscotch/auto` is accepted as a second spelling of the same id and resolves
-identically, so a configuration written either way keeps working and there is
-nothing to migrate.
-Once it resolves, everything after that is the ordinary route path: the same
-order, the same failover, and the same charge for the step that answered.
-
-Until you have a default route it still answers, from a list we publish for the
-**cost tier** your workspace is on. There are three, `low`, `balanced` and
-`high`, and a workspace that has never chosen is on `balanced`. The tier is a
-shortlist and not a ceiling: `low` is cheaper because the models on it are
-cheaper, and nothing about the tier limits what a request may spend. Setting a
-default route of your own takes the id off our lists entirely, and yours answers
-instead.
-
-Two things it will not do. It never quietly serves you from a dearer tier than
-the one you picked: if the tier you are on has no list, or nothing on it can be
-served at that moment, the request is refused with `404`
-`model_not_available` and the message names your tier and both ways out. And it
-never falls back to a tier or a route you did not choose, so a refusal here
-means the same thing every time.
-
-## Which key a route runs on
-
-A route can also say whose provider key its steps run on, which matters only if
-you have [brought your own key](/features/bring-your-own-key) for a provider we
-carry. The choice is per route and it has three values: follow your workspace's
-own rule, which is what every route does unless you say otherwise; run on your
-own key; or run on ours. It is the way to keep one route off your own provider
-quota while the rest of your traffic stays on it. A step that cannot honour the
-choice is skipped, with the reason recorded, rather than served on the other
-key.
-
-## Who can do what
-
-Creating a profile, renaming it, replacing its model list, or archiving it all
-take the same permission: only the workspace owner and admins may do them. Any
-member of the workspace, including a developer or a viewer, may see the
-profiles that exist and request them, the same as any key in the workspace
-already can. See [Workspaces and members](/manage/workspaces-and-members) for
-the full role table.
+The full error envelope and the status map are on [Errors and refusals](/api-reference/errors).
 
 ## Next
 
@@ -177,7 +197,7 @@ the full role table.
   <Card title="Models" href="/features/models">
     How a model id is shaped, and how to discover which ones you can call.
   </Card>
-  <Card title="Errors and refusals" href="/features/errors">
+  <Card title="Errors and refusals" href="/api-reference/errors">
     The one error body the whole API uses, and how to read it.
   </Card>
 </CardGroup>
