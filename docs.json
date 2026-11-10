@@ -115,7 +115,8 @@
               "features/completions-and-embeddings",
               "features/anthropic-messages",
               "features/usage-lookup",
-              "features/videos"
+              "features/videos",
+              "features/images-audio-and-video"
             ]
           },
           {

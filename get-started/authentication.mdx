@@ -190,19 +190,19 @@ The set of things that may end a key, meaning the key stops existing and its slo
 
 | Reason | What causes it | Available today |
 |---|---|---|
-| You revoke it | Somebody with access ends that key deliberately. | Not yet |
-| It was replaced | Minting a replacement ends the key it replaces in the same motion. | Not yet |
+| You revoke it | Somebody with access ends that key deliberately. | Yes |
+| It was replaced | Minting a replacement ends the key it replaces in the same motion. | Yes |
 | A member was removed and the person removing them chose to revoke that key | Removal asks about each key rather than deciding for you. | Yes |
 
-So today the one path that ends a key is the per-key choice made when a member is removed from the workspace. Treat a
-key as live for as long as it exists, and plan around the ceiling of 500 keys until the other two paths ship.
+**Revoke** is a control on the key's row of the Keys screen. It asks "Stop this key from working?" and ends the key on
+**Revoke it**. Nothing replaces it, and its slot is freed. **Regenerate** asks "Replace this key with a fresh one? The old
+one stops working." and, on **Regenerate it**, ends the old key and shows the new one once, the way a new key is shown.
+The old key is confirmed ended before the new one is shown, so you are never told a key was replaced while it still works
+somewhere. Regenerating needs the permission to create a key as well as the permission to revoke one, because it does
+both. Both controls are offered to anyone who may revoke that key: an owner, an admin, or the developer it is accountable to.
 
-{/* CONFLICT, unresolved: the Authentication source says Revoke and Replace are not on the
-Keys screen and have no route, so the table above says "Not yet". The Create source describes a Revoke
-control ("Stop this key from working?") and a Regenerate control ("Replace this key with a fresh one?")
-on each key row, with the regenerate step confirming the old key ends before the new one is shown.
-That description, and the account-wide 429 `too_many_key_operations` churn allowance it names, is kept
-here and not in the page. Reported to the owner: one source is wrong. */}
+Revoking and regenerating share an account-wide churn allowance. An account that ends keys too quickly is refused with HTTP
+429 and the code `too_many_key_operations`, carrying `Retry-After`, until the window passes.
 
 Expiry is a fourth way a key **stops serving traffic**, but it does not end the key: an expired key still exists and
 still holds its slot, and it is refused with `code: key_expired`. Nothing renews it, so the only way to keep serving

@@ -1,7 +1,7 @@
 ---
 title: "Errors"
 description: "One error body for the whole API: a closed set of type values, a stable code, and the request id inside the body."
-status: write-now
+status: partial
 gates: [2.9, 9.6, 9.26, 13.9, 15.8, 21.48, 22.4, 36.17]
 ---
 
@@ -76,8 +76,8 @@ separates causes sharing a status.
 | 401 | `authentication_error` | `key_expired` | The key is past its own expiry date. The message names the date it expired on. Checked before the per-key rate limiter, so an expired key never consumes that allowance. Expired keys are not renewed: create a new one. |
 | 402 | `insufficient_quota` | `insufficient_credit` | The workspace cannot cover the estimated maximum cost of this request. The message names both figures. Buy credit. |
 | 402 | `insufficient_quota` | `key_limit_exceeded` | The sending key reached its own credit limit. Refused before any credit is held; other keys in the workspace are unaffected. The message names what the key has settled and holds inside its current window. |
-| 402 | `insufficient_quota` | `member_limit_exceeded` | The person this request is attributed to has reached their own monthly spend limit. Refused before any credit is held and before any provider is attempted. It stops that one person, on every key their spend answers for and in the playground, while their colleagues go on serving from the same balance. The window is the calendar month, and only the workspace owner can raise or clear the figure. |
-| 402 | `insufficient_quota` | `workspace_limit_exceeded` | The workspace has reached its own monthly spend limit, which is the widest of these four ceilings. Refused before any credit is held and before any provider is attempted, and the usage record carries a charge of 0. It stops every member, on every key that carries the projected ceiling and in the playground unconditionally, so it is the code you get when a request is past both this ceiling and a member's. The workspace owner sets the figure, and the dashboard control for it is not built yet, so ask us to change it in the meantime. |
+| 402 | `insufficient_quota` | `member_limit_exceeded` | Not available yet. The person this request is attributed to has reached their own monthly spend limit. Refused before any credit is held and before any provider is attempted. It stops that one person, on every key their spend answers for and in the playground, while their colleagues go on serving from the same balance. The window is the calendar month, and only the workspace owner can raise or clear the figure. |
+| 402 | `insufficient_quota` | `workspace_limit_exceeded` | Not available yet. The workspace has reached its own monthly spend limit, which is the widest of these four ceilings. Refused before any credit is held and before any provider is attempted, and the usage record carries a charge of 0. It stops every member, on every key that carries the projected ceiling and in the playground unconditionally, so it is the code you get when a request is past both this ceiling and a member's. The workspace owner sets the figure, and the dashboard control for it is not built yet, so ask us to change it in the meantime. |
 | 404 | `invalid_request_error` | `endpoint_not_supported` | The path is not one this release serves, whether or not it exists upstream. The message names the method and the path and says it is not supported in this release. |
 | 404 | `not_found_error` | `model_not_found` | No model of that id is in the live catalog, which is what a typo produces. Check the spelling, or list what this key can call with `GET /v1/models`. `param` is `model` on the model routes and `null` on an inference call. |
 | 404 | `not_found_error` | `model_not_available` | The id is catalogued and is not being served right now, either at all or on the endpoint you called. Told apart from `model_not_found` so a withdrawn model does not read as a typo. The status and the code are the same in every case; the **message** says which case it is, and whether waiting helps. A model the provider has retired says it is gone rather than unwell, that retrying will not bring it back, and that no change to the request reaches it. A model the provider still serves that we cannot reach right now says that instead, and says that nothing about your request is wrong. Anything else keeps the sentence this code has always carried: known here, not being served at the moment, and retrying later is worth more than changing the request. No message names a replacement model unless the provider named one itself. |
@@ -100,10 +100,6 @@ separates causes sharing a status.
 A request that never reached a model is not charged for, and the credit held for
 it is returned. A request terminated part way through is charged for what was
 produced before it was cut and no more.
-
-{/* CONFLICT, unresolved: the 402 workspace_limit_exceeded row above says the dashboard control
-for the workspace monthly limit "is not built yet, so ask us to change it". The Spend controls page
-describes that control on the Settings screen under Limits as shipped. Reported to the owner. */}
 
 ### Rate limits and spend refusals
 

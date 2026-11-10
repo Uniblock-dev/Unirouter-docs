@@ -2,7 +2,7 @@
 title: "Workspaces and members"
 description: "A workspace holds your keys, usage, playground and billing. Roles, creating a workspace, invitations, transfer and removal."
 status: partial
-gates: ["9.4", "9.5", "9.11", "9.12", "9.13", "9.14", "9.15", "9.16", "9.17", "9.18", "9.19", "9.20", "9.24"]
+gates: ["9.4", "9.5", "9.11", "9.12", "9.13", "9.14", "9.15", "9.16", "9.17", "9.18", "9.19", "9.20", "9.24", "9.6"]
 ---
 
 A workspace is the thing you sign in to and the thing you invite people into. It is named,
@@ -86,13 +86,8 @@ their own sentence, because the fact they refuse is not billing:
 > low credit.
 
 Both are HTTP 403. Because billing belongs to a workspace, one card cannot fund two workspaces.
-Each workspace is bought for separately. The workspace's monthly spend limit, which sits in the
-same Limits section, is described on [Spend controls](/manage/spend-controls).
-
-{/* CONFLICT, unresolved: this page's source said the workspace monthly spend limit
-was "not settled" and carried no figure or sentence for it. The Spend controls source describes
-it as shipped with a 402 code. The sentence about it is removed from this page only; the owner
-must decide which is true. Reported. */}
+Each workspace is bought for separately. A workspace monthly spend limit is not available yet
+; see [Spend controls](/manage/spend-controls).
 
 ## Keys and who can see them
 

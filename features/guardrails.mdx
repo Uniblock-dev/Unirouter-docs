@@ -71,10 +71,6 @@ zero-data-retention choice and the sensitive-data detectors. The other rules app
 under a "Coming soon" heading and cannot be set from the dashboard yet. Every rule is enforced at
 request time once it is on a guardrail, so this page documents all nine.
 
-{/* CONFLICT, unresolved: this page names the sensitive-data detectors as "email, IP
-address, password pair"; the set-up source names them "Email addresses, IP addresses, Passwords,
-secrets and API keys". The API vocabulary in the reference is email, ip_address, password_pair. Reported. */}
-
 ### How each rule works
 
 **Spend cap.** The cap is a dollar figure written as text with at most two decimal places, and a
@@ -183,8 +179,8 @@ You need to be the owner or an admin. Have the key you want to govern created fi
     Workspace default inherits whatever the workspace has set.
   </Step>
   <Step title="Turn on sensitive-data detectors">
-    Under **Sensitive-data detection**, switch on any of **Email addresses**, **IP addresses** and
-    **Passwords, secrets and API keys**. A request whose prompt carries one of them is refused before it is
+    Under **Sensitive-data detection**, switch on any of the three detectors, **email**,
+    **IP address** and **password pair**. A request whose prompt carries one of them is refused before it is
     sent. The screen says how much each rule adds to a request once it has measured it.
   </Step>
   <Step title="Create">

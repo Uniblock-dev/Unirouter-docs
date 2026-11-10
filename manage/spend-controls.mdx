@@ -2,7 +2,7 @@
 title: "Spend controls"
 description: "Pause every request, set your spend rate cap and monthly limits, choose when we email you about a falling balance, and read what each refusal costs you."
 status: partial
-gates: ["9.6", "9.25", "9.26", "10.11", "21.48", "22.4"]
+gates: ["9.6", "9.25", "9.26", "10.11", "21.48", "22.4", "4.40"]
 ---
 
 import OwnerOnlyNote from '/snippets/owner-only-note.mdx';
@@ -24,8 +24,8 @@ per-member limit lives on the **Team** screen's **Spend** tab.
 |---|---|---|---|
 | Pause | Refuses every request straight away, revoking nothing. | Any member | Owner |
 | Spend rate cap | Limits how much credit may be held per rolling 60 seconds. | Any member | Owner |
-| Monthly workspace limit | Caps what the whole workspace may spend in a UTC calendar month. | Any member | Owner |
-| Monthly member limit | Caps what one member's keys may spend in a UTC calendar month. | Any member | Owner |
+| Monthly workspace limit | Caps what the whole workspace may spend in a UTC calendar month. Not available yet. | Any member | Owner |
+| Monthly member limit | Caps what one member's keys may spend in a UTC calendar month. Not available yet. | Any member | Owner |
 | Low credit notice | Emails you once when your available balance falls below a figure. | Any member | Owner |
 
 A sixth control, the [guardrail](/features/guardrails), belongs to one key
@@ -45,8 +45,8 @@ goes on serving while one key is refused.
 | 413 | `payload_too_large` | Nothing. The request body is over the 8388608 byte maximum this API accepts. | Send fewer messages, a shorter prompt, or fewer inputs. |
 | 402 | `insufficient_credit` | Available credit at admission. | Buy credit. |
 | 402 | `key_limit_exceeded` | This key's own credit limit, for its current window. | Wait for the window to roll, raise the limit, or send on another key. |
-| 402 | `member_limit_exceeded` | Your own monthly spend limit, for the current UTC calendar month. | Ask the workspace owner to raise or clear it on the Team screen's Spend tab. Your colleagues are unaffected. |
-| 402 | `workspace_limit_exceeded` | The workspace's monthly spend limit, for the current UTC calendar month. | Ask the workspace owner, who sets it on the Settings screen under Limits. |
+| 402 | `member_limit_exceeded` | Not available yet. Your own monthly spend limit, for the current UTC calendar month. | Ask the workspace owner to raise or clear it on the Team screen's Spend tab. Your colleagues are unaffected. |
+| 402 | `workspace_limit_exceeded` | Not available yet. The workspace's monthly spend limit, for the current UTC calendar month. | Ask the workspace owner, who sets it on the Settings screen under Limits. |
 | 402 | `key_limit_exceeded` with a guardrail named | A spend cap set by a [guardrail](/features/guardrails) on this key. | Ask an owner or admin to change or detach the guardrail. |
 | 401 | `key_expired` | Nothing. The key's own expiry date has passed. | Create a new key. Expired keys are never renewed. |
 | 503 | `paused_by_owner` | Nothing. The workspace owner has paused requests. | Lift the pause in Settings. |
@@ -59,11 +59,6 @@ One further 429 meaning is specified and not yet shipped, for a provider pool we
 are protecting, so it is absent from the table. Until it ships, treat a 429
 carrying none of the codes above as a condition to retry after a short pause, and
 quote the request id if it persists.
-
-{/* merge note: the 402 workspace_limit_exceeded row and the "Cap a month"
-section below carry the Settings-screen control. The API error reference says that
-control is not built yet, and the Workspaces page says the workspace monthly limit
-is not settled. Both are reported to the owner; neither is resolved here. */}
 
 ## Pause every request
 
@@ -119,8 +114,8 @@ you to do. The refusal carries `Retry-After` in whole seconds.
     cannot state it at that moment, the hint says so and adds that lowering your cap
     still works.
   </Step>
-  <Step title="Enter a whole number of minor units">
-    At least 100. Submitting a figure above the stated ceiling is refused, naming both
+  <Step title="Enter an amount">
+    At least 1 minor unit. Submitting a figure above the stated ceiling is refused, naming both
     your figure and the highest you may set, and nothing is written.
   </Step>
   <Step title="Save">
@@ -136,10 +131,6 @@ Setting the cap is the owner's. Reading the Limits section is open to every memb
 - **Lowering always works.** If your cap is above the self-service ceiling, you can
   still lower it to any figure at or above 1 minor unit. You cannot raise it further
   until we raise the ceiling.
-
-{/* CONFLICT, unresolved: the step above says the entry must be at least 100,
-while the lowering rule says any figure at or above 1 minor unit is accepted. Both
-sentences came from the spend controls page. Reported to the owner. */}
 
 ### What it counts, which is not what you spent
 
@@ -198,26 +189,21 @@ You are told about the balance first. An account that is both out of credit and 
 its ceiling gets the 402, because the cap clears itself in 60 seconds and telling
 someone with no credit to slow down is advice that cannot work.
 
-## Cap a month, for the workspace or for one member
+## Monthly limits, for the workspace or for one member
 
-Both monthly limits count what has been spent from your balance in the current UTC
-calendar month, and both refuse at admission, before credit is held, so a request they
-stop costs nothing.
+Monthly limits are not available yet. The workspace limit and the
+member limit are both held until their stories are accepted. Until then, no control on
+the screen sets either limit and no request is refused by either one.
 
-**The workspace limit** is the row "Monthly spend limit for this workspace" in the
-Limits section, with its unit printed beside it: "Per UTC calendar month". The row says
-what a caller gets when it trips: requests beyond it return 402 with the code
-`workspace_limit_exceeded`, never charged. The control to change it is the owner's
-alone, and setting it to zero clears it.
-
-**A member's limit** is set on the Team screen's Spend tab, where each member has a
-"Monthly limit" with "Set limit" or "Edit limit", or "No limit". It binds through every
-key that answers to that member in this workspace, and a request it stops returns 402
-with the code `member_limit_exceeded`. Only the owner may set it. The member's
-colleagues are unaffected, and so is the workspace limit.
-
-Neither limit counts a request served on your own provider key, because that request
-spends nothing from your balance. See [Bring your own key](/features/bring-your-own-key).
+When they are available, both count what has been spent from your balance in the
+current UTC calendar month, and both refuse at admission, before credit is held, so a
+request they stop costs nothing. The workspace limit is set by the owner alone, and
+setting it to zero clears it. A refused request returns 402 with the code
+`workspace_limit_exceeded`, and the Team screen's Spend tab will carry each member's
+"Monthly limit". A request stopped by a member limit returns 402 with the code
+`member_limit_exceeded`. The member's colleagues are unaffected, and so is the workspace
+limit. Neither limit will count a request served on your own provider key, because that
+request spends nothing from your balance. See [Bring your own key](/features/bring-your-own-key).
 
 ## Limits that belong to one key
 
@@ -288,9 +274,8 @@ Two of the rows carry no figure yet, and the screen says why:
 They are drawn because the units we meter you in are fixed now rather than later. A row
 with no figure means nobody is checking it, and it never means you have no room.
 
-The Limits section and the self-service cap control are shipped. Every row reads the
-same live data the platform enforces against, so the figures and sentences on this page
-are not a copy that can drift from what is enforced.
+Every row reads the same live data the platform enforces against. The self-service cap
+control is held until that story is accepted.
 
 ## Per-key request rate
 
