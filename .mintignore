@@ -8,3 +8,6 @@ drafts/
 
 # Authoring glossary, not a page
 CONTEXT.md
+
+# Page-type templates, copied to make a page and never published
+templates/
