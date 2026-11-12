@@ -108,9 +108,14 @@ The five fields:
 - `size` is required, as `WIDTHxHEIGHT` in pixels, such as `"1280x720"`. It
   must have a per-second rate on the model; a size without one is refused
   before anything is held, and so is a size the model does not publish.
-  That refusal answers 503 with the code `model_not_priceable`: an
-  unpublished size, such as `1366x768` on a Seedance model, is not a fault
-  that clears, so do not retry it. Send a size the model publishes.
+  A size with no per-second rate answers 400 with the code
+  `model_not_priceable` and `param` set to `size`, and the message lists the
+  sizes that are priced. It is not a fault that clears, so do not retry it.
+  Send a size the model publishes.
+- `generate_audio` is a boolean, true when absent. Only `Seedance 2.0`,
+  including its fast and mini models, honors it: `false` renders a silent
+  video. Every other model ignores it and renders as the Sound column below
+  says.
 - `input_reference` is a reference image, multipart only. A model that
   renders from an image only requires it; a model that renders from text
   only refuses it. Each model accepts only the image forms and sizes it
@@ -134,8 +139,8 @@ check the catalog before calling one.
 | `Sora 2` (`openai-main/sora-2`), not currently served | 1 or more, 4 when absent | Required | Unknown | Unknown | Unknown |
 | `Seedance 1.0` (any other id containing `seedance-`) | 2 to 12 | `854x480`, `480x854`, `1280x720`, `720x1280`, `1920x1080`, `1080x1920` | Required | Optional image | Silent |
 | `Seedance 1.5 Pro` (id containing `seedance-1-5`) | 4 to 12 | Same six as `Seedance 1.0` | Required | Optional image | With sound |
-| `Seedance 2.0` (id containing `seedance-2-0`) | 4 to 15 | Same six, plus `3840x2160` and `2160x3840` | Required | Optional image | With sound |
-| `Seedance 2.0` fast and mini (id containing `seedance-2-0-fast` or `seedance-2-0-mini`) | 4 to 15 | `854x480`, `480x854`, `1280x720`, `720x1280` | Required | Optional image | With sound |
+| `Seedance 2.0` (id containing `seedance-2-0`) | 4 to 15 | Same six, plus `3840x2160` and `2160x3840` | Required | Optional image | With sound; silent with `generate_audio: false` |
+| `Seedance 2.0` fast and mini (id containing `seedance-2-0-fast` or `seedance-2-0-mini`) | 4 to 15 | `854x480`, `480x854`, `1280x720`, `720x1280` | Required | Optional image | With sound; silent with `generate_audio: false` |
 | `Seedance 2.5` (id containing `seedance-2-5`) | 4 to 30 | Same six as `Seedance 1.0` | Required | Optional image | With sound |
 | `Hailuo 02` and `2.3` (id starting with `MiniMax-Hailuo-`), not currently served | 6 or 10 at `1366x768`, 6 at `1920x1080`; required | `1366x768`, `1920x1080` | Required unless an image is uploaded; 2000 characters at most | Optional first frame; required for `MiniMax-Hailuo-2.3-Fast` | Unknown |
 | `Wan 2.2` text to video (`wan2.2-t2v-plus`), not currently served | Exactly 5; required | `832x480`, `480x832`, `624x624`, `1920x1080`, `1080x1920`, `1440x1440`, `1632x1248`, `1248x1632` | Required | Refused | Unknown |

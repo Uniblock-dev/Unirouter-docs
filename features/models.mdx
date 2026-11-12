@@ -58,7 +58,7 @@ Percent-encode the id once or send it as it is. A double-encoded slash names no 
 The Models screen shows one row per model and folds its providers together, with price ranges. Opening a row
 gives one line per provider with its callable id. The row itself is not callable: take the `model` value from a provider line.
 
-A catalog row with no provider identity is left out rather than shown as a bare id.
+A catalog row with no provider identity is left out rather than shown as a bare id. So is a model that names no endpoint it can be called on, such as chat or embeddings, even when it carries a price.
 
 ## A model is offered only when it is live
 

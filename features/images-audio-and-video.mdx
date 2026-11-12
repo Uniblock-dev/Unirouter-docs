@@ -38,7 +38,10 @@ and settled against what the provider reports when it finishes, at the
 provider's rate with nothing added.
 
 - An image request holds `n` times the dearest matching per-image rate for the
-  size and quality you asked for, and settles on the images returned.
+  size and quality you asked for, and settles on the images returned. A
+  token-priced reply that reports no token counts is charged the images you asked for at that per-image
+  rate, never above the hold; where the model publishes no per-image rate,
+  the hold is released and nothing is charged.
 - A speech request holds the characters of `input` at the per-million rate.
 - A transcription or translation holds whichever is larger of the `duration`
   you declare and an estimate from the file's size, and settles on the seconds
@@ -52,7 +55,10 @@ provider's rate with nothing added.
 
 A request for a model with no published rate in the unit it needs is refused
 with HTTP 503 and the code `model_not_priceable` rather than served free or at
-a guessed price. The multipart doors share the eight MiB body cap every
+a guessed price, carrying `Retry-After` because only pricing the model clears
+it. A request naming a `size` or `quality` the model has no price for is
+refused with HTTP 400 and the same code, with `param` naming the field and the
+message listing the priced values. The multipart doors share the eight MiB body cap every
 endpoint has.
 
 Only the account that created a video job can read it, fetch its content or
