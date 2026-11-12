@@ -22,6 +22,7 @@
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import Ajv from 'ajv';
 import {
   PRIVATE_PATH_PREFIXES,
   PRODUCTION_SERVER,
@@ -235,6 +236,7 @@ function deepMerge(base, patch) {
 // produced, which is why --check runs the same function on the committed file.
 
 function auditArtifact(artifact, report) {
+  auditUnitPricedModel(artifact, report);
   const pathNames = Object.keys(artifact.paths ?? {});
 
   if (pathNames.length === 0) {
@@ -304,6 +306,34 @@ function auditArtifact(artifact, report) {
         }
       }
     }
+  }
+}
+
+// A unit-priced model can appear without any token prices. Validate the actual
+// published schema, including its references, instead of checking one keyword.
+function auditUnitPricedModel(artifact, report) {
+  const fixture = {
+    model_id: 'example/image',
+    display_name: 'Example image model',
+    author: 'Example',
+    endpoint_families: ['image_generations'],
+    provider_display_names: ['Example'],
+    capabilities: { audio: 'unknown', json_mode: 'unknown', streaming: 'unknown', tools: 'unknown', vision: 'unknown' },
+  };
+  try {
+    const validate = new Ajv({ strict: false, allErrors: true }).compile({
+      components: { schemas: artifact.components?.schemas ?? {} },
+      $ref: '#/components/schemas/ModelExtension',
+    });
+    if (!validate(fixture)) {
+      report.fail('ModelExtension', `unit-priced model without token rates must validate: ${JSON.stringify(validate.errors)}`);
+    }
+    const { model_id: omitted, ...missingRequired } = fixture;
+    if (validate(missingRequired)) {
+      report.fail('ModelExtension', 'the model_id requirement must still be enforced.');
+    }
+  } catch (error) {
+    report.fail('ModelExtension', `could not validate unit-priced model: ${error.message}`);
   }
 }
 

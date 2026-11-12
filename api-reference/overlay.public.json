@@ -548,7 +548,6 @@
           "model_id",
           "display_name",
           "author",
-          "input_rate_thousandths",
           "endpoint_families",
           "provider_display_names",
           "capabilities"
@@ -575,11 +574,11 @@
           },
           "input_rate_thousandths": {
             "type": "integer",
-            "description": "The provider's own list price for prompt tokens, in thousandths of the currency unit per million tokens. Nothing this platform charges on top is folded in: the fee is taken when credit is bought, and a request then costs the provider's price."
+            "description": "The provider's own list price for prompt tokens, in thousandths of the currency unit per million tokens. A model priced only per unit, such as an image, audio, or video model, omits token rate fields. Nothing this platform charges on top is folded in: the fee is taken when credit is bought, and a request then costs the provider's price."
           },
           "output_rate_thousandths": {
             "type": "integer",
-            "description": "The same unit, for completion tokens. Absent when the model publishes no separate output rate."
+            "description": "The same unit, for completion tokens. Absent when the model publishes no separate output rate or is priced only per unit."
           },
           "currency_code": {
             "type": "string",
