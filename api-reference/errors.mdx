@@ -104,8 +104,8 @@ produced before it was cut and no more.
 
 ### Rate limits and spend refusals
 
-Three codes share `429`, and they call for different behaviour. Read the code:
-the status alone does not tell you which of the three you met.
+Four codes share `429`, and they call for different behaviour. Read the code:
+the status alone does not tell you which refusal you met.
 
 - `rate_limit_exceeded` is your key sending too many requests. The response
   carries `Retry-After` in seconds. Back off and retry.
@@ -119,9 +119,11 @@ the status alone does not tell you which of the three you met.
 - `upstream_rate_limited` is the model's provider rate-limiting the call. It is
   not your key's allowance and not your account's cap, nothing about the request
   is wrong, and nothing is charged. It carries `Retry-After` in whole seconds.
+- `provider_key_refused` means the provider rate-limited a request using your
+  own key. Back off and retry. See [Provider key refusals](#provider-key-refusals).
 
-`Retry-After` is present on all three `429` codes and is not sent on other
-statuses. Do not infer a retry delay from its absence. It was **not** sent on
+`Retry-After` is present on the first three codes above, but not on
+`provider_key_refused`. Do not infer a retry delay from its absence. It was **not** sent on
 `spend_rate_exceeded` until 2026-09-16, when the wait moved out of the English
 message and into a header; a client written against the older behaviour, which
 read the sentence or backed off on a fixed timer, keeps working unchanged.
