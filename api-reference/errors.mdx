@@ -94,7 +94,7 @@ separates causes sharing a status.
 | 503 | `api_error` | `no_provider_configured` | We are not currently configured to serve this. Retry later. |
 | 503 | `server_error` | `paused_by_owner` | Somebody with access to this account has paused it. Retrying on a timer will not clear it; the pause has to be lifted. |
 | 503 | `server_error` | `balance_unavailable` | We could not read the account's balance, so the request was refused rather than served unmetered. Ours. Retry shortly. |
-| 503 | `server_error` | `model_not_priceable` | No credit could be held for the call. Usually ours, and clears on its own: retry shortly. One case is not, and the message says so, because it is the request rather than the model that is missing something: a request naming no output ceiling, for a model that publishes no maximum output either. Send `max_tokens` and it is admitted. See [Request parameters](/api-reference/parameters). |
+| 503 | `server_error` | `model_not_priceable` | No credit could be held for the call. Usually ours, and clears on its own: retry shortly. Two cases are not, and the message says so, because it is the request rather than the model that is missing something. One is a request naming no output ceiling, for a model that publishes no maximum output either. Send `max_tokens` and it is admitted. See [Request parameters](/api-reference/parameters). The other is a video create naming a size with no published rate: do not retry it; send a size the model publishes. See [Videos](/features/videos). |
 | 503 | `server_error` | `model_pricing_unreadable` | As above, from the other direction: the published rate for the model could not be read. Ours. Retry shortly. |
 | 503 | `api_error` | `provider_account_unavailable` | A provider has restricted this workspace, so the request was not sent to that provider. Nothing was sent and nothing was charged. The message reads `"<model>" cannot be served right now: <provider> has restricted this workspace, so requests from it are not sent to <provider>. Nothing was sent and nothing was charged. Call a model from another provider, or contact support about the <provider> restriction.`, where `<provider>` is the provider's name. A request that names a profile gets the same refusal worded for the profile: `"<profile>" could not be routed: <provider> has restricted this workspace, and every model it names that could be served runs on <provider>.` followed by the same two sentences. |
 | 504 | `server_error` | `request_deadline_exceeded` | The request ran past the 540 second limit and was terminated. Split the work, or stream the response. |
@@ -105,8 +105,8 @@ produced before it was cut and no more.
 
 ### Rate limits and spend refusals
 
-Three codes share `429`, and they call for different behaviour. Read the code:
-the status alone does not tell you which of the three you met.
+Four codes share `429`, and they call for different behaviour. Read the code:
+the status alone does not tell you which refusal you met.
 
 - `rate_limit_exceeded` is your key sending too many requests. The response
   carries `Retry-After` in seconds. Back off and retry.
@@ -120,9 +120,11 @@ the status alone does not tell you which of the three you met.
 - `upstream_rate_limited` is the model's provider rate-limiting the call. It is
   not your key's allowance and not your account's cap, nothing about the request
   is wrong, and nothing is charged. It carries `Retry-After` in whole seconds.
+- `provider_key_refused` means the provider rate-limited a request using your
+  own key. Back off and retry. See [Provider key refusals](#provider-key-refusals).
 
-`Retry-After` is present on all three `429` codes and is not sent on other
-statuses. Do not infer a retry delay from its absence. It was **not** sent on
+`Retry-After` is present on the first three codes above, but not on
+`provider_key_refused`. Do not infer a retry delay from its absence. It was **not** sent on
 `spend_rate_exceeded` until 2026-09-16, when the wait moved out of the English
 message and into a header; a client written against the older behaviour, which
 read the sentence or backed off on a fixed timer, keeps working unchanged.

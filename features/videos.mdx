@@ -36,9 +36,9 @@ curl https://api.hopscotchlabs.ai/v1/videos \
   -H "Authorization: Bearer [REDACTED]" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "openai/sora-2",
+    "model": "byteplus/seedance-1-0-pro-fast-251015",
     "prompt": "A paper boat drifting down a rainy street.",
-    "seconds": "8",
+    "seconds": "5",
     "size": "1280x720"
   }'
 ```
@@ -52,9 +52,9 @@ client = OpenAI(
 )
 
 job = client.videos.create(
-    model="openai/sora-2",
+    model="byteplus/seedance-1-0-pro-fast-251015",
     prompt="A paper boat drifting down a rainy street.",
-    seconds="8",
+    seconds="5",
     size="1280x720",
 )
 print(job.id, job.status)
@@ -69,9 +69,9 @@ const client = new OpenAI({
 });
 
 const job = await client.videos.create({
-  model: "openai/sora-2",
+  model: "byteplus/seedance-1-0-pro-fast-251015",
   prompt: "A paper boat drifting down a rainy street.",
-  seconds: "8",
+  seconds: "5",
   size: "1280x720",
 });
 console.log(job.id, job.status);
@@ -84,9 +84,9 @@ A multipart create names the same fields, with the image as a file part:
 ```bash curl
 curl https://api.hopscotchlabs.ai/v1/videos \
   -H "Authorization: Bearer [REDACTED]" \
-  -F "model=minimax/MiniMax-Hailuo-2.3-Fast" \
-  -F "seconds=6" \
-  -F "size=1366x768" \
+  -F "model=byteplus/seedance-1-0-pro-fast-251015" \
+  -F "seconds=5" \
+  -F "size=1280x720" \
   -F "input_reference=@frame.png;type=image/png"
 ```
 
@@ -108,6 +108,9 @@ The five fields:
 - `size` is required, as `WIDTHxHEIGHT` in pixels, such as `"1280x720"`. It
   must have a per-second rate on the model; a size without one is refused
   before anything is held, and so is a size the model does not publish.
+  That refusal answers 503 with the code `model_not_priceable`: an
+  unpublished size, such as `1366x768` on a Seedance model, is not a fault
+  that clears, so do not retry it. Send a size the model publishes.
 - `input_reference` is a reference image, multipart only. A model that
   renders from an image only requires it; a model that renders from text
   only refuses it. Each model accepts only the image forms and sizes it
@@ -122,25 +125,27 @@ reads as what it is rather than as a fault on this platform.
 Match the model half of your pinned id against the first column.
 `GET /v1/models` lists the exact strings this key can call, and that list is
 authoritative where this table and the catalog disagree. Unknown means the
-serving code states no rule; the provider's own refusal arrives relayed.
+serving code states no rule; the provider's own refusal arrives relayed. A
+row marked not currently served names a model no live id serves today, so
+check the catalog before calling one.
 
 | Model | Seconds | Size | Prompt | Reference image | Sound |
 |---|---|---|---|---|---|
-| `Sora 2` (`openai/sora-2`) | 1 or more, 4 when absent | Required | Unknown | Unknown | Unknown |
+| `Sora 2` (`openai-main/sora-2`), not currently served | 1 or more, 4 when absent | Required | Unknown | Unknown | Unknown |
 | `Seedance 1.0` (any other id containing `seedance-`) | 2 to 12 | `854x480`, `480x854`, `1280x720`, `720x1280`, `1920x1080`, `1080x1920` | Required | Optional image | Silent |
 | `Seedance 1.5 Pro` (id containing `seedance-1-5`) | 4 to 12 | Same six as `Seedance 1.0` | Required | Optional image | With sound |
 | `Seedance 2.0` (id containing `seedance-2-0`) | 4 to 15 | Same six, plus `3840x2160` and `2160x3840` | Required | Optional image | With sound |
 | `Seedance 2.0` fast and mini (id containing `seedance-2-0-fast` or `seedance-2-0-mini`) | 4 to 15 | `854x480`, `480x854`, `1280x720`, `720x1280` | Required | Optional image | With sound |
 | `Seedance 2.5` (id containing `seedance-2-5`) | 4 to 30 | Same six as `Seedance 1.0` | Required | Optional image | With sound |
-| `Hailuo 02` and `2.3` (id starting with `MiniMax-Hailuo-`) | 6 or 10 at `1366x768`, 6 at `1920x1080`; required | `1366x768`, `1920x1080` | Required unless an image is uploaded; 2000 characters at most | Optional first frame; required for `MiniMax-Hailuo-2.3-Fast` | Unknown |
-| `Wan 2.2` text to video (`wan2.2-t2v-plus`) | Exactly 5; required | `832x480`, `480x832`, `624x624`, `1920x1080`, `1080x1920`, `1440x1440`, `1632x1248`, `1248x1632` | Required | Refused | Unknown |
-| `Wan 2.2` image to video (`wan2.2-i2v-plus`) | Exactly 5; required | Same eight as the text to video model | Required | Required: PNG, JPEG or WebP, uploads totalling at most 8 MiB | Unknown |
-| `Kling v3 pro` | 3 to 15, 4 when absent | `1280x720`, `720x1280`, `960x960` | Required; 2500 characters at most | Refused | Silent |
+| `Hailuo 02` and `2.3` (id starting with `MiniMax-Hailuo-`), not currently served | 6 or 10 at `1366x768`, 6 at `1920x1080`; required | `1366x768`, `1920x1080` | Required unless an image is uploaded; 2000 characters at most | Optional first frame; required for `MiniMax-Hailuo-2.3-Fast` | Unknown |
+| `Wan 2.2` text to video (`wan2.2-t2v-plus`), not currently served | Exactly 5; required | `832x480`, `480x832`, `624x624`, `1920x1080`, `1080x1920`, `1440x1440`, `1632x1248`, `1248x1632` | Required | Refused | Unknown |
+| `Wan 2.2` image to video (`wan2.2-i2v-plus`), not currently served | Exactly 5; required | Same eight as the text to video model | Required | Required: PNG, JPEG or WebP, uploads totalling at most 8 MiB | Unknown |
+| `Kling v3 pro`, not currently served | 3 to 15, 4 when absent | `1280x720`, `720x1280`, `960x960` | Required; 2500 characters at most | Refused | Silent |
 | `Wan v2.6` | 5, 10 or 15; required | `1280x720`, `720x1280`, `720x720`, `960x720`, `720x960`, `1920x1080`, `1080x1920`, `1080x1080`, `1440x1080`, `1080x1440` | Required | Refused | Silent |
 | `Veo` | 1 or more, 4 when absent | `1280x720`, `720x1280`, `1920x1080`, `1080x1920` | Required | Optional image | Unknown |
-| `Luma Ray` (`ray-3.2`) | 5 or 10; required | Any size whose short edge is 540, 720 or 1080 and whose shape is `1:1`, `4:3`, `3:4`, `16:9`, `9:16` or `21:9` | Required | Refused | Unknown |
-| `Runway Gen 4 Turbo` (`gen4_turbo`) | 2 to 10 | `1280x720`, `720x1280`, `1104x832`, `832x1104`, `960x960`, `1584x672` | Optional | Required image, at most 5 MiB as a data URI | Unknown |
-| `Runway Gen 4.5` (`gen4.5`) | 2 to 10 | Same six for image to video, plus `1280x720` and `720x1280` for text to video | Required; 1000 characters at most | Optional image, at most 5 MiB as a data URI | Unknown |
+| `Luma Ray` (`ray-3.2`), not currently served | 5 or 10; required | Any size whose short edge is 540, 720 or 1080 and whose shape is `1:1`, `4:3`, `3:4`, `16:9`, `9:16` or `21:9` | Required | Refused | Unknown |
+| `Runway Gen 4 Turbo` (`gen4_turbo`), not currently served | 2 to 10 | `1280x720`, `720x1280`, `1104x832`, `832x1104`, `960x960`, `1584x672` | Optional | Required image, at most 5 MiB as a data URI | Unknown |
+| `Runway Gen 4.5` (`gen4.5`), not currently served | 2 to 10 | Same six for image to video, plus `1280x720` and `720x1280` for text to video | Required; 1000 characters at most | Optional image, at most 5 MiB as a data URI | Unknown |
 
 Where a model requires a duration, omitting `seconds` does not fall back to
 4: the create is refused 400 and nothing is held.
@@ -198,10 +203,12 @@ curl https://api.hopscotchlabs.ai/v1/videos/video_123/content \
   -o video.mp4
 ```
 
-The content door streams the provider's bytes with their content type,
-length and disposition. The query string is forwarded, so a variant rides on
-the URL. This platform stores no video, so the provider's own download
-window applies. Asking for content before the job completes answers 409 with
+The content door streams the provider's bytes with their content type.
+The query string is forwarded, so a variant rides on the URL. This platform
+stores no video, so the provider's own download window applies. Do not
+expect length or disposition headers: the observed answer is 200
+`video/mp4`, chunked, with no `Content-Length` and no `Content-Disposition`.
+Asking for content before the job completes answers 409 with
 the code `video_not_completed`.
 
 To cancel, delete the job:
@@ -225,12 +232,15 @@ supplies the expiring `video_url` instead, but the control plane strips
 every external URL from every job object before answering, a behavior the
 video-doors suite pins, so the handler wins and the specification sentence
 is stale. The effect is that the bytes of a finished `Wan 2.2` job cannot be
-fetched through this API today; its poll still reports the job.
+fetched through this API today; its poll still reports the job. A
+`deepinfra/p-video` job is a narrower exception on the delete alone: the
+provider cannot cancel, so its delete answers 405 with the type
+`invalid_request_error`, and the job keeps running and settles normally.
 
 ## Refusals
 
 A create for a model the catalog does not list answers 404
-`model_not_available`, like any other door. A follow-up for a job this
+`model_not_found`, like any other door. A follow-up for a job this
 account did not create answers 404 `video_not_found`. Content for a job that
 is not completed answers 409 `video_not_completed`. A provider that cannot
 be reached answers 502 `provider_unavailable`, and an answer that cannot be
