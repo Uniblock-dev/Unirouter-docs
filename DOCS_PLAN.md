@@ -555,6 +555,15 @@ The editorial fence, enforced by the banned-content linter (§16). **Never publi
 
 ## 14. Known drift and open questions that gate docs work
 
+**LLM-512: Short model name availability is unknown.** This site's earlier example asserted that
+`anthropic/opus` resolves, while the reported live chat and model-detail calls returned `404`. The
+request handler on source `origin/main` resolves an alias only when the catalog holds a matching name
+for that provider; it does not establish which aliases production currently holds. The reported live
+result wins for that example. Unauthenticated checks of both endpoints returned `401`, so an
+authenticated production transcript and the current catalog entry are needed to establish its present
+behavior. The models page directs readers to listed ids and does not promise that example resolves.
+Record this finding in the internal findings register for an owner to verify.
+
 Tracked here so writers meet them where the work is; each names its unblock condition.
 
 1. **RESOLVED (2026-09-17): `x-hopscotch-served-by` ships.** This item recorded Story 2.13 as inverted against its own criteria, with `x-uniblock-provider` set and the required served-by header not. The served-by header has been set since 2026-09-05 (PR #533, filed against Story 13.5), it is written by the control plane rather than forwarded from the fork, it is in `EXPOSED_HEADERS` so a cross-origin browser can read it, and it is on every served reply, streamed or not, which is the only way a customer on a routing profile can tell which member answered. It is now a row on the headers page and on the compatibility page. The tracker still reads 2.13 `backlog`, so the routing page still waits: what this item unblocks is the header row, not 2.13's own page. Recorded internally as SF-182.
