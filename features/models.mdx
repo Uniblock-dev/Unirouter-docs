@@ -6,8 +6,7 @@ gates: ["8.6", "8.7", "8.8", "8.40", "13.9", "18.58", "18.87", "22.1"]
 type: concept
 ---
 
-You name a model in the `model` field of a request, as you would with OpenAI. The name says which
-provider serves it, so one key and one endpoint reach models from more than one place.
+Name a model in the request's `model` field. Its name identifies the provider.
 
 ## Model ids
 
@@ -22,16 +21,18 @@ publishes as `openai/gpt-oss-120b` is `groq/gpt-oss-120b` here. An id with no na
 `anthropic/claude-opus-4-5`. Each name is fixed the first time we publish that model on that provider, so an
 id in your code stays put.
 
-You choose the provider, and we never substitute another. A model carried by two providers is two ids with
-two prices.
+You choose the provider. A model carried by two providers has two ids and prices.
 
 The `model` field accepts three forms:
 
 | Form | What it does |
 |---|---|
-| `provider/model` | That model from that provider. If it cannot serve the request, the request fails rather than moving to another host. The half after the slash may be the pinned name or a shorter name we hold, such as `anthropic/opus`, which is served and answered as the pinned id. A name we do not hold is refused with a `404` naming the provider and the id. |
+| `provider/model` | That model from that provider. If it cannot serve the request, the request fails rather than moving to another host. Use an `id` from the model list for the pinned name. A shorter name resolves only if the catalog holds it for that provider; otherwise it can return `404` `model_not_found`. |
 | `profile/{identifier}` | A [routing profile](/features/routing-profiles) you built. |
 | `unirouter/auto` | Whichever route you made your default, or a list we publish for your cost tier. `hopscotch/auto` is a second spelling. |
+
+This page previously said `anthropic/opus` resolves to a pinned id; a live request reportedly returned
+`404` `model_not_found`. The request result determines whether a shorter name resolves.
 
 A bare id such as `gpt-4o-mini`, or a bare `opus`, is refused with `400` and the code `model_id_not_pinned`.
 Ask for ids rather than building them by hand.
