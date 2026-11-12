@@ -132,7 +132,7 @@
     "POST /v1/realtime/client_secrets": "e88e4856f8182c66",
     "POST /v1/responses": "bb0d2e840c104fb3",
     "POST /v1/systemone": "fe50fff54d61a534",
-    "POST /v1/videos": "7162f81d3a6965dd",
+    "POST /v1/videos": "c02f175f71b5984d",
     "PUT /v1/organization/workload-insights/profiles/{profileId}/optimization": "59c131cd485d10ff",
     "PUT /v1/organization/workload-insights/tasks/{id}/outcome": "2b833ed8769854b4"
   }

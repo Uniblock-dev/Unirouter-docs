@@ -100,6 +100,20 @@
           "200": {
             "description": "The completion. A response that is not streamed carries the provider's token counts in its own `usage` object. Its `model` field echoes the slug you asked for rather than the provider's internal name, except in three cases that are returned as the provider sent them: a streamed reply, whose frames are passed through unchanged; a request naming a routing profile, which names a chain rather than one model; and a successful body carrying no string `model` field at all.\n\nWhen `stream` is true the body is `text/event-stream` instead, and the counts arrive on a `:x-hopscotch-usage` comment line immediately before `data: [DONE]`; the server-sent events specification requires parsers to ignore comment lines, so an SDK never sees it.",
             "headers": {
+              "x-hopscotch-redirected-from": {
+                "description": "Present only when a sunset redirect served this request. The retiring model id requested, including a profile member redirected to its successor.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/retiring-model"
+                }
+              },
+              "x-hopscotch-served-model": {
+                "description": "The successor model that actually answered a sunset redirect, priced and admitted under that model. Present for JSON and streamed replies.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/successor-model"
+                }
+              },
               "x-hopscotch-served-by": {
                 "description": "The full id, \"{provider}/{model}\", of the model that actually answered: the pinned id when the request named one directly, or the routing-profile chain member that served when the request named a profile.",
                 "schema": {
@@ -119,6 +133,14 @@
                 },
                 "$ref": "#/components/headers/ServedVia"
               },
+              "x-hopscotch-cache-status": {
+                "description": "What the response cache did for this request: HIT served an exact-match stored entry with no provider call, HIT:semantic served a near-duplicate stored entry for a separately opted-in workspace on chat completions with no provider call, MISS served the provider and stored the reply where eligible, and BYPASS with a reason sat the cache out (not_opted_in, skip, model_ineligible, provider_ineligible, model_unknown, model_unreadable, nondeterministic, zdr, ttl_unreadable, an unservable reply class, and the rest). Absent while the response cache flag is off, where the reply reads exactly as before the cache.",
+                "schema": {
+                  "type": "string",
+                  "example": "HIT"
+                },
+                "$ref": "#/components/headers/CacheStatus"
+              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               },
@@ -130,9 +152,6 @@
               },
               "x-hopscotch-retry-attempt-count": {
                 "$ref": "#/components/headers/RetryAttemptCount"
-              },
-              "x-hopscotch-cache-status": {
-                "$ref": "#/components/headers/CacheStatus"
               },
               "x-hopscotch-trace-id": {
                 "$ref": "#/components/headers/TraceId"
@@ -692,6 +711,20 @@
           "200": {
             "description": "The completion, in OpenAI's text completion format as the provider produced it. A response that is not streamed carries the provider's token counts in its own `usage` object.\n\nWhen `stream` is true the body is `text/event-stream` instead, in OpenAI's own chunk format, ending with `data: [DONE]`.",
             "headers": {
+              "x-hopscotch-redirected-from": {
+                "description": "Present only when a sunset redirect served this request. The retiring model id requested, including a profile member redirected to its successor.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/retiring-model"
+                }
+              },
+              "x-hopscotch-served-model": {
+                "description": "The successor model that actually answered a sunset redirect, priced and admitted under that model. Present for JSON and streamed replies.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/successor-model"
+                }
+              },
               "x-hopscotch-served-by": {
                 "description": "The full id, \"{provider}/{model}\", of the model that actually answered: the pinned id when the request named one directly, or the routing-profile chain member that served when the request named a profile.",
                 "schema": {
@@ -711,6 +744,14 @@
                 },
                 "$ref": "#/components/headers/ServedVia"
               },
+              "x-hopscotch-cache-status": {
+                "description": "What the response cache did for this request: HIT served an exact-match stored entry with no provider call, HIT:semantic served a near-duplicate stored entry for a separately opted-in workspace on chat completions with no provider call, MISS served the provider and stored the reply where eligible, and BYPASS with a reason sat the cache out (not_opted_in, skip, model_ineligible, provider_ineligible, model_unknown, model_unreadable, nondeterministic, zdr, ttl_unreadable, an unservable reply class, and the rest). Absent while the response cache flag is off, where the reply reads exactly as before the cache.",
+                "schema": {
+                  "type": "string",
+                  "example": "HIT"
+                },
+                "$ref": "#/components/headers/CacheStatus"
+              },
               "x-hopscotch-request-id": {
                 "$ref": "#/components/headers/RequestId"
               },
@@ -722,9 +763,6 @@
               },
               "x-hopscotch-retry-attempt-count": {
                 "$ref": "#/components/headers/RetryAttemptCount"
-              },
-              "x-hopscotch-cache-status": {
-                "$ref": "#/components/headers/CacheStatus"
               },
               "x-hopscotch-trace-id": {
                 "$ref": "#/components/headers/TraceId"
@@ -1786,6 +1824,20 @@
           "200": {
             "description": "The model response, in the Responses format, forwarded as the provider sent it.\n\nWhen `stream` is true the body is `text/event-stream` instead, and the token counts arrive on a `:x-hopscotch-usage` comment line immediately before the stream ends; the server-sent events specification requires parsers to ignore comment lines, so an SDK never sees it.",
             "headers": {
+              "x-hopscotch-redirected-from": {
+                "description": "Present only when a sunset redirect served this request. The retiring model id requested, including a profile member redirected to its successor.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/retiring-model"
+                }
+              },
+              "x-hopscotch-served-model": {
+                "description": "The successor model that actually answered a sunset redirect, priced and admitted under that model. Present for JSON and streamed replies.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/successor-model"
+                }
+              },
               "x-hopscotch-served-by": {
                 "description": "The full id, \"{provider}/{model}\", of the model that actually answered: the pinned id when the request named one directly, or the routing-profile chain member that served when the request named a profile.",
                 "schema": {
@@ -2594,6 +2646,20 @@
           "200": {
             "description": "The message, in Anthropic's format as the provider produced it: a `content` array, a `stop_reason`, and a `usage` object with `input_tokens` and `output_tokens`.\n\nWhen `stream` is true the body is `text/event-stream` instead, passed through in Anthropic's own event format.",
             "headers": {
+              "x-hopscotch-redirected-from": {
+                "description": "Present only when a sunset redirect served this request. The retiring model id requested, including a profile member redirected to its successor.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/retiring-model"
+                }
+              },
+              "x-hopscotch-served-model": {
+                "description": "The successor model that actually answered a sunset redirect, priced and admitted under that model. Present for JSON and streamed replies.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/successor-model"
+                }
+              },
               "x-hopscotch-served-by": {
                 "description": "The full id, \"{provider}/{model}\", of the model that actually answered: the pinned id when the request named one directly, or the routing-profile chain member that served when the request named a profile.",
                 "schema": {
@@ -3189,6 +3255,11 @@
                     "description": "The resolution, such as `\"1280x720\"`. Required: a create that names none is refused before anything is held. It must have a per-second rate on the model; one without is refused before anything is held. A create naming a size the model does not publish is refused 400 before anything is held.",
                     "example": "1280x720"
                   },
+                  "generate_audio": {
+                    "type": "boolean",
+                    "description": "Whether the render carries generated audio. Default true. Honored on Seedance 2.0 only (including fast and mini): an explicit false renders a silent video. Silently ignored on every other generation: 1.5 pro and 2.5 always render with audio, 1.0 renders none, whatever the create says.",
+                    "example": false
+                  },
                   "input_reference": {
                     "type": "string",
                     "format": "binary",
@@ -3232,6 +3303,11 @@
                     "description": "The resolution, such as `\"1280x720\"`. Required: a create that names none is refused before anything is held. It must have a per-second rate on the model; one without is refused before anything is held. A create naming a size the model does not publish is refused 400 before anything is held.",
                     "example": "1280x720"
                   },
+                  "generate_audio": {
+                    "type": "boolean",
+                    "description": "Whether the render carries generated audio. Default true. Honored on Seedance 2.0 only (including fast and mini): an explicit false renders a silent video. Silently ignored on every other generation: 1.5 pro and 2.5 always render with audio, 1.0 renders none, whatever the create says.",
+                    "example": false
+                  },
                   "input_reference": {
                     "type": "string",
                     "format": "binary",
@@ -3251,6 +3327,20 @@
           "200": {
             "description": "The provider's video job object (id, status, progress), with external URLs omitted. A recorded job is charged when a terminal status is observed. If the provider returns no readable job id or an id already recorded for that provider, the full hold is charged immediately and usage is recorded under this create request's unique request id.",
             "headers": {
+              "x-hopscotch-redirected-from": {
+                "description": "Present only when a sunset redirect served this request. The retiring model id requested, including a profile member redirected to its successor.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/retiring-model"
+                }
+              },
+              "x-hopscotch-served-model": {
+                "description": "The successor model that actually answered a sunset redirect, priced and admitted under that model. Present for JSON and streamed replies.",
+                "schema": {
+                  "type": "string",
+                  "example": "openai/successor-model"
+                }
+              },
               "x-hopscotch-served-by": {
                 "description": "The full id, \"{provider}/{model}\", of the model that actually answered: the pinned id when the request named one directly, or the routing-profile chain member that served when the request named a profile.",
                 "schema": {
@@ -3287,20 +3377,6 @@
               },
               "x-hopscotch-trace-id": {
                 "$ref": "#/components/headers/TraceId"
-              },
-              "x-hopscotch-redirected-from": {
-                "description": "Present only when a sunset redirect served this request. The retiring model id requested, including a profile member redirected to its successor.",
-                "schema": {
-                  "type": "string",
-                  "example": "openai/retiring-model"
-                }
-              },
-              "x-hopscotch-served-model": {
-                "description": "The successor model that actually answered a sunset redirect, priced and admitted under that model. Present for JSON and streamed replies.",
-                "schema": {
-                  "type": "string",
-                  "example": "openai/successor-model"
-                }
               }
             },
             "content": {

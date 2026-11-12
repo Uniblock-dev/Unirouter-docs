@@ -84,7 +84,9 @@ and lifting takes effect on the next request.
 ## Spend rate cap
 
 The spend rate cap limits how much credit may be **held** per rolling 60 seconds.
-The default is 5000 minor units. Over it, requests are refused with HTTP 429 and code
+A new account starts at 100000 minor units (1000.00). An account opened before
+that default was raised keeps the cap it already holds, which is 5000 minor units
+(50.00) unless somebody changed it. Over the cap, requests are refused with HTTP 429 and code
 `spend_rate_exceeded`, carrying `Retry-After` in whole seconds, and they are admitted
 again within 60 seconds with nothing for you to do.
 
@@ -110,8 +112,8 @@ Two consequences follow:
 - A minute of ordinary traffic that all completed still counts against the ceiling
   for a minute afterwards.
 - On an expensive model, requests that omit `max_tokens` hold the model's whole
-  published maximum output. The cap can bind well below 50.00 a minute of real
-  spending, because the credit it counts is credit you were never going to spend.
+  published maximum output. The cap can bind well below its own figure in real
+  spending a minute, because the credit it counts is credit you were never going to spend.
 
 The refusal's message says "reserved", which means held. The cap clears 60 seconds
 after the earliest hold counted, and `Retry-After` is computed from that same hold.

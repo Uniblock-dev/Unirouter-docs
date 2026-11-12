@@ -157,9 +157,9 @@ claims:
     status: shipped
 
   - id: spend-cap-default
-    value: "5000"
-    means: "The default account spend rate cap, in minor units of reserved estimated maximums per rolling 60 seconds."
-    source: "_bmad-output/product/decisions/epic-4-spend-rate-cap-2026-08-19.md; services/control-plane/src/money/balance.ts"
+    value: "100000"
+    means: "The default spend rate cap a new account starts at, in minor units of reserved estimated maximums per rolling 60 seconds."
+    source: "services/control-plane/src/money/durableObjects/accountBalance/limits.ts (DEFAULT_SPEND_CAP_MINOR) at Gateway-LLM origin/main 5c3bd73403; _bmad-output/initiative-gateway-llm/decisions/epic-4-spend-rate-cap-2026-08-19.md, amended 2026-11-12"
     status: shipped
     note: >-
       It counts credit HELD, not credit spent. State the lever beside the
@@ -266,8 +266,8 @@ claims:
 
   - id: spend-cap-maximum
     value: "100000"
-    means: "The largest spend rate cap, and the largest low-credit threshold. Both are the same figure in minor units."
-    source: "services/control-plane/src/money/balance.ts (MAX_SPEND_CAP_MINOR, MAX_LOW_CREDIT_THRESHOLD_MINOR)"
+    means: "The largest low-credit threshold, in minor units. It is no longer the largest spend rate cap, which rose to 1000000 on 2026-11-12."
+    source: "services/control-plane/src/money/durableObjects/accountBalance/limits.ts (MAX_LOW_CREDIT_THRESHOLD_MINOR) at Gateway-LLM origin/main 5c3bd73403"
     status: shipped
 
   - id: low-credit-threshold-example-minor
@@ -392,9 +392,27 @@ claims:
     status: shipped
 
   - id: spend-cap-default-decimal
+    value: "1000.00"
+    means: "The default spend rate cap a new account starts at, expressed in dollars rather than minor units."
+    source: "services/control-plane/src/money/durableObjects/accountBalance/limits.ts (DEFAULT_SPEND_CAP_MINOR = 100_000); the same figure as spend-cap-default"
+    status: shipped
+
+  - id: spend-cap-earlier-default
+    value: "5000"
+    means: "The spend rate cap every account opened before the default was raised still stores, in minor units, unless it was changed. Nothing migrates it."
+    source: "_bmad-output/initiative-gateway-llm/decisions/epic-4-spend-rate-cap-2026-08-19.md (amendment of 2026-11-12) at Gateway-LLM origin/main 5c3bd73403"
+    status: shipped
+
+  - id: spend-cap-earlier-default-decimal
     value: "50.00"
-    means: "The default spend rate cap expressed in dollars rather than minor units."
-    source: "services/control-plane/src/money/spendCap.ts; the same figure as spend-cap-default, which is 5000 minor units"
+    means: "The earlier default spend rate cap, expressed in dollars rather than minor units."
+    source: "the same figure as spend-cap-earlier-default"
+    status: shipped
+
+  - id: model-not-priceable-retry-after-seconds
+    value: "3600"
+    means: "The Retry-After a 503 model_not_priceable carries when the model has no usable price."
+    source: "services/control-plane/src/money/flows/admission/reservation.ts (retryAfterSeconds default 3600) at Gateway-LLM origin/main 5c3bd73403"
     status: shipped
 
   - id: spend-cap-minimum-decimal
