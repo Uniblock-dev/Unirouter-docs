@@ -96,7 +96,8 @@ the conversation under our account:
 - `web_search_options`, or a hosted tool the provider charges for per call (web
   search, web fetch, code execution, and on a Gemini model a grounding tool such
   as `google_search`),
-- audio in (an `input_audio` part) or out (`audio`, or audio in `modalities`),
+- audio out (`audio`, or audio in `modalities`), and audio in (an
+  `input_audio` part), except as described below for Gemini chat,
 - a `cache_control` marker with a `1h` ttl,
 - `store: true`, and on `POST /v1/responses` also `previous_response_id`,
   `conversation`, an `item_reference` input item and `background: true`.
@@ -104,6 +105,20 @@ the conversation under our account:
 Each is a `400` with `code` `null` and `param` naming the field, never its value,
 and the message says to remove it or send the request on your own provider key.
 On `POST /v1/responses` an omitted `store` is sent to the provider as `false`.
+
+**Audio in on a Gemini chat completion.** `POST /v1/chat/completions` accepts
+`input_audio` parts on the platform's own keys when the request goes straight to
+a Gemini model on Google AI Studio or Vertex AI: no routing profile, no
+fallback to another provider, and a model whose published prices cover text,
+cached text, audio and cached audio input in every tier and which publishes a
+context window. Send each clip as a `messages[].content[]` part with `type`
+`input_audio` and `input_audio` holding base64 `data` and a `format` such as
+`wav`. Credit is held for the model's whole published input window at its
+highest input rate, plus bounded output, and the charge settles on the audio
+tokens the provider reports. If the provider never reports them, including on a
+stream that stops early, the whole hold is returned: no charge is estimated
+from the audio's size or from the input window.
+Audio sent to Gemini as an `image_url`, and audio output, are still refused.
 
 **A request served on your own provider key keeps every one of them** and goes
 out as you sent it, because the provider bills and stores it against your own
