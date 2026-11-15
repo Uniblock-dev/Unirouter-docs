@@ -1,0 +1,139 @@
+---
+title: "Gemini on Vertex"
+description: "Call Vertex Gemini models with the Hopscotch API, read streamed text and generated images, and check parameters and charges."
+status: write-now
+gates: []
+type: guide
+---
+
+Use your Hopscotch API key and a `vertex-ai/` model id from the [model catalog](/features/models).
+The examples below use the customer API and your workspace's normal credit balance.
+
+## How to
+
+### Check the model and its parameters
+
+Read `GET /v1/models` for the ids available to your key, then look up the exact id:
+
+```bash
+curl https://api.hopscotchlabs.ai/v1/models/vertex-ai/gemini-3.8-flash \
+  -H "Authorization: Bearer ub_live_YOUR_KEY_HERE"
+```
+
+Check the detail's supported endpoints and current prices before choosing an example.
+`uniblock.parameters` contains parameter bounds and defaults where recorded.
+`uniblock.supported_parameters` contains published parameter names, with known refusals removed.
+An empty list means no publishable declaration is available; it does not establish that every
+parameter is unsupported. A listed parameter is not proof that every value works on every endpoint.
+See [Request parameters](/api-reference/parameters#the-parameters-a-given-model-takes).
+
+For Gemini 3.8 Flash, use `reasoning_effort: "low"`, `"medium"` or `"high"` when choosing a thinking level.
+Google does not support `temperature`, `top_p`, `top_k`, candidate count or frequency and presence
+penalties on this model. Leave those controls out, including defaults your client adds automatically.
+The [Google model guide](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/guides/gemini-3-8-flash)
+describes these restrictions.
+
+### Send a text request
+
+```bash curl
+curl https://api.hopscotchlabs.ai/v1/chat/completions \
+  -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "vertex-ai/gemini-3.8-flash",
+    "messages": [{"role": "user", "content": "Reply with exactly the text VERTEX_OK."}],
+    "max_tokens": 1024,
+    "reasoning_effort": "low",
+    "stream": false
+  }'
+```
+
+Read text from `choices[0].message.content`. Preserve `x-hopscotch-request-id` from the response
+headers for [usage lookup](/features/usage-lookup). A successful HTTP status alone does not establish
+that the model produced the text or image your application needs; inspect the output and finish reason.
+
+### Stream the response
+
+Send the same body with `stream: true` and `stream_options: {"include_usage": true}`.
+Read text from each `choices[].delta.content`, retain the final usage frame, and consume the stream
+through `data: [DONE]`. A stream can report an error after its HTTP headers have arrived.
+See [Streaming](/features/streaming) for the event format and error handling.
+
+### Generate an image in chat
+
+Choose a model whose catalog entry supports image output. This request uses Gemini 3.1 Flash Image:
+
+```bash
+curl https://api.hopscotchlabs.ai/v1/chat/completions \
+  -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "vertex-ai/gemini-3.1-flash-image",
+    "messages": [{"role": "user", "content": "Generate one simple image: a small blue circle centered on a plain white background. No text."}],
+    "max_tokens": 4096,
+    "modalities": ["text", "image"],
+    "image_config": {"aspect_ratio": "1:1", "image_size": "1K"},
+    "stream": false
+  }'
+```
+
+Read each image from `choices[].message.images[].image_url.url`. The value is a data URL;
+decode the base64 payload after its comma to obtain the image bytes. Text content can be empty
+when an image is present.
+
+For streaming, add the same streaming fields used for text and collect
+`choices[].delta.images[].image_url.url` as well as any text deltas. Rendering only `delta.content`
+will miss the generated image.
+
+### Use the image generation endpoint
+
+For an image-only request, first check that the model publishes the `image_generations` endpoint:
+
+```bash
+curl https://api.hopscotchlabs.ai/v1/images/generations \
+  -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "vertex-ai/gemini-3.1-flash-image",
+    "prompt": "A small blue circle centered on a plain white background. No text.",
+    "n": 1,
+    "size": "1024x1024",
+    "response_format": "b64_json"
+  }'
+```
+
+This endpoint is non-streaming. Decode `data[].b64_json` directly; it does not have the data URL
+prefix used by chat images. Chat's `max_tokens`, `modalities` and `image_config` are not this
+endpoint's request controls. See the [API reference](/api-reference/introduction) for its schema.
+
+### Check usage and the charge
+
+Keep the response's `usage` alongside the request id. Gemini reports reasoning separately from
+candidate output: do not assume that `completion_tokens` includes reasoning. Image and audio
+breakdowns, when reported, appear in the inference response's token detail fields.
+
+Use `GET /v1/usage/{id}` to read the recorded prompt, completion, cache and reasoning counts and
+the customer charge. That lookup does not currently expose separate image and audio token counts.
+Its `charge.amount` and rate revision identify what the request actually cost; multiplying a text
+rate by total tokens does not account for the different token kinds.
+
+The introductory pricing period for Vertex Gemini 3.8 Flash runs through 2026-12-31.
+Use the current catalog prices when budgeting later requests; this guide does not promise an
+automatic price change. Google's [pricing page](https://cloud.google.com/model-garden/pricing)
+describes the introductory period.
+
+### Account for the current image limitation
+
+Nano Banana 2.1 can currently return a successful response with usage but no text or image in the
+customer API, in both streaming and non-streaming requests. Treat that as missing output and inspect
+its usage record before retrying, since it can still incur a charge. Use the Gemini 3.1 Flash Image
+example above when you need the image flow demonstrated here.
+
+For an unavailable or retired model, choose a current id from the catalog instead of constructing a
+new id from its display name. See [Model lifecycle](/features/model-lifecycle) and [Errors](/api-reference/errors).
+
+## Next
+
+- [Request parameters](/api-reference/parameters)
+- [Usage lookup](/features/usage-lookup)
+- [Python SDK](/integrations/openai-sdk-python) and [Node SDK](/integrations/openai-sdk-node)

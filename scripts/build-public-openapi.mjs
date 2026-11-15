@@ -12,6 +12,8 @@
  * Usage:
  *   node scripts/build-public-openapi.mjs --source ../Gateway-LLM
  *   node scripts/build-public-openapi.mjs            (uses the synced local copy)
+ *   node scripts/build-public-openapi.mjs --only-path /v1/chat/completions
+ *                                                     (repeat for each reviewed path)
  *   node scripts/build-public-openapi.mjs --check    (validates the committed
  *                                                     artifact, no source needed)
  *
@@ -30,6 +32,7 @@ import {
   paths,
 } from './lib/paths.mjs';
 import { Report, flag, option } from './lib/report.mjs';
+import { scopedArtifact, selectedPaths } from './lib/scoped-openapi.mjs';
 
 const OVERLAY_HEADER_REF = '#/responseHeaders/';
 const COMPONENT_HEADER_REF = '#/components/headers/';
@@ -57,6 +60,7 @@ const FORBIDDEN_SUBSTRINGS = [
 ];
 
 const report = new Report('build-public-openapi');
+const onlyPaths = selectedPaths(process.argv.slice(2), ['--source'], ['--check']);
 
 const overlay = readJson(paths.overlay, 'overlay');
 
@@ -79,7 +83,11 @@ if (flag('check')) {
     process.exit(process.exitCode ?? 1);
   }
   classifyPaths(base, overlay, report);
-  const artifact = buildArtifact(base, overlay);
+  let artifact = buildArtifact(base, overlay);
+  if (onlyPaths.length) {
+    artifact = scopedArtifact(readJson(paths.publicSpec, 'committed artifact'), artifact, onlyPaths);
+    report.note(`rebuilt only: ${onlyPaths.join(', ')}`);
+  }
   auditArtifact(artifact, report);
   const bytes = `${JSON.stringify(artifact, null, 2)}\n`;
   auditBytes(bytes, report);
