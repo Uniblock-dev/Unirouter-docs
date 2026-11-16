@@ -24,7 +24,9 @@ response = client.chat.completions.create(
 print(response.choices[0].message.content)
 ```
 
-ids are `provider/model`, so the id you send says which provider serves it. A bare model name with no provider is refused rather than routed for you.
+Model ids are `provider/model`, so the id you send says which provider serves it. A bare model name with no provider is refused rather than routed for you.
+
+Credit is prepaid. Requests are charged at the provider's rate, with no markup on top.
 
 <CardGroup cols={1}>
   <Card title="Start with the Quickstart" icon="player-play" href="/get-started/quickstart">
