@@ -62,15 +62,16 @@ validates nothing against the server, so a wrong base URL surfaces on your first
 request rather than at startup. The SDK never asks `GET /v1/models` on its own
 either. It reaches an endpoint only when your code calls the method for it.
 
-**A resource we do not serve raises rather than hangs.** Calling
-`client.images.generate(...)` or `client.audio.speech.create(...)` against this
-base URL reaches a path this API does not serve yet, and the SDK turns the
+**A resource we do not serve raises rather than hangs.** `client.images.generate(...)`
+and `client.audio.speech.create(...)` reach paths this API serves: image and
+audio requests are served and charged like any other request.
+`client.embeddings.create(...)` is not served yet, and the SDK turns that
 `404` into `openai.NotFoundError`. That is worth knowing because it is the one
 shape of failure that looks like a configuration mistake and is not: the base
 URL is right and the endpoint is absent. See
 [OpenAI compatibility](/get-started/migrate-from-openai) for the list that
 serves, which includes `client.completions.create(...)` and
-`client.responses.create(...)`. `client.embeddings.create(...)` is not served yet. A `404` is
+`client.responses.create(...)`. A `404` is
 not in the SDK's retry set, so it fails on the first attempt rather than after
 a backoff.
 
