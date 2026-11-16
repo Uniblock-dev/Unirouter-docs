@@ -7,6 +7,10 @@
  *   node scripts/sync-source-spec.mjs --source ../Gateway-LLM --ref origin/main
  *   node scripts/sync-source-spec.mjs --source ../Gateway-LLM --ref origin/main --write-lock
  *   node scripts/sync-source-spec.mjs --source ../Gateway-LLM --worktree
+ *   node scripts/sync-source-spec.mjs --source ../Gateway-LLM --ref origin/main --write-lock --only-path /v1/chat/completions
+ *
+ * Repeat --only-path to move only reviewed operation hashes. Other lock entries
+ * retain their earlier review point even when the source inventory changed.
  *
  * The spec is read from a git ref in the source checkout, not from its working
  * tree, because a working tree can sit on any branch with any edits. --ref
@@ -42,8 +46,10 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { PUBLIC_PATH_PREFIX, SOURCE_SPEC_RELATIVE, paths } from './lib/paths.mjs';
 import { Report, flag, option } from './lib/report.mjs';
+import { scopedInventory, selectedPaths } from './lib/scoped-openapi.mjs';
 
 const report = new Report('sync-source-spec');
+const onlyPaths = selectedPaths(process.argv.slice(2), ['--source', '--ref'], ['--worktree', '--write-lock']);
 
 const source = option('source');
 if (!source) {
@@ -97,7 +103,11 @@ const previous = existsSync(paths.sourceSpecLock)
   ? JSON.parse(readFileSync(paths.sourceSpecLock, 'utf8'))
   : { operations: {} };
 
-const diff = compare(previous.operations ?? {}, inventory);
+const reviewedInventory = onlyPaths.length
+  ? scopedInventory(previous.operations ?? {}, inventory, onlyPaths)
+  : inventory;
+if (onlyPaths.length) report.note(`reviewing only: ${onlyPaths.join(', ')}`);
+const diff = compare(previous.operations ?? {}, reviewedInventory);
 printDiff(diff);
 
 if (flag('write-lock')) {
@@ -105,7 +115,7 @@ if (flag('write-lock')) {
     $comment:
       'The reviewed sync point for the public /v1 surface. Written by scripts/sync-source-spec.mjs. It holds no request or response content: only which public operations exist and a hash of each, so a change to the public contract shows up in a diff without the private spec entering this repository.',
     syncedFrom: SOURCE_SPEC_RELATIVE,
-    operations: inventory,
+    operations: reviewedInventory,
   };
   writeFileSync(paths.sourceSpecLock, `${JSON.stringify(lock, null, 2)}\n`, 'utf8');
   report.note('updated api-reference/source-spec.lock.json');

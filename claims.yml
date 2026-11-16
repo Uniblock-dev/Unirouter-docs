@@ -58,6 +58,34 @@ allow_patterns:
       as an unregistered claim.
 
 claims:
+  - id: vertex-gemini-flash-model-version
+    value: "3.8"
+    means: "Gemini 3.8 Flash, the exact model used in the Vertex text example."
+    source: "https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/guides/gemini-3-8-flash; customer API smoke transcript verified 2026-11-14"
+    status: shipped
+    used_by: ["features/vertex-gemini"]
+
+  - id: vertex-gemini-image-model-version
+    value: "3.1"
+    means: "Gemini 3.1 Flash Image, the exact model used in the Vertex image examples."
+    source: "services/gateway/src/providers/google-vertex-ai/imageGenerate.ts; customer API smoke transcript verified 2026-11-14"
+    status: shipped
+    used_by: ["features/vertex-gemini"]
+
+  - id: vertex-nano-banana-model-version
+    value: "2.1"
+    means: "Nano Banana 2.1, whose customer API returned empty output in both tested chat modes."
+    source: "Customer API smoke transcript verified 2026-11-14; exact model vertex-ai/gemini-nano-banana-2.1"
+    status: shipped
+    used_by: ["features/vertex-gemini"]
+
+  - id: vertex-gemini-introductory-period
+    value: "2026-12-31"
+    means: "Last day of the approved Vertex Gemini 3.8 Flash introductory pricing period."
+    source: "docs/agents/vertex-gemini-activation.md; https://cloud.google.com/model-garden/pricing"
+    status: shipped
+    used_by: ["features/vertex-gemini"]
+
   - id: fee-rate-percent
     value: "0%"
     means: "The platform fee added at credit purchase, at the current rate."

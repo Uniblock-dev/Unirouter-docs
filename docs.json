@@ -93,6 +93,7 @@
             "group": "Models",
             "pages": [
               "features/models",
+              "features/vertex-gemini",
               "features/model-capabilities",
               "features/model-lifecycle"
             ]
