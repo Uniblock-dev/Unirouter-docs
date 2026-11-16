@@ -81,7 +81,7 @@
     "POST /v1/audio/speech": "4a349950dbfd99bb",
     "POST /v1/audio/transcriptions": "e54d2b67bdcaee24",
     "POST /v1/audio/translations": "5e1d12cff33edafa",
-    "POST /v1/chat/completions": "c0958c3c05cb7850",
+    "POST /v1/chat/completions": "dee178c3e16183c4",
     "POST /v1/completions": "2066ad1238f9f62f",
     "POST /v1/embeddings": "6fe2947d233eb810",
     "POST /v1/images/edits": "b7efa1d645d6c4a7",
