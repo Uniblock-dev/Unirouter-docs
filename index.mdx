@@ -1,6 +1,6 @@
 ---
 title: "Hopscotch Gateway"
-description: "Aasdasjdjkasdjn OpenAI-compatible LLM router. Change one base URL and one API key, keep your OpenAI SDK, and call models across providers on one prepaid balance."
+description: "An OpenAI-compatible LLM router. Change one base URL and one API key, keep your OpenAI SDK, and call models across providers on one prepaid balance."
 status: "write-now"
 gates: []
 type: "overview"
@@ -24,9 +24,7 @@ response = client.chat.completions.create(
 print(response.choices[0].message.content)
 ```
 
-Model ids are `provider/model`, so the id you send says which provider serves it. A bare model name with no provider is refused rather than routed for you.
-
-Credit is prepaid. Requests aasdasdre charged at the provider's rate, with no markup on top.
+ids are `provider/model`, so the id you send says which provider serves it. A bare model name with no provider is refused rather than routed for you.
 
 <CardGroup cols={1}>
   <Card title="Start with the Quickstart" icon="player-play" href="/get-started/quickstart">
