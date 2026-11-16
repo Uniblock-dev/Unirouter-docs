@@ -33,7 +33,8 @@
     "videoDoors": "services/control-plane/src/video/doors.ts (serveVideoFollowUp, openVideoJob, publicJobResponse), services/control-plane/src/video/publicJob.ts (publicVideoJson)",
     "videoSettlement": "services/control-plane/src/video/jobSettlement.ts (settleObservedVideoJob, proratedCharge), services/control-plane/src/video/jobs.ts (recordVideoJob, readVideoJobByIdForAccount), services/control-plane/src/money/core/deadline.ts (VIDEO_JOB_DEADLINE_MS)",
     "videoHold": "services/control-plane/src/money/flows/admission/unitHold.ts (videoHold, DEFAULT_VIDEO_SECONDS), services/control-plane/src/money/flows/admission/unitHoldVideoTiers.ts (videoSecondCandidates, heldVideoSeconds)",
-    "videoModels": "services/gateway/src/providers/byteplus/videos.ts (seedanceLimits), services/gateway/src/providers/fal-ai/videos.ts (FAL_VIDEO_MODELS), services/gateway/src/providers/minimax/videos.ts, services/gateway/src/providers/dashscope/media.ts, services/gateway/src/providers/google-vertex-ai/videos.ts, services/gateway/src/providers/luma/videos.ts (LUMA_VIDEO_SECONDS), services/gateway/src/providers/runway/videos.ts (RUNWAY_MODELS)"
+    "videoModels": "services/gateway/src/providers/byteplus/videos.ts (seedanceLimits), services/gateway/src/providers/fal-ai/videos.ts (FAL_VIDEO_MODELS), services/gateway/src/providers/minimax/videos.ts, services/gateway/src/providers/dashscope/media.ts, services/gateway/src/providers/google-vertex-ai/videos.ts, services/gateway/src/providers/luma/videos.ts (LUMA_VIDEO_SECONDS), services/gateway/src/providers/runway/videos.ts (RUNWAY_MODELS)",
+    "vertexGemini": "Source main 90f20d3381: services/gateway/src/providers/google/chatComplete.ts, services/gateway/src/providers/google/imageGenerate.ts, services/control-plane/src/inference/doorRules.ts, services/control-plane/src/models/catalogResponses.ts, services/control-plane/src/usage/keyReadback.ts"
   },
   "info": {
     "title": "Hopscotch",
@@ -119,11 +120,11 @@
           "messages"
         ],
         "additionalProperties": true,
-        "description": "An OpenAI chat completion request. Fields beyond the ones named here are forwarded to the provider unchanged rather than refused for being unfamiliar.",
+        "description": "An OpenAI-compatible chat request. Accepted controls depend on the selected model and endpoint; a field listed here does not establish support for every model. Unsupported or unmetered features can be refused before a provider call.",
         "properties": {
           "model": {
             "type": "string",
-            "description": "A model id in `family/model` form. List what you can call with GET /v1/models.",
+            "description": "The exact provider-qualified ID returned by GET /v1/models, for example vertex-ai/gemini-3.8-flash. The offering must include chat_completions in endpoint_families. A bare ID is refused with model_id_not_pinned. A profile/{identifier} value selects your routing profile instead.",
             "example": "openai/gpt-4o-mini"
           },
           "messages": {
@@ -147,12 +148,45 @@
           "stream_options": {
             "type": "object",
             "additionalProperties": true,
-            "description": "OpenAI stream options. Set `include_usage` to receive OpenAI's own usage chunk in the stream. Hopscotch's own counts arrive separately on the :x-hopscotch-usage comment line either way.",
+            "description": "Set include_usage to request a final usage chunk. For Gemini, read token totals and modality details there, then GET /v1/usage/{id} for the settled charge.",
             "properties": {
               "include_usage": {
                 "type": "boolean"
               }
             }
+          },
+          "modalities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Requested output modalities. For an offered Vertex Gemini image model, use [\"text\", \"image\"]. Support is model-specific. Audio output is refused on platform-paid chat requests.",
+            "example": [
+              "text",
+              "image"
+            ]
+          },
+          "image_config": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "image_size": {
+                "type": "string",
+                "description": "The model-specific image resolution. The verified Vertex example uses 1K.",
+                "example": "1K"
+              },
+              "aspect_ratio": {
+                "type": "string",
+                "description": "The model-specific image aspect ratio.",
+                "example": "1:1"
+              }
+            },
+            "description": "Image controls for Gemini chat generation. Availability depends on the model. This is separate from the Images API size parameter."
+          },
+          "reasoning_effort": {
+            "type": "string",
+            "description": "A model-specific reasoning control. Use a value the selected model supports; low was verified for the Vertex text examples.",
+            "example": "low"
           }
         }
       },
@@ -178,12 +212,61 @@
             "type": "array",
             "items": {
               "type": "object",
-              "additionalProperties": true
+              "additionalProperties": true,
+              "properties": {
+                "index": {
+                  "type": "integer"
+                },
+                "message": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "role": {
+                      "type": "string"
+                    },
+                    "content": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "images": {
+                      "type": "array",
+                      "description": "Gemini image output, separate from text content. Check this array even when content is empty.",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "image_url"
+                            ]
+                          },
+                          "image_url": {
+                            "type": "object",
+                            "additionalProperties": true,
+                            "properties": {
+                              "url": {
+                                "type": "string",
+                                "description": "A data URL containing the generated image."
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "finish_reason": {
+                  "type": "string",
+                  "nullable": true
+                }
+              }
             }
           },
           "usage": {
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": true,
+            "description": "Provider-normalized usage. For Vertex Gemini, prompt_tokens + completion_tokens + completion_tokens_details.reasoning_tokens equals total_tokens. Chat image tokens appear in completion_tokens_details.image_tokens when reported. Count modality subsets once."
           }
         }
       },
@@ -318,7 +401,7 @@
           },
           "model": {
             "type": "string",
-            "description": "The full `provider/model` id the request was served under, the same string GET /v1/models publishes.",
+            "description": "The provider-qualified ID recorded for this request. A refusal before provider selection can prefix the requested full ID with unknown/; it does not mean an unknown provider served the request.",
             "example": "openai/gpt-4o-mini"
           },
           "outcome": {
@@ -331,7 +414,7 @@
           },
           "usage": {
             "type": "object",
-            "description": "Every count a charge can turn on. Null means the provider did not report that count. 0 means it reported none. They are not the same fact.",
+            "description": "Stored prompt, completion, total, cache and reasoning counters. Null means no count was recorded; zero is a recorded zero. This lookup does not currently return the audio/image modality splits carried by the original inference response.",
             "additionalProperties": false,
             "required": [
               "prompt_tokens",
@@ -406,7 +489,7 @@
               "rate_revision_id": {
                 "type": "string",
                 "nullable": true,
-                "description": "An opaque id for the set of rates this charge was computed from. Two requests with the same value were priced by the same rates. Null on a record written before rate revisions existed, or one left unpriced."
+                "description": "An opaque identifier for the published rate revision associated with the charge. Preserve it with the request ID when checking a charge; context tier and effective date can select different rates within that pricing history."
               },
               "note": {
                 "type": "string",
@@ -556,7 +639,7 @@
         "properties": {
           "model_id": {
             "type": "string",
-            "description": "The same value as `id`, repeated inside the extension so a client reading only this block still has it."
+            "description": "The model name without its provider prefix. Send the top-level id as model; it contains the provider-qualified value the API accepts."
           },
           "display_name": {
             "type": "string"
@@ -575,7 +658,7 @@
           },
           "input_rate_thousandths": {
             "type": "integer",
-            "description": "The provider's own list price for prompt tokens, in thousandths of the currency unit per million tokens. Nothing this platform charges on top is folded in: the fee is taken when credit is bought, and a request then costs the provider's price."
+            "description": "The published customer input price, in thousandths of the currency unit per million tokens. Read the model offering for the current price; this field is not a provider-cost disclosure."
           },
           "output_rate_thousandths": {
             "type": "integer",
@@ -591,7 +674,7 @@
             "items": {
               "type": "string"
             },
-            "description": "The request families this model answers."
+            "description": "Published request families for this offering. Support on chat_completions does not establish support on image_generations or another endpoint."
           },
           "provider_display_names": {
             "type": "array",
@@ -689,7 +772,8 @@
                 "type": "array",
                 "items": {
                   "$ref": "#/components/schemas/ModelParameter"
-                }
+                },
+                "description": "Recorded parameter controls. An empty array means no controls were recorded, not that the model accepts no optional parameters."
               },
               "deprecated_at": {
                 "type": "integer",
@@ -705,6 +789,14 @@
                 "type": "string",
                 "nullable": true,
                 "description": "What to move to, where one is named."
+              },
+              "supported_parameters": {
+                "type": "array",
+                "nullable": true,
+                "items": {
+                  "type": "string"
+                },
+                "description": "Recorded supported-parameter names, with disproved capabilities withheld. Null or an empty array means support metadata is unavailable or unrecorded, not that every unlisted parameter is rejected."
               }
             }
           }
@@ -845,6 +937,154 @@
             }
           }
         }
+      },
+      "GeminiTokenUsage": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "prompt_tokens": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "completion_tokens": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "total_tokens": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "prompt_tokens_details": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "cached_tokens": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "audio_tokens": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "cached_tokens_details": {
+                "type": "object",
+                "additionalProperties": true,
+                "properties": {
+                  "audio_tokens": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          },
+          "completion_tokens_details": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "reasoning_tokens": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "audio_tokens": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "image_tokens": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Image output tokens on chat responses, when reported."
+              }
+            }
+          },
+          "output_tokens_details": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "image_tokens": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Image output tokens on an Images API response."
+              }
+            }
+          }
+        },
+        "description": "Gemini inference usage. Thinking is separate from completion_tokens: total_tokens includes prompt, visible completion and thinking. Modality counts are subsets of enclosing totals, not extra tokens. Missing details do not prove zero usage."
+      },
+      "ImageGenerationRequest": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "The exact provider-qualified ID from GET /v1/models.",
+            "example": "vertex-ai/gemini-3.1-flash-image"
+          },
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "example": "A small blue circle centered on a plain white background. No text."
+          },
+          "n": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "How many images to request. Vertex Gemini accepts only 1.",
+            "example": 1
+          },
+          "size": {
+            "type": "string",
+            "description": "Vertex Gemini accepts 1024x1024, 2048x2048 or 4096x4096 when supported by the model. The verified example uses 1024x1024.",
+            "example": "1024x1024"
+          },
+          "response_format": {
+            "type": "string",
+            "description": "Vertex Gemini accepts b64_json. Other image offerings can support different formats.",
+            "example": "b64_json"
+          },
+          "quality": {
+            "type": "string",
+            "description": "Model-specific image quality. Omit it for the Vertex Gemini example."
+          }
+        },
+        "description": "Generate an image with an offering that publishes image_generations in endpoint_families. Accepted controls depend on the offering.",
+        "required": [
+          "model",
+          "prompt"
+        ]
+      },
+      "ImageGeneration": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "created": {
+            "type": "integer",
+            "description": "Response creation time as Unix seconds."
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "b64_json": {
+                  "type": "string",
+                  "description": "Base64-encoded image bytes."
+                },
+                "url": {
+                  "type": "string",
+                  "description": "An image URL when the offering returns URL output."
+                }
+              }
+            }
+          },
+          "usage": {
+            "$ref": "#/components/schemas/GeminiTokenUsage"
+          }
+        },
+        "required": [
+          "created",
+          "data"
+        ]
       }
     }
   },
@@ -909,7 +1149,7 @@
       "post": {
         "operationId": "createChatCompletion",
         "summary": "Create a chat completion",
-        "description": "Send an OpenAI chat completion request. Set `stream: true` for server-sent events.\n\nCredit is held when the request is admitted and settled against the provider's own token counts when it finishes. You are charged the provider's rate at face value. Nothing is added per request.",
+        "description": "Send an OpenAI-compatible chat request. Set stream: true for server-sent events. Select an exact model ID from GET /v1/models and check endpoint_families. Offered Vertex Gemini image models can generate images when modalities includes image.\n\nCredit is held at admission and settled using published customer rates and recorded usage. Read the settled charge with GET /v1/usage/{id}, using the x-hopscotch-request-id response header.",
         "tags": [
           "Chat"
         ],
@@ -926,7 +1166,7 @@
                 "$ref": "#/components/schemas/ChatCompletionRequest",
                 "properties": {
                   "model": {
-                    "description": "The model to call, which the live catalog has to offer for the responses family. A provider-pinned id, `{provider}/{that provider's own id}`, is split once on the first slash. A routing-profile slug, `profile/{identifier}`, tries that profile's models in your own order. `unirouter/auto`, or its second spelling `hopscotch/auto`, names whichever route your workspace made its default. A bare model id is refused with 400 and the code `model_id_not_pinned`. `GET /v1/models` lists the exact strings this key can call."
+                    "description": "The exact provider-qualified ID returned by GET /v1/models, for example vertex-ai/gemini-3.8-flash. The offering must include chat_completions in endpoint_families. A bare ID is refused with model_id_not_pinned. A profile/{identifier} value selects your routing profile instead."
                   }
                 }
               },
@@ -944,7 +1184,7 @@
         },
         "responses": {
           "200": {
-            "description": "The completion. A response that is not streamed carries the provider's token counts in its own `usage` object. Its `model` field echoes the slug you asked for rather than the provider's internal name, except in three cases that are returned as the provider sent them: a streamed reply, whose frames are passed through unchanged; a request naming a routing profile, which names a chain rather than one model; and a successful body carrying no string `model` field at all.\n\nWhen `stream` is true the body is `text/event-stream` instead, and the counts arrive on a `:x-hopscotch-usage` comment line immediately before `data: [DONE]`; the server-sent events specification requires parsers to ignore comment lines, so an SDK never sees it.",
+            "description": "A chat completion. For a direct nonstreamed request, model names the requested public ID. Gemini can return text in message.content and generated images in message.images as image_url data URLs.\n\nWith stream: true, read text/event-stream data frames through data: [DONE]. Gemini image output is carried in choices[].delta.images. Set stream_options.include_usage for a final usage chunk. A successful HTTP status alone does not guarantee visible text or an image: check content and finish_reason. Thinking usage can be recorded when no visible completion is returned.",
             "headers": {
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
@@ -968,7 +1208,7 @@
                 "$ref": "#/responseHeaders/ServedBy"
               },
               "x-hopscotch-served-via": {
-                "description": "Present, with the value `backup`, when a backup route served this request. Absent on every other response, and never sent with any other value, so a client that has never read it sees nothing change about an ordinary request. The provider named on x-hopscotch-provider and in the body is still the one you asked for.",
+                "description": "Present as backup when a backup route served this request. Absent on ordinary direct responses. Read x-hopscotch-provider with x-hopscotch-served-by when checking which model served.",
                 "$ref": "#/responseHeaders/ServedVia"
               }
             },
@@ -1002,7 +1242,7 @@
             }
           },
           "400": {
-            "description": "The request cannot be served as sent. `code` is null for a missing parameter, with `param` naming it, `context_length_exceeded` for a request too large to price or serve in one call, and `provider_key_refused` when the request ran on your own key for a provider that rejected it or refused this particular call under it. On the platform's own provider keys this route also refuses, with `code` null and `param` naming the field and never its value, a field that buys something this platform cannot bill yet or keeps the conversation at the provider: a `service_tier` other than `auto`, `default` or `on_demand`, `web_search_options`, a hosted tool the provider charges for per call, audio in or out, a `cache_control` marker with a `1h` ttl, and `store: true`. A request served on your own provider key keeps every one of them. See Request parameters.",
+            "description": "The request cannot be served as sent. `code` is null for a missing parameter, with `param` naming it, `context_length_exceeded` for a request too large to price or serve in one call, and `provider_key_refused` when the request ran on your own key for a provider that rejected it or refused this particular call under it. On the platform's own provider keys this route also refuses, with `code` null and `param` naming the field and never its value, a field that buys something this platform cannot bill yet or keeps the conversation at the provider: a `service_tier` other than `auto`, `default` or `on_demand`, `web_search_options`, a hosted tool the provider charges for per call, audio output or an input-audio shape the selected route cannot meter, a `cache_control` marker with a `1h` ttl, and `store: true`. A request served on your own provider key keeps every one of them. See Request parameters.",
             "headers": {
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
@@ -1331,7 +1571,7 @@
             }
           },
           "503": {
-            "description": "Ours rather than yours, and `code` names the condition. `paused_by_owner` clears only when somebody lifts the pause, so retrying on a timer will not help. `balance_unavailable` (we could not read the balance, so the request was refused rather than served unmetered), `model_not_priceable` and `model_pricing_unreadable` (a model we list could not be priced for this call) and `no_provider_configured` (we are not currently configured to serve this) all clear without you doing anything.",
+            "description": "Ours rather than yours, and `code` names the condition. `paused_by_owner` clears only when somebody lifts the pause, so retrying on a timer will not help. `balance_unavailable` (we could not read the balance, so the request was refused rather than served unmetered), `model_not_priceable` and `model_pricing_unreadable` (a model we list could not be priced for this call) and `no_provider_configured` (we are not currently configured to serve this) all clear without you doing anything. An offering without usable published prices can return model_pricing_unreadable before a provider call or charge.",
             "headers": {
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
@@ -3024,7 +3264,7 @@
       "get": {
         "operationId": "retrieveRequestUsage",
         "summary": "Retrieve one request's usage",
-        "description": "Read back what one request recorded and what it cost. Send the value of the `x-hopscotch-request-id` header from the response you are asking about. The key that made the request can read it, with no dashboard session.\n\nThe record is written after the response is sent, so a read taken the instant a response lands can arrive first and answer 404. Read it again a moment later. A record made by another key, a record outside this key's workspace, and an id that never existed all answer with the same 404, so this route cannot be used to learn whether an id exists.\n\nIn `usage`, null means the provider did not report that count and 0 means it was measured as none. The two are different facts. `charge` is present only when your workspace balance paid for the request. `served_on_own_key` is true when the request ran on your own provider key, and `paid_from_allowance` is true when an included allowance paid for it, in which case `charge` is absent. No prompt and no response body is stored, so none is returned.\n\nThis route counts against the calling key's own request rate limit, like every other route.",
+        "description": "Read back what one request recorded and what it cost. Send the value of the `x-hopscotch-request-id` header from the response you are asking about. The key that made the request can read it, with no dashboard session.\n\nThe record is written after the response is sent, so a read taken the instant a response lands can arrive first and answer 404. Read it again a moment later. A record made by another key, a record outside this key's workspace, and an id that never existed all answer with the same 404, so this route cannot be used to learn whether an id exists.\n\nIn `usage`, null means no count was recorded and 0 is a recorded zero. Keep the original inference usage object for audio/image modality details, which this lookup does not return. `charge` is present only when your workspace balance paid for the request. `served_on_own_key` is true when the request ran on your own provider key, and `paid_from_allowance` is true when an included allowance paid for it, in which case `charge` is absent. No prompt and no response body is stored, so none is returned.\n\nThis route counts against the calling key's own request rate limit, like every other route.",
         "tags": [
           "Usage"
         ],
@@ -3047,7 +3287,7 @@
         ],
         "responses": {
           "200": {
-            "description": "The recorded request: when it started, the model that served it, how it ended, every token count a charge can turn on, and the charge with its currency and rate revision.",
+            "description": "Stored token totals, cache and reasoning counts, outcome, and settled charge with currency and rate revision. Audio/image splits are available on the original inference response, not this lookup.",
             "headers": {
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
@@ -4232,9 +4472,580 @@
       "reason": "POST /v1/images/edits: Story 50.6's image and audio door, documented in the source spec under customerApiKey. It is live in production. fiveDoorsEnabled in services/control-plane/src/public/routes.ts reads FIVE_DOORS_ENABLED === 'true', and services/control-plane/wrangler.toml sets that flag to \"true\" under [env.production.vars] on main, so the path is served there and no longer answers the 404 endpoint_not_supported (SF-706). It stays blocked on this site only until a documentation pass publishes it: per-unit pricing, the multipart body and its 8 MiB cap, and the binary audio reply each need a page, and every example has to be transcribed from the handler. Recorded in the internal site's unresolved-findings.md as SF-398, SF-420 and SF-706."
     },
     "/v1/images/generations": {
-      "classification": "blocked",
-      "gate": "50.6",
-      "reason": "POST /v1/images/generations: Story 50.6's image and audio door, documented in the source spec under customerApiKey. It is live in production. fiveDoorsEnabled in services/control-plane/src/public/routes.ts reads FIVE_DOORS_ENABLED === 'true', and services/control-plane/wrangler.toml sets that flag to \"true\" under [env.production.vars] on main, so the path is served there and no longer answers the 404 endpoint_not_supported (SF-706). It stays blocked on this site only until a documentation pass publishes it: per-unit pricing, the multipart body and its 8 MiB cap, and the binary audio reply each need a page, and every example has to be transcribed from the handler. Recorded in the internal site's unresolved-findings.md as SF-398, SF-420 and SF-706."
+      "classification": "public",
+      "post": {
+        "summary": "Generate images",
+        "description": "Generate an image with a model offered for image_generations. For Vertex Gemini, request one image as b64_json at a supported square resolution. Image support through chat alone does not establish this endpoint is available.\n\nPublished prices determine whether the offering is token-metered or charged per image. Preserve Gemini image-token usage and use GET /v1/usage/{id} to read the settled charge.",
+        "tags": [
+          "Images"
+        ],
+        "servers": [
+          {
+            "url": "https://api.hopscotchlabs.ai",
+            "description": "Production"
+          }
+        ],
+        "security": [
+          {
+            "customerApiKey": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImageGenerationRequest",
+                "description": "Generate an image with an offering that publishes image_generations in endpoint_families. Accepted controls depend on the offering.",
+                "properties": {
+                  "model": {
+                    "type": "string",
+                    "description": "The exact provider-qualified ID from GET /v1/models.",
+                    "example": "vertex-ai/gemini-3.1-flash-image"
+                  },
+                  "prompt": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "A small blue circle centered on a plain white background. No text."
+                  },
+                  "n": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "How many images to request. Vertex Gemini accepts only 1.",
+                    "example": 1
+                  },
+                  "size": {
+                    "type": "string",
+                    "description": "Vertex Gemini accepts 1024x1024, 2048x2048 or 4096x4096 when supported by the model. The verified example uses 1024x1024.",
+                    "example": "1024x1024"
+                  },
+                  "response_format": {
+                    "type": "string",
+                    "description": "Vertex Gemini accepts b64_json. Other image offerings can support different formats.",
+                    "example": "b64_json"
+                  },
+                  "quality": {
+                    "type": "string",
+                    "description": "Model-specific image quality. Omit it for the Vertex Gemini example."
+                  }
+                },
+                "required": [
+                  "model",
+                  "prompt"
+                ]
+              },
+              "example": {
+                "model": "vertex-ai/gemini-3.1-flash-image",
+                "prompt": "A small blue circle centered on a plain white background. No text.",
+                "n": 1,
+                "size": "1024x1024",
+                "response_format": "b64_json"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The image list. Vertex Gemini returns base64 image data and reported token usage; image-output tokens and text tokens use their respective published customer rates. This JSON endpoint does not stream. Other offerings may publish per-image prices. A missing image or inconsistent required image-usage details is a failed response.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "x-request-id": {
+                "$ref": "#/responseHeaders/SdkRequestId"
+              },
+              "x-hopscotch-provider": {
+                "$ref": "#/responseHeaders/Provider"
+              },
+              "x-hopscotch-retry-attempt-count": {
+                "$ref": "#/responseHeaders/RetryAttemptCount"
+              },
+              "x-hopscotch-cache-status": {
+                "$ref": "#/responseHeaders/CacheStatus"
+              },
+              "x-hopscotch-trace-id": {
+                "$ref": "#/responseHeaders/TraceId"
+              },
+              "x-hopscotch-served-by": {
+                "$ref": "#/responseHeaders/ServedBy"
+              },
+              "x-hopscotch-served-via": {
+                "description": "Present as backup when a backup route served this request. Absent on ordinary direct responses. Read x-hopscotch-provider with x-hopscotch-served-by when checking which model served.",
+                "$ref": "#/responseHeaders/ServedVia"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageGeneration"
+                },
+                "example": {
+                  "created": 1794697200,
+                  "data": [
+                    {
+                      "b64_json": "BASE64_IMAGE_DATA"
+                    }
+                  ],
+                  "usage": {
+                    "prompt_tokens": 14,
+                    "completion_tokens": 1120,
+                    "total_tokens": 1134,
+                    "completion_tokens_details": {
+                      "reasoning_tokens": 0
+                    },
+                    "output_tokens_details": {
+                      "image_tokens": 1120
+                    },
+                    "prompt_tokens_details": {
+                      "cached_tokens": 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request cannot be served as sent. Missing model or prompt, or unsupported image controls such as count, size or response format, can be refused with param naming the field. Check the selected offering and the Vertex restrictions above.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "missing_model": {
+                    "summary": "No model named",
+                    "value": {
+                      "error": {
+                        "message": "You must provide a model parameter naming the model to call. It is read to work out what the request could cost before it is sent.",
+                        "type": "invalid_request_error",
+                        "param": "model",
+                        "code": null,
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "context_length_exceeded": {
+                    "summary": "Too large to serve in one call",
+                    "value": {
+                      "error": {
+                        "message": "This request is too large to price: it is estimated at 4000000 prompt tokens, which is beyond anything this platform can hold credit for. Send less in one call.",
+                        "type": "invalid_request_error",
+                        "param": "messages",
+                        "code": "context_length_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "provider_key_refused": {
+                    "summary": "Your own provider key was rejected",
+                    "value": {
+                      "error": {
+                        "message": "openai rejected your workspace's own openai key (401), so the credential itself was not accepted. Replace it on the Provider keys screen. While your workspace holds a key for openai, every request to openai runs on yours and none is sent on a Hopscotch key, so no other credential was tried for it. Nothing was charged for this request. Remove the key on the Provider keys screen and these requests go back to running on Hopscotch's key and being charged for.",
+                        "type": "invalid_request_error",
+                        "param": null,
+                        "code": "provider_key_refused",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No key, a scheme other than Bearer, a key of the wrong shape, or a key we reject. An unknown key and a revoked key are answered with one identical message on purpose.\n\nA key past its own expiry date is refused here too, with code `key_expired` and a message naming the date. It is checked before the per-minute rate limiter, so an expired key never consumes that allowance. Expired keys are not renewed: create a new one.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "Incorrect API key provided.",
+                    "type": "authentication_error",
+                    "param": null,
+                    "code": "invalid_api_key",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The request will not be paid for, and nothing was charged. Code `insufficient_credit` is the workspace being out of credit, which stops every key on it. Code `key_limit_exceeded` is the sending key reaching its own credit limit, which leaves every other key in the workspace serving normally; it is refused before any credit is held, and the message names what that key has settled and holds inside its current window.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "insufficient_credit": {
+                    "summary": "The workspace is out of credit",
+                    "value": {
+                      "error": {
+                        "message": "This account has 54 minor units available and the request needs 55 held.",
+                        "type": "insufficient_quota",
+                        "param": null,
+                        "code": "insufficient_credit",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "key_limit_exceeded": {
+                    "summary": "This key is at its own limit",
+                    "value": {
+                      "error": {
+                        "message": "This key may spend $20.00 in its current window and has $18.40 settled and $1.70 held against that, so a request needing $0.30 more is refused. Nothing was charged for it and no credit was held. The limit belongs to this key alone, so other keys in the workspace are unaffected. This limit resets monthly on UTC calendar windows, so requests are admitted again when the window rolls. It can also be raised or removed on the Keys screen.",
+                        "type": "insufficient_quota",
+                        "param": null,
+                        "code": "key_limit_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Refused for a setting the caller owns rather than anything about the model, and `code` names which. A key whose account staff have suspended is refused with code `account_suspended`, before any credit is held or any provider is called; contact support, because retrying will not change the answer.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This account is suspended, so it cannot send requests. Contact support. Request id REQUEST_ID.",
+                    "type": "permission_error",
+                    "param": null,
+                    "code": "account_suspended",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The model cannot be served, and the two cases are told apart by `code`. `model_not_found` means the id is in no catalog at all, which is what a typo produces, so check the spelling or list what this key can call with `GET /v1/models`. `model_not_available` means the id is catalogued and is not being served right now, either on this endpoint or at all, so retrying later is worth more than changing the request. No provider was called either way.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "model_not_found": {
+                    "summary": "No model of that id exists",
+                    "value": {
+                      "error": {
+                        "message": "The model \"MODEL_ID\" does not exist. Check the spelling, or list the models this key can call with GET /v1/models.",
+                        "type": "not_found_error",
+                        "param": null,
+                        "code": "model_not_found",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "model_not_available": {
+                    "summary": "Known to us, and not being served right now",
+                    "value": {
+                      "error": {
+                        "message": "The model \"MODEL_ID\" is not currently available. It is known to this platform and is not being served right now, so retrying later is worth more than changing the request.",
+                        "type": "not_found_error",
+                        "param": null,
+                        "code": "model_not_available",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "model_not_available_endpoint": {
+                    "summary": "Live, and not offered on this endpoint",
+                    "value": {
+                      "error": {
+                        "message": "\"MODEL_ID\" is not offered on this endpoint: the catalog lists it for chat and not for embeddings.",
+                        "type": "not_found_error",
+                        "param": null,
+                        "code": "model_not_available",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The workflow associated with the request is archived and accepts no new requests. No generation was started.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            }
+          },
+          "413": {
+            "description": "The request body is larger than the 8388608 byte maximum this API accepts, so it was refused at the door. A body that declares its length is refused without a byte being read; one that declares none is read only as far as the ceiling and then abandoned. Nothing was parsed, no credit was held, no model was called and nothing was charged.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "payload_too_large": {
+                    "summary": "The request body is over the ceiling",
+                    "value": {
+                      "error": {
+                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "type": "invalid_request_error",
+                        "param": null,
+                        "code": "payload_too_large",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "A limit refused the request. `rate_limit_exceeded` is this key's own request rate and carries `Retry-After`. `spend_rate_exceeded` is the account spend rate cap, which counts the credit held for requests rather than the credit they settle at; send `max_tokens` to hold less. `provider_key_refused` is your own key for a provider being over its limit there; it clears on its own and carries no `Retry-After`. `upstream_rate_limited` is the model's provider rate-limiting the call: nothing about the request is wrong, nothing is charged, and it carries `Retry-After`.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "Retry-After": {
+                "description": "Seconds to wait. Present on `rate_limit_exceeded` and on `upstream_rate_limited`.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "example": 17
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "rate_limit_exceeded": {
+                    "summary": "This key's request rate",
+                    "value": {
+                      "error": {
+                        "message": "Rate limit reached for this key. Try again in 12 seconds. Request id REQUEST_ID.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "rate_limit_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "spend_rate_exceeded": {
+                    "summary": "The account spend rate cap",
+                    "value": {
+                      "error": {
+                        "message": "This account has already reserved 5000 minor units in the last 60 seconds, which is at its ceiling of 5000. Requests are admitted again within 60 seconds of the earliest reservation counted, with nothing to do in the meantime.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "spend_rate_exceeded",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "provider_key_refused": {
+                    "summary": "Your own provider key is over its limit",
+                    "value": {
+                      "error": {
+                        "message": "openai refused this request as over its limits, on your workspace's own openai key. This is your account's limit at openai rather than ours. While your workspace holds a key for openai, every request to openai runs on yours and none is sent on a Hopscotch key, so no other credential was tried for it. Nothing was charged for this request. Remove the key on the Provider keys screen and these requests go back to running on Hopscotch's key and being charged for.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "provider_key_refused",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "upstream_rate_limited": {
+                    "summary": "The model's provider rate-limited the call",
+                    "value": {
+                      "error": {
+                        "message": "The provider serving this model is rate-limiting requests right now. Nothing was charged. Retry after the number of seconds in the Retry-After header. Quote the request id if you contact support.",
+                        "type": "rate_limit_error",
+                        "param": null,
+                        "code": "upstream_rate_limited",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "A fault on our side. The request id is the one thing worth keeping.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "The server had an error while processing your request. Sorry about that! Quote the request id if you contact support.",
+                    "type": "api_error",
+                    "param": null,
+                    "code": null,
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The provider response could not be used as an image response, including missing or inconsistent required image-token details. Keep the request ID and read its recorded outcome and charge through the usage endpoint.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "Ours rather than yours, and `code` names the condition. `paused_by_owner` clears only when somebody lifts the pause, so retrying on a timer will not help. `balance_unavailable` (we could not read the balance, so the request was refused rather than served unmetered), `model_not_priceable` and `model_pricing_unreadable` (a model we list could not be priced for this call) and `no_provider_configured` (we are not currently configured to serve this) all clear without you doing anything. An offering without usable published prices can return model_pricing_unreadable before a provider call or charge.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "paused_by_owner": {
+                    "summary": "Somebody pressed Pause",
+                    "value": {
+                      "error": {
+                        "message": "Every request on this account is paused, because somebody with access to it pressed Pause in the dashboard. Nothing was charged for this request and no credit was held for it. It is retryable, and it will be refused the same way until the pause is lifted, so retrying on a timer will not clear it. Requests start working again the moment the pause is lifted from the same control, with nothing else to do and nothing to re-create.",
+                        "type": "server_error",
+                        "param": null,
+                        "code": "paused_by_owner",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  },
+                  "balance_unavailable": {
+                    "summary": "We could not read the balance",
+                    "value": {
+                      "error": {
+                        "message": "Your credit balance could not be checked while this request was running, so it was stopped rather than left unwatched. This is a fault on our side rather than a problem with your account, and it does not mean you are out of credit. Try again shortly.",
+                        "type": "server_error",
+                        "param": null,
+                        "code": "balance_unavailable",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "The request ran past the request deadline and was terminated.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "message": "This request ran longer than the 540 second limit and was terminated. Reduce the amount of work in one call, or stream the response, and try again.",
+                    "type": "server_error",
+                    "param": null,
+                    "code": "request_deadline_exceeded",
+                    "request_id": "REQUEST_ID"
+                  }
+                }
+              }
+            }
+          },
+          "529": {
+            "description": "The model's provider answered `529` rather than `429`. Carries the same `upstream_rate_limited` code as the 429 case, with `type` `api_error` as the status class requires: nothing about the request is wrong, nothing is charged, and it carries `Retry-After`.",
+            "headers": {
+              "x-hopscotch-request-id": {
+                "$ref": "#/responseHeaders/RequestId"
+              },
+              "Retry-After": {
+                "description": "Seconds to wait. Present the same way as on the 429 `upstream_rate_limited`.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "example": 17
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "upstream_rate_limited": {
+                    "summary": "The model's provider rate-limited the call, at 529",
+                    "value": {
+                      "error": {
+                        "message": "The provider serving this model is rate-limiting requests right now. Nothing was charged. Retry after the number of seconds in the Retry-After header. Quote the request id if you contact support.",
+                        "type": "api_error",
+                        "param": null,
+                        "code": "upstream_rate_limited",
+                        "request_id": "REQUEST_ID"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "/v1/videos": {
       "classification": "public",
@@ -5582,11 +6393,21 @@
     {
       "name": "Videos",
       "description": "Video jobs: create, poll, download, delete."
+    },
+    {
+      "name": "Images",
+      "description": "Generate images with an offered image model."
     }
   ],
   "exampleVerification": {
     "$comment": "DOCS_PLAN.md section 9 requires every published example to have been executed against a real environment with the transcript attached to the PR. Examples whose verification is still owed are listed here, and scripts/build-public-openapi.mjs prints them on every build so the debt stays visible instead of being forgotten. This block is stripped from the published artifact.",
-    "verified": [],
+    "verified": [
+      {
+        "example": "Vertex Gemini chat text and image, streamed and nonstreamed; images/generations; usage/{id}",
+        "shapeFrom": "Source main 90f20d3381 and authorized production API smoke on 2026-11-14.",
+        "note": "Response shapes and usage lookup were observed. Generated images decoded successfully. Public examples replace IDs, timestamps and image bytes with placeholders. No customer records or provider credentials are published. This does not certify every optional control."
+      }
+    ],
     "owed": [
       {
         "example": "POST /v1/chat/completions 200",
@@ -5722,6 +6543,11 @@
         "example": "DELETE /v1/videos/{id} 200 and the 400 on DELETE and content",
         "shapeFrom": "The 200 relays the provider's answer per services/control-plane/src/video/doors.ts; the 400 sentence is the DashScope media handler's relayed refusal in services/gateway/src/providers/dashscope/media.ts",
         "note": "Field values are illustrative and the relayed 400 sentence is unconfirmed at the public boundary. Needs a live transcript per status."
+      },
+      {
+        "example": "POST /v1/images/generations refusal statuses",
+        "shapeFrom": "Shared public refusal handlers and services/gateway/src/providers/google/imageGenerate.ts at source main 90f20d3381.",
+        "note": "Shared refusal examples are transcribed. No deliberate paid error calls were added to the bounded smoke batch."
       }
     ]
   }
