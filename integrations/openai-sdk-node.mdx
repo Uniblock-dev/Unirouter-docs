@@ -114,14 +114,14 @@ they are `undefined` rather than wrong if a response ever arrives without one. A
 client that treats `error.code` as always present is making an assumption this
 API happens to satisfy today.
 
-## Endpoints this SDK can reach and this API does not serve yet
+## Which endpoints this SDK can reach
 
-Calling `client.images.generate(...)` or `client.audio.speech.create(...)`
-against this base URL reaches a path this API does not serve yet, and the SDK
-raises `NotFoundError`. The base URL is not the problem when that happens.
-`client.completions.create(...)` and `client.responses.create(...)` do serve.
-`client.embeddings.create(...)` does not yet; embeddings are not served and
-there is no date. See
+`client.images.generate(...)` and `client.audio.speech.create(...)` reach
+paths this API serves: image and audio requests are served and charged like
+any other request. `client.completions.create(...)` and
+`client.responses.create(...)` do serve. `client.embeddings.create(...)` does
+not yet; embeddings are not served and there is no date, so that call raises
+`NotFoundError`, and the base URL is not the problem when it does. See
 [OpenAI compatibility](/get-started/migrate-from-openai) for the full list.
 
 ## What we did not verify
