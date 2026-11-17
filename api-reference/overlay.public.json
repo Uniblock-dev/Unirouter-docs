@@ -4934,14 +4934,6 @@
               }
             }
           },
-          "502": {
-            "description": "The provider response could not be used as an image response, including missing or inconsistent required image-token details. Keep the request ID and read its recorded outcome and charge through the usage endpoint.",
-            "headers": {
-              "x-hopscotch-request-id": {
-                "$ref": "#/responseHeaders/RequestId"
-              }
-            }
-          },
           "503": {
             "description": "Ours rather than yours, and `code` names the condition. `paused_by_owner` clears only when somebody lifts the pause, so retrying on a timer will not help. `balance_unavailable` (we could not read the balance, so the request was refused rather than served unmetered), `model_not_priceable` and `model_pricing_unreadable` (a model we list could not be priced for this call) and `no_provider_configured` (we are not currently configured to serve this) all clear without you doing anything. An offering without usable published prices can return model_pricing_unreadable before a provider call or charge.",
             "headers": {
