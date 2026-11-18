@@ -89,13 +89,11 @@ Emptying the amount sets the cadence back to never. A limit that never resets wo
 
 ### End a key
 
-Three things can end a key, and nothing else does. Ending a key means it stops existing and its slot frees.
+A key ends in one of three ways, and its slot frees up when it does:
 
-| Reason | What causes it | Available today |
-|---|---|---|
-| You revoke it | Somebody with access ends that key deliberately. | Yes |
-| It was replaced | Minting a replacement ends the key it replaces in the same motion. | Yes |
-| A member was removed and the person removing them chose to revoke that key | Removal asks about each key rather than deciding for you. | Yes |
+- **You revoke it.** Anyone who may revoke that key can do this.
+- **You replace it.** Regenerating a key ends the old one as it creates the new one.
+- **A member is removed and you choose to revoke their key.** Removal asks about each key, so nothing is revoked by default.
 
 **Revoke** asks "Stop this key from working?" and ends the key on **Revoke it**. Nothing replaces it. **Regenerate**
 asks "Replace this key with a fresh one? The old one stops working." and, on **Regenerate it**, ends the old key and
