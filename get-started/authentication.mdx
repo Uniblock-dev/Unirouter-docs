@@ -125,22 +125,9 @@ that takes effect everywhere.
 
 ## The key format
 
-A key is a non-secret prefix followed by 43 random characters from the base64url alphabet: `A-Z`, `a-z`, `0-9`, `-`
-and `_`.
+Keys start with `ub_live_`, followed by 43 characters. The prefix is public. Everything after it is secret.
 
-| Prefix | Environment |
-|---|---|
-| `ub_live_` | Production. This is the one you get from the dashboard. |
-| `ub_stg_` | Staging. |
-| `ub_dev_` | Development. |
-
-The prefix lets secret scanners recognise a leaked Hopscotch key in a public repository, and says which environment a
-misplaced key belongs to. The prefix and the last four characters stay visible in the dashboard, so you can tell keys
-apart; the other 39 characters are gone from our side once shown.
-
-We keep only a hash, so a key cannot be shown again or recovered. That is a property of the design: a leak of our
-database yields no working key, and the same fact stops us reading yours back. If you lose a key, mint a new one and
-end the lost one, as described under [End a key](#end-a-key).
+You see the full key once, when you create it, so copy it right away. Hopscotch stores only a hash, so a lost key can't be recovered. If you lose one, replace it.
 
 ## Keys belong to the workspace
 
