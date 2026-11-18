@@ -90,6 +90,8 @@ separates causes sharing a status.
 | 429 | `rate_limit_error` | `upstream_rate_limited` | The model's provider rate-limited the call. Nothing about the request is wrong and nothing is charged for it. Carries `Retry-After` in whole seconds: the provider's own figure where it sent one, and five seconds where it sent none. Back off and retry. |
 | 429 | `rate_limit_error` | `provider_key_refused` | The request ran on your own key for that provider, and the provider says that key is over its limit there. Nothing to fix on our side; it clears on its own. |
 | 500 | `api_error` | `null` | An unhandled fault on our side. Quote the request id. |
+| 502 | `api_error` | `provider_unavailable` | On a video follow-up: the provider holding the job could not be reached. Nothing was charged. Try again shortly. |
+| 502 | `api_error` | `invalid_provider_response` | On a video follow-up: the provider answered, but its answer could not be read as a video response. Nothing was charged. |
 | 503 | `api_error` | `no_provider_configured` | We are not currently configured to serve this. Retry later. |
 | 503 | `server_error` | `paused_by_owner` | Somebody with access to this account has paused it. Retrying on a timer will not clear it; the pause has to be lifted. |
 | 503 | `server_error` | `balance_unavailable` | We could not read the account's balance, so the request was refused rather than served unmetered. Ours. Retry shortly. |
@@ -225,6 +227,8 @@ description of what the screen said.
 - `503` with `paused_by_owner`: do not retry on a timer.
 - `503` with `provider_account_unavailable`: read the message. It names the provider that has restricted this
   workspace, so call a model from another provider, or contact support about the restriction.
+- `502` with `provider_unavailable` or `invalid_provider_response`: retry with backoff. Nothing was charged.
+  If it persists, quote a request id.
 - Other `503`, and `500`: retry with backoff. If it persists, quote a request id.
 - `504`: the request ran past the 540 second limit. Retrying the same work unchanged will most likely hit the
   same limit, so split it or stream it.
