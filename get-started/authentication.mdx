@@ -10,8 +10,7 @@ import AuthHeader from '/snippets/auth-header.mdx';
 import ErrorEnvelope from '/snippets/error-envelope.mdx';
 import RequestIdNote from '/snippets/request-id-note.mdx';
 
-Every request to the public API is authenticated by one API key on one header. There is no other
-credential, no session, and no signature: a key opens the door and nothing else does.
+Every API request needs one API key, sent in the `Authorization` header as a Bearer token. You don't need a session, a signature, or any other credential. If the header is missing, uses a different scheme, or carries a malformed or rejected key, the API returns `401`.
 
 ## How to
 
