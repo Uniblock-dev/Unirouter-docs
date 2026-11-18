@@ -62,10 +62,12 @@ validates nothing against the server, so a wrong base URL surfaces on your first
 request rather than at startup. The SDK never asks `GET /v1/models` on its own
 either. It reaches an endpoint only when your code calls the method for it.
 
-**A resource we do not serve raises rather than hangs.** Calling
-`client.images.generate(...)` or `client.audio.speech.create(...)` against this
-base URL reaches a path this API does not serve yet, and the SDK turns the
-`404` into `openai.NotFoundError`. That is worth knowing because it is the one
+**A resource we do not serve raises rather than hangs.** `client.images.generate(...)`
+reaches `POST /v1/images/generations`, which serves; see
+[Gemini on Vertex](/features/vertex-gemini). Calling
+`client.audio.speech.create(...)` against this base URL reaches a path this site
+does not document, and if it is not served the SDK turns the `404` into
+`openai.NotFoundError`. That is worth knowing because it is the one
 shape of failure that looks like a configuration mistake and is not: the base
 URL is right and the endpoint is absent. See
 [OpenAI compatibility](/get-started/migrate-from-openai) for the list that
