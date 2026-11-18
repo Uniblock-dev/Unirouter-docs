@@ -132,12 +132,11 @@ not say who may use the key.
 
 ## 500 live keys per workspace
 
-A workspace holds up to 500 live keys. A request for one more at 500 is refused with: `This workspace already holds 500
-live keys, which is the maximum. Revoke one to free a slot.`
+Each workspace can hold up to 500 live keys. If you ask for one more at 500, you get: `This workspace already holds 500 live keys, which is the maximum. Revoke one to free a slot.`
 
-The ceiling counts live keys, not keys ever minted, so an ended key frees its slot. Several keys rather than one is
-deliberate: with one, a leak means an outage. With several, you can create the replacement, move traffic, and end the
-old key with nothing down in between.
+Only live keys count, so an ended key frees its slot right away.
+
+Use several keys instead of one. With a single key, a leak means an outage. With several, you can create the replacement, move traffic over, and end the old key with nothing down in between.
 
 ### Keys that arrive with an invitation
 
