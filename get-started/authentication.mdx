@@ -80,20 +80,12 @@ cannot create API keys.` See [Workspaces and members](/manage/workspaces-and-mem
 
 ### Set an expiry and a spending limit
 
-Both are optional, and both are set on the key when you create it or later from its row. A key with neither
-never expires and spends against the workspace balance with no ceiling of its own.
+Both are optional. You can set them when you create a key or later from its row. A key with neither never expires and has no limit of its own.
 
-**Expiration** is a date. A key presented after it is refused with code `key_expired`, and the refusal names
-the instant it expired. Nothing renews an expired key: the fix is a new key.
+- **Expiration:** A date. After it, the key is refused with `key_expired`. An expired key can't be renewed, so create a new one.
+- **Credit limit:** The most the key can spend, with a **Reset** cadence beside it: never, daily, weekly or monthly, on UTC calendar windows. A request that would take the key past its limit is refused with `key_limit_exceeded` before anything is held or charged. Other keys in the workspace keep working from the same balance.
 
-**Credit limit** is an amount this key may spend, with a **Reset** cadence beside it: never, daily, weekly or
-monthly, on UTC calendar windows. A request that would take the key past its limit is refused with code
-`key_limit_exceeded` before anything is held or charged. The refusal names what the key has settled and holds
-in its current window. Other keys in the workspace keep serving from the same balance.
-
-The cadence is available only once there is a limit for it to apply to. Emptying the amount returns the cadence
-to never, and a limit that never resets does not clear by waiting: raise it or remove it. See
-[Spend controls](/manage/spend-controls).
+Emptying the amount sets the cadence back to never. A limit that never resets won't clear by waiting, so raise it or remove it. See [Spend controls](https://docs.hopscotchlabs.ai/manage/spend-controls.md).
 
 ### End a key
 
