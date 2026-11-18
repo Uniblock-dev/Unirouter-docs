@@ -116,9 +116,11 @@ API happens to satisfy today.
 
 ## Endpoints this SDK can reach and this API does not serve yet
 
-Calling `client.images.generate(...)` or `client.audio.speech.create(...)`
-against this base URL reaches a path this API does not serve yet, and the SDK
-raises `NotFoundError`. The base URL is not the problem when that happens.
+`client.images.generate(...)` reaches `POST /v1/images/generations`, which
+serves; see [Gemini on Vertex](/features/vertex-gemini). Calling
+`client.audio.speech.create(...)` against this base URL reaches a path this site
+does not document, and if it is not served the SDK raises `NotFoundError`. The
+base URL is not the problem when that happens.
 `client.completions.create(...)` and `client.responses.create(...)` do serve.
 `client.embeddings.create(...)` does not yet; embeddings are not served and
 there is no date. See
