@@ -86,7 +86,7 @@ console.log(response.choices[0].message.content);
 
 The response is the OpenAI chat completion shape.
 
-## If it fails
+## Troubleshooting your first request
 
 Every error uses the same JSON body. Branch on `error.code`, not `message`. Quote `error.request_id` (also the `x-hopscotch-request-id` header) if you contact support.
 
