@@ -85,7 +85,7 @@ Both are optional. You can set them when you create a key or later from its row.
 - **Expiration:** A date. After it, the key is refused with `key_expired`. An expired key can't be renewed, so create a new one.
 - **Credit limit:** The most the key can spend, with a **Reset** cadence beside it: never, daily, weekly or monthly, on UTC calendar windows. A request that would take the key past its limit is refused with `key_limit_exceeded` before anything is held or charged. Other keys in the workspace keep working from the same balance.
 
-Emptying the amount sets the cadence back to never. A limit that never resets won't clear by waiting, so raise it or remove it. See [Spend controls](https://docs.hopscotchlabs.ai/manage/spend-controls.md).
+Emptying the amount sets the cadence back to never. A limit that never resets won't clear by waiting, so raise it or remove it. See [Spend controls](/manage/spend-controls).
 
 ### End a key
 
