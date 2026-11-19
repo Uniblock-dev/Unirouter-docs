@@ -157,9 +157,8 @@ Some refusals are about your account instead of your request, like running out o
 Here's everything to change in your app, in order. The sections above explain why each step matters.
 
 <Steps>
-  <Step title="Prefix every model id">
-    Search your code for model names and put the provider in front of each one. This is the step that fails the
-    first request if you skip it.
+  <Step title="Add a provider to every model id">
+    Search your code for model names and add the provider prefix to each one, using ids from `GET /v1/models`. If you skip this, your first request fails.
   </Step>
   <Step title="Point the client at the base URL and swap the key">
     Two settings, both above. Keep the key in the environment rather than in source.
