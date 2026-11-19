@@ -173,12 +173,10 @@ Here's everything to change in your app, in order. The sections above explain wh
     Add it to every call, especially calls that don't set it today. It keeps the amount we hold against your balance small.
   </Step>
   <Step title="Log the request id">
-    `x-request-id` is the header the official SDKs already surface on their error objects, so this is usually a
-    one-line change. Without it, a support conversation starts from a description rather than from a request.
+    The OpenAI SDKs already expose `x-request-id` on their error objects, so logging it is usually a one-line change. If you contact support, the request id lets us find the exact request without working from a description.
   </Step>
-  <Step title="Buy credit before you cut over">
-    A verified account with a zero balance refuses every request, which is a confusing first result if you were not
-    expecting it.
+  <Step title="Add credit before you switch">
+    A verified account with no credit refuses every request. Add credit first so your first live request goes through.
   </Step>
 </Steps>
 
