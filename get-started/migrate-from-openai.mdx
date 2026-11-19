@@ -163,9 +163,8 @@ Here's everything to change in your app, in order. The sections above explain wh
   <Step title="Update the base URL and API key">
     These are the two settings described above. Load the key from an environment variable instead of putting it in your source code.
   </Step>
-  <Step title="Find any call to an endpoint this site does not document">
-    Anything beyond the table above is undocumented here. Decide what those call sites do before you cut over
-    rather than after, and treat them as unanswered rather than as either working or refused.
+  <Step title="Check for endpoints this page doesn't list">
+    Compare the endpoints your app calls against the endpoint table above. We don't document behavior for anything outside that table, so don't count on those calls working or failing. Decide how your app should handle them before you switch.
   </Step>
   <Step title="Stop reading provider rate-limit headers">
     If your pacing depends on them, move it onto `429` codes and `Retry-After`.
