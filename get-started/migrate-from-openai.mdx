@@ -166,8 +166,8 @@ Here's everything to change in your app, in order. The sections above explain wh
   <Step title="Check for endpoints this page doesn't list">
     Compare the endpoints your app calls against the endpoint table above. We don't document behavior for anything outside that table, so don't count on those calls working or failing. Decide how your app should handle them before you switch.
   </Step>
-  <Step title="Stop reading provider rate-limit headers">
-    If your pacing depends on them, move it onto `429` codes and `Retry-After`.
+  <Step title="Stop relying on provider rate-limit headers">
+    If your app uses them to pace requests, switch to `429` responses and the `Retry-After` header.
   </Step>
   <Step title="Send max_tokens">
     Especially on any call path that currently omits it.
