@@ -1,20 +1,23 @@
 ---
 title: "Migrate from OpenAI"
-description: "What OpenAI-compatible means here, the endpoints that exist, what changes when you move an app, and a checklist to cut over."
-status: partial
-gates: ["2.3", "2.10", "2.11", "2.31", "13.9"]
-type: guide
+description: "What OpenAI-compatible means on Hopscotch, which endpoints exist, what changes when you move an app over, and a checklist for switching."
+status: "partial"
+gates:
+  - "2.3"
+  - "2.10"
+  - "2.11"
+  - "2.31"
+  - "13.9"
+type: "guide"
 ---
 
 import BaseUrl from '/snippets/base-url.mdx';
 
-If your application already calls OpenAI, almost all of it survives the move. "OpenAI-compatible"
-here means three specific things:
+If your app already calls OpenAI, most of your code stays the same. When we say "OpenAI-compatible," we mean three things:
 
-1. The request and response bodies are OpenAI's, and travel unchanged but for two rewrites named below.
-2. Errors arrive in the OpenAI error envelope, so your existing error handling parses them.
-3. What we add is additive: extra response headers and one SSE comment line, both of which a compliant
-   client ignores.
+1. Request and response bodies use OpenAI's format. We pass them through as they are, apart from two rewrites covered below.
+2. Errors come back in OpenAI's error format, so your existing error handling can read them.
+3. Anything we add sits on top: a few extra response headers and one extra line at the end of a stream. Standard clients ignore both.
 
 ## The two settings
 
