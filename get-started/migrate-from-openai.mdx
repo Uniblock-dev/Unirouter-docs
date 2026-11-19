@@ -140,7 +140,7 @@ Until 2026-09-14, we also sent each of these headers, and the request id, under 
 :x-hopscotch-usage {"v":1,...}
 ```
 
-The SSE spec tells parsers to ignore lines that start with a colon, so the OpenAI SDKs skip it and your code never sees it. [Streaming](https://docs.hopscotchlabs.ai/features/streaming.md) lists its fields. Non-streamed replies don't have an equivalent yet. In both cases, we count tokens on our side, and those counts become your usage record.
+The SSE spec tells parsers to ignore lines that start with a colon, so the OpenAI SDKs skip it and your code never sees it. [Streaming](/features/streaming) lists its fields. Non-streamed replies don't have an equivalent yet. In both cases, we count tokens on our side, and those counts become your usage record.
 
 **An extra field in errors.** Error objects include `request_id` next to OpenAI's standard fields. It's the only difference from OpenAI's error format. We put it inside `error` so that clients reading only the fields they know will skip it.
 
