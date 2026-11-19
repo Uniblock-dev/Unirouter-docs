@@ -94,7 +94,7 @@ Every error uses the same JSON body. Branch on `error.code`, not `message`. Quot
 | --- | --- | --- | --- |
 | 401 | `invalid_api_key` | Key missing, not sent as a Bearer token, wrong shape, or not accepted. | Send `Authorization: Bearer <key>`. Check you copied the whole key. Lost keys can't be recovered, so create a new one on the Keys screen. |
 | 402 | `insufficient_credit` | The workspace can't cover the request's estimated maximum cost. | Have the workspace owner or an admin buy credit on the Billing screen. See [buying credit](https://docs.hopscotchlabs.ai/manage/buy-credit.md). |
-| 400 | `model_id_not_pinned` | `model` has no provider prefix. Common when migrating OpenAI code. | Use `openai/gpt-4o-mini`, not `gpt-4o-mini`. A `profile/` slug or `unirouter/auto` also works. |
+| 400 | `model_id_not_pinned` | `model` has no provider prefix. Common when migrating OpenAI code. | Use `openai-main/gpt-4o-mini`, not `gpt-4o-mini`. A `profile/` slug or `unirouter/auto` also works. |
 
 Don't retry these unchanged. Fix the key, credit, or model id first.
 
