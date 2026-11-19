@@ -146,11 +146,11 @@ The SSE spec tells parsers to ignore lines that start with a colon, so the OpenA
 
 ## Errors and billing
 
-Status codes and `type` values match OpenAI's. In your error handling, check `type` and `code` and don't match on the message text, because we may reword it. [Errors and refusals](https://docs.hopscotchlabs.ai/api-reference/errors.md) lists every code and its status.
+Status codes and `type` values match OpenAI's. In your error handling, check `type` and `code` and don't match on the message text, because we may reword it. [Errors and refusals](/api-reference/errors) list every code and its status.
 
 Some refusals are about your account instead of your request, like running out of credit or hitting your spend rate cap. These use OpenAI's existing `insufficient_quota` and `rate_limit_error` types, so your current error handling still catches them. Each one also includes a Hopscotch `code` that tells you exactly what happened.
 
-**Billing.** Credit is prepaid. We charge our platform fee when you buy credit, so each request costs exactly the provider's rate with nothing added. If your balance reaches zero, new requests get a `402` and any requests still running are stopped. See [Credits and billing](https://docs.hopscotchlabs.ai/manage/credits-and-billing.md).
+**Billing.** Credit is prepaid. We charge our platform fee when you buy credit, so each request costs exactly the provider's rate with nothing added. If your balance reaches zero, new requests get a `402` and any requests still running are stopped. See [Credits and billing](/manage/cr).
 
 ## How to
 
