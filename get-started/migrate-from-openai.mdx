@@ -161,7 +161,7 @@ Here's everything to change in your app, in order. The sections above explain wh
     Search your code for model names and add the provider prefix to each one, using ids from `GET /v1/models`. If you skip this, your first request fails.
   </Step>
   <Step title="Update the base URL and API key">
-    Two settings, both above. Keep the key in the environment rather than in source.
+    These are the two settings described above. Load the key from an environment variable instead of putting it in your source code.
   </Step>
   <Step title="Find any call to an endpoint this site does not document">
     Anything beyond the table above is undocumented here. Decide what those call sites do before you cut over
