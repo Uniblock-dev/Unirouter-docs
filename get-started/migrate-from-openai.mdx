@@ -76,7 +76,7 @@ every time. It is a 404 in the OpenAI envelope, with type `invalid_request_error
 
 ## Model ids
 
-Model ids use the format `provider/model`, for example `openai/gpt-4o-mini`. We split the id at the first slash. The part before the slash is the provider that serves the request. The part after it is our name for that model on that provider. When we call the provider, we use the provider's own name for the model, so you never need to know it.
+Model ids use the format `provider/model`, for example `openai-main/gpt-4o-mini`. We split the id at the first slash. The part before the slash is the provider that serves the request. The part after it is our name for that model on that provider. When we call the provider, we use the provider's own name for the model, so you never need to know it.
 
 If two providers offer the same model, that model has two ids, and you pick which one to call.
 
