@@ -116,45 +116,33 @@ We reserve `x-hopscotch-*` for our own headers in both directions. If you send o
 
 ## Response differences
 
-All of these are additions to an otherwise unchanged OpenAI response.
+Except for the provider rate-limit headers covered below, everything in this section is added to a standard OpenAI response.
 
-**The request id.** Every response, success or error, carries `x-hopscotch-request-id`, and the same value on
-`x-request-id`, which is the header the OpenAI SDKs already read. On an error, the id also appears as `request_id`
-inside the `error` object. That fifth field inside `error` is the one shape difference from OpenAI's envelope, and
-it is inside `error` rather than beside it precisely so that an SDK reading the fields it knows ignores it safely.
+**Request id.** Every response, success or error, includes `x-hopscotch-request-id`. We send the same value as `x-request-id`, which the OpenAI SDKs already read. On errors, it also appears as `request_id` inside the `error` object.
 
-**Diagnostic headers.** A short allowlist describes how the request was served:
+**Diagnostic headers.** These show how we handled the request:
 
-| Header | What it says |
-|---|---|
-| `x-hopscotch-provider` | Which provider family answered. |
-| `x-hopscotch-retry-attempt-count` | How many attempts it took, so a slow success has a visible reason. |
-| `x-hopscotch-cache-status` | Whether the reply came from cache rather than from the provider. |
-| `x-hopscotch-trace-id` | A second internal id, distinct from your request id. |
-| `x-hopscotch-served-by` | The full id, `{provider}/{model}`, of the model that actually answered. |
+| Header | What it tells you |
+| --- | --- |
+| `x-hopscotch-provider` | The provider that answered. |
+| `x-hopscotch-retry-attempt-count` | How many attempts the request took. Useful when a request succeeds but runs slower than expected. |
+| `x-hopscotch-cache-status` | Whether the reply came from our cache instead of the provider. |
+| `x-hopscotch-trace-id` | A second internal id, separate from your request id. |
+| `x-hopscotch-served-by` | The full `{provider}/{model}` id of the model that answered. |
 
-Each of these, and the request id above, was also sent under an `x-uniblock-` name until 2026-09-14. That spelling
-was retired and is no longer written, so read the `x-hopscotch-` name, or `x-request-id` for the id. See
-[Headers](/api-reference/headers).
+Until 2026-09-14, we also sent each of these headers, and the request id, under an `x-uniblock-` name. We no longer send those, so read the `x-hopscotch-` version, or `x-request-id` for the request id. See [Headers](https://docs.hopscotchlabs.ai/api-reference/headers.md).
 
-**Provider rate-limit headers are not forwarded.** Nothing else the provider sets travels onward. If you currently
-read the remaining-requests and reset headers that a provider sets, those are absent here, because they describe a
-pool we hold rather than a limit that applies to you. Your own limits arrive as 429 responses with codes you can
-branch on, documented in [Spend controls](/manage/spend-controls).
+**Provider rate-limit headers.** We don't pass on any other headers from the provider. If your app reads headers like remaining requests or reset time, they won't be there. Those numbers describe the capacity we share across all customers, so they wouldn't tell you anything about your own limits. When you hit one of your own limits, you get a `429` with a code you can check. See [Spend controls](https://docs.hopscotchlabs.ai/manage/spend-controls.md).
 
-**One extra line on a stream.** A streamed reply carries one extra line immediately before `data: [DONE]`, starting
-with a colon:
+**An extra line in streams.** Right before `data: [DONE]`, a streamed reply includes one extra line that starts with a colon:
 
 ```text
 :x-hopscotch-usage {"v":1,...}
 ```
 
-The SSE specification requires a parser to ignore a line starting with a colon, so the OpenAI SDKs skip it and a
-conforming client never sees it. [Streaming](/features/streaming) documents its fields. A non-streamed reply carries
-no equivalent header today. The counts are read on our side and become your usage record.
+The SSE spec tells parsers to ignore lines that start with a colon, so the OpenAI SDKs skip it and your code never sees it. [Streaming](https://docs.hopscotchlabs.ai/features/streaming.md) lists its fields. Non-streamed replies don't have an equivalent yet. In both cases, we count tokens on our side, and those counts become your usage record.
 
-**One extra field in an error.** The error object carries `request_id` alongside the fields OpenAI defines. It is
-inside `error` rather than beside it so that a client reading only the fields it knows ignores it safely.
+**An extra field in errors.** Error objects include `request_id` next to OpenAI's standard fields. It's the only difference from OpenAI's error format. We put it inside `error` so that clients reading only the fields they know will skip it.
 
 ## Errors and billing
 
