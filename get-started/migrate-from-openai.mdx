@@ -76,19 +76,15 @@ every time. It is a 404 in the OpenAI envelope, with type `invalid_request_error
 
 ## Model ids
 
-Models are named `provider/model`, for example `openai/gpt-4o-mini`. The id is split once on the first
-slash: the part before it names the provider that will serve the request, and everything after it is our name
-for that model on that provider. The provider is still sent its own spelling, by us and not by you. The same
-model carried by two providers is two ids, and you choose which one you send.
+Model ids use the format `provider/model`, for example `openai/gpt-4o-mini`. We split the id at the first slash. The part before the slash is the provider that serves the request. The part after it is our name for that model on that provider. When we call the provider, we use the provider's own name for the model, so you never need to know it.
 
-Every model id gains a provider in front of it. This is the one change that is not optional, and it breaks
-loudly rather than quietly. A bare OpenAI-style name such as `gpt-4o-mini` is not a Hopscotch model id. It is
-refused with `400` and the code `model_id_not_pinned`, naming both accepted forms. That refusal is deliberate:
-a bare id would have to be resolved to some provider we happen to carry it under, and picking one for you is a
-decision about price and about who sees your prompt that we are not willing to make on your behalf.
+If two providers offer the same model, that model has two ids, and you pick which one to call.
 
-Find the ids you can call with `GET /v1/models`, or on the Models screen in the dashboard. Do not assemble them
-by hand from a provider's own naming. See [Models](/features/models).
+**Add a provider to every model id.** It's the only change you can't skip, and if you miss it you'll find out on your first request. A bare OpenAI name like `gpt-4o-mini` returns a `400` with the code `model_id_not_pinned`, and the error message shows both formats we accept.
+
+We refuse bare ids on purpose. To serve one, we'd have to pick a provider for you. That choice affects what you pay and who sees your prompts, so we leave it to you.
+
+To find the ids you can call, use `GET /v1/models` or the Models screen in the dashboard. Copy ids from there instead of building them from a provider's own model names. See [Models](https://docs.hopscotchlabs.ai/features/models.md).
 
 ```bash
 curl https://api.hopscotchlabs.ai/v1/models \
