@@ -93,27 +93,20 @@ curl https://api.hopscotchlabs.ai/v1/models \
 
 ## Request bodies and parameters
 
-The chat completion body is forwarded as you sent it. There is no request schema of ours in front of it and no
-allowlist of parameters, so a parameter your client already sends works without waiting for us to add it. A body
-the provider rejects comes back as the provider's own OpenAI-shaped error. `max_tokens`, `temperature`, `tools`,
-`response_format`, and the rest travel in the body.
+We forward your chat completion body exactly as you send it. We don't check it against a schema of our own or limit which parameters you can use, so anything your client sends today keeps working. `max_tokens`, `temperature`, `tools`, `response_format` and everything else go in the body as usual. If the provider rejects your body, you get the provider's own error in OpenAI's format.
 
-Two fields are read on the way through, both to work out what the request could cost before it is sent: `model`,
-and `max_tokens` or `max_completion_tokens`. Reading one does not change it.
+We read two fields on the way through so we can estimate the cost before sending the request: `model`, and `max_tokens` (or `max_completion_tokens`). Reading them doesn't change them.
 
-Two rewrites exist, and they are the whole list. A request naming a routing profile or `unirouter/auto` has its
-`model` replaced with the model being tried on that attempt, because that is what a route means. And a request
-that names no output ceiling, sent to a provider whose own API refuses a request without one, has `max_tokens`
-filled in with the model's published maximum output, which is the figure credit was already being held against.
-Every other provider is sent your body without the field. [Request parameters](/api-reference/parameters) covers
-both in full.
+There are only two cases where we change your request:
 
-Nothing Hopscotch-specific belongs in a request. There is no parameter of ours to send, and no header can change how
-a request is served.
+- **Routing.** If you call a routing profile or `hopscotch/auto`, we replace `model` with the model we're trying on that attempt. That's how routing works.
+- **Missing output limit.** Some providers refuse any request that doesn't set a maximum output. If you send one of these providers a request without `max_tokens`, we fill it in with the model's published maximum output. That's the same number we already used to hold credit for the request. For every other provider, we leave `max_tokens` unset.
 
-**`max_tokens` is worth sending even though it is optional.** It is what sizes the amount we hold against your
-balance before the call, so a request without it is held at the model's published maximum output and reaches your
-account spend rate cap sooner. See [Spend controls](/manage/spend-controls).
+[Request parameters](https://docs.hopscotchlabs.ai/api-reference/parameters.md) covers both cases in detail.
+
+You don't need to add anything Hopscotch-specific to your requests. We have no custom parameters, and no header changes how we serve a request.
+
+**Send `max_tokens` even though it's optional.** Before each call, we hold part of your balance to cover it, and `max_tokens` sets how much. Without it, we hold enough for the model's maximum output, so you'll hit your spend rate cap sooner. See [Spend controls](/manage/spend-controls).
 
 ## Request headers
 
