@@ -110,12 +110,9 @@ You don't need to add anything Hopscotch-specific to your requests. We have no c
 
 ## Request headers
 
-Send `Authorization` and `Content-Type`. Nothing else you send is forwarded: the request we make on your behalf is
-built from your request body and our own provider credential, with a fresh header set. Organisation and project
-headers do not travel.
+Send `Authorization` and `Content-Type`. We don't forward any other headers. When we call the provider, we build a new request from your body and our own provider credential, with a fresh set of headers. That means OpenAI's organization and project headers (`OpenAI-Organization` and `OpenAI-Project`) are dropped.
 
-`x-uniblock-*` is our reserved namespace on both directions of the wire. Sending one has no effect for the same
-reason: it does not travel.
+We reserve `x-hopscotch-*` for our own headers in both directions. If you send one, we drop it like any other header, so it has no effect.
 
 ## Response differences
 
