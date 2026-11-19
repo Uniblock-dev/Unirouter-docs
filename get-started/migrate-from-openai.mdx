@@ -169,8 +169,8 @@ Here's everything to change in your app, in order. The sections above explain wh
   <Step title="Stop relying on provider rate-limit headers">
     If your app uses them to pace requests, switch to `429` responses and the `Retry-After` header.
   </Step>
-  <Step title="Send max_tokens">
-    Especially on any call path that currently omits it.
+  <Step title="Set `max_tokens`">
+    Add it to every call, especially calls that don't set it today. It keeps the amount we hold against your balance small.
   </Step>
   <Step title="Log the request id">
     `x-request-id` is the header the official SDKs already surface on their error objects, so this is usually a
