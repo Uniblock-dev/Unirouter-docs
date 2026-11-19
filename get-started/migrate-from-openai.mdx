@@ -150,7 +150,7 @@ Status codes and `type` values match OpenAI's. In your error handling, check `ty
 
 Some refusals are about your account instead of your request, like running out of credit or hitting your spend rate cap. These use OpenAI's existing `insufficient_quota` and `rate_limit_error` types, so your current error handling still catches them. Each one also includes a Hopscotch `code` that tells you exactly what happened.
 
-**Billing.** Credit is prepaid. We charge our platform fee when you buy credit, so each request costs exactly the provider's rate with nothing added. If your balance reaches zero, new requests get a `402` and any requests still running are stopped. See [Credits and billing](/manage/cr).
+**Billing.** Credit is prepaid. We charge our platform fee when you buy credit, so each request costs exactly the provider's rate with nothing added. If your balance reaches zero, new requests get a `402` and any requests still running are stopped. See [Credits and billing](/manage/credits-and-billing).
 
 ## How to
 
