@@ -130,7 +130,7 @@ Except for the provider rate-limit headers covered below, everything in this sec
 | `x-hopscotch-trace-id` | A second internal id, separate from your request id. |
 | `x-hopscotch-served-by` | The full `{provider}/{model}` id of the model that answered. |
 
-Until 2026-09-14, we also sent each of these headers, and the request id, under an `x-uniblock-` name. We no longer send those, so read the `x-hopscotch-` version, or `x-request-id` for the request id. See [Headers](https://docs.hopscotchlabs.ai/api-reference/headers.md).
+Until 2026-09-14, we also sent each of these headers, and the request id, under an `x-uniblock-` name. We no longer send those, so read the `x-hopscotch-` version, or `x-request-id` for the request id. See [Headers](/api-reference/headers).
 
 **Provider rate-limit headers.** We don't pass on any other headers from the provider. If your app reads headers like remaining requests or reset time, they won't be there. Those numbers describe the capacity we share across all customers, so they wouldn't tell you anything about your own limits. When you hit one of your own limits, you get a `429` with a code you can check. See [Spend controls](https://docs.hopscotchlabs.ai/manage/spend-controls.md).
 
