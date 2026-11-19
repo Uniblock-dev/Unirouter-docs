@@ -102,7 +102,7 @@ There are only two cases where we change your request:
 - **Routing.** If you call a routing profile or `hopscotch/auto`, we replace `model` with the model we're trying on that attempt. That's how routing works.
 - **Missing output limit.** Some providers refuse any request that doesn't set a maximum output. If you send one of these providers a request without `max_tokens`, we fill it in with the model's published maximum output. That's the same number we already used to hold credit for the request. For every other provider, we leave `max_tokens` unset.
 
-[Request parameters](api-reference/) covers both cases in detail.
+[Request parameters](/api-reference/parameters) covers both cases in detail.
 
 You don't need to add anything Hopscotch-specific to your requests. We have no custom parameters, and no header changes how we serve a request.
 
