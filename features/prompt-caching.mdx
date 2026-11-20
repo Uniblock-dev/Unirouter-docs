@@ -24,10 +24,8 @@ table, because a stale table about pricing is worse than none.
 
 Cached tokens are reported separately from ordinary input tokens, in three places.
 
-**In the reply body**, on a response that is not streamed, inside the provider's own `usage` object, in whatever
-spelling that provider uses.
-
-**On the stream**, as fields on the `:x-hopscotch-usage` comment line written immediately before `data: [DONE]`:
+1. **In the reply body**, on a response that is not streamed, inside the provider's own `usage` object, in whatever spelling that provider uses.
+2. **On the stream**, as fields on the `:x-hopscotch-usage` comment line written immediately before `data: [DONE]`:
 
 ```text
 :x-hopscotch-usage {"v":1,"reported":true,"prompt_tokens":1200,"completion_tokens":80,"total_tokens":1280,"cache_read_input_tokens":1024,"cache_write_input_tokens":0}
@@ -39,8 +37,7 @@ spelling that provider uses.
 | `cache_write_input_tokens` | Input tokens written into it. |
 | `cache_write_1h_input_tokens` | The part of those writes made with a one-hour lifetime. Already counted inside `cache_write_input_tokens`, and present only when the provider splits its writes by lifetime, as Anthropic does. |
 
-**On your usage record**, and so on the Activity screen, as the cache read and cache write figures for that
-request. See [Usage and metering](/manage/usage-and-metering).
+3. **On your usage record**, and so on the Activity screen, as the cache read and cache write figures for that request. See [Usage and metering](/manage/usage-and-metering).
 
 ### Absent is not zero
 
