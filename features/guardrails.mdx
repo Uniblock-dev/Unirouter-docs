@@ -165,31 +165,34 @@ If the key already has a guardrail, you'll see:
 
 ### 3. Edit or delete a guardrail
 
-**Edit** opens the same form. Saving replaces the whole guardrail, name included, and every attached key picks
-up the change before the save is reported done.
+**Edit** opens the same form you used to create it. Saving overwrites the whole guardrail, name included. Every attached key picks up the change before the save shows as done.
 
-**Delete** is behind a confirm, and a guardrail that still governs keys cannot be deleted. The refusal names them:
-`This guardrail still governs 2 keys: prod-api, prod-worker. Detach them before deleting it.` The screen also
-refuses a save with no name, a name already used in the workspace (`This workspace already holds a guardrail named "NAME". Names are unique per workspace, ignoring case.`),
-and a spend cap of zero or with more than two decimals.
+**Delete** asks you to confirm. You can't delete a guardrail that still governs keys. The error lists them:
+
+> This guardrail still governs 2 keys: prod-api, prod-worker. Detach them before deleting it.
 
 ### 4. Find the block in Activity
 
-Refused requests are ordinary rows in **Activity**. Open it, filter by key, model or date, and set
-the outcome filter to **refused**. The charge reads zero. Open a row to see the exact code and the guardrail name.
-The caller's error carries the same request id. See [View activity](/manage/usage-and-metering#look-up-one-request).
+Refused requests show up as normal rows in **Activity**.
+
+1. Open **Activity**.
+2. Filter by key, model or date.
+3. Set the outcome filter to **refused**. The charge on these rows is zero.
+4. Open a row to see the exact error code and the guardrail name.
+
+The error the caller received has the same request ID, so you can match the two. See [View activity](/manage/usage-and-metering#look-up-one-request).
 
 ### 5. Fix a policy after a false positive
 
-A false positive is a request the guardrail refused that should have been served. First find the rule: its code names it in Activity or in the caller's error. Then make the smallest change:
+A false positive is a request the guardrail blocked that it should have let through.
 
-- **Spend cap.** Raise the amount or change the period, or turn the cap off.
-- **Zero data retention.** Set the privacy choice to workspace default or off.
-- **Sensitive-data detectors.** Switch off the detector that matched.
-- **Injection patterns and allow lists.** These cannot be edited on the screen yet. Detach the key to lift all of its
-  rules; it then runs on its own limits. Re-attach once the rule is changed in a supported place.
-
-Send the same request again and watch Activity. If it is still refused, the code names the rule still in the way. 
+1. **Find the rule.** The error code tells you which rule fired. You'll find it in Activity or in the caller's error.
+2. **Make the smallest change that fixes it:**
+   - **Spend cap:** raise the amount, change the period, or turn the cap off.
+   - **Zero data retention:** set **Privacy** to **Workspace default** or **Off**.
+   - **Sensitive data:** turn off the detector that matched.
+   - **Injection patterns and allow lists:** you can't edit these in the dashboard yet. Detach the key to lift all of the guardrail's rules from it, so it runs on its own limits. Re-attach it once the rule has been changed in a supported place.
+3. **Retry and check.** Send the same request again and watch Activity. If it's still refused, the new error code tells you which rule is still blocking it.
 
 ## Next steps
 
