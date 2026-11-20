@@ -38,8 +38,7 @@ Deprecation is a recommendation. The provider has stopped recommending the model
 It is on the list, and not only on the detail, precisely so that a client can
 find every model it depends on that is ending without fetching each one.
 
-**On `GET /v1/models/{id}`**, three fields inside the `uniblock` block carry the
-whole picture:
+In `GET /v1/models/{id}`, three fields inside the `uniblock` block give you the full picture:
 
 ```json
 {
@@ -55,10 +54,7 @@ whole picture:
 | `sunset_at` | Unix seconds, or null. When it stops answering. |
 | `replacement_model_id` | The id to move to, or null. |
 
-**`replacement_model_id` is null more often than not, and that is deliberate.** A
-replacement is named only where the provider named one. Nothing here guesses at
-what you meant, because a wrong guess about which model to move to is worse than
-no guess: you act on it.
+**Expect** `replacement_model_id `**to be** `null `**most of the time. That’s on purpose.** We only fill it in when the provider has named a successor. We never guess, because you’d act on a wrong guess and move to the wrong model.
 
 ## What happens when a model reaches its sunset
 
