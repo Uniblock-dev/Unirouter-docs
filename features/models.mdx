@@ -1,9 +1,17 @@
 ---
 title: "Models"
-description: "How model ids are shaped, how to discover which models are callable right now, and the vocabulary a model's rate is expressed in."
-status: partial
-gates: ["8.6", "8.7", "8.8", "8.40", "13.9", "18.58", "18.87", "22.1"]
-type: concept
+description: "How model ids are formatted, how to see which models you can call right now, and the terms used to express a model’s rate."
+status: "partial"
+gates:
+  - "8.6"
+  - "8.7"
+  - "8.8"
+  - "8.40"
+  - "13.9"
+  - "18.58"
+  - "18.87"
+  - "22.1"
+type: "concept"
 ---
 
 You name a model in the `model` field of a request, as you would with OpenAI. The name says which
@@ -14,13 +22,10 @@ provider you request, so one key and one endpoint reach models from more than on
 An id is a provider and a model name, split on the **first** slash:
 
 ```json
-{ "model": "openai/gpt-4o-mini" }
+{ "model": "openai-main/gpt-4o-mini" }
 ```
 
-The part after the slash is the provider's own id with the maker's namespace removed. A model a provider
-publishes as `openai/gpt-oss-120b` is `groq/gpt-oss-120b` here. An id with no namespace is unchanged, as in
-`anthropic/claude-opus-4-5`. Each name is fixed the first time we publish that model on that provider, so an
-id in your code stays put.
+The part after the slash is the provider’s own id, minus the maker’s namespace. If a provider publishes a model as `openai-main/gpt-oss-120b`, you call it `cerebras/gpt-oss-120b` here. Ids with no namespace stay as they are, like `anthropic/claude-opus-4-5`. We fix each name when we first publish that model on that provider, so ids in your code won’t change.
 
 A model carried by two providers has two ids and prices. [Response headers](/api-reference/headers)
 identify the provider that served the request.
@@ -36,9 +41,7 @@ The `model` field accepts three forms:
 A bare id such as `gpt-4o-mini`, or a bare `opus`, is refused with `400` and the code `model_id_not_pinned`.
 Ask for ids rather than building them by hand.
 
-The single-model lookup, `GET /v1/models/{id}`, also accepts the provider's own spelling, so an old link or
-usage record still opens. The request path does not, so an id that works in a lookup may not be callable.
-This site publishes no list of models, families or providers, because a stale list is worse than none.
+`GET /v1/models/{id}` also accepts the provider’s own spelling, so old links and usage records still open. The request path doesn’t accept it, so an id that works in a lookup may not work in a request. This site doesn’t publish a list of models, families or providers, because a stale list does more harm than none.
 
 ## Discovering what you can call
 

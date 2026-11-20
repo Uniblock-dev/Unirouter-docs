@@ -10,8 +10,7 @@ import AuthHeader from '/snippets/auth-header.mdx';
 import ErrorEnvelope from '/snippets/error-envelope.mdx';
 import RequestIdNote from '/snippets/request-id-note.mdx';
 
-Every request to the public API is authenticated by one API key on one header. There is no other
-credential, no session, and no signature: a key opens the door and nothing else does.
+Every API request needs one API key, sent in the `Authorization` header as a Bearer token. You don't need a session, a signature, or any other credential. If the header is missing, uses a different scheme, or carries a malformed or rejected key, the API returns `401`.
 
 ## How to
 
@@ -25,7 +24,7 @@ credential, no session, and no signature: a key opens the door and nothing else 
 curl https://api.hopscotchlabs.ai/v1/chat/completions \
   -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
   -H "Content-Type: application/json" \
-  -d '{"model": "openai/gpt-4o-mini", "messages": [{"role": "user", "content": "Hello."}]}'
+  -d '{"model": "openai-main/gpt-4o-mini", "messages": [{"role": "user", "content": "Hello."}]}'
 ```
 
 ```python Python
@@ -81,30 +80,20 @@ cannot create API keys.` See [Workspaces and members](/manage/workspaces-and-mem
 
 ### Set an expiry and a spending limit
 
-Both are optional, and both are set on the key when you create it or later from its row. A key with neither
-never expires and spends against the workspace balance with no ceiling of its own.
+Both are optional. You can set them when you create a key or later from its row. A key with neither never expires and has no limit of its own.
 
-**Expiration** is a date. A key presented after it is refused with code `key_expired`, and the refusal names
-the instant it expired. Nothing renews an expired key: the fix is a new key.
+- **Expiration:** A date. After it, the key is refused with `key_expired`. An expired key can't be renewed, so create a new one.
+- **Credit limit:** The most the key can spend, with a **Reset** cadence beside it: never, daily, weekly or monthly, on UTC calendar windows. A request that would take the key past its limit is refused with `key_limit_exceeded` before anything is held or charged. Other keys in the workspace keep working from the same balance.
 
-**Credit limit** is an amount this key may spend, with a **Reset** cadence beside it: never, daily, weekly or
-monthly, on UTC calendar windows. A request that would take the key past its limit is refused with code
-`key_limit_exceeded` before anything is held or charged. The refusal names what the key has settled and holds
-in its current window. Other keys in the workspace keep serving from the same balance.
-
-The cadence is available only once there is a limit for it to apply to. Emptying the amount returns the cadence
-to never, and a limit that never resets does not clear by waiting: raise it or remove it. See
-[Spend controls](/manage/spend-controls).
+Emptying the amount sets the cadence back to never. A limit that never resets won't clear by waiting, so raise it or remove it. See [Spend controls](/manage/spend-controls).
 
 ### End a key
 
-Three things can end a key, and nothing else does. Ending a key means it stops existing and its slot frees.
+A key ends in one of three ways, and its slot frees up when it does:
 
-| Reason | What causes it | Available today |
-|---|---|---|
-| You revoke it | Somebody with access ends that key deliberately. | Yes |
-| It was replaced | Minting a replacement ends the key it replaces in the same motion. | Yes |
-| A member was removed and the person removing them chose to revoke that key | Removal asks about each key rather than deciding for you. | Yes |
+- **You revoke it.** Anyone who may revoke that key can do this.
+- **You replace it.** Regenerating a key ends the old one as it creates the new one.
+- **A member is removed and you choose to revoke their key.** Removal asks about each key, so nothing is revoked by default.
 
 **Revoke** asks "Stop this key from working?" and ends the key on **Revoke it**. Nothing replaces it. **Regenerate**
 asks "Replace this key with a fresh one? The old one stops working." and, on **Regenerate it**, ends the old key and
@@ -126,22 +115,11 @@ that takes effect everywhere.
 
 ## The key format
 
-A key is a non-secret prefix followed by 43 random characters from the base64url alphabet: `A-Z`, `a-z`, `0-9`, `-`
-and `_`.
+A key is `ub_live_` followed by 43 random characters from the base64url alphabet: `A-Z`, `a-z`, `0-9`, `-` and `_`.
 
-| Prefix | Environment |
-|---|---|
-| `ub_live_` | Production. This is the one you get from the dashboard. |
-| `ub_stg_` | Staging. |
-| `ub_dev_` | Development. |
+The prefix is public. It lets secret scanners spot a leaked Hopscotch key in a public repository. The dashboard keeps the prefix and the last four characters visible so you can tell keys apart. The other 39 characters are gone from our side once the key has been shown.
 
-The prefix lets secret scanners recognise a leaked Hopscotch key in a public repository, and says which environment a
-misplaced key belongs to. The prefix and the last four characters stay visible in the dashboard, so you can tell keys
-apart; the other 39 characters are gone from our side once shown.
-
-We keep only a hash, so a key cannot be shown again or recovered. That is a property of the design: a leak of our
-database yields no working key, and the same fact stops us reading yours back. If you lose a key, mint a new one and
-end the lost one, as described under [End a key](#end-a-key).
+We store only a hash, so we can't show a key again or recover it. It also means a leak of our database exposes no working keys. If you lose a key, create a new one and end the lost one, as described under [End a key](#end-a-key).
 
 ## Keys belong to the workspace
 
@@ -154,12 +132,11 @@ not say who may use the key.
 
 ## 500 live keys per workspace
 
-A workspace holds up to 500 live keys. A request for one more at 500 is refused with: `This workspace already holds 500
-live keys, which is the maximum. Revoke one to free a slot.`
+Each workspace can hold up to 500 live keys. If you ask for one more at 500, you get: `This workspace already holds 500 live keys, which is the maximum. Revoke one to free a slot.`
 
-The ceiling counts live keys, not keys ever minted, so an ended key frees its slot. Several keys rather than one is
-deliberate: with one, a leak means an outage. With several, you can create the replacement, move traffic, and end the
-old key with nothing down in between.
+Only live keys count, so an ended key frees its slot right away.
+
+Use several keys instead of one. With a single key, a leak means an outage. With several, you can create the replacement, move traffic over, and end the old key with nothing down in between.
 
 ### Keys that arrive with an invitation
 
@@ -230,13 +207,19 @@ cannot raise it. Your account spend rate cap is a different refusal, with its ow
 The create, copy-once and reserved-key flows have not been walked end to end against a deployed environment for this
 page. If a screen contradicts this page, trust the screen and tell us.
 
-## Next
+## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Migrate from OpenAI" href="/get-started/migrate-from-openai">
+  <Card title="Migrate from OpenAI" icon="plug-connected" href="/get-started/migrate-from-openai">
     Two settings, and the list of what changes when you move an existing application.
   </Card>
-  <Card title="Spend controls" href="/manage/spend-controls">
+  <Card title="Features" icon="stack-2" href="/features/overview">
+    Models, streaming, tools, caching, routing and the endpoints.
+  </Card>
+  <Card title="Models" icon="cpu" href="/features/models">
+    How model Ids are written and how to list the ones your key can call.
+  </Card>
+  <Card title="Spend controls" icon="adjustments" href="/manage/spend-controls">
     The workspace caps, the pause, and what each refusal costs you.
   </Card>
 </CardGroup>

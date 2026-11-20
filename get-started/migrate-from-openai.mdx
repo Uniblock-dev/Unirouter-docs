@@ -1,27 +1,29 @@
 ---
 title: "Migrate from OpenAI"
-description: "What OpenAI-compatible means here, the endpoints that exist, what changes when you move an app, and a checklist to cut over."
-status: partial
-gates: ["2.3", "2.10", "2.11", "2.31", "13.9"]
-type: guide
+description: "What OpenAI-compatible means on Hopscotch, which endpoints exist, what changes when you move an app over, and the steps to migrate."
+status: "partial"
+gates:
+  - "2.3"
+  - "2.10"
+  - "2.11"
+  - "2.31"
+  - "13.9"
+type: "guide"
 ---
 
 import BaseUrl from '/snippets/base-url.mdx';
 
-If your application already calls OpenAI, almost all of it survives the move. "OpenAI-compatible"
-here means three specific things:
+If your app already calls OpenAI, most of your code stays the same. When we say "OpenAI-compatible," we mean three things:
 
-1. The request and response bodies are OpenAI's, and travel unchanged but for two rewrites named below.
-2. Errors arrive in the OpenAI error envelope, so your existing error handling parses them.
-3. What we add is additive: extra response headers and one SSE comment line, both of which a compliant
-   client ignores.
+1. Request and response bodies use OpenAI's format. We pass them through as they are, apart from two rewrites covered below.
+2. Errors come back in OpenAI's error format, so your existing error handling can read them.
+3. Anything we add sits on top: a few extra response headers and one extra line at the end of a stream. Standard clients ignore both.
 
 ## The two settings
 
 <BaseUrl />
 
-Your client keeps its own name for these. Change the base URL and change the key, and leave the rest of
-your client configuration where it is.
+Your client may use a different name for these settings, such as `base_url`, `baseURL` or `OPENAI_BASE_URL`. Update the base URL and the API key, and leave the rest of your client config alone.
 
 <CodeGroup>
 
@@ -75,19 +77,15 @@ every time. It is a 404 in the OpenAI envelope, with type `invalid_request_error
 
 ## Model ids
 
-Models are named `provider/model`, for example `openai/gpt-4o-mini`. The id is split once on the first
-slash: the part before it names the provider that will serve the request, and everything after it is our name
-for that model on that provider. The provider is still sent its own spelling, by us and not by you. The same
-model carried by two providers is two ids, and you choose which one you send.
+Model ids use the format `provider/model`, for example `openai-main/gpt-4o-mini`. We split the id at the first slash. The part before the slash is the provider that serves the request. The part after it is our name for that model on that provider. When we call the provider, we use the provider's own name for the model, so you never need to know it.
 
-Every model id gains a provider in front of it. This is the one change that is not optional, and it breaks
-loudly rather than quietly. A bare OpenAI-style name such as `gpt-4o-mini` is not a Hopscotch model id. It is
-refused with `400` and the code `model_id_not_pinned`, naming both accepted forms. That refusal is deliberate:
-a bare id would have to be resolved to some provider we happen to carry it under, and picking one for you is a
-decision about price and about who sees your prompt that we are not willing to make on your behalf.
+If two providers offer the same model, that model has two ids, and you pick which one to call.
 
-Find the ids you can call with `GET /v1/models`, or on the Models screen in the dashboard. Do not assemble them
-by hand from a provider's own naming. See [Models](/features/models).
+**Add a provider to every model id.** It's the only change you can't skip, and if you miss it you'll find out on your first request. A bare OpenAI name like `gpt-4o-mini` returns a `400` with the code `model_id_not_pinned`, and the error message shows both formats we accept.
+
+We refuse bare ids on purpose. To serve one, we'd have to pick a provider for you. That choice affects what you pay and who sees your prompts, so we leave it to you.
+
+To find the ids you can call, use `GET /v1/models` or the Models screen in the dashboard. Copy ids from there instead of building them from a provider's own model names. See [Models](/features/models).
 
 ```bash
 curl https://api.hopscotchlabs.ai/v1/models \
@@ -96,120 +94,90 @@ curl https://api.hopscotchlabs.ai/v1/models \
 
 ## Request bodies and parameters
 
-The chat completion body is forwarded as you sent it. There is no request schema of ours in front of it and no
-allowlist of parameters, so a parameter your client already sends works without waiting for us to add it. A body
-the provider rejects comes back as the provider's own OpenAI-shaped error. `max_tokens`, `temperature`, `tools`,
-`response_format`, and the rest travel in the body.
+We forward your chat completion body exactly as you send it. We don't check it against a schema of our own or limit which parameters you can use, so anything your client sends today keeps working. `max_tokens`, `temperature`, `tools`, `response_format` and everything else go in the body as usual. If the provider rejects your body, you get the provider's own error in OpenAI's format.
 
-Two fields are read on the way through, both to work out what the request could cost before it is sent: `model`,
-and `max_tokens` or `max_completion_tokens`. Reading one does not change it.
+We read two fields on the way through so we can estimate the cost before sending the request: `model`, and `max_tokens` (or `max_completion_tokens`). Reading them doesn't change them.
 
-Two rewrites exist, and they are the whole list. A request naming a routing profile or `unirouter/auto` has its
-`model` replaced with the model being tried on that attempt, because that is what a route means. And a request
-that names no output ceiling, sent to a provider whose own API refuses a request without one, has `max_tokens`
-filled in with the model's published maximum output, which is the figure credit was already being held against.
-Every other provider is sent your body without the field. [Request parameters](/api-reference/parameters) covers
-both in full.
+There are only two cases where we change your request:
 
-Nothing Hopscotch-specific belongs in a request. There is no parameter of ours to send, and no header can change how
-a request is served.
+- **Routing.** If you call a routing profile or `hopscotch/auto`, we replace `model` with the model we're trying on that attempt. That's how routing works.
+- **Missing output limit.** Some providers refuse any request that doesn't set a maximum output. If you send one of these providers a request without `max_tokens`, we fill it in with the model's published maximum output. That's the same number we already used to hold credit for the request. For every other provider, we leave `max_tokens` unset.
 
-**`max_tokens` is worth sending even though it is optional.** It is what sizes the amount we hold against your
-balance before the call, so a request without it is held at the model's published maximum output and reaches your
-account spend rate cap sooner. See [Spend controls](/manage/spend-controls).
+[Request parameters](/api-reference/parameters) covers both cases in detail.
+
+You don't need to add anything Hopscotch-specific to your requests. We have no custom parameters, and no header changes how we serve a request.
+
+**Send `max_tokens` even though it's optional.** Before each call, we hold part of your balance to cover it, and `max_tokens` sets how much. Without it, we hold enough for the model's maximum output, so you'll hit your spend rate cap sooner. See [Spend controls](/manage/spend-controls).
 
 ## Request headers
 
-Send `Authorization` and `Content-Type`. Nothing else you send is forwarded: the request we make on your behalf is
-built from your request body and our own provider credential, with a fresh header set. Organisation and project
-headers do not travel.
+Send `Authorization` and `Content-Type`. We don't forward any other headers. When we call the provider, we build a new request from your body and our own provider credential, with a fresh set of headers. That means OpenAI's organization and project headers (`OpenAI-Organization` and `OpenAI-Project`) are dropped.
 
-`x-uniblock-*` is our reserved namespace on both directions of the wire. Sending one has no effect for the same
-reason: it does not travel.
+We reserve `x-hopscotch-*` for our own headers in both directions. If you send one, we drop it like any other header, so it has no effect.
 
 ## Response differences
 
-All of these are additions to an otherwise unchanged OpenAI response.
+Except for the provider rate-limit headers covered below, everything in this section is added to a standard OpenAI response.
 
-**The request id.** Every response, success or error, carries `x-hopscotch-request-id`, and the same value on
-`x-request-id`, which is the header the OpenAI SDKs already read. On an error, the id also appears as `request_id`
-inside the `error` object. That fifth field inside `error` is the one shape difference from OpenAI's envelope, and
-it is inside `error` rather than beside it precisely so that an SDK reading the fields it knows ignores it safely.
+**Request id.** Every response, success or error, includes `x-hopscotch-request-id`. We send the same value as `x-request-id`, which the OpenAI SDKs already read. On errors, it also appears as `request_id` inside the `error` object.
 
-**Diagnostic headers.** A short allowlist describes how the request was served:
+**Diagnostic headers.** These show how we handled the request:
 
-| Header | What it says |
-|---|---|
-| `x-hopscotch-provider` | Which provider family answered. |
-| `x-hopscotch-retry-attempt-count` | How many attempts it took, so a slow success has a visible reason. |
-| `x-hopscotch-cache-status` | Whether the reply came from cache rather than from the provider. |
-| `x-hopscotch-trace-id` | A second internal id, distinct from your request id. |
-| `x-hopscotch-served-by` | The full id, `{provider}/{model}`, of the model that actually answered. |
+| Header | What it tells you |
+| --- | --- |
+| `x-hopscotch-provider` | The provider that answered. |
+| `x-hopscotch-retry-attempt-count` | How many attempts the request took. Useful when a request succeeds but runs slower than expected. |
+| `x-hopscotch-cache-status` | Whether the reply came from our cache instead of the provider. |
+| `x-hopscotch-trace-id` | A second internal id, separate from your request id. |
+| `x-hopscotch-served-by` | The full `{provider}/{model}` id of the model that answered. |
 
-Each of these, and the request id above, was also sent under an `x-uniblock-` name until 2026-09-14. That spelling
-was retired and is no longer written, so read the `x-hopscotch-` name, or `x-request-id` for the id. See
-[Headers](/api-reference/headers).
+Until 2026-09-14, we also sent each of these headers, and the request id, under an `x-uniblock-` name. We no longer send those, so read the `x-hopscotch-` version, or `x-request-id` for the request id. See [Headers](/api-reference/headers).
 
-**Provider rate-limit headers are not forwarded.** Nothing else the provider sets travels onward. If you currently
-read the remaining-requests and reset headers that a provider sets, those are absent here, because they describe a
-pool we hold rather than a limit that applies to you. Your own limits arrive as 429 responses with codes you can
-branch on, documented in [Spend controls](/manage/spend-controls).
+**Provider rate-limit headers.** We don't pass on any other headers from the provider. If your app reads headers like remaining requests or reset time, they won't be there. Those numbers describe the capacity we share across all customers, so they wouldn't tell you anything about your own limits. When you hit one of your own limits, you get a `429` with a code you can check. See [Spend controls](https://docs.hopscotchlabs.ai/manage/spend-controls.md).
 
-**One extra line on a stream.** A streamed reply carries one extra line immediately before `data: [DONE]`, starting
-with a colon:
+**An extra line in streams.** Right before `data: [DONE]`, a streamed reply includes one extra line that starts with a colon:
 
 ```text
 :x-hopscotch-usage {"v":1,...}
 ```
 
-The SSE specification requires a parser to ignore a line starting with a colon, so the OpenAI SDKs skip it and a
-conforming client never sees it. [Streaming](/features/streaming) documents its fields. A non-streamed reply carries
-no equivalent header today. The counts are read on our side and become your usage record.
+The SSE spec tells parsers to ignore lines that start with a colon, so the OpenAI SDKs skip it and your code never sees it. [Streaming](/features/streaming) lists its fields. Non-streamed replies don't have an equivalent yet. In both cases, we count tokens on our side, and those counts become your usage record.
 
-**One extra field in an error.** The error object carries `request_id` alongside the fields OpenAI defines. It is
-inside `error` rather than beside it so that a client reading only the fields it knows ignores it safely.
+**An extra field in errors.** Error objects include `request_id` next to OpenAI's standard fields. It's the only difference from OpenAI's error format. We put it inside `error` so that clients reading only the fields they know will skip it.
 
 ## Errors and billing
 
-Status codes and the closed set of `type` values are OpenAI's. Branch on `type` and `code`, never on the message text:
-the fields are the contract and the sentences are prose that may be reworded. Every shipped code and its status is in
-[Errors and refusals](/api-reference/errors).
+Status codes and `type` values match OpenAI's. In your error handling, check `type` and `code` and don't match on the message text, because we may reword it. [Errors and refusals](/api-reference/errors) list every code and its status.
 
-Some of our refusals are about billing rather than about your request: not enough credit, or an account spend rate cap.
-Those reuse OpenAI's own `insufficient_quota` and `rate_limit_error` types, so the branch your client already has keeps
-working, and carry a Hopscotch `code` that says which of them happened.
+Some refusals are about your account instead of your request, like running out of credit or hitting your spend rate cap. These use OpenAI's existing `insufficient_quota` and `rate_limit_error` types, so your current error handling still catches them. Each one also includes a Hopscotch `code` that tells you exactly what happened.
 
-**Billing.** Credit is prepaid and the platform fee is added when you buy credit, not when you spend it, so a request
-deducts the provider's own rate with nothing on top. A zero balance refuses new requests with `402` and ends in-flight
-ones. See [Credits and billing](/manage/credits-and-billing).
+**Billing.** Credit is prepaid. We charge our platform fee when you buy credit, so each request costs exactly the provider's rate with nothing added. If your balance reaches zero, new requests get a `402` and any requests still running are stopped. See [Credits and billing](/manage/credits-and-billing).
 
-## How to
+## Migration steps
+
+Here's everything to change in your app, in order. The sections above explain why each step matters.
 
 <Steps>
-  <Step title="Prefix every model id">
-    Search your code for model names and put the provider in front of each one. This is the step that fails the
-    first request if you skip it.
+  <Step title="Add a provider to every model id">
+    Search your code for model names and add the provider prefix to each one, using ids from `GET /v1/models`. If you skip this, your first request fails.
   </Step>
-  <Step title="Point the client at the base URL and swap the key">
-    Two settings, both above. Keep the key in the environment rather than in source.
+  <Step title="Update the base URL and API key">
+    These are the two settings described above. Load the key from an environment variable instead of putting it in your source code.
   </Step>
-  <Step title="Find any call to an endpoint this site does not document">
-    Anything beyond the table above is undocumented here. Decide what those call sites do before you cut over
-    rather than after, and treat them as unanswered rather than as either working or refused.
+  <Step title="Check for endpoints this page doesn't list">
+    Compare the endpoints your app calls against the endpoint table above. We don't document behavior for anything outside that table, so don't count on those calls working or failing. Decide how your app should handle them before you switch.
   </Step>
-  <Step title="Stop reading provider rate-limit headers">
-    If your pacing depends on them, move it onto `429` codes and `Retry-After`.
+  <Step title="Stop relying on provider rate-limit headers">
+    If your app uses them to pace requests, switch to `429` responses and the `Retry-After` header.
   </Step>
-  <Step title="Send max_tokens">
-    Especially on any call path that currently omits it.
+  <Step title="Set `max_tokens`">
+    Add it to every call, especially calls that don't set it today. It keeps the amount we hold against your balance small.
   </Step>
   <Step title="Log the request id">
-    `x-request-id` is the header the official SDKs already surface on their error objects, so this is usually a
-    one-line change. Without it, a support conversation starts from a description rather than from a request.
+    The OpenAI SDKs already expose `x-request-id` on their error objects, so logging it is usually a one-line change. If you contact support, the request id lets us find the exact request without working from a description.
   </Step>
-  <Step title="Buy credit before you cut over">
-    A verified account with a zero balance refuses every request, which is a confusing first result if you were not
-    expecting it.
+  <Step title="Add credit before you switch">
+    A verified account with no credit refuses every request. Add credit first so your first live request goes through.
   </Step>
 </Steps>
 
@@ -223,16 +191,19 @@ ones. See [Credits and billing](/manage/credits-and-billing).
 - Moving from another router is not documented here. The differences that matter would be differences from that
   product's behaviour, and we do not document other people's products from the outside.
 
-## Next
+## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Authentication" href="/get-started/authentication">
+  <Card title="Authentication" icon="key" href="/get-started/authentication">
     The Bearer header, key format, and how a key ends.
   </Card>
-  <Card title="Models" href="/features/models">
+  <Card title="Models" icon="cpu" href="/features/models">
     The ids you can call, and how a model id is shaped.
   </Card>
-  <Card title="Errors and refusals" href="/api-reference/errors">
+  <Card title="Spend controls" icon="adjustments">
+    The workspace caps, the pause, and what each refusal cost you.
+  </Card>
+  <Card title="Errors and refusals" icon="alert-triangle" href="/api-reference/errors">
     The envelope and the full table of codes.
   </Card>
 </CardGroup>
