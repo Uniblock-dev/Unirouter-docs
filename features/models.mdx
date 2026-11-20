@@ -62,9 +62,7 @@ Rows with no provider identity are hidden instead of shown as a bare id.
 
 A model shows up only when all three of these are true: we hold a working credential for it, it’s enabled on our side, and it has a price we’ve confirmed. Being listed doesn’t guarantee a successful response. A model with only a placeholder price stays hidden and comes back as unknown if you name it.
 
-Your own key for a provider changes which credential answers your calls. It cannot add a provider or a model.
-See [Bring your own key](/features/bring-your-own-key). A request for a model that is not live, or that your
-workspace may not use, is refused with an error that names the reason. See [Errors](/api-reference/errors).
+Your own provider key changes which credential serves your calls, but it can’t add a provider or a model. See [Bring your own key](/features/bring-your-own-key). If you request a model that isn’t live, or one your workspace can’t use, the error tells you why. See [Errors](/api-reference/errors).
 
 ## What a request costs
 
