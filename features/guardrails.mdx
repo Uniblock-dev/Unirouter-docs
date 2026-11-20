@@ -27,14 +27,15 @@ A key is governed by at most one guardrail at a time, and one guardrail can gove
 you like. Attaching a second guardrail to a key is refused rather than stacked. A guardrail does not
 change the workspace setting for keys it does not govern.
 
-## A guardrail replaces the key's own limits
+## The guardrail's values take over completely
 
-While a guardrail governs a key, its spend cap and zero-data-retention value are the ones in force, and
-the key's own figures are kept but inert. This is replacement, not a floor or a ceiling: a guardrail with
-no spend cap governs a key with no spend cap. The Keys screen refuses to change a governed key's limits:
+While a guardrail governs a key, only the guardrail's spend cap and zero-data-retention setting count. The key's own values stay saved but do nothing until you detach the guardrail.
+
+The two sets of values aren't combined. If the guardrail has no spend cap, the key has no spend cap either, even if you set a credit limit on the key itself.
+
+To keep this clear, the **Keys** screen won't let you edit a governed key's limits. It shows:
 
 > This key is governed by guardrail NAME, so its own limits cannot be changed.
-> Detach it from the guardrail first.
 
 ## The rules
 
