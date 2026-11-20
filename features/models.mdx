@@ -41,9 +41,7 @@ The `model` field accepts three forms:
 A bare id such as `gpt-4o-mini`, or a bare `opus`, is refused with `400` and the code `model_id_not_pinned`.
 Ask for ids rather than building them by hand.
 
-The single-model lookup, `GET /v1/models/{id}`, also accepts the provider's own spelling, so an old link or
-usage record still opens. The request path does not, so an id that works in a lookup may not be callable.
-This site publishes no list of models, families or providers, because a stale list is worse than none.
+`GET /v1/models/{id}` also accepts the provider’s own spelling, so old links and usage records still open. The request path doesn’t accept it, so an id that works in a lookup may not work in a request. This site doesn’t publish a list of models, families or providers, because a stale list does more harm than none.
 
 ## Discovering what you can call
 
