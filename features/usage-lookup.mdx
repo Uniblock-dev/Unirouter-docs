@@ -8,12 +8,14 @@ type: "guide"
 
 import RequestIdNote from '/snippets/request-id-note.mdx';
 
-Every response carries a request id. `GET /v1/usage/{id}` takes that id and
-answers with the usage record the dashboard would show for it: the token
-counts, what it cost, whether it was served, and how long it took. It reads the
-same record the Activity screen reads, so the two never disagree, and it needs
-only the API key, so a job can account for its own spend without anyone
-signing in.
+Every response comes with a request id. Send that id to `GET /v1/usage/{id}` and you get back the usage record the dashboard shows for that request:
+
+- token counts
+- what it cost
+- whether it was served
+- how long it took
+
+The endpoint reads the same record as the Activity screen, so the numbers always match. All it needs is the API key, which means a script or job can track its own spend without anyone signing in.
 
 ## How to
 
