@@ -106,10 +106,11 @@ The two ceilings behave differently:
 - Choose up to three detectors: `email`, `ip_address` and `password_pair`. In the dashboard these appear as **Email addresses**, **IP addresses**, and **Passwords, secrets and API keys**.
 - A matching request is stopped before any provider sees it.
 
+For both injection patterns and sensitive data, the error names the guardrail and the detector that matched. It never includes the matched text or the pattern.
+
 ## What a refused request sees
 
-Every guardrail refusal is an error in the OpenAI envelope, with a code you can branch on. Nothing is charged
-or held for a request a guardrail stops, and the message always names the guardrail.
+A guardrail refusal comes back as a standard OpenAI-style [error](/api-reference/errors), with a stable `code` you can branch on. The message always names the guardrail. A refused request is never charged, and no credit is held for it.
 
 | Rule | Status | `type` | `code` |
 |---|---|---|---|
