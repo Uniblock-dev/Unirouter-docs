@@ -57,10 +57,11 @@ Today the dashboard can set the guardrail's name, spend cap, zero-data-retention
 
 ### How each rule works
 
-**Spend cap.** A dollar figure with at most two decimal places, and a period of `daily`, `weekly` or
-`monthly`. A cap with no period is refused rather than read as unlimited. The cap counts credit spent from
-your balance, so a request served on your own provider key never counts against it. See
-[Bring your own key](/features/bring-your-own-key).
+### Spend cap
+
+- **Amount:** a dollar figure with up to two decimal places. Zero isn't allowed.
+- **Period:** `daily`, `weekly` or `monthly`. The period is required. A cap without one fails to save, so you can't end up with an accidental "unlimited" cap.
+- **What counts:** only credit spent from your Hopscotch balance. Requests served on your own provider key never count toward the cap. See [Bring your own key](/features/bring-your-own-key).
 
 **Zero data retention and no training.** ZDR on requires a provider whose published retention is zero and
 whose training is disabled; no training requires only the second half. A model the key names that no
