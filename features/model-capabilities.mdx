@@ -67,20 +67,12 @@ So check the catalog when you pick a model, before you send anything. Reading a 
 
 ## Where capabilities come from
 
-A capability word is a recorded answer rather than a claim we make. It is
-established from what a model's own sources publish and from what we observe
-when a model is exercised, and where those disagree, the stronger evidence wins.
-A word with no evidence behind it stays `unknown` rather than taking a default.
+Each capability value is an answer we’ve recorded. We base it on what the model’s own sources publish and on what we see when we run the model. When those disagree, we go with the stronger evidence. If we have no evidence, the value stays `unknown` and never falls back to a default.
 
-Two things follow from that, and both are worth knowing before you build on the
-field:
+Keep two things in mind before you build on these values:
 
-- **A word can change without the model changing.** New evidence about an
-  existing model moves the word. Read the catalog rather than caching it
-  indefinitely.
-- **The word describes the model as this catalog holds it**, which is not a
-  promise from the provider. It is the best answer available, said plainly, with
-  `unknown` used where there is no answer rather than a confident wrong one.
+- **A value can change even if the model doesn’t.** New evidence about a model can update its values, so re-read the catalog now and then. Don’t cache it forever.
+- **The value describes the model as it’s listed in this catalog.** It’s our best answer, but the provider hasn’t promised it. If we don’t have an answer, you’ll see `unknown` and never a confident guess.
 
 ## What is not here
 
