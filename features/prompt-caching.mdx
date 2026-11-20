@@ -6,19 +6,13 @@ gates: ["18.62"]
 type: concept
 ---
 
-Several providers cache part of a prompt, so resending it avoids paying full price for that part.
-The feature is the provider's. It is asked for in the request body, which travels here unchanged, so it
-works through this API as it does when you call the provider directly.
+Several providers can cache part of your prompt, so you pay less for that part when you send it again. Caching is a provider feature that you request in the request body. We forward the body unchanged, so caching works through Hopscotch the same way it does when you call the provider directly.
 
 ## How you ask for it
 
-The same way you would upstream. A provider whose caching is explicit takes a marker in the body, which is
-forwarded as you wrote it. A provider whose caching is automatic applies it without being asked, and nothing
-here turns it off.
+Request it the same way you would with the provider directly. If the provider uses explicit caching, add its cache marker to the request body and we forward it as written. If the provider caches automatically, it does so without being asked, and we don’t turn that off.
 
-There is no Hopscotch control for caching, in the body or in a header, and nothing to enable in the dashboard.
-Which providers cache, and on what terms, is the provider's own behaviour. This site publishes no per-provider
-table, because a stale table about pricing is worse than none.
+Hopscotch has no caching setting of its own. There’s nothing in the body, nothing in a header, and nothing to turn on in the dashboard. Each provider decides whether it caches and on what terms. We don’t publish a per-provider table, because pricing changes and an outdated pricing table does more harm than having none.
 
 ## Where the counts arrive
 
@@ -39,12 +33,9 @@ Cached tokens are reported separately from ordinary input tokens, in three place
 
 3. **On your usage record**, and so on the Activity screen, as the cache read and cache write figures for that request. See [Usage and metering](/manage/usage-and-metering).
 
-### Absent is not zero
+### A missing count doesn’t mean zero
 
-A field is omitted rather than sent as `0` when the provider did not report it. A provider that does no cache
-accounting produces a usage line with neither field, which is a different fact from a request that used no
-cache. So a missing `cache_read_input_tokens` means "we were not told", and `0` means the provider said none.
-Every count is the provider's own. Nothing is re-counted or estimated.
+If the provider didn’t report a count, we leave the field out instead of sending `0`. A provider that doesn’t track caching returns a usage line with neither field, and that’s different from a request that got no cache hits. A missing `cache_read_input_tokens` means the provider didn’t tell us. A `0` means the provider reported none. Every count comes from the provider, and we don’t recount or estimate anything.
 
 ## How cached tokens are priced
 
