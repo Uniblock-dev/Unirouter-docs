@@ -55,21 +55,15 @@ What that means for your code:
 - **Branching on truthiness** is the bug this field exists to prevent. All three
   values are non-empty strings.
 
-## A capability is a description, not a gate
+## Capabilities don’t block requests
 
-Nothing on the request path checks your request against these words. If you send
-an image to a model whose `vision` is `no`, the request is forwarded and the
-provider refuses it in its own words, on its own status. We do not pre-empt that
-with a refusal of our own, and we do not translate the one you get.
+We don’t check your request against these values. If you send an image to a model whose `vision` is `no`, we forward the request anyway. The provider rejects it with its own error message and status code, and we pass that error back to you as-is.
 
 This is the same rule as everywhere else on the request path: your body reaches
 the provider as you wrote it, and the provider answers for it. See
 [Request parameters](/api-reference/parameters).
 
-The practical consequence is that the catalog is worth reading at the point where
-you *choose* a model, not at the point where you send. Choosing on the word is
-cheap. Discovering the answer from a failed request costs you a round trip, and
-tells you about one provider's copy of the model rather than about the model.
+So check the catalog when you pick a model, before you send anything. Reading a capability value costs nothing. A failed request costs you a round trip, and it only tells you how one provider serves the model.
 
 ## Where capabilities come from
 
