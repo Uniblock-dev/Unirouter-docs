@@ -65,13 +65,8 @@ re-counts or estimates: the figure you read back came from the provider. See
 
 Two habits are worth having:
 
-**A data URI is prompt tokens and body bytes both.** Base64 makes a large image
-noticeably larger on the wire before it is a single token of anything.
-
-**An image stays in the conversation.** Every turn of a multi-turn chat resends
-the whole `messages` array, so an image in turn one is paid for again in turn
-five. Drop it from the history once the model has described it, if the
-description is what the rest of the conversation needs.
+1. **A data URI is prompt tokens and body bytes both.** Base64 makes a large image noticeably larger on the wire before it is a single token of anything.
+2. **An image stays in the conversation.** Every turn of a multi-turn chat resends the whole `messages` array, so an image in turn one is paid for again in turn five. Drop it from the history once the model has described it, if the description is what the rest of the conversation needs.
 
 ## Audio, video, and generated images
 
