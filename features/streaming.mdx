@@ -96,10 +96,7 @@ because the commonest streaming loop in every language reads
 
 ## When a stream ends early
 
-A streamed response has already sent its status and headers by the time anything
-can go wrong, so a failure cannot arrive as a status code. Instead the stream ends
-with one more `data:` line carrying the standard error body, and then closes.
-There is no `data: [DONE]` after it.
+By the time anything can go wrong in a stream, the status code and headers have already been sent. That means an error can’t come back as a status code. The stream sends one final `data:` line with the standard error body and then closes. No `data: [DONE]` follows it.
 
 ```
 data: {"error":{"message":"Your credit ran out while this request was still running, so it was stopped rather than finished. You have been charged only for what was produced before that point. Add credit and send it again.","type":"insufficient_quota","param":null,"code":"balance_exhausted","request_id":"00000000-0000-4000-8000-000000000000"}}
@@ -113,16 +110,9 @@ Three codes can end a stream:
 | `balance_unavailable` | We could not check the balance while the request was running, so we stopped it rather than leave it unwatched. | Retry shortly. This is ours, and it does not mean you are out of credit. |
 | `request_deadline_exceeded` | The request ran past the 540 second limit. | Split the work into smaller calls. |
 
-`balance_exhausted` only ever appears mid-stream. A request refused before it
-started because the account cannot pay is a `402` with `insufficient_credit`, so
-"never started" and "cut off part way" are always distinguishable. Neither is
-charged as a whole request: a refusal costs nothing, and a cut stream costs what
-it produced.
+You’ll only see `balance_exhausted` in the middle of a stream. If your account can’t pay before a request starts, you get a `402` with `insufficient_credit`. This way you can always tell a request that never started from one that was cut off partway. Neither one is charged as a full request. A refused request costs nothing, and a cut-off stream costs only the output it produced.
 
-Handle a stream that stops without `data: [DONE]` and without an error line as an
-incomplete response. It means the connection ended, which is a truncated answer
-rather than a complete one, and we record it as a stream that did not finish
-rather than as a fault.
+If a stream stops with neither `data: [DONE]` nor an error line, the connection dropped. Treat the response as incomplete because the answer is truncated. We log it as an unfinished stream, and it isn’t counted as a fault.
 
 ## What streaming does not change
 
