@@ -77,7 +77,7 @@ In the dashboard, the **Privacy** setting can be **On**, **Off** or **Workspace 
 - A region list can only use these five words: `us`, `eu`, `uk`, `apac`, `global`.
 - A request that falls outside a list is refused before it's sent.
 
-### Token limits
+#### Token limits
 
 Pick a tier, or set your own ceilings.
 
@@ -86,6 +86,13 @@ Pick a tier, or set your own ceilings.
 | `low` | 8,000 | 1,000 |
 | `medium` | 32,000 | 4,000 |
 | `high` | 128,000 | 16,000 |
+
+A custom ceiling is a whole number of tokens, up to `2,000,000`.
+
+The two ceilings behave differently:
+
+- **Input ceiling:** if the estimated prompt is over the ceiling, the request is refused.
+- **Output ceiling:** never causes a refusal. Hopscotch lowers the `max_tokens` it forwards to the ceiling, or to the model's own maximum if that's lower. Requests still go through; replies are just capped in length.
 
 ## What a refused request sees
 
