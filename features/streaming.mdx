@@ -31,9 +31,7 @@ as the model produces it.
 
 ### On the Responses API
 
-`POST /v1/responses` streams too, and everything on this page about how a stream
-is relayed, where the counts ride and how a stream can end early applies to it
-unchanged, because it is the same request path.
+`POST /v1/responses` streams too. It uses the same request path as chat completions, so everything on this page also applies to it: how the stream is relayed, where token counts appear, and how a stream can end early.
 
 What differs is the transcript. A Responses stream carries named events with
 their own shapes rather than the chat completion chunks shown below, and those
