@@ -100,20 +100,14 @@ data = json.loads(choice.message.content)
 
 ## Streaming a structured output
 
-`stream: true` and `response_format` compose the way they do upstream: the
-content arrives in fragments, and a fragment is not parseable JSON on its own.
-Accumulate the deltas and parse once at the end, unless you have a streaming
-parser that is built for partial documents.
+You can use `stream: true` with `response_format`, and it works the same way as calling the provider directly. Content arrives in fragments, and a single fragment won’t parse as JSON. Collect the deltas and parse once at the end, unless you’re using a parser built for partial JSON.
 
 The stream itself is unchanged by any of this. See
 [Streaming](/features/streaming).
 
 ## What it costs
 
-A `json_schema` is part of the body, so it is prompt tokens on every request that
-carries it. A large schema sent on every turn of a long conversation is paid for
-on every turn. The counts you read back are the provider's own and already
-include it.
+A `json_schema` is part of the request body, so you pay for it as prompt tokens every time you send it. Send a large schema on every turn of a long conversation and you pay for it on every turn. The token counts you get back come from the provider and already include the schema.
 
 ## What we did not verify
 
