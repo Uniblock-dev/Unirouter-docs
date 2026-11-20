@@ -69,6 +69,24 @@ Today the dashboard can set the guardrail's name, spend cap, zero-data-retention
 - **No training on:** the request only goes to providers that don't train on inputs. Retention isn't checked.
 - If no eligible provider serves the model in the request, the request is refused and isn't sent anywhere.
 
+In the dashboard, the **Privacy** setting can be **On**, **Off** or **Workspace default**. See [Zero data retention](/manage/zero-data-retention).
+
+#### Provider, model and region allow lists
+
+- Each list holds up to 100 entries, each up to 200 characters.
+- A region list can only use these five words: `us`, `eu`, `uk`, `apac`, `global`.
+- A request that falls outside a list is refused before it's sent.
+
+### Token limits
+
+Pick a tier, or set your own ceilings.
+
+| Tier | Input tokens | Output tokens |
+| :-- | :-- | :-- |
+| `low` | 8,000 | 1,000 |
+| `medium` | 32,000 | 4,000 |
+| `high` | 128,000 | 16,000 |
+
 ## What a refused request sees
 
 Every guardrail refusal is an error in the OpenAI envelope, with a code you can branch on. Nothing is charged
