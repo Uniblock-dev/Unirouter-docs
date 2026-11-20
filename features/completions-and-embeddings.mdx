@@ -30,7 +30,7 @@ curl https://api.hopscotchlabs.ai/v1/completions \
   -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "openai/gpt-4o-mini",
+    "model": "openai-main/gpt-4o-mini",
     "prompt": "Write one sentence about rivers.",
     "max_tokens": 60
   }'
@@ -45,7 +45,7 @@ client = OpenAI(
 )
 
 completion = client.completions.create(
-    model="openai/gpt-4o-mini",
+    model="openai-main/gpt-4o-mini",
     prompt="Write one sentence about rivers.",
     max_tokens=60,
 )
@@ -61,7 +61,7 @@ const client = new OpenAI({
 });
 
 const completion = await client.completions.create({
-  model: "openai/gpt-4o-mini",
+  model: "openai-main/gpt-4o-mini",
   prompt: "Write one sentence about rivers.",
   max_tokens: 60,
 });
