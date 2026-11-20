@@ -47,9 +47,7 @@ request, not the catalog.
 
 ## What this platform checks
 
-Nothing about your schema or the reply, and the sentence is worth stating flatly
-rather than leaving you to infer it. The one exception is the shape of the field
-itself when Anthropic serves the request, below.
+Nothing. We don’t validate your schema, and we don’t validate or repair the reply. The one exception is when Anthropic serves the request. In that case we adjust the shape of the field itself, as described below.
 
 - **Your schema is not validated here.** It is forwarded as written to every
   provider that reads `response_format`. A schema a provider will not accept
