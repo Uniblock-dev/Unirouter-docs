@@ -45,17 +45,14 @@ Ask for ids rather than building them by hand.
 
 ## Discovering what you can call
 
-**Over the API.** `GET /v1/models` returns an OpenAI-shaped list. Each entry has an `id` (the value for
-`model`), its input rate and, where separate, its output rate, a context window, capabilities, the currency and the provider names behind it. `GET /v1/models/{id}` adds a short description, the request parameters with
-their bounds and defaults, and any deprecation and sunset dates with the named replacement. The description
-comes from third-party model catalogues and appears only on the single-model call.
+**Over the API.** `GET /v1/models` returns the ids to use in `model`, plus prices, context windows, capabilities, currency and providers. `GET /v1/models/{id}` adds descriptions and lifecycle dates. In that response, `uniblock.supported_parameters` lists the parameters the provider has declared, and `uniblock.parameters` holds recorded bounds and defaults. Neither is a full schema or a test result, and an empty list means nothing publishable was declared.
 
 ```bash
 curl https://api.hopscotchlabs.ai/v1/models \
   -H "Authorization: Bearer ub_live_XXXXXXXXXXXX"
 ```
 
-Percent-encode the id once or send it as it is. A double-encoded slash names no model and answers `404`.
+Encode the id once or send it as is. Double encoding the slash names no model and returns `404`.
 
 **In the dashboard.** The Models screen and the [Playground](/features/playground) offer the same catalog.
 The Models screen shows one row per model and folds its providers together, with price ranges. Opening a row
