@@ -122,17 +122,26 @@ A guardrail refusal comes back as a standard OpenAI-style [error](/api-reference
 | Injection pattern | 403 | `permission_error` | `injection_pattern_matched` |
 | Sensitive data | 403 | `permission_error` | `sensitive_data_matched` |
 
-The spend cap reuses the code a key's own credit limit uses, because to the caller it is the same event. The
-message names the guardrail to tell them apart: "This cap is set by guardrail \"prod-agents\", not on the key
-itself."
+**Spend cap vs. key credit limit.** Both return `key_limit_exceeded`, because to the caller they're the same event. Read the message to tell them apart. A guardrail cap says so, for example:
 
-Rules are checked in a fixed order: which providers may serve the key, then injection patterns, then
-sensitive-data detectors, then the token ceiling and the spend cap. A request that breaks two rules is refused
-for the first in that order.
+> This cap is set by guardrail "prod-agents", not on the key itself.
 
-If a token limit, an injection rule or a sensitive-data rule cannot be read when a request arrives, the request
-is refused with HTTP 503 and a code ending in `_unreadable`, not served as if the rule were absent. Nothing is
-sent. Re-saving the guardrail republishes it.
+### Which rule fires first
+
+Rules are checked in this order:
+
+1. Which providers may serve the key
+2. Injection patterns
+3. Sensitive-data detectors
+4. Token ceiling and spend cap
+
+If a request breaks more than one rule, the error is for the first one in this list.
+
+### When a rule can't be read
+
+If Hopscotch can't read a token limit, injection rule or sensitive-data rule when a request arrives, it refuses the request with HTTP 503 and a code ending in `_unreadable`. The request isn't sent, and it isn't served as if the rule were missing.
+
+To fix it, open the guardrail and save it again. Saving republishes it.
 
 ## Who can manage guardrails
 
