@@ -94,6 +94,18 @@ The two ceilings behave differently:
 - **Input ceiling:** if the estimated prompt is over the ceiling, the request is refused.
 - **Output ceiling:** never causes a refusal. Hopscotch lowers the `max_tokens` it forwards to the ceiling, or to the model's own maximum if that's lower. Requests still go through; replies are just capped in length.
 
+#### Injection patterns
+
+- Up to 32 regular expressions, each up to 512 characters.
+- Patterns run in a linear-time regex engine.
+- A pattern that matches an empty string fails to save.
+- A matching request is stopped before any provider sees it.
+
+#### Sensitive data
+
+- Choose up to three detectors: `email`, `ip_address` and `password_pair`. In the dashboard these appear as **Email addresses**, **IP addresses**, and **Passwords, secrets and API keys**.
+- A matching request is stopped before any provider sees it.
+
 ## What a refused request sees
 
 Every guardrail refusal is an error in the OpenAI envelope, with a code you can branch on. Nothing is charged
