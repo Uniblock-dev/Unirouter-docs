@@ -61,16 +61,14 @@ header in logs and build no behaviour on it. See [Headers](/api-reference/header
 
 ## Getting a cache hit at all
 
-The rules are the provider's, but the general shape holds across providers that cache:
+Each provider sets its own rules, but the basics are the same across providers that cache:
 
-- **Put the stable part of your prompt first.** Caching works on a prefix, so an unchanging system prompt and
-  document belong before the part that changes.
-- **Do not reorder it between turns.** A prefix that differs by a timestamp, a reordered tool list or a
-  regenerated id is a different prefix.
-- **Short prompts are usually not cached.** Providers set a minimum, and below it nothing is cached.
-- **Caches expire.** A cache read on one turn does not promise one on the next.
+- **Put the stable part of your prompt first.** Caching works on the start of the prompt (the prefix), so put your unchanging system prompt and documents before the parts that change.
+- **Keep that prefix identical between turns.** A changed timestamp, a reordered tool list, or a regenerated ID makes it a new prefix.
+- **Short prompts usually aren’t cached.** Providers set a minimum length, and nothing shorter gets cached.
+- **Caches expire.** A cache hit on one turn doesn’t guarantee one on the next.
 
-The way to know whether it worked is the counts. Read `cache_read_input_tokens` on a second identical request.
+To check whether caching worked, send the same request twice and look at `cache_read_input_tokens` on the second response.
 
 ## What this platform does not do
 
