@@ -101,14 +101,9 @@ All three cases look identical, so nobody can use this endpoint to find out whet
 }
 ```
 
-The first sentence is the one to act on. The record is written after the
-response has been sent to you, so a lookup fired the instant a response
-arrives can run ahead of it. Retry a 404 once after a short pause before
-treating it as missing.
+Pay attention to the first sentence of the message: no record for that id is visible to this key. The usual reason is timing. We write the usage record after we send you the response, so a lookup you send the moment the response arrives can get there before the record does. If you get a 404, wait a moment and retry once before you treat the request as missing.
 
-Records age out on the retention window described on
-[Data and privacy](/manage/data-and-privacy#how-long-records-are-kept). A
-request older than that is a 404 here too; its charge stays on your statement.
+Records are deleted after the retention window described on [Data and privacy](/manage/data-and-privacy). A lookup for an older request also returns a 404, but its charge stays on your statement.
 
 ## Next steps
 
