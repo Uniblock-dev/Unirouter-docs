@@ -1,9 +1,10 @@
 ---
 title: "Bring your own key"
-description: "Use your own provider credential so a provider bills you directly. What free really means, what it does not add, and who may set one."
-status: partial
-gates: ["14.1"]
-type: concept
+description: "Connect your own provider credential and that provider bills you directly. This page covers what that costs you on Hopscotch, what it leaves unchanged, and who can set it up."
+status: "partial"
+gates:
+  - "14.1"
+type: "concept"
 ---
 
 Bringing your own key means giving Hopscotch a credential you already hold for a
@@ -13,22 +14,18 @@ you called that provider yourself.
 
 ## What "free" means, precisely
 
-A request served on your own key costs you nothing on your Hopscotch balance.
-Nothing is charged and nothing is held against your credit for it, not even
+A request that runs on your own key costs nothing from your Hopscotch balance. We don’t charge for it, and we don’t hold any of your credit for it, even
 briefly.
 
-That is not the same as invisible. The request is still fully metered: it gets
-a usage record with real prompt and completion token counts, it appears in
-Usage and in Activity exactly like any other request, and it is counted apart
-from the requests we serve on our own keys rather than folded into them. Read
-"free" as **we charge you nothing for this one**, not as **this one leaves no
-trace**. See [Usage and metering](/manage/usage-and-metering) for the full
-field set a request produces.
+We still meter it in full. Each request:
 
-The provider itself is not free. Running on your own key means the provider
-invoices your account for the tokens, which is the entire point of bringing
-one: the cost moves from your Hopscotch balance to your account at the
-provider.
+- gets a usage record with real prompt and completion token counts
+- shows up in Usage and Activity like any other request
+- is counted separately from requests we serve on our own keys
+
+So “free” means we don’t charge you for the request, and you still get a complete record of it. See [Usage and metering](https://docs.hopscotchlabs.ai/manage/usage-and-metering.md) for every field a request produces.
+
+You do pay the provider. They bill your account for the tokens. That’s the reason to bring a key: the cost moves off your Hopscotch balance and onto your provider bill.
 
 ## Your key, and only your key, for that provider
 
