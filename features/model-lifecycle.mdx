@@ -1,15 +1,13 @@
 ---
 title: "Model lifecycle"
-description: "Models are deprecated and then stop serving. The two dates mean different things, and the catalog carries both so a shutdown is never a surprise."
-status: partial
-gates: ["18.24"]
-type: concept
+description: "Providers deprecate models first and stop serving them later. The two dates mean different things, and the catalog includes both so a shutdown never catches you off guard."
+status: "partial"
+gates:
+  - "18.24"
+type: "concept"
 ---
 
-A model you can call today is a model somebody else is maintaining, and it will
-eventually stop. The catalog carries the dates for that rather than letting you
-find out from a failed request, and this page says what the dates mean and what
-to do with them.
+Every model you can call today is run by a provider, and at some point the provider will turn it off. The catalog publishes the dates for that, so a failed request isn’t how you find out. This page explains what each date means and what to do about it.
 
 ## Two dates, two meanings
 
@@ -20,16 +18,11 @@ They are different facts and a model can carry either without the other.
 | Deprecated | Prefer something else. The model still answers. |
 | Sunset | This stops answering. After it, the model is gone. |
 
-Deprecation is advice: the provider has stopped recommending the model, usually
-because a successor exists, and nothing about your request changes on that date.
-Sunset is a fact about serving.
+Deprecation is a recommendation. The provider has stopped recommending the model, usually because there’s a newer one, but your requests keep working the same way. Sunset is the date the model stops answering requests.
 
 ## Where they are
 
-**On every entry in `GET /v1/models`**, a sunset shows as `shutdown_date`, at the
-top level of the model object where OpenAI's own model shape defines it, in unix
-seconds. It is **absent rather than null** when there is none, so test for the
-key rather than for a value.
+**In** `GET /v1/models`, each model’s sunset date appears as `shutdown_date`, in unix seconds. It sits at the top level of the model object, where OpenAI’s own model format puts it. If a model has no sunset date, the key is missing entirely instead of being set to `null`. Check whether the key exists, not what its value is.
 
 ```json
 {
