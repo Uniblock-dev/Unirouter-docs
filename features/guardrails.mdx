@@ -1,14 +1,17 @@
 ---
 title: "Guardrails"
-description: "A named rule set attached to API keys: spend caps, zero data retention, provider, model and region allow lists, token ceilings and prompt checks."
-status: partial
-gates: ["47.7"]
-type: guide
+description: "Named rule sets you attach to API keys. Cap spend, require zero data retention, limit providers, models and regions, set token ceilings, and block risky prompts."
+status: "partial"
+gates:
+  - "47.7"
+type: "guide"
 ---
 
-A guardrail is a named set of rules that belongs to your workspace and applies to whichever API
-keys you attach it to. Every request on those keys is judged against it before anything is sent to
-a provider. Guardrails live on the **Guardrails** screen in the dashboard, between Keys and BYOK.
+A guardrail is a named set of rules you attach to one or more API keys. Use it to cap spend, require zero data retention, limit which providers, models and regions a key can use, set token ceilings, and block prompts that match a pattern or contain sensitive data.
+
+Every request on a governed key is checked against its guardrail before anything is sent to a provider.
+
+Guardrails belong to your workspace. You manage them on the **Guardrails** screen in the dashboard, between **Keys** and **BYOK**.
 
 ## Where the policy belongs
 
