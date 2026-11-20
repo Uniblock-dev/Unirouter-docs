@@ -80,11 +80,6 @@ prompt     = input + cache_read + cache_write
 completion = output + reasoning
 ```
 
-`input` excludes cached tokens, unlike a provider's `prompt_tokens`, which usually includes them. Cache reads
-are commonly discounted, and cache writes cost more on some providers and do not exist on others. A rate can
-carry a tier, a condition under which a different price applies, such as batch or priority. The default tier
-has no conditions.
+`input` excludes cached tokens, while a provider’s `prompt_tokens` usually includes them. Cache reads are often discounted. Cache writes cost extra with some providers, and others don’t have them at all. A rate can also carry a tier, which is a condition that switches the price, such as batch or priority. The default tier has no conditions.
 
-A charge names the rate revision in force when it was made. Changing any rate mints a new revision, so a later
-price change cannot rewrite a past charge. The catalog describes prices in this same vocabulary, but your usage record, not the catalog, is the
-authority on what a request cost.
+Each charge records the rate revision in force when it was made. Any rate change creates a new revision, so a later price change never alters a past charge. The catalog uses the same terms for prices, but your usage record is the final word on what a request cost.
