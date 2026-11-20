@@ -74,10 +74,7 @@ answering `yes`, `no` or `unknown`. See
 [Model capabilities](/features/model-capabilities), and read the part about
 `unknown` before you filter on it.
 
-The word is a description and not a gate. A `tools` array sent to a model that
-does not take one is forwarded, and what you get back is the provider's own
-refusal in the provider's own words. We do not pre-empt it, so the useful place
-to check the word is where you choose the model.
+The `tools` capability in the model catalog tells you whether a model supports tools, but Hopscotch doesn’t enforce it. If you send a `tools` array to a model that doesn’t support tools, we forward it anyway. You get back the provider’s own error, in the provider’s own words. We don’t block the request ahead of time, so the place to check `tools` is when you choose a model.
 
 ## What a tool-calling loop costs
 
