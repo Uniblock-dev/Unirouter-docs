@@ -9,10 +9,7 @@ type: concept
 import UsageHeader from '/snippets/usage-header.mdx';
 import { FeatureStatus } from '/snippets/feature-status.mdx';
 
-Streaming works the way it works on the API this one is shaped after. Set
-`"stream": true` in the body, read the events, stop at `data: [DONE]`. If your
-client already streams from an OpenAI-compatible endpoint, it streams from this
-one without a change.
+Streaming works the same way it does on OpenAI’s API. Set `"stream": true` in the request body, read the server-sent events as they arrive, and stop when you see `data: [DONE]`. If your client already streams from an OpenAI-compatible endpoint, it will stream from Hopscotch with no changes.
 
 ## Asking for a stream
 
