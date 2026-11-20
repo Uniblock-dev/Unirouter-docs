@@ -78,18 +78,14 @@ The `tools` capability in the model catalog tells you whether a model supports t
 
 ## What a tool-calling loop costs
 
-A loop is several requests, and each one is a request in every sense that
-matters here: it is charged, it lands in Activity as its own row, and it counts
-against your key's request rate and your account spend rate cap.
+A tool-calling loop is a series of requests, and each turn counts as a full request. It’s billed, it shows up as its own row in Activity, and it counts toward your key’s request rate limit and your account’s spend rate cap.
 
-Two consequences that surprise people:
+Two things tend to surprise people:
 
-1. **Your tool definitions are prompt tokens, on every turn.** They are part of the body you send each time round the loop, so a large `tools` array is a cost you pay per turn rather than once. The token counts you get back are the provider's own and already include them.
-2. **A turn that only calls a tool still produces output tokens.** The `tool_calls` array is generated text. A loop that runs several turns before answering has paid for every one of them.
+1. **Tool definitions count as prompt tokens on every turn.** Your `tools` array goes out with the request body on each pass through the loop, so you pay for a large one on every turn. The token counts in the response come straight from the provider and already include it.
+2. **A turn that only calls a tool still uses output tokens.** The model generates the `tool_calls` array as text. If a loop takes several turns to reach an answer, you pay for the output of each one.
 
-Send `max_tokens` on each turn. It is what sizes the credit held while a request
-runs, and a loop holds credit several times over. See
-[Rate limits and spend controls](/manage/spend-controls).
+Set `max_tokens` on every turn. It decides how much credit we hold while a request runs, and a loop holds credit again on each turn. See [Rate limits and spend controls](https://docs.hopscotchlabs.ai/manage/spend-controls.md).
 
 ## Errors in the middle of a loop
 
