@@ -34,9 +34,7 @@ provider runs on it. We do not fall back to our own key for that provider,
 because that would mean charging you for a request you brought your own
 credential to cover.
 
-That cuts the other way when the key stops working. If the provider will not
-accept it, the request is refused rather than quietly served on our key and
-billed as usual. See [If the provider refuses your key](#if-the-provider-refuses-your-key)
+The same rule holds when your key stops working. If the provider rejects your key, the request fails. We won’t quietly switch to our own key and bill you as usual. See [If the provider refuses your key](#if-the-provider-refuses-your-key)
 below.
 
 ## It does not add anything to your catalog
