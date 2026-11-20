@@ -77,8 +77,7 @@ curl https://api.hopscotchlabs.ai/v1/usage/REQUEST_ID \
 | `latency_ms` | How long the request took, end to end, as we measured it. |
 | `note` | A sentence about what exists for this record. Today it says what the example above says: the bodies were never stored. |
 
-The fields a customer never sees stay fenced out: nothing about our cost, our
-added latency, or how many attempts it took is in this record.
+Internal details are left out of the record. It doesn’t include our cost, the latency we added, or how many attempts the request took.
 
 ## When a record is not found
 
