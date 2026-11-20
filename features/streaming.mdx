@@ -33,13 +33,9 @@ as the model produces it.
 
 `POST /v1/responses` streams too. It uses the same request path as chat completions, so everything on this page also applies to it: how the stream is relayed, where token counts appear, and how a stream can end early.
 
-What differs is the transcript. A Responses stream carries named events with
-their own shapes rather than the chat completion chunks shown below, and those
-frames are the provider's, forwarded as they arrive. Read them against the
-Responses format rather than against the transcript in the next section. The
-one place the two are identical is the ending: the counts arrive on the same
-`:x-hopscotch-usage` comment line, and the codes that can cut a stream short are
-the same codes.
+Only the event format is different. A Responses stream sends named events in the provider’s own shapes, forwarded as they arrive. It doesn’t send the chat completion chunks shown in the next section, so parse these events using the Responses format.
+
+Both formats end the same way. Token counts arrive on the same `:x-hopscotch-usage` comment line, and the same error codes can cut a stream short.
 
 ## What the transcript looks like
 
