@@ -44,9 +44,7 @@ model yet, not that the answer is negative. A model whose capabilities are all
 `unknown` is a model we have not learned anything about, not a model that can do
 nothing.
 
-The alternative would be to guess, and a guessed `no` is the worse mistake of the
-two: it hides a model that would have worked, silently, from everybody who
-filters on the field. So the catalog says it does not know.
+We could guess instead, but a wrong `no` does the most damage. Anyone who filters on that field would never see the model, and nothing would tell them it was missing. So when we don’t know, the catalog says `unknown`.
 
 What that means for your code:
 
