@@ -22,13 +22,10 @@ provider serves it, so one key and one endpoint reach models from more than one 
 An id is a provider and a model name, split on the **first** slash:
 
 ```json
-{ "model": "openai/gpt-4o-mini" }
+{ "model": "openai-main/gpt-4o-mini" }
 ```
 
-The part after the slash is the provider's own id with the maker's namespace removed. A model a provider
-publishes as `openai/gpt-oss-120b` is `groq/gpt-oss-120b` here. An id with no namespace is unchanged, as in
-`anthropic/claude-opus-4-5`. Each name is fixed the first time we publish that model on that provider, so an
-id in your code stays put.
+The part after the slash is the provider’s own id, minus the maker’s namespace. If a provider publishes a model as openai-main/gpt-oss-120b, you call it cerebras/gpt-oss-120b here. Ids with no namespace stay as they are, like anthropic/claude-opus-4-5. We fix each name when we first publish that model on that provider, so ids in your code won’t change.
 
 You choose the provider, and we never substitute another. A model carried by two providers is two ids with
 two prices.
