@@ -39,28 +39,21 @@ To keep this clear, the **Keys** screen won't let you edit a governed key's limi
 
 ## The rules
 
-A guardrail carries a name and any combination of these rules. Every rule is optional, and a guardrail
-with no rules is legal: it governs its keys and caps nothing.
+A guardrail can hold nine rules. If you try to save a rule name Hopscotch doesn't recognize, the save fails and the error lists the nine valid names.
 
-| Rule | What it does |
-|---|---|
-| Spend cap | A dollar amount per day, week or month that requests on the key may spend from your balance. |
-| Zero data retention | On, off, or inherit the workspace setting. On means only providers recorded as zero-data-retention may serve the key. |
-| No training | Only providers recorded as not training on inputs may serve the key. |
-| Provider allow list | The key may only call these providers. |
-| Model allow list | The key may only call these models. |
-| Region | The key may only be served from providers recorded in these regions: `us`, `eu`, `uk`, `apac` or `global`. |
-| Token limit | An input ceiling and an output ceiling per request, as a preset tier or an explicit figure. |
-| Injection patterns | Regular expressions that, if the prompt matches, stop the request. |
-| Sensitive data | Detectors for an email address, an IP address, or a name such as `password` or `api_key` written beside its value. A match stops the request. |
+| Rule | What it does | Set it in the dashboard? |
+| :-- | :-- | :-- |
+| Spend cap | Caps spend at a dollar amount per day, week or month | Yes |
+| Zero data retention | Sends requests only to zero-retention providers. On, off, or follow the workspace. | Yes (**Privacy**) |
+| No training | Sends requests only to providers that don't train on inputs | Coming soon |
+| Provider allow list | Limits which providers can serve the key | Coming soon |
+| Model allow list | Limits which models the key can call | Coming soon |
+| Region | Limits which regions can serve the key | Coming soon |
+| Token limit | Sets input and output token ceilings | Coming soon |
+| Injection patterns | Blocks prompts that match a regular expression | Coming soon |
+| Sensitive data | Blocks requests that contain emails, IP addresses or passwords | Yes |
 
-The vocabulary is closed. A rule name the product does not know is refused when you save, and the refusal
-lists the nine it does know.
-
-**What the screen can write today.** The Guardrails screen edits the name, the spend cap, the
-zero-data-retention choice and the sensitive-data detectors. The other rules sit under "Coming soon" on
-the form and cannot be set from the dashboard yet. Every rule is enforced at request time once it is on a
-guardrail.
+Today the dashboard can set the guardrail's name, spend cap, zero-data-retention choice and sensitive-data detectors. The other rules appear under **Coming soon** on the form. Once a rule is on a guardrail, it's enforced on every request, whether or not the dashboard can edit it yet.
 
 ### How each rule works
 
