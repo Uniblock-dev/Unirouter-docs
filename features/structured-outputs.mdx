@@ -85,16 +85,9 @@ Whatever the provider guarantees, the content is a string in
 `choices[0].message.content` and your code has to parse it. Two failure modes are
 worth handling by name:
 
-**A truncated reply is not valid JSON.** A response cut short by `max_tokens`
-ends mid-object, and `finish_reason` says `length` rather than `stop`. Check it
-before you parse: a JSON parse error whose real cause is a token ceiling is a
-confusing thing to debug. It is also a real risk here specifically, because a
-request that names no ceiling is held against the model's published maximum
-output and a schema-shaped answer can be longer than you expect. See
-[Request parameters](/api-reference/parameters).
+**Check** `finish_reason `**before you parse.** If a reply hits `max_tokens`, it stops in the middle of the object, and `finish_reason` is `length` instead of `stop`. If you skip this check, you’ll get a JSON parse error and debug the wrong problem. The risk is real here: if you don’t set `max_tokens`, the request runs against the model’s published maximum output, and answers that follow a schema are often longer than you’d expect. See [Request parameters](/api-reference/parameters).
 
-**A refusal is not your schema.** A model that declines to answer answers in
-prose or in its own refusal field, not in the shape you asked for.
+**Refusals won’t match your schema.** If the model declines to answer, it replies in plain text or in its own refusal field, so the shape you asked for won’t be there.
 
 ```python
 choice = response.choices[0]
