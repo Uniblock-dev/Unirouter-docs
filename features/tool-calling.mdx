@@ -85,7 +85,7 @@ Two things tend to surprise people:
 1. **Tool definitions count as prompt tokens on every turn.** Your `tools` array goes out with the request body on each pass through the loop, so you pay for a large one on every turn. The token counts in the response come straight from the provider and already include it.
 2. **A turn that only calls a tool still uses output tokens.** The model generates the `tool_calls` array as text. If a loop takes several turns to reach an answer, you pay for the output of each one.
 
-Set `max_tokens` on every turn. It decides how much credit we hold while a request runs, and a loop holds credit again on each turn. See [Rate limits and spend controls](https://docs.hopscotchlabs.ai/manage/spend-controls.md).
+Set `max_tokens` on every turn. It decides how much credit we hold while a request runs, and a loop holds credit again on each turn. See [Rate limits and spend controls](/manage/spend-controls).
 
 ## Errors in the middle of a loop
 
