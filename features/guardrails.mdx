@@ -57,31 +57,17 @@ Today the dashboard can set the guardrail's name, spend cap, zero-data-retention
 
 ### How each rule works
 
-### Spend cap
+#### Spend cap
 
 - **Amount:** a dollar figure with up to two decimal places. Zero isn't allowed.
 - **Period:** `daily`, `weekly` or `monthly`. The period is required. A cap without one fails to save, so you can't end up with an accidental "unlimited" cap.
 - **What counts:** only credit spent from your Hopscotch balance. Requests served on your own provider key never count toward the cap. See [Bring your own key](/features/bring-your-own-key).
 
-**Zero data retention and no training.** ZDR on requires a provider whose published retention is zero and
-whose training is disabled; no training requires only the second half. A model the key names that no
-eligible provider serves is refused, and the request is not sent anywhere.
+#### Zero data retention and no training
 
-**Allow lists and regions.** A provider list, a model list and a region list each hold up to 100 entries,
-each up to 200 characters. A region list holds at most the five region words above. A request outside a
-list is refused before it is sent.
-
-**Token limits.** The tiers are `low` (`8,000` tokens in, `1,000` out), `medium` (`32,000` in, `4,000` out)
-and `high` (`128,000` in, `16,000` out). An explicit ceiling is a whole number of tokens up to `2,000,000`.
-The input ceiling refuses a request whose estimated prompt is above it. The output ceiling never refuses:
-the `max_tokens` we forward is lowered to it, or to the model's own maximum if smaller, so a key under an
-output ceiling gets shorter replies rather than refusals.
-
-**Injection patterns and sensitive data.** An injection rule is up to 32 regular expressions, each up to
-512 characters, run in a linear-time engine. A pattern that matches the empty string is refused at save time.
-A sensitive-data rule names up to three detectors from the closed set `email`, `ip_address` and
-`password_pair`. Both rules stop the request before any provider sees it. The refusal names the guardrail and
-the detector, and never echoes the matched text or the pattern.
+- **Zero data retention on:** the request only goes to providers whose published terms say zero retention _and_ no training.
+- **No training on:** the request only goes to providers that don't train on inputs. Retention isn't checked.
+- If no eligible provider serves the model in the request, the request is refused and isn't sent anywhere.
 
 ## What a refused request sees
 
