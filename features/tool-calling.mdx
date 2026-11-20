@@ -94,14 +94,8 @@ against your key's request rate and your account spend rate cap.
 
 Two consequences that surprise people:
 
-**Your tool definitions are prompt tokens, on every turn.** They are part of the
-body you send each time round the loop, so a large `tools` array is a cost you
-pay per turn rather than once. The token counts you get back are the provider's
-own and already include them.
-
-**A turn that only calls a tool still produces output tokens.** The `tool_calls`
-array is generated text. A loop that runs several turns before answering has
-paid for every one of them.
+1. **Your tool definitions are prompt tokens, on every turn.** They are part of the body you send each time round the loop, so a large `tools` array is a cost you pay per turn rather than once. The token counts you get back are the provider's own and already include them.
+2. **A turn that only calls a tool still produces output tokens.** The `tool_calls` array is generated text. A loop that runs several turns before answering has paid for every one of them.
 
 Send `max_tokens` on each turn. It is what sizes the credit held while a request
 runs, and a loop holds credit several times over. See
