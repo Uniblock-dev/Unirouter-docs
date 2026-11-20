@@ -81,9 +81,13 @@ Internal details are left out of the record. It doesn’t include our cost, the 
 
 ## When a record is not found
 
-One answer covers every miss. A request another key made, a request in a
-different workspace, and an id that never existed all get the same 404, so the
-endpoint cannot be used to probe for other people's requests:
+Every miss returns the same 404. You get it when the request:
+
+- was made with a different key
+- belongs to another workspace
+- never existed
+
+All three cases look identical, so nobody can use this endpoint to find out whether someone else’s request exists.
 
 ```json 404
 {
