@@ -56,24 +56,29 @@ We've planned one more 429 case, for protecting a shared provider pool, but it h
 
 ## Pause every request
 
-Pause is the control for a runaway client or a weekend you would rather not be
-surprised by. It revokes nothing, so lifting it starts everything again.
+Use pause to stop a runaway client, or to avoid surprises over a weekend. Pausing doesn't revoke anything, so lifting it brings everything back.
 
-Before you press it, the screen states the effect in numbers:
+### Before you press it
+
+The screen shows you the impact in numbers:
 
 > Pausing refuses every request on all N live keys straight away, with nothing charged
 > for a refused request. Over the last 7 days this account made N requests, which is
 > the traffic that would have stopped. Nothing is deleted and no key is revoked.
 
-The request count is the trailing seven days of actual traffic, not a forecast.
+The request count comes from your actual traffic over the past 7 days.
 
-While paused, requests are refused with HTTP 503 and code `paused_by_owner`, and
-nothing is charged for them. Credit already held for requests that were running is
-still theirs. **Requests already in flight are not cut off.** Each finishes and is
-charged for what it really used.
+### While requests are paused
 
-Any member may read whether requests are paused. Only the owner may press or lift it,
-and lifting takes effect on the next request.
+- **New requests** are refused with HTTP 503 and code `paused_by_owner`. You aren't charged for them.
+- **Requests already running** finish normally and are charged for what they actually used.
+- **Credit already held** for those running requests stays with them.
+
+### Who can pause
+
+- Any member can see whether requests are paused.
+- Only the owner can pause or lift it.
+- Lifting takes effect on the very next request.
 
 <Note>
   Pause is yours to lift. It is a different state from an account we have suspended,
