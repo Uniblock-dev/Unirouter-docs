@@ -72,9 +72,10 @@ Your balance and your usage figures are both calculated by the same component, s
 
 ## Running out of credit
 
-**Nothing is charged for a request we refuse.** When available balance cannot cover a new
-request, it is refused with HTTP 402 and code `insufficient_credit`. The message names both
-figures:
+If your credit runs out while a request is streaming, we stop the stream. Its last `data:` line carries the standard error envelope with:
+
+- `type`: `insufficient_quota`
+- `code`: `balance_exhausted`
 
 ```json
 {
