@@ -60,12 +60,13 @@ The rates used for each charge are saved with it, so you can always see how it w
 | **Settled** | The sum of every transaction on your statement. |
 | **Held for requests in flight** | Credit set aside for requests that are still running. |
 
-Available is settled minus held. A request is admitted against a hold for the most it could cost.
-When it finishes, the hold comes back and you are charged for what it used. Omitting `max_tokens`
-holds more, which is why such a request can meet the spend rate cap sooner. See
-[Rate limits and spend controls](/manage/spend-controls).
+**Available = settled − held**
 
-One component computes every balance, so your balance and usage figures cannot disagree.
+When a request comes in, we hold enough credit to cover the most it could cost. When it finishes, we release the hold and charge you for what it actually used.
+
+If you leave out `max_tokens`, the hold is bigger, so the request can reach your spend rate cap sooner. Setting a realistic `max_tokens` doesn't change what you pay. See [Rate limits and spend controls](https://docs.hopscotchlabs.ai/manage/spend-controls.md).
+
+Your balance and your usage figures are both calculated by the same component, so they always agree.
 
 ## Running out of credit
 
