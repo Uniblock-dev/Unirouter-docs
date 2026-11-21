@@ -104,10 +104,14 @@ that says so.
   instead="Both exist in the source tree behind the management API, which is not yet available to customers, and the receipt itself cannot yet say anything stronger than unverified. Nothing below is something you can do today."
 />
 
-**A storage destination you own.** You will register a bucket of your own: an AWS S3 bucket
-reached through a role you create for us, or a Cloudflare R2 bucket reached through a scoped token,
-plus a prefix. We prove we can write to it with one zero-byte object, which we then delete, and we
-store the credentials encrypted. Telemetry, never bodies, is then written to it. The AWS role must require an external id of `hopscotch:` plus your workspace id.
+### Coming soon: a storage destination you own
+
+You'll be able to register your own bucket, plus a prefix:
+
+- **AWS S3:** we connect through an IAM role you create for us. The role must require the external ID `hopscotch:<your-workspace-id>`.
+- **Cloudflare R2:** we connect with a scoped API token.
+
+To check access, we write one empty (zero-byte) test file to the bucket and then delete it. We store your credentials encrypted. After that, we write request telemetry to your bucket. We never write request or response bodies there.
 
 **A receipt.** On request, we scan what we hold for your workspace and issue a signed receipt with a
 verdict of `certified` or `unverified`, a closed list of reasons, the counts behind them, a hash of
