@@ -33,11 +33,11 @@ Hopscotch creates one usage record for every request it receives. The Usage and 
 | `costMinor` | What the request charged, in integer minor units. Null means it was never priced. |
 | `latencyMs` | The total time you waited, in milliseconds. |
 
-**Null is never zero.** A count that never reached us renders as `unknown`, not `0`. A real charge beside two zeros would look like a billing bug, so an unmeasured count never renders as a measurement.
+**Missing counts show as `unknown`.** If a count never reached us, you see `unknown` instead of `0`. Zeros next to a real charge would look like a billing error, so we only show numbers we actually measured.
 
-**The list is a fence, not a sample.** Figures about our own performance and supply are not in it. Every customer-facing usage endpoint is checked against the same list.
+**The field list is complete and closed.** A record has only the fields listed above, and nothing else is ever added. Figures about our own performance and supply never appear in it. Every customer-facing usage endpoint is checked against this same list.
 
-**Your own key is metered too.** A request served on a provider key your workspace brought gets a usage record like any other, and the record says so. Those requests are counted apart from the ones we served. See [Bring your own key](/features/bring-your-own-key).
+**Requests on your own provider key get a record too.** When a request runs on a provider key your workspace added, it gets a usage record like any other, and the record says it was served on your key. These requests are counted separately from the ones we served. See [Bring your own key](/features/bring-your-own-key).
 
 ## The outcome vocabulary
 
