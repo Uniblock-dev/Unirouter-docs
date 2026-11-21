@@ -64,7 +64,7 @@ Hopscotch creates one usage record for every request it receives. The Usage and 
 | `usage_not_reported_by_provider` | The provider served the request and reported no counts. |
 | `rebuilt_from_ledger` | The record was reconstructed from the transaction it caused on your statement. |
 
-The last five are outcomes where a charge exists and final counts never did. Their token figures read `unknown`, and the charge is what settled against the hold.
+The last five outcomes in the table (`stream_incomplete` through `rebuilt_from_ledger`) have a charge, but their final token counts never arrived. Their token fields show `unknown`. The charge shown is the amount settled against the hold.
 
 ## What is never recorded
 
