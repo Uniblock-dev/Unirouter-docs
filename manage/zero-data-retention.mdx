@@ -113,16 +113,23 @@ You'll be able to register your own bucket, plus a prefix:
 
 To check access, we write one empty (zero-byte) test file to the bucket and then delete it. We store your credentials encrypted. After that, we write request telemetry to your bucket. We never write request or response bodies there.
 
-**A receipt.** On request, we scan what we hold for your workspace and issue a signed receipt with a
-verdict of `certified` or `unverified`, a closed list of reasons, the counts behind them, a hash of
-the destination, and an HMAC-SHA256 signature. Receipts are append-only, and the most recent hundred
-are listable. Disconnecting your bucket issues a termination receipt and removes the credentials. It
-deletes nothing in your bucket.
+#### Coming soon: signed receipts
 
-**Why every receipt is `unverified` today.** A certified verdict needs a plaintext scan of our own
-storage, and that scan is not built. Until it is, every receipt carries the reason
-`plaintext_scan_unavailable`. A receipt that can only say unverified is not a promise we will put on
-a customer page. The gate is named in this page's frontmatter.
+When you ask for a receipt, we scan everything we hold for your workspace and give you a signed receipt with:
+
+- a verdict: `certified` or `unverified`
+- the reasons for that verdict, taken from a fixed list
+- the counts behind those reasons
+- a hash of your storage destination
+- an HMAC-SHA256 signature
+
+Receipts can be added but never edited or removed. You can list the 100 most recent.
+
+**If you disconnect your bucket,** we issue a final termination receipt and remove your stored credentials. We don't delete anything in your bucket.
+
+#### Why every receipt says `unverified` today
+
+Before we can issue a `certified` receipt, we have to scan our own storage for plaintext data, and that scan isn't built yet. Until it is, every receipt comes back `unverified` with the reason `plaintext_scan_unavailable`. We won't show these receipts on customer pages as a guarantee until they can come back `certified`. The condition for changing this is recorded in this page's frontmatter.
 
 ## What this page does not claim
 
