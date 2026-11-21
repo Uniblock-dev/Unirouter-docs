@@ -83,34 +83,43 @@ You need two things:
 
 ## If something goes wrong
 
-**You left the payment page.** The screen says no card was charged and no credit was
-added, and you can start again. A saved card or Stripe Link wallet is untouched by
-this: nothing on any failure path in this product removes a saved payment method.
+**You left the payment page**
 
-**The purchase could not be started.** The amount you typed is preserved. Do not
-press Continue again straight away: each attempt opens its own checkout session, and
-a purchase that did start charges nothing unless you finish paying for it. Quote the
-request id shown with the failure if you need us.
+No card was charged and no credit was added. The screen confirms this, and you can start again whenever you're ready.
 
-**The credit has not arrived.** Reload the Balance tab. Credit lands only on the
-confirmed payment, so a purchase that has been paid arrives without any further
-action from you. If it has not arrived after a few minutes, quote the payment id from
-your statement.
+Your saved card or Stripe Link wallet stays saved. No error anywhere in Hopscotch removes a saved payment method.
+
+**The purchase couldn't start**
+
+The amount you typed is still in the box. Don't press **Continue** again straight away. Every press opens a new checkout session, and the first one may have started after all. An open session costs you nothing unless you finish paying.
+
+If you contact us, include the request id shown with the error.
+
+**Your credit hasn't arrived**
+
+Reload the **Balance** tab. Credit is added as soon as the payment is confirmed, and that happens automatically, so a paid purchase needs nothing more from you.
+
+Still missing after a few minutes? Contact us with the payment id from your statement.
 
 ## Read the statement
 
-The Statement tab lists every transaction, newest first, fifty lines to a page, with
-date filters. A purchase line carries the amount charged, the credit granted and the
-fee, as three sub-fields of the one line, which is what explains any gap between your
-card statement and your balance.
+The **Statement** tab lists every transaction, newest first, 50 per page. You can filter by date.
 
-The running balance on each page is the sum of your transactions up to that line. It is
-there so you can check our arithmetic. It is not your available balance: that is on the
-Balance tab and accounts for credit currently held for requests in flight.
+Each purchase appears as one line with three figures:
 
-The Statement tab is live today, one of the two tabs on the Billing screen alongside
-Balance. What you see there is the live record, not a preview of a screen still
-being designed.
+| Figure | What it shows |
+| :-- | :-- |
+| Amount charged | What your card paid |
+| Credit granted | What was added to your balance |
+| Fee | Our fee on that purchase |
+
+Together, these explain any difference between your card statement and your Hopscotch balance.
+
+**Running balance.** Each page shows a running balance: the total of your transactions up to that line. Use it to check our arithmetic.
+
+For the amount you can actually spend, go to the **Balance** tab. That figure subtracts credit currently held for requests that are still running, so it can be lower than the running balance.
+
+The Statement tab is live now. You'll find it next to **Balance** on the Billing screen, and it shows your real transaction record.
 
 ## Set the low credit notice
 
