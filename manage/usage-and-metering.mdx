@@ -197,11 +197,13 @@ A per-member figure tells you whose key or account a request is tied to. It can'
 
 > Usage records are kept for 90 days. The guaranteed minimum is 62 days, which is two full billing months.
 
-Ninety days is the configured window in force, read by both the purge job and the screens. Sixty-two days is the floor beneath it, so support can quote a request from two full billing months back.
+Usage records are kept for 90 days. The job that deletes old records and the screens you read both use that same setting. It will never go below 62 days, so support can always look up a request from two full billing months back.
 
-When a record passes the window it is deleted. **The charge survives**, because its transaction is never purged, so a balance can still be explained line by line. A date filter that reaches past the window says so rather than returning an empty list.
+When a record passes 90 days, it's deleted. **The charge stays on your statement**, because transactions are never deleted. You can still explain your balance line by line.
 
-The Usage and Activity screens are shipped, and the fields, outcomes and window above are what customers read today.
+If a date filter reaches past the window, the screen tells you, so you know why older rows are missing.
+
+The Usage and Activity screens are live. The fields, outcomes and retention window on this page are what you see today.
 
 ## Next steps
 
