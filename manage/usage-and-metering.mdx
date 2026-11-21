@@ -108,12 +108,14 @@ Rows are sorted by time and then by request id. That keeps paging stable: a row 
 | Took | Milliseconds. |
 | Request id | The first eight characters, linking to the single request view. |
 
-Reading the column values:
+Reading the values:
 
-- **A `backup` mark beside the provider** means the answer came back through a backup route. The model you asked for is still the one that answered. An API caller sees the same fact in the `x-hopscotch-served-via` header, described under [Headers](/api-reference/headers).
-- **Cancelled** is a request you closed before the provider answered. It was charged nothing. The filter's provider error and refused choices leave it out. Refused and provider error rows draw in a distinct color. The exact code is on the single request view.
-- **`unknown` is not zero.** A count never reported reads `unknown`. Collapsing it into `0` would turn an outage into a page of free requests.
-- **`unpriced` is not free.** It appears only on rows recorded before 2026-09-10. Since then a served request is always charged, from the amount you accepted at admission where nothing better can be worked out. A refused request carries a real `0`, and it is an ordinary row, never hidden.
+- `backup `**next to the provider** means the answer came through a backup route. The model you asked for still answered. API callers see the same thing in the `x-hopscotch-served-via` header. See [Headers](https://docs.hopscotchlabs.ai/api-reference/headers.md).
+- **Cancelled** means you closed the request before the provider answered. Nothing was charged. The "provider error" and "refused" filters leave cancelled rows out.
+- **Refused and provider error rows** are drawn in their own color. Open the request to see the exact code.
+- `unknown` means no count was reported. Showing it as `0` would make an outage look like a page of free requests.
+- `unpriced` only appears on rows recorded before 2026-09-10. Since then every served request has a charge. When nothing more precise can be worked out, the charge is the amount you accepted at admission.
+- **A refused request** shows a real charge of `0`. It's listed like any other row.
 
 ### Filters
 
