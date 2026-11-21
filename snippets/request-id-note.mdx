@@ -1,7 +1,8 @@
 <Note>
-  Every response carries the same id on two headers: `x-hopscotch-request-id`,
-  which is ours, and `x-request-id`, which is the one the official OpenAI SDKs
-  surface on their error objects. Every error envelope repeats it as
-  `request_id`. Quote it when you ask us about a request. Without it we are
-  guessing at which of your requests you mean.
+  **Include the request id when you contact us.** Every response has it in two headers:
+
+  - `x-hopscotch-request-id`: our header
+  - `x-request-id`: the header the official OpenAI SDKs show on their error objects
+
+  Every error envelope also includes it as `request_id`. Without it, we'd have to guess which request you mean.
 </Note>
