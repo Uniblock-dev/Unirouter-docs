@@ -146,24 +146,36 @@ Owners and admins can cancel a pending invitation. Cancelling also cancels any k
 
 ## Remove a member
 
-Removal is blocked until every live key the departing member is accountable for carries an
-explicit choice. There is no default, because the safest-looking default is still a choice
-nobody made.
+Before you can remove someone, you choose what happens to **each live key they're accountable for**. There's no default option. Even the safest-looking default would be a decision nobody actually made.
 
-- **Revoke** ends the key now. Anything still calling with it stops.
-- **Keep** leaves the key working and names a different member as accountable. The new
-  accountable member must be somebody who could revoke it.
+For each key, pick one:
 
-An unrecognised choice refuses the whole request. Before you decide, the product shows each live
-key and its recent activity. The removal happens completely or not at all. A kept key can carry a rotate-by date, which is a reminder to replace it and never a kill switch.
+| Choice | What happens |
+| :-- | :-- |
+| **Revoke** | The key ends now. Anything still using it stops working. |
+| **Keep** | The key keeps working, with a different member as accountable. That member must be someone who has permission to revoke it. |
 
-Exactly three things revoke a key, and the list is closed: somebody revoked it; it was replaced,
-which mints a new key and ends the old one in one motion; or the member was removed and the
-remover chose revoke. A role change never revokes a key, and neither does a lapsed reservation,
-because a reservation is not yet a key. Hopscotch staff can also revoke a customer key. That is
-recorded against a named member of staff, not as a fourth way for a workspace to end its own key.
+Before you decide, you'll see each live key and its recent activity.
 
-There is no documented self-removal flow for leaving a workspace. An owner or admin removes people.
+- If any choice isn't recognised, the whole removal is refused.
+- The removal either completes fully or doesn't happen at all.
+- A kept key can have a **rotate-by date**. It's a reminder to replace the key, and the key keeps working after that date passes.
+
+### What revokes a key
+
+Only these three things, and nothing else:
+
+1. Someone revokes it.
+2. It's replaced. This creates a new key and ends the old one in a single step.
+3. Its accountable member is removed, and the person removing them chose **Revoke**.
+
+A role change never revokes a key. Neither does a lapsed reservation, since a reservation hasn't become a key yet.
+
+Hopscotch staff can also revoke a customer key. When they do, it's recorded against a named staff member. It's separate from the three ways a workspace ends its own keys.
+
+### Leaving a workspace
+
+You can't remove yourself from a workspace. An owner or admin has to remove you.
 
 ## How to
 
