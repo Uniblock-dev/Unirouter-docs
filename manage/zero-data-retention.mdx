@@ -108,7 +108,7 @@ that says so.
 
 You'll be able to register your own bucket, plus a prefix:
 
-- **AWS S3:** we connect through an IAM role you create for us. The role must require the external ID `hopscotch:<your-workspace-id>`.
+- **AWS S3:** we connect through an IAM role you create for us. The role must require the external ID `hopscotch:`.
 - **Cloudflare R2:** we connect with a scoped API token.
 
 To check access, we write one empty (zero-byte) test file to the bucket and then delete it. We store your credentials encrypted. After that, we write request telemetry to your bucket. We never write request or response bodies there.
