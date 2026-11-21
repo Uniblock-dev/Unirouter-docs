@@ -57,22 +57,25 @@ A role is a set of permissions rather than a rank, so read the table rather than
 | Buy credit and manage the saved cards | Yes | Yes | No | No |
 | Pause or resume requests, and set the low credit notice | Yes | No | No | No |
 
-A developer may create a key, because a developer who cannot get a credential cannot use
-the product. A viewer reads and creates nothing.
+Developers can create keys, because they need a credential to use the product. Viewers can look but can't create anything.
 
-Two rules sit above the table and cannot be worked around by editing a role:
+### Two rules that override the table
 
-**Nobody can hand out authority they do not hold.** An attempt is refused with:
+Editing a role can't get around these.
+
+**1. You can't give anyone permissions you don't have.** Trying returns:
+
 `You cannot give somebody permissions you do not have yourself.`
 
-**Only the owner makes or unmakes an admin.** An admin creating a second admin would confer
-persistence, and a stolen admin session must not be able to leave a permanent second
-administrator behind. The refusal reads: `Only the workspace owner can make someone an admin.`
+**2. Only the owner can make someone an admin or remove an admin.** This way, a stolen admin session can't leave a permanent second admin behind. An admin who tries gets:
 
-Your role is read at the moment you press a button, not when the screen loaded, so a demotion
-in between is refused. Where your role does not carry an action, the answer is HTTP 403 with:
-`Your role in this workspace does not allow that.` A workspace you are not a member of answers
-as though it does not exist.
+`Only the workspace owner can make someone an admin.`
+
+### How permissions are checked
+
+- We check your role at the moment you act. If someone changed your role after the page loaded, the action is refused.
+- If your role doesn't allow an action, you get HTTP 403 with: `Your role in this workspace does not allow that.`
+- A workspace you're not a member of responds as though it doesn't exist.
 
 ## Exactly one owner
 
