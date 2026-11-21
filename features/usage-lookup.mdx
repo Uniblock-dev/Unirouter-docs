@@ -105,6 +105,38 @@ Records age out on the retention window described on
 [Data and privacy](/manage/data-and-privacy#how-long-records-are-kept). A
 request older than that is a 404 here too; its charge stays on your statement.
 
+## Read your balance and spend
+
+The same API key also reads what its workspace has left and what it has
+spent, with no dashboard session:
+
+| Route | What it answers |
+|---|---|
+| `GET /v1/balance` | The workspace balance: available, settled, and the credit held for requests still in flight. |
+| `GET /v1/usage` | Charged spend, tokens and requests by UTC day and model, the last 30 days unless `from` and `to` name another range. |
+| `GET /v1/key/usage` | This key's own spend today, this week and this month, and its credit limit with what is left of it. |
+
+```bash
+curl https://api.hopscotchlabs.ai/v1/balance \
+  -H "Authorization: Bearer ub_live_YOUR_KEY_HERE"
+```
+
+```json 200
+{
+  "object": "balance",
+  "currency": "USD",
+  "available_balance": "18.50",
+  "settled_balance": "20.00",
+  "outstanding_reservations": "1.50",
+  "as_of": "2026-10-21T15:30:00.000Z"
+}
+```
+
+Amounts are exact decimal strings, so parse them as decimals. These reads
+share a limit of their own, 60 a minute per key, apart from the request rate
+your inference calls spend, so polling a balance never slows real traffic. The
+[API reference](/api-reference/introduction) has every field and refusal.
+
 ## Next
 
 <CardGroup cols={2}>
