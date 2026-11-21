@@ -123,29 +123,26 @@ The one exception is the playground. There, sending a request as a key counts as
 
 Create and end keys on the **Keys** screen. See [Authentication](/api-reference/authentication).
 
-## Invitations
+## Invite members
 
-An owner or an admin invites somebody by email address and the role they should hold. An
-invitation can offer admin, developer or viewer. It can never offer owner, because ownership
-moves only by transfer. Only the owner can offer admin: an admin inviting a second admin would
-confer persistence, not permission. An admin who tries is refused with
-`Only the workspace owner can make someone an admin.`
+Owners and admins invite people by email address and choose their role: **admin**, **developer** or **viewer**.
 
-- The link works for the invited address only, and is valid for seven days from when it was sent.
-- Accepting requires signing in as that address, which proves the mailbox, so no separate
-  verification is asked.
-- The inviter's authority is re-checked at acceptance. An invitation sent by somebody who has
-  since lost the right to send it does not work. It confers nothing until accepted.
-- It may carry a key reservation, so the invitee arrives with a key waiting. The reservation takes
-  one of the workspace's 500 key slots from the moment it is made. See
-  [Authentication](/get-started/authentication#500-live-keys-per-workspace).
-- A workspace may hold up to ten pending invitations at once.
+- **You can't invite someone as owner.** Ownership only moves by transfer.
+- **Only the owner can invite an admin**, for the same reason only the owner can make one. An admin who tries gets: `Only the workspace owner can make someone an admin.`
 
-A link that matches nothing and a link that belongs to somebody else's address answer
-identically, so holding a session reveals nothing about who has been invited.
+### How invitations work
 
-Cancelling a pending invitation takes the same permission as sending it, owner or admin, and
-cancels any key reservation it carried, freeing the slot.
+- **The link only works for the invited email address**, for 7 days from when it was sent.
+- **To accept, the invitee signs in as that address.** That proves they own the mailbox, so there's no separate verification step.
+- **We re-check the inviter's permissions when the invitation is accepted.** If the inviter has since lost the right to invite, the invitation stops working. Until it's accepted, an invitation grants nothing.
+- **An invitation can include a key reservation**, so the new member has a key waiting when they arrive. The reservation uses one of the workspace's 500 key slots as soon as it's made. See [Authentication](https://docs.hopscotchlabs.ai/get-started/authentication.md#500-live-keys-per-workspace).
+- **A workspace can have up to 10 pending invitations** at once.
+
+A link that matches no invitation gets the same response as a link meant for someone else's address. Being signed in doesn't reveal who has been invited.
+
+### Cancel an invitation
+
+Owners and admins can cancel a pending invitation. Cancelling also cancels any key reservation it carried, which frees up the slot.
 
 ## Removing somebody never silently revokes a key
 
