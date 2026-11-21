@@ -119,16 +119,17 @@ Reading the values:
 
 ### Filters
 
-The filters narrow the same list and compose. A filtered view is an address you can bookmark. A value the screen cannot read is dropped and named.
+| Filter | Choices | Default |
+| :-- | :-- | :-- |
+| Model | Any model, or one this workspace has called | Any model |
+| Outcome | Any outcome, served, provider error or refused | Any outcome |
+| From | Start date, included, in UTC | Empty |
+| To | End date, excluded, in UTC | Empty |
 
-| Filter | Options | Default |
-|---|---|---|
-| Model | Models this workspace has called. A renamed model still matches rows recorded under its old name. | Any model |
-| Outcome | Any outcome, served, provider error, or refused. | Any outcome |
-| From | A calendar date, inclusive, applied to when the request started, in UTC. | Empty |
-| To | A calendar date, exclusive, applied to when the request started, in UTC. | Empty |
-
-Shortcuts for the last day, week and month fill the date fields. There is no request id filter: click the truncated id in a row to reach one request.
+- Filters combine, and each filtered view has its own URL you can bookmark.
+- If the URL contains a value the screen can't read, the screen drops it and tells you which one.
+- Shortcuts for the last day, week and month fill in the dates for you.
+- There's no request id filter. To open one request, click its id in the row.
 
 ### Three ways to see no rows
 
