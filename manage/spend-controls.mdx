@@ -102,33 +102,28 @@ Only the owner can set the cap.
 - **You can raise it** up to the self-service ceiling. To go higher, ask us to raise the ceiling.
 - **You can't set it to 0.** To stop all requests, use pause.
 
-### What it counts, which is not what you spent
+### How the cap counts spend
 
-When a request is admitted we hold the most it could cost. That figure is the
-request's own `max_tokens` where it names one, and the model's published maximum
-output length where it does not. The request then settles for what it produced, and
-the rest of the hold comes back.
+The cap counts credit that's **held**, which is usually more than you end up spending. Here's how it works:
 
-The window counts what was held, and nothing is taken back out of it. A released,
-expired or settled hold all count for their full 60 seconds. That is deliberate: a
-leaked key making thousands of small requests holds almost nothing at any instant.
+1. **When a request starts,** we hold the most it could cost. We work that out from the request's `max_tokens`. If the request doesn't set `max_tokens`, we use the model's published maximum output length.
+2. **When the request finishes,** you're charged for what it actually produced, and the rest of the hold is released.
+3. **The cap keeps counting the full hold for 60 seconds** after it was made, whether the hold was settled, released or expired. Nothing is subtracted early.
 
-Two consequences follow:
+We count this way on purpose. A leaked key firing thousands of small requests holds very little at any one moment, but it adds up quickly over a minute.
 
-- A minute of ordinary traffic that all completed still counts against the ceiling
-  for a minute afterwards.
-- On an expensive model, requests that omit `max_tokens` hold the model's whole
-  published maximum output. The cap can bind well below 50.00 a minute of real
-  spending, because the credit it counts is credit you were never going to spend.
+What this means for you:
 
-The refusal's message says "reserved", which means held. The cap clears 60 seconds
-after the earliest hold counted, and `Retry-After` is computed from that same hold.
+- A minute of normal traffic still counts against the cap for 60 seconds, even after every request has finished.
+- On an expensive model, each request without `max_tokens` holds the model's entire maximum output. The cap can then kick in while your real spend is well under 50.00 a minute, because most of what its counting is credit you were never going to spend.
+
+The error message uses the word "reserved". That means held. The cap clears 60 seconds after the oldest hold it counted and `Retry-After` is calculated from that same hold.
 
 ### The lever: send `max_tokens`
 
-A client that names a realistic ceiling gets several times more requests a minute out
-of the same cap, **and is charged exactly what it was before**, because the charge has
-always been for what was produced.
+Set a realistic `max_tokens` on each request. You'll fit several times more requests per minute under the same cap, and **your charges stay exactly the same**, because you're always charged for what was produced.
+
+Running a batch job, load test or eval sweep? Make this change first.
 
 ```python Python
 completion = client.chat.completions.create(
