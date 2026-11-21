@@ -177,12 +177,12 @@ A `usage` line on your statement carries our request id as its cause. That is th
   </Step>
 </Steps>
 
-Usage figures and your balance are the same charges read two ways, matched by request id with no tolerance for a difference. If they disagree we are told, rather than you having to find it.
+We also run this check ourselves. Usage figures and your balance are the same charges read two ways, and we match them by request id. Any difference at all alerts us, so you shouldn't have to be the one who finds it.
 
-Two cases carry more than the amount:
+Two kinds of lines need a little more context:
 
-- **A charge with an explanation.** Some lines say the counts were not confirmed, the provider reported none, or the hold had expired when the charge settled.
-- **A served request with no cost figure.** When token counts never arrived, the request settles against its hold and the usage row cannot yet state the amount. The totals name how many such requests fall in the window, so they read as incomplete.
+- **A charge with a note.** Some lines say the counts weren't confirmed, the provider reported none, or the hold had expired by the time the charge settled.
+- **A served request with no cost yet.** If token counts never arrived, the request settles against its hold, and the usage row can't show the amount yet. The window totals say how many of these requests they include, so you can tell the totals are incomplete.
 
 ## Who sees what
 
