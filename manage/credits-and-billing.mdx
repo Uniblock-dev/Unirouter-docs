@@ -95,11 +95,16 @@ A request that's refused before it starts gets a different code, `insufficient_c
 
 ## Every transaction is on your statement
 
-The Statement tab lists every transaction, newest first, fifty lines to a page. Each line shows when, the
-signed amount in minor units, its kind, and a quotable id: the payment id on a purchase, the
-request id on a charge. A **purchase line** carries the amount charged, the credit granted and the
-fee between them, which explains any gap between your card statement and your balance. A
-**running balance** on each page is the sum up to that line. It is not your available balance.
+The **Statement** tab lists every transaction, newest first, 50 per page. Each line shows:
+
+- When it happened
+- The amount, in minor units, with a + or − sign
+- The type of transaction
+- An id you can quote: the payment id for a purchase, or the request id for a charge
+
+**Purchase lines** show three amounts: what your card was charged, the credit you received, and the fee in between. If your card statement doesn't match your balance, the fee explains the difference.
+
+**Running balance**: each line shows the total of all transactions up to that point. This can differ from your available balance, because available also subtracts credit held for requests that are still running.
 
 Some charges carry one of three sentences, quoted exactly:
 
