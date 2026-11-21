@@ -86,16 +86,21 @@ The request count comes from your actual traffic over the past 7 days.
 
 ## Spend rate cap
 
-The spend rate cap limits how much credit may be **held** per rolling 60 seconds.
-The default is 5000 minor units. Over it, requests are refused with HTTP 429 and code
-`spend_rate_exceeded`, carrying `Retry-After` in whole seconds, and they are admitted
-again within 60 seconds with nothing for you to do.
+The spend rate cap limits how much credit can be **held** in any rolling 60-second window. The default is 5000 minor units (50.00).
 
-Setting the cap is the owner's. Two rules apply:
+When you go over it:
 
-- **A cap of 0 is refused.** Stopping requests entirely is what the pause is for.
-- **Lowering always works**, to any figure at or above 1 minor unit. Raising stops at
-  the self-service ceiling until we raise it.
+- Requests are refused with HTTP 429 and code `spend_rate_exceeded`.
+- The response includes a `Retry-After` header, in whole seconds.
+- Requests go through again within 60 seconds. You don't need to do anything.
+
+### Change the cap
+
+Only the owner can set the cap.
+
+- **You can always lower it**, to any amount of 1 minor unit or more.
+- **You can raise it** up to the self-service ceiling. To go higher, ask us to raise the ceiling.
+- **You can't set it to 0.** To stop all requests, use pause.
 
 ### What it counts, which is not what you spent
 
