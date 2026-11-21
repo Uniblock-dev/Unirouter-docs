@@ -89,10 +89,9 @@ If your credit runs out while a request is streaming, we stop the stream. Its la
 }
 ```
 
-A request already streaming when credit runs out is **cut off**. The stream ends with a `data:`
-line carrying the same envelope, with type `insufficient_quota` and code `balance_exhausted`. The hold goes back. If no token
-counts arrived, you are charged nothing. The codes differ on purpose: a cut stream and a request
-that never started are different events. Buying credit clears both.
+We release the hold. If no token counts arrived before the stream stopped, you aren't charged.
+
+A request that's refused before it starts gets a different code, `insufficient_credit`. The two codes let you tell a stopped stream apart from a request that never ran. Buying credit fixes both.
 
 ## Every transaction is on your statement
 
