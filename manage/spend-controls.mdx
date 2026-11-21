@@ -123,8 +123,6 @@ The error message uses the word "reserved". That means held. The cap clears 60 s
 
 Set a realistic `max_tokens` on each request. You'll fit several times more requests per minute under the same cap, and **your charges stay exactly the same**, because you're always charged for what was produced.
 
-Running a batch job, load test or eval sweep? Make this change first.
-
 ```python Python
 completion = client.chat.completions.create(
     model="openai-main/gpt-4o-mini",
@@ -133,13 +131,11 @@ completion = client.chat.completions.create(
 )
 ```
 
-If you are running a batch job, a load test or an evaluation sweep, change this first.
+Running a batch job, load test or eval sweep? Make this change first.
 
 ### Out of credit and over the cap at the same time
 
-You are told about the balance first. An account both out of credit and over its
-ceiling gets the 402, because the cap clears in 60 seconds and telling someone with no
-credit to slow down is advice that cannot work.
+If both happen at once, you get the out-of-credit error (HTTP 402) first. The cap clears by itself within 60 seconds, and slowing down won't help an account with no credit, so the balance is the thing to fix.
 
 ## How to
 
