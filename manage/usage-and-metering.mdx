@@ -47,28 +47,50 @@ Three things to know when you read these fields:
 
 `outcome` tells you what happened to the request. The list of values is fixed, and we only add a new one when a feature needs it.
 
-| Outcome | Meaning |
-|---|---|
-| `served` | The model answered and you were charged. |
-| `refused_zero_balance` | Refused at admission: not enough available credit. Charged nothing. |
-| `refused_rate_capped` | Refused by your spend rate cap. Charged nothing. |
-| `refused_paused_by_owner` | The owner has paused requests. Charged nothing. |
-| `refused_model_not_live` | The model could not be served. Charged nothing. |
-| `refused_not_permitted` | The caller was not allowed to make this request. Charged nothing. |
-| `refused_invalid_request` | The request could not be served as sent. Charged nothing. |
-| `refused_platform_unavailable` | No provider was attempted. Charged nothing. |
-| `customer_disconnected` | You closed the connection before the provider answered. Charged nothing. |
-| `provider_failed` | A provider answered with a failure. |
-| `provider_rate_limited` | A provider refused us for rate. |
-| `terminated_zero_balance` | A stream was cut off when the credit ran out. |
-| `terminated_deadline` | The request hit our request deadline and was ended. |
-| `stream_incomplete` | The stream ended without the counts that close it. |
-| `usage_metadata_missing` | No usage figures arrived with the reply. |
-| `usage_metadata_unreadable` | Usage figures arrived and could not be read. |
-| `usage_not_reported_by_provider` | The provider served the request and reported no counts. |
-| `rebuilt_from_ledger` | The record was reconstructed from the transaction it caused on your statement. |
+**Served**
 
-The last five outcomes in the table (`stream_incomplete` through `rebuilt_from_ledger`) have a charge, but their final token counts never arrived. Their token fields show `unknown`. The charge shown is the amount settled against the hold.
+| Outcome | What happened |
+| :-- | :-- |
+| `served` | The model answered. Charged. |
+
+**Refused: charged nothing**
+
+| Outcome | What happened |
+| :-- | :-- |
+| `refused_zero_balance` | Refused at admission because you didn't have enough credit available. |
+| `refused_rate_capped` | Refused by your spend rate cap. |
+| `refused_paused_by_owner` | The workspace owner has paused requests. |
+| `refused_model_not_live` | The model couldn't be served. |
+| `refused_not_permitted` | The caller wasn't allowed to make this request. |
+| `refused_invalid_request` | The request couldn't be served as sent. |
+| `refused_platform_unavailable` | No provider was tried. |
+
+**Cancelled: charged nothing**
+
+| Outcome | What happened |
+| :-- | :-- |
+| `customer_disconnected` | You closed the connection before the provider answered. |
+
+**Stopped by a provider or a limit**
+
+| Outcome | What happened |
+| :-- | :-- |
+| `provider_failed` | The provider answered with a failure. |
+| `provider_rate_limited` | The provider turned the request away for rate reasons. |
+| `terminated_zero_balance` | A stream was cut off when your credit ran out. |
+| `terminated_deadline` | The request hit its deadline and was ended. |
+
+**Charged, but final token counts never arrived**
+
+For these five outcomes the token figures show `unknown`. The charge is whatever settled against the hold taken when the request was admitted.
+
+| Outcome | What happened |
+| :-- | :-- |
+| `stream_incomplete` | The stream ended before the counts that close it arrived. |
+| `usage_metadata_missing` | The reply came with no usage figures. |
+| `usage_metadata_unreadable` | Usage figures arrived but couldn't be read. |
+| `usage_not_reported_by_provider` | The provider served the request and reported no counts. |
+| `rebuilt_from_ledger` | We rebuilt the record from the transaction the request created. |
 
 ## What is never recorded
 
