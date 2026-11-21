@@ -1,14 +1,14 @@
 ---
 title: "Data and privacy"
-description: "What Hopscotch records about a request, what it does not record, how long records are kept, and what we cannot recover for you."
-status: partial
-gates: ["5.7", "5.8"]
-type: concept
+description: "What Hopscotch stores about each request, what it never stores, how long records last, and what we can't recover for you."
+status: "partial"
+gates:
+  - "5.7"
+  - "5.8"
+type: "concept"
 ---
 
-This is a factual description of what the product stores. It is not a privacy
-policy and it is not a legal document. Where a published privacy policy and this
-page eventually differ, the policy governs.
+This page lists what the product actually stores. It isn't a privacy policy or a legal document. If the two ever disagree, the published privacy policy wins.
 
 ## We record metadata about a request, not its content
 
@@ -23,14 +23,15 @@ tell you what happened:
 - how long it took
 - the outcome, meaning whether it was served, refused, or failed
 
-We do not record the prompt and we do not record the response body. Not
-truncated, not hashed, not sampled. There is nowhere in the usage record for
-either of them to go.
+We don't record the prompt or the response body. We don't keep a shortened copy, a hash or a sample either. The usage record has no field where either one could go.
 
-That means there are things we cannot do for you. We cannot show you what you
-sent last Tuesday, we cannot replay a request, and we cannot read a request back
-to check whether a reply was reasonable. What we can do is find the record of it
-by its request id and tell you the facts above.
+**What this means for you.** Since we never have the content, we can't:
+
+- show you what you sent on a past date
+- replay a request
+- read a request back to check whether the reply made sense
+
+We _can_ find a request by its request id and tell you what we recorded about it: when it ran, the model and provider, token counts, cost, duration, and whether it was served, refused or failed.
 
 ## The playground stores nothing either
 
