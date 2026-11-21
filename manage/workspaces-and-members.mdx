@@ -77,50 +77,51 @@ Editing a role can't get around these.
 - If your role doesn't allow an action, you get HTTP 403 with: `Your role in this workspace does not allow that.`
 - A workspace you're not a member of responds as though it doesn't exist.
 
-## Exactly one owner
+## Billing permissions
 
-A workspace has exactly one owner, always. Ownership is never granted. Trying to set somebody's
-role to owner, or to move the current owner out of that role, is refused with:
-`Ownership is transferred, never granted. Use the transfer control instead.`
+| Action | Who can do it |
+| :-- | :-- |
+| Read the balance, the statement, and whether requests are paused | Any member |
+| Buy credit and manage saved cards | Owner and admins |
+| Pause or resume requests, and change the low credit notice | Owner only |
 
-Ownership moves by transfer, which promotes the new owner and demotes the outgoing one in the
-same write, so there is never a moment with two owners or none. A removal or demotion that would
-leave the workspace with no owner is refused, and the refusal names transfer as the way through.
+Every member can read those first three because they decide whether that member's own requests get served.
 
-## The owner and billing
+If a developer or viewer tries a billing action, they get HTTP 403 with:
 
-Any member may read the balance, the statement, and whether the owner has paused requests.
-Those three facts govern whether a member's own requests are served.
+`Only the workspace owner or an admin can manage its billing: its saved cards and the buying of credit.`
 
-Buying credit and managing the saved cards belong to the owner and admins. Every billing control
-answers a developer or a viewer with HTTP 403 and one sentence: `Only the workspace owner or an
-admin can manage its billing: its saved cards and the buying of credit.`
+If anyone other than the owner tries to pause, resume, or change the low credit notice, they get HTTP 403 with:
 
-Pausing or resuming requests and changing the low credit notice are the owner's alone, with
-their own HTTP 403 sentence: `Only the workspace owner can pause or resume its requests, or
-change when it is emailed about low credit.`
+`Only the workspace owner can pause or resume its requests, or change when it is emailed about low credit.`
 
-Billing belongs to a workspace, so one card cannot fund two workspaces. A workspace monthly spend
-limit is not available yet; see [Spend controls](/manage/spend-controls).
+Billing belongs to one workspace, so a single card can't fund two workspaces.
+
+A monthly spend limit for the whole workspace isn't available yet. See [Spend controls](/manage/spend-controls).
 
 ## Keys and who can see them
 
-A key belongs to the workspace and carries one accountable member, so spend can be attributed
-to somebody. Being accountable for a key is not a permission: it says who answers for what the
-key does, not who may use it.
+Every key belongs to the workspace and has one **accountable member**, so you can trace spend to a person. Being accountable means you answer for what the key does. It doesn't affect who can use the key.
 
-A key may be limited to named members, which decides who can see and manage it. The owner and
-admins always see every key. Everybody else sees the keys they are accountable for or named on,
-and nobody outside the list learns that a hidden key exists. Every key list carries the same
-fixed note, because one that appeared only when a key was hidden would announce it.
+### Limit a key to named members
 
-The limit is visibility and management, and nothing else. On the request path a key is a bearer
-credential, so the limit is not per-person enforcement and promises no per-person usage split. A
-developer or viewer attempting to set a limit is refused with: `Only an owner or an admin can
-limit a key to particular members.` The one place a member limit does more than scope a screen is
-the playground, where sending as a key counts as managing it. See [Playground](/features/playground).
+Owners and admins can limit a key to named members. This controls who can **see and manage** the key:
 
-Keys are created and ended on the Keys screen. See [Authentication](/get-started/authentication).
+- Owners and admins always see every key.
+- Everyone else sees only the keys they're accountable for or named on.
+- People outside the list can't tell a hidden key exists. Every key list shows the same fixed note whether or not anything is hidden, so the note gives nothing away.
+
+If a developer or viewer tries to set a limit, they get:
+
+`Only an owner or an admin can limit a key to particular members.`
+
+### What a member limit doesn't do
+
+When a request comes in, the key works for anyone who has it. So limiting a key to named members doesn't enforce access per person, and it doesn't split usage per person.
+
+The one exception is the playground. There, sending a request as a key counts as managing it, so the member limit applies. See [Playground](/features/playground).
+
+Create and end keys on the **Keys** screen. See [Authentication](/api-reference/authentication).
 
 ## Invitations
 
