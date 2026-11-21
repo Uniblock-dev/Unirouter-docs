@@ -1,16 +1,36 @@
 ---
 title: "Workspaces and members"
-description: "A workspace holds your keys, usage, playground and billing. Roles, creating a workspace, invitations, transfer and removal."
-status: partial
-gates: ["9.4", "9.5", "9.11", "9.12", "9.13", "9.14", "9.15", "9.16", "9.17", "9.18", "9.19", "9.20", "9.24", "9.6"]
-type: guide
+description: "What a workspace contains, who can do what, and how to create workspaces, invite people, transfer ownership and remove members."
+status: "partial"
+gates:
+  - "9.4"
+  - "9.5"
+  - "9.11"
+  - "9.12"
+  - "9.13"
+  - "9.14"
+  - "9.15"
+  - "9.16"
+  - "9.17"
+  - "9.18"
+  - "9.19"
+  - "9.20"
+  - "9.24"
+  - "9.6"
+type: "guide"
 ---
 
-A workspace is the thing you sign in to and invite people into. It holds members, API keys,
-usage records, a playground, and its own billing: one balance, one card, one statement.
+## What a workspace is
 
-Everything that spends is attached to a workspace. A key belongs to the workspace rather
-than to the person who created it, and a request made with that key spends that
+A workspace is what you sign in to and invite people into. Each workspace has its own:
+
+- members
+- API keys
+- usage records
+- playground
+- billing: one balance, one card, one statement
+
+Everything that spends money belongs to a workspace. Keys belong to the workspace, even though a person created them, and any request made with a key spends that
 workspace's credit.
 
 ## Roles
