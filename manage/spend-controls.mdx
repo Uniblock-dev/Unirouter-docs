@@ -50,10 +50,9 @@ rest of the workspace keeps serving.
 | 401 | `key_expired` | Nothing. The key's own expiry date has passed. | Create a new key. Expired keys are never renewed. |
 | 503 | `paused_by_owner` | Nothing. The workspace owner has paused requests. | Lift the pause in Settings. |
 
-Every refusal uses the standard error envelope. Branch on `code`, since messages may
-be reworded. One further 429 meaning, for a provider pool we are protecting, is specified
-but not yet shipped. Until it ships, retry a 429 with none of these codes after a short
-pause, and quote the request id if it persists.
+Every refusal uses the standard error envelope. Branch on `code`. The wording of `message` may change.
+
+We've planned one more 429 case, for protecting a shared provider pool, but it hasn't shipped yet. Until it does: if you get a 429 without any of the codes above, wait a moment and retry. If it keeps happening, contact us with the request id.
 
 ## Pause every request
 
