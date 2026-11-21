@@ -35,13 +35,15 @@ Everything on this page is built from those records. The Usage screen adds them 
 | `costMinor` | What the request charged, in integer minor units. Null means it was never priced. |
 | `latencyMs` | The total time you waited, in milliseconds. |
 
-**Missing counts show as `unknown`.** If a count never reached us, you see `unknown` instead of `0`. Zeros next to a real charge would look like a billing error, so we only show numbers we actually measured.
+Three things to know when you read these fields:
 
-**The field list is complete and closed.** A record has only the fields listed above, and nothing else is ever added. Figures about our own performance and supply never appear in it. Every customer-facing usage endpoint is checked against this same list.
+**A missing count shows as** `unknown`**.** If a count never reached us, the field is null and the screens show `unknown`. We never fill the gap with `0`. A real charge next to two zeros would look like a billing bug, so anything we didn't measure stays marked as unmeasured.
 
-**Requests on your own provider key get a record too.** When a request runs on a provider key your workspace added, it gets a usage record like any other, and the record says it was served on your key. These requests are counted separately from the ones we served. See [Bring your own key](/features/bring-your-own-key).
+**This list is complete.** These fields are everything a customer-facing usage endpoint can return, and every one of those endpoints is checked against this list. Internal figures about our own performance and provider supply aren't included.
 
-## The outcome vocabulary
+**Requests on your own provider key are metered too.** A request that runs on a provider key your workspace brought still gets a usage record, with `servedOnOwnKey` set to true. These requests are counted separately from the ones we served. See [Bring your own key](/features/bring-your-own-key).
+
+## Outcomes
 
 `outcome` tells you what happened to the request. The list of values is fixed, and we only add a new one when a feature needs it.
 
