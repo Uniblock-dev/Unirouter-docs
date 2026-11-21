@@ -60,7 +60,9 @@ The rates used for each charge are saved with it, so you can always see how it w
 | **Settled** | The sum of every transaction on your statement. |
 | **Held for requests in flight** | Credit set aside for requests that are still running. |
 
-**Available = settled − held**
+```text
+Available = settled − held
+```
 
 When a request comes in, we hold enough credit to cover the most it could cost. When it finishes, we release the hold and charge you for what it actually used.
 
