@@ -186,7 +186,12 @@ Two kinds of lines need a little more context:
 
 ## Who sees what
 
-Totals and the breakdowns by model and provider are workspace facts, and every member sees them whole. Breakdowns by key and by member are scoped: owners and admins see every line, and everybody else sees the keys they are accountable for or named on, plus their own row. A per-member figure is accountability, not proof of presence, because an API key is a bearer credential.
+| Figures | Who can see them |
+| :-- | :-- |
+| Totals, breakdown by model, breakdown by provider | Every member, in full. |
+| Breakdown by key, breakdown by member | Owners and admins see every line. Other members see the keys they're responsible for or named on, plus their own row. |
+
+A per-member figure tells you whose key or account a request is tied to. It can't prove who actually sent it, because anyone holding an API key can use it.
 
 ## How long records are kept
 
