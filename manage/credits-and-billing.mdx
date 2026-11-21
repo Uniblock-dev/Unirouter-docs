@@ -35,13 +35,22 @@ redirect. Until it arrives, the purchase shows as pending.
 
 ## What a request costs
 
-A served request is charged what its model costs at the provider's rates, at face value, with
-no markup and no fee at request time. Charges are computed per usage type (input, cached input,
-cache writes, output and reasoning tokens), and the rates behind each charge are recorded with it.
+You pay what the model costs at the provider's rates. We add no markup, and nothing extra is charged when a request runs.
 
-Charges are stored in integer **micro-dollars** in USD, so a small request is not rounded away.
-Figures **you** type, such as the spend rate cap, the low balance threshold and a key's credit
-limit, stay in minor units, where 100 is 1.00.
+Each charge is broken down by usage type:
+
+- Input tokens
+- Cached input tokens
+- Cache writes
+- Output tokens
+- Reasoning tokens
+
+The rates used for each charge are saved with it, so you can always see how it was worked out.
+
+**Units**
+
+- **Charges** are stored in USD as whole micro-dollars (millionths of a dollar). Even a very small request is recorded at its real cost and doesn't get rounded down to zero.
+- **Amounts you type in**, such as the spend rate cap, the low balance threshold and a key's credit limit, use minor units, where 100 means 1.00.
 
 ## The three figures on your balance
 
