@@ -143,9 +143,23 @@ The screen tells you which of these applies:
 
 ### Look up one request
 
-Every response carries `x-hopscotch-request-id`, and every error envelope repeats it as `request_id`. Click the id in any row to open the single request view. It repeats the row in full, with the streamed flag and the prompt, completion and total tokens, and shows when the figures were read, separately from when the request ran.
+Every response carries the request id in two headers:
 
-A request id from another workspace and one that never existed both find nothing, so the lookup cannot reveal whether an id exists elsewhere. A request past the 90 day window is answered by naming the window, and its transaction stays on your statement.
+- `x-hopscotch-request-id`, which is ours
+- `x-request-id`, which is the one the official OpenAI SDKs show on their error objects
+
+Every error envelope repeats it as `request_id`. Include it whenever you ask us about a request, so we know exactly which one you mean.
+
+To open a request, click its id in any Activity row. The single request view shows everything in the row, plus:
+
+- whether the reply was streamed
+- prompt, completion and total tokens
+- when the figures were read, shown separately from when the request ran
+
+A few cases to know about:
+
+- **An id from another workspace and an id that never existed look the same.** Both find nothing, so a lookup can't reveal whether an id exists somewhere else.
+- **A request older than 90 days** isn't found, and the screen names the retention window. Its charge is still on your statement.
 
 ### Reconcile a statement line with a request
 
