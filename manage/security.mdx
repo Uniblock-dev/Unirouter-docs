@@ -52,9 +52,9 @@ See [Workspaces and members](/manage/workspaces-and-members) for the full permi
 
 ## Your billing figures come from one place
 
-One component computes a balance, and one record explains a charge. Your balance, your statement and your usage figures are derived from the same accounting rather than kept in step by a job that reconciles two copies, so they cannot drift apart and tell you two different things.
+Your balance, statement and usage figures all come from one accounting component, and each charge has exactly one record that explains it. There are no separate copies kept in sync by a background job, so the figures can't drift apart or disagree with each other.
 
-A charge names the model rates that were in force when it was made, and those rates are immutable once used. A later price change cannot alter what an old request cost.
+Each charge records the model rates in effect when the request ran. A rate can't be changed once it has been used, so a later price change never alters what an earlier request cost.
 
 ## What we do not claim
 
@@ -68,4 +68,4 @@ Stated plainly:
 
 ## Reporting something
 
-If a request behaved in a way you cannot explain, the request id is the useful thing to have. It is on every response, successes and errors alike, and it is what lets a specific request be found. Quote it rather than describing the symptom.
+If a request did something you can't explain, include its request id when you report it. Every response has one, whether it succeeded or failed, and it lets us find that exact request. The id helps far more than a description of what went wrong.
