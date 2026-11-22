@@ -18,11 +18,13 @@ Every framework here works for the same reason: each already has an OpenAI-compa
 
 <BaseUrl />
 
-## The one change that is not optional
+## The one required change
 
-**Every model id names its provider.** `gpt-4o-mini` is not a model id here. `openai-main/gpt-4o-mini` is. A bare id is refused with `400` and `model_id_not_pinned`. The refusal names the accepted forms and points you to `GET /v1/models`. It arrives as `invalid_request_error` with `param` set to `model`, so your error handling parses it.
+**Every model id must include its provider.** Use `openai/gpt-4o-mini`, for example, rather than `gpt-4o-mini`. A bare id gets a `400` with the code `model_id_not_pinned`. The error lists the accepted formats and points you to`GET /v1/models`. Its type is `invalid_request_error` with`param` set to `model`, so your existing error handling can parse it.
 
-This breaks an untouched application, loudly. It matters more in a framework, because **some frameworks carry a default model of their own**. A framework you never told which model to use still sends one, and it is a bare OpenAI id. Your framework's page says whether yours does. [Models](/features/models) covers the id forms, and [Migrate from OpenAI](/get-started/migrate-from-openai) covers the rest of the move.
+If you move an app over without changing its model ids, every request fails with this error, so you'll notice right away.
+
+This needs extra care with frameworks, because **some frameworks have a default model built in**. Even if you never set a model, the framework sends one, and it's a bare OpenAI id. Each framework's page says whether it does this. [Models](https://docs.hopscotchlabs.ai/features/models.md) explains the id format, and [Migrate from OpenAI](https://docs.hopscotchlabs.ai/get-started/migrate-from-openai.md) covers the rest of the switch.
 
 ## The surface a framework can reach
 
