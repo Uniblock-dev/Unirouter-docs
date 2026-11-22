@@ -31,7 +31,7 @@ const hopscotch = createOpenAICompatible({
 });
 
 const { text } = await generateText({
-  model: hopscotch("openai/gpt-4o-mini"),
+  model: hopscotch("openai-main/gpt-4o-mini"),
   prompt: "Say hi in five words.",
 });
 ```
@@ -68,7 +68,7 @@ const openai = createOpenAI({
   apiKey: process.env.HOPSCOTCH_API_KEY,
 });
 
-const model = openai.chat("openai/gpt-4o-mini");
+const model = openai.chat("openai-main/gpt-4o-mini");
 ```
 
 `openai.chat(...)` is the chat-completions path and the AI SDK's own provider
@@ -115,7 +115,7 @@ import { APICallError } from "ai";
 
 try {
   await generateText({
-    model: hopscotch("openai/gpt-4o-mini"),
+    model: hopscotch("openai-main/gpt-4o-mini"),
     prompt: "Say hi in five words.",
   });
 } catch (error) {
