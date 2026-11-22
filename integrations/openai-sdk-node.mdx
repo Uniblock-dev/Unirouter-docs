@@ -29,7 +29,7 @@ const client = new OpenAI({
 });
 
 const response = await client.chat.completions.create({
-  model: "openai/gpt-4o-mini",
+  model: "openai-main/gpt-4o-mini",
   messages: [{ role: "user", content: "Say hi in five words." }],
 });
 
@@ -94,7 +94,7 @@ Note the capitalisation: the error carries `requestID` and the response carries
 ```javascript
 try {
   await client.chat.completions.create({
-    model: "openai/gpt-4o-mini",
+    model: "openai-main/gpt-4o-mini",
     messages: [{ role: "user", content: "Say hi in five words." }],
   });
 } catch (error) {
