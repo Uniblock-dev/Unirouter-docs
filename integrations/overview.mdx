@@ -20,7 +20,7 @@ Every framework here works for the same reason: each already has an OpenAI-compa
 
 ## The one change that is not optional
 
-**Every model id names its provider.** `gpt-4o-mini` is not a model id here. `openai/gpt-4o-mini` is. A bare id is refused with `400` and `model_id_not_pinned`. The refusal names the accepted forms and points you to `GET /v1/models`. It arrives as `invalid_request_error` with `param` set to `model`, so your error handling parses it.
+**Every model id names its provider.** `gpt-4o-mini` is not a model id here. `openai-main/gpt-4o-mini` is. A bare id is refused with `400` and `model_id_not_pinned`. The refusal names the accepted forms and points you to `GET /v1/models`. It arrives as `invalid_request_error` with `param` set to `model`, so your error handling parses it.
 
 This breaks an untouched application, loudly. It matters more in a framework, because **some frameworks carry a default model of their own**. A framework you never told which model to use still sends one, and it is a bare OpenAI id. Your framework's page says whether yours does. [Models](/features/models) covers the id forms, and [Migrate from OpenAI](/get-started/migrate-from-openai) covers the rest of the move.
 
