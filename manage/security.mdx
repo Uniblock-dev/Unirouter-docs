@@ -1,13 +1,12 @@
 ---
 title: "Security"
 description: "The security promises Hopscotch makes about your keys, your prompts, provider credentials, and who can manage your billing."
-status: write-now
+status: "write-now"
 gates: []
-type: concept
+type: "concept"
 ---
 
-This page lists what we promise and what we do not. Each promise below is
-something the product enforces, not a statement of intent.
+This page lists what we promise and what we do not. Each promise below is something the product enforces, not a statement of intent.
 
 ## Your API keys
 
@@ -20,80 +19,53 @@ We refuse any key that is unknown, revoked or malformed. See [Authentication](/
 
 ## Provider credentials
 
-**You never hold a provider credential, and we never expose ours.** When you call
-a model, we substitute our own credential for the provider that serves it. You do
-not see it, you do not receive it, and nothing in a response lets you work it
-out.
+**You never hold a provider credential, and we never expose ours.** When you call a model, we substitute our own credential for the provider that serves it. You do not see it, you do not receive it, and nothing in a response lets you work it out.
 
 A provider credential problem on our side is ours to fix, with nothing for you to change.
 
 ## Your prompts and replies
 
-**We do not store the content of a request.** We record metadata about it: the
-model, the provider, the token counts, the cost, the latency and the outcome. The
-prompt and the response body are not stored, and that includes playground runs.
-See [Data and privacy](/manage/data-and-privacy).
+**We do not store the content of a request.** We record metadata about it: the model, the provider, the token counts, the cost, the latency and the outcome. The prompt and the response body are not stored, and that includes playground runs. See [Data and privacy](/manage/data-and-privacy).
 
 ## Invitations
 
-An invitation link is stored only as a hash of its token, and an invitation is
-found by that hash. A database dump yields nothing that can be presented as a
-valid link.
+An invitation link is stored only as a hash of its token, and an invitation is found by that hash. A database dump yields nothing that can be presented as a valid link.
 
-An invitation works only for the email address it was sent to, expires after
-seven days, and re-checks the inviter's authority at the moment it is accepted. A
-link that matches nothing and a link that belongs to another address answer
-identically, so holding a session tells you nothing about who has been invited.
+An invitation works only for the email address it was sent to, expires after seven days, and re-checks the inviter's authority at the moment it is accepted. A link that matches nothing and a link that belongs to another address answer identically, so holding a session tells you nothing about who has been invited.
 
 ## Who can manage billing
 
-Permissions are enforced on our side, on every request, against your role read at
-that moment. A screen that hides a control is not the enforcement; the refusal is.
+We check permissions on our servers for every request, against your role at the moment the request arrives. If the dashboard hides a control from you, that's for convenience. The server would refuse the action anyway.
 
-The workspace owner and its admins can buy credit and manage the card; the owner
-alone can pause or resume requests. Developers and viewers can read the balance and
-the statement and can do nothing to them. Ownership moves only by an explicit transfer, which demotes the
-outgoing owner in the same action, so a workspace never has two owners and never
-has none.
+| Action | Owner | Admin | Developer | Viewer |
+| --- | :-: | :-: | :-: | :-: |
+| View the balance and statement | ✓ | ✓ | ✓ | ✓ |
+| Buy credit and manage the card | ✓ | ✓ |  |  |
+| Pause or resume requests | ✓ |  |  |  |
+| Make someone an admin | ✓ |  |  |  |
 
-Only the owner can make somebody an admin. An admin cannot create a second admin,
-because a stolen admin session must not be able to leave a permanent
-administrator behind after the session is ended and the password is changed.
+**Ownership changes only through an explicit transfer.** The transfer demotes the outgoing owner in the same step, so a workspace always has exactly one owner.
 
-See [Workspaces and members](/manage/workspaces-and-members) for the full
-permission table.
+**Admins can't create other admins.** If someone steals an admin session, they can't use it to promote another account that stays an admin after you end the session and change the password.
+
+See [Workspaces and members](/manage/workspaces-and-members) for the full permission table.
 
 ## Your billing figures come from one place
 
-One component computes a balance, and one record explains a charge. Your balance,
-your statement and your usage figures are derived from the same accounting rather
-than kept in step by a job that reconciles two copies, so they cannot drift apart
-and tell you two different things.
+One component computes a balance, and one record explains a charge. Your balance, your statement and your usage figures are derived from the same accounting rather than kept in step by a job that reconciles two copies, so they cannot drift apart and tell you two different things.
 
-A charge names the model rates that were in force when it was made, and those
-rates are immutable once used. A later price change cannot alter what an old
-request cost.
+A charge names the model rates that were in force when it was made, and those rates are immutable once used. A later price change cannot alter what an old request cost.
 
 ## What we do not claim
 
 Stated plainly:
 
-- **No compliance certification.** No audit, certification or framework claim is
-  made anywhere on this site, because none has been obtained.
-- **No availability or latency promise.** There is no service level agreement and
-  no published uptime or latency figure. Any number you may have seen elsewhere is
-  a target of ours, not a commitment to you.
-- **No revocation timing promise.** We do not publish how quickly a revoked key
-  stops working everywhere, because it has not been measured on a deployed
-  environment.
-- **Nothing about provider-side handling.** What a provider does with a request we
-  forwarded to it is governed by that provider.
-- **No security contact yet.** This site does not yet name a channel for reporting
-  a security problem. When one is published it will be on this page.
+- **No compliance certification.** No audit, certification or framework claim is made anywhere on this site, because none has been obtained.
+- **No availability or latency promise.** There is no service level agreement and no published uptime or latency figure. Any number you may have seen elsewhere is a target of ours, not a commitment to you.
+- **No revocation timing promise.** We do not publish how quickly a revoked key stops working everywhere, because it has not been measured on a deployed environment.
+- **Nothing about provider-side handling.** What a provider does with a request we forwarded to it is governed by that provider.
+- **No security contact yet.** This site does not yet name a channel for reporting a security problem. When one is published it will be on this page.
 
 ## Reporting something
 
-If a request behaved in a way you cannot explain, the request id is the useful
-thing to have. It is on every response, successes and errors alike, and it is
-what lets a specific request be found. Quote it rather than describing the
-symptom.
+If a request behaved in a way you cannot explain, the request id is the useful thing to have. It is on every response, successes and errors alike, and it is what lets a specific request be found. Quote it rather than describing the symptom.
