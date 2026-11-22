@@ -44,10 +44,10 @@ In some configurations `--weak-model` and `--editor-model` fall back to defaults
 
 Aider names a model on a compatible endpoint with an `openai/` prefix. That prefix selects the adapter in the library underneath Aider and is consumed, with the rest forwarded.
 
-Our ids begin with their provider, and for OpenAI-served models that provider is `openai`. So a pinned id and Aider's prefix produce a doubled first segment:
+Our ids begin with their provider, and for OpenAI-served models that provider is `openai-main`. So a pinned id and Aider's prefix produce a doubled first segment:
 
 ```bash
-aider --model openai/openai/gpt-4o-mini
+aider --model openai/openai-main/gpt-4o-mini
 ```
 
 **We did not verify what reaches the wire in that case.** The library's issue tracker shows doubled prefixes handled inconsistently, so we will not say which segment survives. You can find out in one request. A `400` with `model_id_not_pinned` means one segment arrived. A `404` with `model_not_found` means both did. Neither costs anything. An id whose provider is not `openai` does not have this problem.
