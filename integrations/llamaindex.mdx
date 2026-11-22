@@ -22,7 +22,7 @@ import os
 from llama_index.llms.openai_like import OpenAILike
 
 llm = OpenAILike(
-    model="openai/gpt-4o-mini",
+    model="openai-main/gpt-4o-mini",
     api_base="https://api.hopscotchlabs.ai/v1",
     api_key=os.environ["HOPSCOTCH_API_KEY"],
     is_chat_model=True,
