@@ -27,14 +27,12 @@ This needs extra care with frameworks, because **some frameworks have a default
 
 ## The surface a framework can reach
 
-The documented API is `POST /v1/chat/completions` plus the catalog reads, `GET /v1/models` and `GET /v1/models/{id}`. That is what these pages configure, and it is the whole of what they claim.
+Because only chat completions and the model catalog are available, two things change. Each framework's page covers whichever applies to it:
 
-Two consequences, each noted on the relevant page:
+- **Frameworks that default to another API are set to chat completions.** Two libraries here, the Vercel AI SDK and Pydantic AI, now send their default<br /> OpenAI setup to the Responses API. Their pages set chat completions<br /> explicitly, since that default has already changed once.
+- **Embeddings aren't available.** If a framework uses embeddings to build an index, retriever or memory, those calls fail. You won't see the error when you configure the framework, only when that code first runs. If a framework uses embeddings by default, as LlamaIndex does, its page tells you what to set instead.
 
-- **A framework whose default path is not chat completions is pinned to chat completions.** Two libraries here now reach for OpenAI's Responses API by default. These pages pin chat completions explicitly rather than trusting a default that has moved once.
-- **Embeddings have no home here.** A framework that reaches for embeddings to build an index, retriever or memory will not get them. The failure arrives when that code path first runs, not at configuration. Where a framework does this by default, its page says so and what to set instead.
-
-See [OpenAI compatibility](/get-started/migrate-from-openai) for the endpoint table and refusals.
+See [OpenAI compatibility](https://docs.hopscotchlabs.ai/get-started/migrate-from-openai.md) for the endpoint table and the requests we refuse.
 
 ## What every one of these pages assumes
 
