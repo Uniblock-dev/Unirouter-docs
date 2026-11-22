@@ -11,20 +11,12 @@ something the product enforces, not a statement of intent.
 
 ## Your API keys
 
-**We store a one-way hash of your key, never the key.** A key is shown to you
-once, at creation. What we keep is a hash of it, plus the non-secret prefix and
-last four characters so you can tell your keys apart.
+Because we store only a hash of each key, two things are true:
 
-Two consequences follow, and the second matters as much as the first:
+- **A database leak exposes no usable keys.** Nothing stored there can be sent as a bearer token.
+- **Nobody can show you your key again, including us.** No support process, console screen or internal tool can read a key back, because we never stored the value it would need.
 
-- A leak of our database yields no usable keys. There is nothing in it that can
-  be sent as a bearer token.
-- We cannot show you your key again, and nobody at Hopscotch can either. There is
-  no support path, no console screen and no internal tool that reads a key back,
-  because the value that would let one exist was never written down.
-
-An unknown key, a revoked key and a malformed key are all refused. See
-[Authentication](/get-started/authentication) for what your client receives.
+We refuse any key that is unknown, revoked or malformed. See [Authentication](/api-reference/authentication) for the response your client gets.
 
 ## Provider credentials
 
