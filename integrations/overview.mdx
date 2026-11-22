@@ -1,18 +1,17 @@
 ---
 title: "Framework integrations"
 description: "Why every OpenAI-compatible framework works here, the one change that is not optional, and which page covers your framework."
-status: partial
-gates: ["2.3", "2.11"]
-type: overview
+status: "partial"
+gates:
+  - "2.3"
+  - "2.11"
+type: "overview"
 ---
 
 import FeatureStatus from '/snippets/feature-status.mdx';
 import BaseUrl from '/snippets/base-url.mdx';
 
-<FeatureStatus
-  feature="the official-SDK compatibility proof"
-  detail="Every page in this section changes a base URL and a key on a library we do not maintain, and nothing else. We have not published a proof run of any of them against the production hostname, so read these as instructions rather than as certifications. Each page ends with what was and was not checked."
-/>
+<FeatureStatus feature="the official-SDK compatibility proof" detail="Every page in this section changes a base URL and a key on a library we do not maintain, and nothing else. We have not published a proof run of any of them against the production hostname, so read these as instructions rather than as certifications. Each page ends with what was and was not checked." />
 
 Every framework here works for the same reason: each already has an OpenAI-compatible provider, because each already talks to OpenAI. Point that provider at our base URL with a Hopscotch key, and the framework needs to know nothing else has changed.
 
@@ -20,11 +19,11 @@ Every framework here works for the same reason: each already has an OpenAI-compa
 
 ## The one required change
 
-**Every model id must include its provider.** Use `openai/gpt-4o-mini`, for example, rather than `gpt-4o-mini`. A bare id gets a `400` with the code `model_id_not_pinned`. The error lists the accepted formats and points you to`GET /v1/models`. Its type is `invalid_request_error` with`param` set to `model`, so your existing error handling can parse it.
+**Every model id must include its provider.** Use `openai/gpt-4o-mini`, for example, rather than `gpt-4o-mini`. A bare id gets a `400` with the code `model_id_not_pinned`. The error lists the accepted formats and points you to `GET /v1/models`. Its type is `invalid_request_error` with `param` set to `model`, so your existing error handling can parse it.
 
-If you move an app over without changing its model ids, every request fails with this error, so you'll notice right away.
+If you move an app over without changing its model ids, every request fails with this error, so you'll notice right away.
 
-This needs extra care with frameworks, because **some frameworks have a default model built in**. Even if you never set a model, the framework sends one, and it's a bare OpenAI id. Each framework's page says whether it does this. [Models](https://docs.hopscotchlabs.ai/features/models.md) explains the id format, and [Migrate from OpenAI](https://docs.hopscotchlabs.ai/get-started/migrate-from-openai.md) covers the rest of the switch.
+This needs extra care with frameworks, because **some frameworks have a default model built in**. Even if you never set a model, the framework sends one, and it's a bare OpenAI id. Each framework's page says whether it does this. [Models](https://docs.hopscotchlabs.ai/features/models.md) explains the id format, and [Migrate from OpenAI](https://docs.hopscotchlabs.ai/get-started/migrate-from-openai.md) covers the rest of the switch.
 
 ## The surface a framework can reach
 
@@ -49,18 +48,23 @@ See [OpenAI compatibility](/get-started/migrate-from-openai) for the endpoint ta
   <Card title="OpenAI SDK for Python" icon="brand-python" href="/integrations/openai-sdk-python">
     The reference case. Two constructor arguments.
   </Card>
+
   <Card title="OpenAI SDK for Node" icon="brand-nodejs" href="/integrations/openai-sdk-node">
     The same two, plus the one browser setting to leave alone.
   </Card>
+
   <Card title="Vercel AI SDK" icon="triangle" href="/integrations/vercel-ai-sdk">
     Which of its two OpenAI providers to use.
   </Card>
+
   <Card title="LangChain" icon="link" href="/integrations/langchain">
     Python and JavaScript. The default model is the thing that bites.
   </Card>
+
   <Card title="LlamaIndex" icon="stack-2" href="/integrations/llamaindex">
     Why the plain OpenAI class rejects our ids.
   </Card>
+
   <Card title="Pydantic AI" icon="shield-check" href="/integrations/pydantic-ai">
     The base URL goes on the provider, not the model.
   </Card>
