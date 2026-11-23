@@ -61,6 +61,64 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "temperature": {
+                    "type": "number",
+                    "description": "Sampling temperature. Vertex Gemini forwards this as generationConfig.temperature; Gemini 3.8 Flash ignores custom sampling values. Invalid values may still be rejected by Google. Omit this control on that model.",
+                    "example": 1
+                  },
+                  "top_p": {
+                    "type": "number",
+                    "description": "Sampling probability. Vertex Gemini forwards this as generationConfig.topP; Gemini 3.8 Flash ignores custom sampling values. Invalid values may still be rejected by Google.",
+                    "example": 0.95
+                  },
+                  "top_k": {
+                    "type": "integer",
+                    "description": "Sampling candidate count. Vertex Gemini forwards this as generationConfig.topK; Gemini 3.8 Flash ignores custom sampling values. Invalid values may still be rejected by Google.",
+                    "example": 40
+                  },
+                  "presence_penalty": {
+                    "type": "number",
+                    "nullable": true,
+                    "description": "Vertex Gemini forwards every non-null value unchanged as generationConfig.presencePenalty, including zero and nonzero values on Gemini 3.8 Flash and its preview variants. Google validates values and model-specific support; the adapter does not reject penalties by model. Null is omitted. Google's parameter refusals retain their HTTP status and readable reason in the OpenAI error envelope. A successful response does not guarantee that the model uses the parameter.",
+                    "example": 0
+                  },
+                  "frequency_penalty": {
+                    "type": "number",
+                    "nullable": true,
+                    "description": "Vertex Gemini forwards every non-null value unchanged as generationConfig.frequencyPenalty, including zero and nonzero values on Gemini 3.8 Flash and its preview variants. Google validates values and model-specific support; the adapter does not reject penalties by model. Null is omitted. Google's parameter refusals retain their HTTP status and readable reason in the OpenAI error envelope. A successful response does not guarantee that the model uses the parameter.",
+                    "example": 0
+                  },
+                  "safety_settings": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/VertexGeminiSafetySettings"
+                      }
+                    ],
+                    "description": "Vertex Gemini safety settings. safetySettings is an equivalent alias. Send one spelling. If both are supplied, equal JSON values are accepted (object key order is ignored; array order is significant); different values return 400 with a message naming both fields. The platform-credential error boundary clears param and code. An explicit null is forwarded as null and is not treated as omission."
+                  },
+                  "safetySettings": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/VertexGeminiSafetySettings"
+                      }
+                    ],
+                    "description": "Alias of safety_settings for Vertex Gemini. Equal values supplied under both names are accepted; conflicting values return 400 with a message naming both fields. The platform-credential error boundary clears param and code. OFF is forwarded unchanged."
+                  },
+                  "reasoning_effort": {
+                    "description": "Reasoning control interpreted by the selected provider. Vertex Gemini 3.8 Flash maps low, medium or high to its thinking level; minimal is unsupported. Other providers retain their own supported values. Empty or whitespace-only strings return 400 with code invalid_value and param reasoning_effort. Gemini also rejects 0 and false.",
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ],
+                    "example": "low"
+                  },
                   "model": {
                     "type": "string",
                     "description": "The exact provider-qualified ID returned by GET /v1/models, for example vertex-ai/gemini-3.8-flash. The offering must include chat_completions in endpoint_families. A bare ID is refused with model_id_not_pinned. A profile/{identifier} value selects your routing profile instead.",
@@ -5866,6 +5924,43 @@
             "type": "string",
             "description": "A model-specific reasoning control. Use a value the selected model supports; low was verified for the Vertex text examples.",
             "example": "low"
+          },
+          "safety_settings": {
+            "type": "array",
+            "nullable": true,
+            "description": "Vertex Gemini per-category safety settings, forwarded with their thresholds unchanged; Google validates categories and thresholds. OFF disables a category's configurable filter; BLOCK_NONE still returns safety scores. Omit the field to keep Google's defaults. safetySettings is accepted as the same field: send one spelling, because different values under both names are refused with 400 before a provider call.",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "category": {
+                  "type": "string",
+                  "example": "HARM_CATEGORY_HARASSMENT"
+                },
+                "threshold": {
+                  "type": "string",
+                  "example": "OFF"
+                }
+              }
+            },
+            "example": [
+              {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "OFF"
+              }
+            ]
+          },
+          "presence_penalty": {
+            "type": "number",
+            "nullable": true,
+            "description": "On Vertex Gemini a non-null value, including zero, is forwarded unchanged and Google decides whether the selected model accepts it; null is left out. Other providers apply their own rules.",
+            "example": 0
+          },
+          "frequency_penalty": {
+            "type": "number",
+            "nullable": true,
+            "description": "On Vertex Gemini a non-null value, including zero, is forwarded unchanged and Google decides whether the selected model accepts it; null is left out. Other providers apply their own rules.",
+            "example": 0
           }
         }
       },

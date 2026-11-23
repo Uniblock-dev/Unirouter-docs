@@ -188,6 +188,43 @@
             "type": "string",
             "description": "A model-specific reasoning control. Use a value the selected model supports; low was verified for the Vertex text examples.",
             "example": "low"
+          },
+          "safety_settings": {
+            "type": "array",
+            "nullable": true,
+            "description": "Vertex Gemini per-category safety settings, forwarded with their thresholds unchanged; Google validates categories and thresholds. OFF disables a category's configurable filter; BLOCK_NONE still returns safety scores. Omit the field to keep Google's defaults. safetySettings is accepted as the same field: send one spelling, because different values under both names are refused with 400 before a provider call.",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "category": {
+                  "type": "string",
+                  "example": "HARM_CATEGORY_HARASSMENT"
+                },
+                "threshold": {
+                  "type": "string",
+                  "example": "OFF"
+                }
+              }
+            },
+            "example": [
+              {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "OFF"
+              }
+            ]
+          },
+          "presence_penalty": {
+            "type": "number",
+            "nullable": true,
+            "description": "On Vertex Gemini a non-null value, including zero, is forwarded unchanged and Google decides whether the selected model accepts it; null is left out. Other providers apply their own rules.",
+            "example": 0
+          },
+          "frequency_penalty": {
+            "type": "number",
+            "nullable": true,
+            "description": "On Vertex Gemini a non-null value, including zero, is forwarded unchanged and Google decides whether the selected model accepts it; null is left out. Other providers apply their own rules.",
+            "example": 0
           }
         }
       },
