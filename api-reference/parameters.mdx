@@ -36,36 +36,26 @@ These changes apply on every key. We list them all so you never have to discover
 
 On the platform's own provider keys, some fields are also blocked.
 
-## What happens to everything else
+## Everything else is forwarded
 
-Almost nothing. There is no request schema of ours in front of the provider's
-and no allowlist of parameters. `temperature`,
-`top_p`, `stop`, `seed`, `logprobs`, `tools`, `tool_choice`, `response_format`,
-and any parameter a provider adds next month all reach the provider as sent.
+For providers with an OpenAI-compatible pass-through API, any other parameter you send can reach the provider unchanged.
 
-This cuts both ways, and the second half is the half worth planning for:
+Native APIs such as Vertex Gemini work differently. Only the fields we map reach the native request, and the values each model accepts vary.
 
-- **A parameter is never refused here for being unfamiliar.** You do not wait for
-  us to add support for something your client already sends.
-- **A parameter is never validated here either.** If a model will not take the
-  parameter, or will not take the value, the answer you get is the provider's own
-  refusal relayed with its own status and its own sentence. We do not pre-empt it
-  with a refusal of our own, and we do not translate it.
+Two things to plan for:
 
-  There is one exception, and it is a single value rather than a field: an empty
-  or whitespace-only `reasoning_effort` is refused here with a `400`, `code`
-  `invalid_value` and `param` set to `reasoning_effort`. It is the one value no
-  provider accepts, so relaying it would spend a round trip to be told the same
-  thing. Any other `reasoning_effort` you send, string or otherwise, is
-  forwarded. See [Reasoning models](/features/reasoning).
+- **Published model metadata isn't an allowlist.** If a parameter is missing from it, we won't refuse your request for that reason.
+- **The provider can still refuse a parameter or value.** We can also reject a value while translating it for a provider's native API, before the request is sent.
 
-  The other is a short list of fields refused on the platform's own provider
-  keys and forwarded on yours, in
-  [the next section](#the-fields-refused-on-the-platforms-own-provider-keys).
+### What we refuse ourselves
 
-So a `400` on a chat completion has two possible authors. Ours name a `param` and
-come from the short list below. Everything else on that status came from the
-provider and reads like the provider.
+- **An empty** `reasoning_effort`**.** An empty or whitespace-only value returns `400` with `code: "invalid_value"` and `param: "reasoning_effort"`. No provider accepts it, so we save you the round trip.
+- **Some Gemini** `reasoning_effort `**values.** Gemini translation rejects `0` and `false`, and rejects `"minimal"` on models that don't allow that thinking level. These errors include `param: "reasoning_effort"`. Google can still refuse other values. See [Reasoning models](https://docs.hopscotchlabs.ai/features/reasoning.md).
+- **Certain fields on platform provider keys.** These are refused on the platform's keys and forwarded on yours. See [the next section](#fields-blocked-on-platform-provider-keys).
+
+### Finding the source of a `400`
+
+A `400` can come from our admission checks, from provider-specific translation, or from the provider itself. Check `error.code` and `error.param` before changing the body and retrying.
 
 ## The fields refused on the platform's own provider keys
 
