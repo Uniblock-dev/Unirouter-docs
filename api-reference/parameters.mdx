@@ -26,25 +26,17 @@ If we can't make sense of a value, the two fields are handled differently:
 
 ## What is rewritten
 
-Two rewrites exist on every key, and two more on the platform's own provider
-keys, [listed below](#the-fields-refused-on-the-platforms-own-provider-keys): an
-omitted `store` on Responses is sent as `false`, and three routing fields a
-reseller provider reads are removed from a chat body. All are named here because a body that arrives different
-from the one you sent should never be something you discover from a provider's
-error message.
+## What we change
 
-**`model`, when you asked for a route rather than a model.** A request naming
-`profile/{identifier}` or `unirouter/auto` is a request for a list of models
-tried in order, so the body that reaches a provider carries the id of the model
-being tried on that attempt. See [Routing profiles](/features/routing-profiles).
+These changes apply on every key. We list them all so you never have to discover a changed body from a provider's error message.
 
-**`max_tokens`, when the provider's own API refuses a request without one.** Some
-providers require the field. If your body carries neither `max_tokens` nor
-`max_completion_tokens` and the provider is one of those, the field is added,
-and the value used is the model's published `max_output_tokens`, which is the
-figure credit was already being held against. Nothing else in the body is
-touched, and a body that already names a ceiling is sent unchanged. Every other
-provider is sent your body without the field, exactly as you wrote it.
+- `model`**, when you name a route.** Sending `profile/{identifier}` or `unirouter/auto` asks us to try a list of models in order. Each attempt reaches the provider with the ID of the model being tried. See [Routing profiles](https://docs.hopscotchlabs.ai/features/routing-profiles.md).
+- `max_tokens`**, when the provider requires it.** Some providers refuse requests that don't include `max_tokens`. If your body has neither `max_tokens` nor `max_completion_tokens` and the provider is one of these, we add `max_tokens` set to the model's published `max_output_tokens`. That's the same figure we were already holding credit against. If you set a ceiling yourself, we keep it. Provider-specific translation still runs after this step.
+- `store `**on Responses.** If you leave out `store` on `POST /v1/responses`, we send `store: false`.
+- **Routing fields on chat completions.** We remove `provider`, `models` and `transforms`, which are fields reseller providers read. Clients that send them keep working, and you're charged for the model you named.
+- **Vertex Gemini fields.** We translate OpenAI-compatible fields into Google's request format. For example, `max_tokens` sets the output limit, `reasoning_effort` picks a thinking level, and `modalities` and `image_config` control image output on supported chat models. See [Gemini on Vertex](https://docs.hopscotchlabs.ai/features/vertex-gemini.md) for request and response shapes.
+
+On the platform's own provider keys, some fields are also blocked. See [Fields blocked on platform provider keys](#fields-blocked-on-platform-provider-keys).
 
 ## What happens to everything else
 
