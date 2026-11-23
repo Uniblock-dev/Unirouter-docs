@@ -57,36 +57,26 @@ Two things to plan for:
 
 A `400` can come from our admission checks, from provider-specific translation, or from the provider itself. Check `error.code` and `error.param` before changing the body and retrying.
 
-## The fields refused on the platform's own provider keys
+## Fields blocked on platform provider keys
 
-A request served on the platform's own provider keys is refused, before
-anything is held and before any provider is called, when it carries a field
-that buys something this platform cannot bill yet or asks the provider to keep
-the conversation under our account:
+When your request runs on the platform's own provider keys, we refuse it if it includes a field that:
 
-- a `service_tier` other than the provider's standard one (`auto`, `default` or
-  `on_demand` on chat completions, `auto` or `default` on Responses),
-- `web_search_options`, or a hosted tool the provider charges for per call (web
-  search, web fetch, code execution, and on a Gemini model a grounding tool such
-  as `google_search`),
-- audio in (an `input_audio` part) or out (`audio`, or audio in `modalities`),
-- a `cache_control` marker with a `1h` ttl,
-- `store: true`, and on `POST /v1/responses` also `previous_response_id`,
-  `conversation`, an `item_reference` input item and `background: true`.
+- buys something we can't bill for yet, or
+- asks the provider to store the conversation under our account.
 
-Each is a `400` with `code` `null` and `param` naming the field, never its value,
-and the message says to remove it or send the request on your own provider key.
-On `POST /v1/responses` an omitted `store` is sent to the provider as `false`.
+The refusal happens before we hold any credit or call a provider.
 
-**A request served on your own provider key keeps every one of them** and goes
-out as you sent it, because the provider bills and stores it against your own
-account. See [Bring your own key](/features/bring-your-own-key).
+| Type | Blocked fields |
+| :-- | :-- |
+| Service tier | Any `service_tier` other than the provider's standard one. Standard is `auto`, `default` or `on_demand` on chat completions, and `auto` or `default` on Responses. |
+| Paid hosted tools | `web_search_options`, and any hosted tool the provider charges for per call: web search, web fetch, code execution, and Gemini grounding tools such as `google_search`. |
+| Audio | Audio input (an `input_audio` part) and audio output (`audio`, or audio in `modalities`). |
+| Long cache | A `cache_control` marker with a `1h` ttl. |
+| Stored state | `store: true`. On `POST /v1/responses`, also `previous_response_id`, `conversation`, `item_reference` input items and `background: true`. |
 
-On chat completions, the routing fields `provider`, `models` and `transforms`,
-which a reseller provider reads, are removed from the body rather than refused, so a client that
-sends them keeps working and the model you named is the one you are charged for.
-Every other field, including the reasoning and verbosity parameters a client may
-send, travels to the provider untouched and is answered by the provider.
+Each refusal is a `400` with `code: null` and `param` set to the field name (never its value). The message tells you to remove the field or send the request on your own provider key.
+
+**On your own provider key, all of these fields go through as you sent them**, because the provider bills and stores against your account. See [Bring your own key](/features/bring-your-own-key). Other fields still go through provider-specific translation and depend on what the provider supports.
 
 ## The refusals that are ours
 
