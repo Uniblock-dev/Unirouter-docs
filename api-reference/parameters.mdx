@@ -10,26 +10,19 @@ The body of a chat completion is OpenAI's, and it travels to the provider as you
 wrote it. This page says exactly which parts of it this platform looks at, which
 parts it changes, and what happens to everything else.
 
-## What is read
+## What we read
 
-Admission reads two things out of your body, both to work out what the request
-could cost before it is sent:
+Before we send your request, we read two fields to work out what it could cost. Reading them doesn't change them.
 
-| Field | Why it is read |
-|---|---|
-| `model` | To find the provider, the rate, and whether we can serve it at all. |
-| `max_tokens`, or `max_completion_tokens` | To size the credit held while the request runs. When both are present, the larger is used. |
+| Field | Why we read it |
+| :-- | :-- |
+| `model` | To find the provider and the rate, and to check that we can serve the model. |
+| `max_tokens` or `max_completion_tokens` | To decide how much credit to hold while the request runs. If you send both, we use the larger value. |
 
-Neither read changes the field, and the two fields answer differently when the
-value cannot be made sense of.
+If we can't make sense of a value, the two fields are handled differently:
 
-A ceiling this cannot read falls back to being treated as absent rather than
-being corrected, so credit is held at the model's published maximum output and
-the provider answers for its own body. `model` has no such fallback: it is the
-one field admission cannot proceed without, so a missing model and a model id in
-a shape this does not accept are both refused here, before any provider is
-called. Both refusals are in [The refusals that are ours](#the-refusals-that-are-ours)
-below, and both name a `param`, which is how you tell them from the provider's.
+- **An output ceiling we can't read** is treated as missing. We hold credit at the model's published maximum output, leave the value in your body, and let the provider respond to it.
+- **A missing or malformed** `model` is refused before any provider is called, because we can't continue without it. Both refusals name a `param`, which is how you tell them apart from provider errors. See [Errors we return before calling a provider](#errors-we-return-before-calling-a-provider).
 
 ## What is rewritten
 
