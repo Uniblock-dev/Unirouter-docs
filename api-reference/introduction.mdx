@@ -61,7 +61,7 @@ We forward your body as you sent it. We don't rename or drop parameters, and we 
 
 ## Model IDs
 
-Model IDs use the format `provider/model`, for example `openai/gpt-4o-mini`.
+Model IDs use the format `provider/model`, for example `openai-main/gpt-4o-mini`.
 
 - **Before the first slash:** the provider that serves your request.
 - **After the first slash:** our name for the model on that provider. This is the provider's own ID with the model maker's namespace removed. For example, Groq publishes `openai/gpt-oss-120b`, so here it's `groq/gpt-oss-120b`. When we send the request, we use the provider's original spelling for you.
