@@ -216,8 +216,7 @@ description of what the screen said.
 - `413` with `payload_too_large`: do not retry unchanged. Send a smaller body.
 - `429` with `provider_key_refused`: retry with backoff. It carries no `Retry-After`, but a provider's own
   limit clears on its own.
-- `400` with `model_id_not_pinned`: do not retry unchanged. Add the provider prefix, so `gpt-4o-mini` becomes
-  `openai/gpt-4o-mini`, or send a `profile/` slug.
+- `400` with `model_id_not_pinned`: do not retry unchanged. Add the provider prefix, so `gpt-4o-mini` becomes `openai-main/gpt-4o-mini`, or send a `profile/` slug.
 - `404` with `model_not_found`: do not retry unchanged. Fix the model id.
 - `404` with `model_not_available`: read the message before you retry. If it says the provider has retired the
   model, do not retry at all; pick another model. If it says we cannot reach it, or says neither, retry later,
@@ -240,7 +239,7 @@ from openai import APIStatusError
 
 try:
     completion = client.chat.completions.create(
-        model="openai/gpt-4o-mini",
+        model="openai-main/gpt-4o-mini",
         messages=[{"role": "user", "content": "Say hi in five words."}],
     )
 except APIStatusError as error:
