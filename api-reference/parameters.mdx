@@ -22,9 +22,7 @@ Before we send your request, we read two fields to work out what it could cost. 
 If we can't make sense of a value, the two fields are handled differently:
 
 - **An output ceiling we can't read** is treated as missing. We hold credit at the model's published maximum output, leave the value in your body, and let the provider respond to it.
-- **A missing or malformed** `model` is refused before any provider is called, because we can't continue without it. Both refusals name a `param`, which is how you tell them apart from provider errors. See [Errors we return before calling a provider](#errors-we-return-before-calling-a-provider).
-
-## What is rewritten
+- **A missing or malformed** `model` is refused before any provider is called, because we can't continue without it. Both refusals name a `param`, which is how you tell them apart from provider errors.
 
 ## What we change
 
@@ -36,7 +34,7 @@ These changes apply on every key. We list them all so you never have to discover
 - **Routing fields on chat completions.** We remove `provider`, `models` and `transforms`, which are fields reseller providers read. Clients that send them keep working, and you're charged for the model you named.
 - **Vertex Gemini fields.** We translate OpenAI-compatible fields into Google's request format. For example, `max_tokens` sets the output limit, `reasoning_effort` picks a thinking level, and `modalities` and `image_config` control image output on supported chat models. See [Gemini on Vertex](https://docs.hopscotchlabs.ai/features/vertex-gemini.md) for request and response shapes.
 
-On the platform's own provider keys, some fields are also blocked. See [Fields blocked on platform provider keys](#fields-blocked-on-platform-provider-keys).
+On the platform's own provider keys, some fields are also blocked.
 
 ## What happens to everything else
 
