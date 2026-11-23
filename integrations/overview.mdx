@@ -19,7 +19,7 @@ Every framework here works for the same reason: each already has an OpenAI-compa
 
 ## The one required change
 
-**Every model id must include its provider.** Use `openai/gpt-4o-mini`, for example, rather than `gpt-4o-mini`. A bare id gets a `400` with the code `model_id_not_pinned`. The error lists the accepted formats and points you to `GET /v1/models`. Its type is `invalid_request_error` with `param` set to `model`, so your existing error handling can parse it.
+**Every model id must include its provider.** Use `openai-main/gpt-4o-mini`, for<br /> example, rather than `gpt-4o-mini`. A bare id gets a `400` with the code `model_id_not_pinned`. The error lists the accepted formats and points you to `GET /v1/models`. Its type is `invalid_request_error` with `param` set to `model`, so your existing error handling can parse it.
 
 If you move an app over without changing its model ids, every request fails with this error, so you'll notice right away.
 

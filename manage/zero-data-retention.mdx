@@ -51,7 +51,7 @@ A blocked request is refused before it is sent, with HTTP 403, type `permission_
 ```json 403
 {
   "error": {
-    "message": "The workspace requires zero-data-retention providers, and \"openai/gpt-4o-mini\" is not served by one recorded as meeting that requirement. Turn the requirement off under Data handling, or route this request to a provider recorded as zero-data-retention.",
+    "message": "The workspace requires zero-data-retention providers, and \"openai-main/gpt-4o-mini\" is not served by one recorded as meeting that requirement. Turn the requirement off under Data handling, or route this request to a provider recorded as zero-data-retention.",
     "type": "permission_error",
     "param": null,
     "code": "no_zdr_eligible_provider",
@@ -91,7 +91,7 @@ So a workspace can require the requirement everywhere and exempt one key, or lea
 one key to it. A guardrail refusal names the guardrail instead of the workspace:
 
 ```text
-The guardrail "eu-only" on this key requires zero-data-retention providers, and "openai/gpt-4o-mini" is not served by one recorded as meeting that requirement. Change the guardrail, or route this request to a provider recorded as zero-data-retention.
+The guardrail "eu-only" on this key requires zero-data-retention providers, and "openai-main/gpt-4o-mini" is not served by one recorded as meeting that requirement. Change the guardrail, or route this request to a provider recorded as zero-data-retention.
 ```
 
 A guardrail can also require providers not training on inputs, with the same code and a message
