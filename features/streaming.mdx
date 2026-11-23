@@ -41,12 +41,12 @@ Both formats end the same way. Token counts arrive on the same `:x-hopscotch-usa
 
 Annotated. Ids and content are illustrative; the framing is exact.
 
-```
-data: {"id":"chatcmpl-EXAMPLE","object":"chat.completion.chunk","model":"openai/gpt-4o-mini","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":null}]}
+```text
+data: {"id":"chatcmpl-EXAMPLE","object":"chat.completion.chunk","model":"openai-main/gpt-4o-mini","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":null}]}
 
-data: {"id":"chatcmpl-EXAMPLE","object":"chat.completion.chunk","model":"openai/gpt-4o-mini","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":null}]}
+data: {"id":"chatcmpl-EXAMPLE","object":"chat.completion.chunk","model":"openai-main/gpt-4o-mini","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":null}]}
 
-data: {"id":"chatcmpl-EXAMPLE","object":"chat.completion.chunk","model":"openai/gpt-4o-mini","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+data: {"id":"chatcmpl-EXAMPLE","object":"chat.completion.chunk","model":"openai-main/gpt-4o-mini","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
 
 :x-hopscotch-usage {"v":1,"reported":true,"prompt_tokens":12,"completion_tokens":8,"total_tokens":20}
 
