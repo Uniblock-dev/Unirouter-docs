@@ -43,7 +43,7 @@ Ask for ids rather than building them by hand.
 
 `GET /v1/models/{id}` also accepts the provider’s own spelling, so old links and usage records still open. The request path doesn’t accept it, so an id that works in a lookup may not work in a request. This site doesn’t publish a list of models, families or providers, because a stale list does more harm than none.
 
-## Discovering what you can call
+## Discover models
 
 **Over the API.** `GET /v1/models` returns the ids to use in `model`, plus prices, context windows, capabilities, currency and providers. `GET /v1/models/{id}` adds descriptions and lifecycle dates. In that response, `uniblock.supported_parameters` lists the parameters the provider has declared, and `uniblock.parameters` holds recorded bounds and defaults. Neither is a full schema or a test result, and an empty list means nothing publishable was declared.
 
