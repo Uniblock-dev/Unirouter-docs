@@ -5033,12 +5033,12 @@
               "deprecated_at": {
                 "type": "integer",
                 "nullable": true,
-                "description": "Unix seconds."
+                "description": "Unix milliseconds."
               },
               "sunset_at": {
                 "type": "integer",
                 "nullable": true,
-                "description": "Unix seconds."
+                "description": "Unix milliseconds."
               },
               "replacement_model_id": {
                 "type": "string",
