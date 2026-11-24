@@ -11,7 +11,7 @@ import { FeatureStatus } from '/snippets/feature-status.mdx';
 
 Streaming works the same way it does on OpenAI’s API. Set `"stream": true` in the request body, read the server-sent events as they arrive, and stop when you see `data: [DONE]`. If your client already streams from an OpenAI-compatible endpoint, it will stream from Hopscotch with no changes.
 
-## Asking for a stream
+## Turn on streaming with `stream: true`
 
 ```bash
 curl https://api.hopscotchlabs.ai/v1/chat/completions \
@@ -29,7 +29,7 @@ The response has `Content-Type: text/event-stream`. The body is relayed as it
 arrives: nothing is buffered on our side, so the first token reaches you as soon
 as the model produces it.
 
-### On the Responses API
+### Streaming on the Responses API
 
 `POST /v1/responses` streams too. It uses the same request path as chat completions, so everything on this page also applies to it: how the stream is relayed, where token counts appear, and how a stream can end early.
 
@@ -75,7 +75,7 @@ Absent counts are omitted rather than sent as zero, and `"reported": false`
 carries no counts at all. The full field list is in
 [Headers](/api-reference/headers#token-counts).
 
-## Getting the counts in the stream itself
+## Get usage in a stream chunk with `include_usage`
 
 The comment line above is ours. If you want token counts as part of the stream
 your SDK parses, ask for them the standard way:
