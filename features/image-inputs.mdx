@@ -30,7 +30,7 @@ rather than one you can link to:
 {"type": "image_url", "image_url": {"url": "data:image/png;base64,iVBORw0KGgo..."}}
 ```
 
-## Which models take one
+## Which models accept images
 
 Every catalog entry carries a `vision` word in its `capabilities` block,
 answering `yes`, `no` or `unknown`. See
@@ -39,7 +39,7 @@ answering `yes`, `no` or `unknown`. See
 Read `unknown` as "nobody has established this", not as "no". A `yes` is a
 recorded answer rather than a guess, which is why it is worth choosing on.
 
-## Nothing here checks the image
+## Image checks and limits come from the provider
 
 The request path forwards your body and does not inspect it. Consequences, all of
 them the same consequence seen from different sides:
@@ -55,7 +55,7 @@ them the same consequence seen from different sides:
 - **We do not resize, re-encode, or strip metadata.** The bytes you put in the
   body are the bytes that go on.
 
-## What an image costs
+## Images are billed as prompt tokens
 
 Images are charged as prompt tokens, at the model's input rate, and the count is
 the provider's own. Different providers count an image differently, and the same
@@ -65,8 +65,9 @@ re-counts or estimates: the figure you read back came from the provider. See
 
 Two habits are worth having:
 
-1. **A data URI is prompt tokens and body bytes both.** Base64 makes a large image noticeably larger on the wire before it is a single token of anything.
-2. **An image stays in the conversation.** Every turn of a multi-turn chat resends the whole `messages` array, so an image in turn one is paid for again in turn five. Drop it from the history once the model has described it, if the description is what the rest of the conversation needs.
+**A data URI is prompt tokens and body bytes both.** Base64 makes a large image noticeably larger on the wire before it is a single token of anything.
+
+**An image stays in the conversation.** Every turn of a multi-turn chat resends the whole `messages` array, so an image in turn one is paid for again in turn five. Drop it from the history once the model has described it, if the description is what the rest of the conversation needs.
 
 ## Audio, video, and generated images
 

@@ -8,7 +8,7 @@ type: concept
 
 Some models generate reasoning tokens before they answer. This is text the model writes to work through the problem. You usually don’t see it, but you always pay for it. Hopscotch doesn’t change any of that. Three things are still worth knowing, because reasoning is where a request most often costs more than you’d expect.
 
-## Asking for it
+## Control reasoning with `reasoning_effort`
 
 `reasoning_effort` is a regular field in the request body, and we send it to the provider exactly as you wrote it, like every other parameter. The same goes for any other field a provider uses to control how much the model thinks. Hopscotch has no reasoning setting of its own and adds nothing to your request body.
 
@@ -55,7 +55,7 @@ completion = output + reasoning
 See [Models](/features/models) for the whole vocabulary, and read what a request
 actually cost from your usage record rather than from a rate.
 
-## `max_tokens` matters more here than anywhere else
+## Set `max_tokens` high enough for reasoning and the answer
 
 There are two reasons, and they push in opposite directions.
 
