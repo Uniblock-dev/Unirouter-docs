@@ -108,7 +108,7 @@ The two ceilings behave differently:
 
 For both injection patterns and sensitive data, the error names the guardrail and the detector that matched. It never includes the matched text or the pattern.
 
-## What a refused request sees
+## Errors when a guardrail blocks a request
 
 A guardrail refusal comes back as a standard OpenAI-style [error](/api-reference/errors), with a stable `code` you can branch on. The message always names the guardrail. A refused request is never charged, and no credit is held for it.
 
