@@ -9,7 +9,7 @@ type: "concept"
 
 Every model you can call today is run by a provider, and at some point the provider will turn it off. The catalog publishes the dates for that, so a failed request isn’t how you find out. This page explains what each date means and what to do about it.
 
-## Two dates, two meanings
+## Deprecated vs. sunset
 
 They are different facts and a model can carry either without the other.
 
@@ -20,7 +20,7 @@ They are different facts and a model can carry either without the other.
 
 Deprecation is a recommendation. The provider has stopped recommending the model, usually because there’s a newer one, but your requests keep working the same way. Sunset is the date the model stops answering requests.
 
-## Where they are
+## Find deprecation and sunset dates in the API
 
 **In** `GET /v1/models`, each model’s sunset date appears as `shutdown_date`, in unix seconds. It sits at the top level of the model object, where OpenAI’s own model format puts it. If a model has no sunset date, the key is missing entirely instead of being set to `null`. Check whether the key exists, not what its value is.
 
@@ -65,7 +65,7 @@ The refusal comes back as a `404`, and the error message tells you why. If the p
 The dates come from the provider, so a model can stop before its published sunset if the provider stops serving it early. When that happens, the model drops out of the catalog right away, whatever the announced date says. The whole catalog works this way: it only lists models you can actually call.
 See [Models](/features/models).
 
-## Building for it
+## Prepare your app for model shutdowns
 
 - **Fetch the model list instead of hard-coding it.** Every hard-coded model id is a deploy you may have to rush out later. Call `GET /v1/models` and treat the result as what’s available right now.
 - **Check** `shutdown_date `**only for the models you use.** Filter the list to the ids your app sends, and you’ll see what’s ending and when.
