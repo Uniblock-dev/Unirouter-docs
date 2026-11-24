@@ -50,8 +50,8 @@ In `GET /v1/models/{id}`, three fields inside the `uniblock` block give you the 
 
 | Field | What it is |
 |---|---|
-| `deprecated_at` | Unix seconds, or null. When the model stopped being recommended. |
-| `sunset_at` | Unix seconds, or null. When it stops answering. |
+| `deprecated_at` | Unix milliseconds, or null. When the model stopped being recommended. |
+| `sunset_at` | Unix milliseconds, or null. When it stops answering. |
 | `replacement_model_id` | The id to move to, or null. |
 
 **Expect** `replacement_model_id `**to be** `null `**most of the time. That’s on purpose.** We only fill it in when the provider has named a successor. We never guess, because you’d act on a wrong guess and move to the wrong model.
