@@ -19,7 +19,7 @@ If your app already calls OpenAI, most of your code stays the same. When we say 
 2. Errors come back in OpenAI's error format, so your existing error handling can read them.
 3. Anything we add sits on top: a few extra response headers and one extra line at the end of a stream. Standard clients ignore both.
 
-## The two settings
+## Change your base URL and API key
 
 <BaseUrl />
 
@@ -66,7 +66,7 @@ The table lists the paths this site publishes. Other paths, including the image 
 `POST /v1/embeddings`, `POST /v1/systemone` and the realtime endpoint, are not documented on this site, so
 treat any call to them as unanswered here. A path this release does not serve answers the 404 below.
 
-### What a call to a path we do not serve returns
+### Errors for unsupported endpoints and methods
 
 A path under `/v1` that this release does not serve is refused at one boundary, so it fails the same way
 every time. It is a 404 in the OpenAI envelope, with type `invalid_request_error` and code
@@ -74,7 +74,7 @@ every time. It is a 404 in the OpenAI envelope, with type `invalid_request_error
 `method_not_allowed` and an `Allow` header naming the methods that are served. A `GET` on
 `/v1/chat/completions` is the everyday example.
 
-## Model ids
+## Model ids need a provider prefix
 
 Model ids use the format `provider/model`, for example `openai-main/gpt-4o-mini`. We split the id at the first slash. The part before the slash is the provider that serves the request. The part after it is our name for that model on that provider. When we call the provider, we use the provider's own name for the model, so you never need to know it.
 
