@@ -137,7 +137,7 @@ Only live keys count, so an ended key frees its slot right away.
 
 Use several keys instead of one. With a single key, a leak means an outage. With several, you can create the replacement, move traffic over, and end the old key with nothing down in between.
 
-### Keys that arrive with an invitation
+### Reserved keys for invited members
 
 An invitation can carry a key reservation, so a new member arrives with a key waiting for them.
 
@@ -192,7 +192,7 @@ cannot raise it. Your account spend rate cap is a different refusal, with its ow
 
 <RequestIdNote />
 
-## Handling keys well
+## Storing and using keys safely
 
 - Keep keys in a secret store or an environment variable, never in source control. The `ub_live_` prefix lets scanners
   catch a leak, but catching it after the fact is not avoiding it.
