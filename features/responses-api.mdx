@@ -96,7 +96,7 @@ Three routes to the stored-state endpoints are not served and answer the usual
 404 `endpoint_not_supported`: reading a response by id, deleting one, and
 listing its input items. There is nothing behind them to read.
 
-## Tools
+## Custom tools work; hosted tools need your own key
 
 Tools you define yourself are forwarded and work as they do on chat. Hosted
 tools that the provider bills for separately are refused on our credentials
@@ -119,7 +119,7 @@ refusal names the tool:
 On your own provider key the provider bills you for the tool directly and the
 request is forwarded untouched.
 
-## Everything else
+## Other fields, streaming and billing
 
 `service_tier` is accepted as `auto` or `default`. The small set of fields no
 endpoint meters on our credentials, a priority or fast mode, regional

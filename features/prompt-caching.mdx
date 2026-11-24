@@ -8,13 +8,13 @@ type: concept
 
 Several providers can cache part of your prompt, so you pay less for that part when you send it again. Caching is a provider feature that you request in the request body. We forward the body unchanged, so caching works through Hopscotch the same way it does when you call the provider directly.
 
-## How you ask for it
+## Request caching the way your provider expects
 
 Request it the same way you would with the provider directly. If the provider uses explicit caching, add its cache marker to the request body and we forward it as written. If the provider caches automatically, it does so without being asked, and we don’t turn that off.
 
 Hopscotch has no caching setting of its own. There’s nothing in the body, nothing in a header, and nothing to turn on in the dashboard. Each provider decides whether it caches and on what terms. We don’t publish a per-provider table, because pricing changes and an outdated pricing table does more harm than having none.
 
-## Where the counts arrive
+## Where to find cached-token counts
 
 Cached tokens are reported separately from ordinary input tokens, in three places.
 
@@ -53,13 +53,13 @@ The rate that applied is the one in force when the request was made, and a later
 it. Your usage record is the authority on what a request cost. A price in the catalog describes what a model
 charges now.
 
-## The cache status header is not this
+## Don't use `x-hopscotch-cache-status` to check cache hits
 
 A served response can carry `x-hopscotch-cache-status`. It describes how our side produced the answer, not
 provider prompt caching. To learn whether your prompt cache was hit, read the token counts above. Read the
 header in logs and build no behaviour on it. See [Headers](/api-reference/headers).
 
-## Getting a cache hit at all
+## How to get a cache hit
 
 Each provider sets its own rules, but the basics are the same across providers that cache:
 
