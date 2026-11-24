@@ -34,7 +34,7 @@ JSON", and `{"type": "json_schema", ...}` for "answer in this shape".
 }
 ```
 
-## Which models take it
+## Which models support `response_format`
 
 Every catalog entry carries a `json_mode` word in its `capabilities` block,
 answering `yes`, `no` or `unknown`. See
@@ -45,7 +45,7 @@ takes `json_object` also takes a `json_schema` with `strict` set, and that
 distinction is real on some model lines. Where it matters, the reliable test is a
 request, not the catalog.
 
-## What this platform checks
+## What Hopscotch validates, and the Anthropic exception
 
 Nothing. We don’t validate your schema, and we don’t validate or repair the reply. The one exception is when Anthropic serves the request. In that case we adjust the shape of the field itself, as described below.
 
@@ -79,7 +79,7 @@ provider offers a strict mode that constrains generation, using it is worth more
 than anything an intermediary could add afterwards, and it is available to you
 because the field travels.
 
-## Parse defensively anyway
+## Check the reply before you parse it
 
 Whatever the provider guarantees, the content is a string in
 `choices[0].message.content` and your code has to parse it. Two failure modes are

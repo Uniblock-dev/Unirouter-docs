@@ -9,7 +9,7 @@ type: "concept"
 
 Tool calling on Hopscotch uses OpenAI’s format. You send a `tools` array in the request body and the model replies with `tool_calls`. Your code runs the tool and sends the result back as a `tool` message. Sending the request through Hopscotch doesn’t change any step of that loop.
 
-## What travels
+## Tool requests and replies pass through unchanged
 
 `tools`, `tool_choice` and `parallel_tool_calls` are regular body fields, and they reach the provider exactly as you wrote them. Hopscotch doesn’t put its own schema in front of yours. Tool definitions your client already builds work right away, so you don’t have to wait for us to add support.
 
