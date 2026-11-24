@@ -12,7 +12,7 @@ provider we carry, so a request to that provider runs on your account there
 instead of ours. The provider bills you directly for it, the way it would if
 you called that provider yourself.
 
-## What "free" means, precisely
+## No Hopscotch charge, full usage records
 
 A request that runs on your own key costs nothing from your Hopscotch balance. We don’t charge for it, and we don’t hold any of your credit for it, even
 briefly.
@@ -37,7 +37,7 @@ credential to cover.
 The same rule holds when your key stops working. If the provider rejects your key, the request fails. We won’t quietly switch to our own key and bill you as usual. See [If the provider refuses your key](#if-the-provider-refuses-your-key)
 below.
 
-## It does not add anything to your catalog
+## Your key doesn't unlock new models
 
 Your key changes which credential we use to call a provider we already support. It doesn’t unlock new providers or models.
 
@@ -47,7 +47,7 @@ You can call exactly what Hopscotch carries. If a model isn’t available throug
 
 A provider can only take your key if it signs you in with a credential. Providers that don’t need a credential have nothing for your key to replace. The add-key screen lists only the providers that qualify, out of the ones we currently carry.
 
-## If the provider refuses your key
+## If your provider key is rejected, the request fails
 
 If the provider rejects your key on a live request, you get a clear error. We don’t switch to our own key behind the scenes, and we don’t pass along the provider’s internal response. The error message:
 
