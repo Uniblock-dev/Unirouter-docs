@@ -105,7 +105,13 @@ The five fields:
   explicit null is refused. Each model accepts only the durations it
   publishes: a create naming anything else is refused 400 before anything is
   held.
-- `size` is required, as `WIDTHxHEIGHT` in pixels, such as `"1280x720"`. It
+- `size` is `WIDTHxHEIGHT` in pixels, such as `"1280x720"`. It is required:
+  a create without it answers 400 `invalid_request_error` with `param` set to
+  `size`, and nothing is held or sent. One exception: a model served by
+  DeepInfra, other than its Pixverse models, accepts a create with no size.
+  The model's cheapest priced size is held and sent to the provider (the
+  landscape one when two tie); where every size costs the same, no size is
+  sent and the provider renders its own. A size you name
   must have a per-second rate on the model; a size without one is refused
   before anything is held, and so is a size the model does not publish.
   A size with no per-second rate answers 400 with the code
@@ -239,8 +245,9 @@ video-doors suite pins, so the handler wins and the specification sentence
 is stale. The effect is that the bytes of a finished `Wan 2.2` job cannot be
 fetched through this API today; its poll still reports the job. A
 `deepinfra/p-video` job is a narrower exception on the delete alone: the
-provider cannot cancel, so its delete answers 405 with the type
-`invalid_request_error`, and the job keeps running and settles normally.
+provider cannot cancel, so its delete answers 400 `invalid_request_error`
+with the code `video_cancel_not_supported`, and the job keeps running and
+settles normally.
 
 ## Refusals
 
