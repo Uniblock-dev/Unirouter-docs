@@ -58,8 +58,8 @@ in your usage without its content.
 Each reply carries one line of labelled figures: time to first token, total time, tokens per second, tokens in
 and tokens out. A figure that was not measured reads `unknown`, not `0`.
 
-- **Time to first token reads `unknown`.** The playground does not stream yet, so the reply arrives whole. A
-  streamed API request does carry that timing.
+- **Time to first token reads `unknown` when a reply arrives whole.** The playground streams a reply when the
+  model's catalog entry says it can stream and streaming is left on, and only a streamed reply carries that timing.
 - **No cost appears on this line.** Read a run's cost in your usage. See
   [Usage and metering](/manage/usage-and-metering).
 
@@ -73,7 +73,6 @@ and tokens out. A figure that was not measured reads `unknown`, not `0`.
 
 ## What is not built yet
 
-- No streaming, so the reply arrives complete.
 - No cost preview before sending, and no cost figure after.
 - No generation settings beyond the model and the key.
 - No warning before a run exceeds your balance, other than the refusal itself.
