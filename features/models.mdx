@@ -7,7 +7,7 @@ type: concept
 ---
 
 You name a model in the `model` field of a request, as you would with OpenAI. The name says which
-provider serves it, so one key and one endpoint reach models from more than one place.
+provider you request, so one key and one endpoint reach models from more than one place.
 
 ## Model ids
 
@@ -22,14 +22,14 @@ publishes as `openai/gpt-oss-120b` is `groq/gpt-oss-120b` here. An id with no na
 `anthropic/claude-opus-4-5`. Each name is fixed the first time we publish that model on that provider, so an
 id in your code stays put.
 
-You choose the provider, and we never substitute another. A model carried by two providers is two ids with
-two prices.
+A model carried by two providers has two ids and prices. [Response headers](/api-reference/headers)
+identify the provider that served the request.
 
 The `model` field accepts three forms:
 
 | Form | What it does |
 |---|---|
-| `provider/model` | That model from that provider. If it cannot serve the request, the request fails rather than moving to another host. The half after the slash may be the pinned name or a shorter name we hold, such as `anthropic/opus`, which is served and answered as the pinned id. A name we do not hold is refused with a `404` naming the provider and the id. |
+| `provider/model` | Requests that provider's catalog entry. The half after the slash may be the pinned name or a shorter name we hold, such as `anthropic/opus`, which is served and answered as the pinned id. A name we do not hold is refused with a `404` naming the provider and the id. |
 | `profile/{identifier}` | A [routing profile](/features/routing-profiles) you built. |
 | `unirouter/auto` | Whichever route you made your default, or a list we publish for your cost tier. `hopscotch/auto` is a second spelling. |
 
@@ -42,10 +42,11 @@ This site publishes no list of models, families or providers, because a stale li
 
 ## Discovering what you can call
 
-**Over the API.** `GET /v1/models` returns an OpenAI-shaped list. Each entry has an `id` (the value for
-`model`), its input rate and, where separate, its output rate, a context window, capabilities, the currency and the provider names behind it. `GET /v1/models/{id}` adds a short description, the request parameters with
-their bounds and defaults, and any deprecation and sunset dates with the named replacement. The description
-comes from third-party model catalogues and appears only on the single-model call.
+**Over the API.** `GET /v1/models` returns ids for the `model` field, prices, context windows,
+capabilities, currency and providers. `GET /v1/models/{id}` adds descriptions and lifecycle dates.
+Its `uniblock.supported_parameters` contains published declarations; `uniblock.parameters` holds
+recorded bounds and defaults. These are not exhaustive schemas or test results; an empty list
+means no publishable declaration. See [Request parameters](/api-reference/parameters#the-parameters-a-given-model-takes).
 
 ```bash
 curl https://api.hopscotchlabs.ai/v1/models \
@@ -58,13 +59,13 @@ Percent-encode the id once or send it as it is. A double-encoded slash names no 
 The Models screen shows one row per model and folds its providers together, with price ranges. Opening a row
 gives one line per provider with its callable id. The row itself is not callable: take the `model` value from a provider line.
 
-A catalog row with no provider identity is left out rather than shown as a bare id.
+A catalog row with no provider identity is left out rather than shown as a bare id. So is a model that names no endpoint it can be called on, such as chat or embeddings, even when it carries a price.
 
 ## A model is offered only when it is live
 
 A model appears only when we hold a working credential of our own for it, it is enabled on our side, and it
-carries a price we have decided. You are never offered a model that would fail on call, nor one whose cost we
-cannot tell you. A model with only a placeholder price is left out and answers as unknown when named.
+carries a price we have decided. Publication does not guarantee successful output. A model with only a
+placeholder price is left out and answers as unknown when named.
 
 Your own key for a provider changes which credential answers your calls. It cannot add a provider or a model.
 See [Bring your own key](/features/bring-your-own-key). A request for a model that is not live, or that your
@@ -79,12 +80,15 @@ purchase fee, not the call price, with calling a provider directly.
 ## How a model's rate is expressed
 
 A model has a price per kind of token. The kinds are `input`, `cache_read`, `cache_write`, `output` and
-`reasoning`, and they partition each request:
+`reasoning`. For providers that include reasoning in their completion count:
 
 ```text
 prompt     = input + cache_read + cache_write
 completion = output + reasoning
 ```
+
+Gemini reports reasoning separately from candidate output, so its `completion_tokens` does not include
+reasoning. Image and audio tokens can also have their own rates. See [Gemini on Vertex](/features/vertex-gemini).
 
 `input` excludes cached tokens, unlike a provider's `prompt_tokens`, which usually includes them. Cache reads
 are commonly discounted, and cache writes cost more on some providers and do not exist on others. A rate can

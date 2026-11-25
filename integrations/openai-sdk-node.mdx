@@ -116,12 +116,15 @@ API happens to satisfy today.
 
 ## Which endpoints this SDK can reach
 
-`client.images.generate(...)` and `client.audio.speech.create(...)` reach
-paths this API serves: image and audio requests are served and charged like
-any other request. `client.completions.create(...)` and
-`client.responses.create(...)` do serve. `client.embeddings.create(...)` does
-not yet; embeddings are not served and there is no date, so that call raises
-`NotFoundError`, and the base URL is not the problem when it does. See
+`client.images.generate(...)` reaches `POST /v1/images/generations`, which
+serves; see [Gemini on Vertex](/features/vertex-gemini).
+`client.audio.speech.create(...)` reaches `POST /v1/audio/speech`, which also
+serves: audio requests are served and charged like any other request, and
+their full reference documentation is still coming.
+`client.completions.create(...)` and `client.responses.create(...)` do serve.
+`client.embeddings.create(...)` does not yet; embeddings are not served and
+there is no date, so that call raises `NotFoundError`, and the base URL is not
+the problem when it does. See
 [OpenAI compatibility](/get-started/migrate-from-openai) for the full list.
 
 ## What we did not verify
@@ -136,8 +139,8 @@ master branch, in `src/client.ts`, `src/core/error.ts` and
 `src/core/streaming.ts`, plus that repository's own README.
 
 **Not checked.** That a call configured this way succeeds against our hostname.
-Nothing on this page has been executed, because the base URL this site prints is
-not yet a host that answers.
+Nothing on this page has been executed. The base URL answers requests; a published
+proof run of this SDK against it is still missing.
 
 **Not checked either.** What this SDK does with an error body that is not the
 envelope we send. The `undefined` caveat above is read off the constructor's
