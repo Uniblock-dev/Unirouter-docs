@@ -137,6 +137,39 @@ share a limit of their own, 60 a minute per key, apart from the request rate
 your inference calls spend, so polling a balance never slows real traffic. The
 [API reference](/api-reference/introduction) has every field and refusal.
 
+### Key and credit reads as numbers
+
+Two more reads return figures in another shape: under a `data` object, with
+each amount as a JSON number rather than a decimal string. They suit a tool
+that already expects to read a key's usage and limit, or its credits and
+usage, in that shape.
+
+| Route | What it answers |
+|---|---|
+| `GET /v1/key` | The figures `GET /v1/key/usage` returns: this key's spend as `usage_daily`, `usage_weekly` and `usage_monthly` (`usage` repeats the month), with `limit`, `limit_remaining` and `limit_reset`. |
+| `GET /v1/credits` | `total_usage`, everything the workspace has been charged since its lifetime total began counting, and `total_credits`, which is that plus the settled balance. |
+
+```bash
+curl https://api.hopscotchlabs.ai/v1/credits \
+  -H "Authorization: Bearer ub_live_YOUR_KEY_HERE"
+```
+
+```json 200
+{
+  "as_of": "2026-10-21T15:30:00.000Z",
+  "data": {
+    "total_credits": 27.3,
+    "total_usage": 7.3
+  }
+}
+```
+
+`total_usage` trails live spend by up to a few hours, so read `GET /v1/balance`
+for a live figure. Each number is written from the exact decimal, but a client
+that parses it into a double keeps about fifteen significant digits; read the
+string routes above where every digit matters. Both count toward the same 60
+reads a minute.
+
 ## Next
 
 <CardGroup cols={2}>
