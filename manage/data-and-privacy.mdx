@@ -1,6 +1,6 @@
 ---
 title: "Data and privacy"
-description: "What Hopscotch records about a request, what it does not record, how long records are kept, and what we cannot recover for you."
+description: "What Hopscotch records about a request, what it does not, what a provider learns about who sent it, how long records are kept, and what we cannot recover."
 status: partial
 gates: ["5.7", "5.8"]
 type: concept
@@ -27,6 +27,14 @@ We do not record the prompt and we do not record the response body. Not
 truncated, not hashed, not sampled. There is nowhere in the usage record for
 either of them to go.
 
+There is one exception. If we refuse a request because it appears to contain
+sexual content involving a minor, or intimate imagery of a person shared
+without their consent, we keep one encrypted copy of the text of its prompt,
+outside the usage record. Only Hopscotch Labs staff who are allowed to read
+customer records can read it. The text is deleted one year after the request; a
+note that the refusal happened, without the text, stays. No other refusal keeps
+any of the prompt.
+
 That means there are things we cannot do for you. We cannot show you what you
 sent last Tuesday, we cannot replay a request, and we cannot read a request back
 to check whether a reply was reasonable. What we can do is find the record of it
@@ -37,10 +45,32 @@ by its request id and tell you the facts above.
 A playground run is a real request and it is recorded exactly like one made
 through the API: the same metadata, on the same key's line.
 
-The prompt and the reply are not stored, which is why the playground has no
-history and no shareable link. Reloading the screen loses the conversation. That
-absence is the data stance rather than a missing feature. See
+Apart from the one exception above, the prompt and the reply are not stored,
+which is why the playground has no history and no shareable link. Reloading the
+screen loses the conversation. That absence is the data stance rather than a
+missing feature. See
 [Playground](/features/playground).
+
+## What a provider learns about who sent a request
+
+When a request runs on a Hopscotch-held key for OpenAI, Anthropic, xAI or Groq,
+including OpenAI models on Microsoft Azure and Anthropic models on Amazon
+Bedrock, we send that provider an identifier for your workspace and user,
+wherever the request type has a field for one. It lets the provider tell one
+customer's traffic from another's without seeing your own user values, and lets
+us match a provider's safety report back to the workspace it concerns.
+
+The identifier is a keyed one-way hash of your workspace id and the top-level
+`user` field of your request. The provider cannot turn it back into either, and
+the same `user` in two workspaces gives two different identifiers. Leave `user`
+out and the identifier stands for your workspace as a whole. It replaces the
+`user` and `safety_identifier` values you sent, and `metadata.user_id` on the
+Messages API. Only `user` feeds the identifier: the other two are replaced
+without changing it. We keep the link from each identifier to its workspace,
+including after the workspace is deleted.
+
+A request on your own provider key goes out with the values you sent. See
+[Bring your own key](/features/bring-your-own-key).
 
 ## How long records are kept
 
