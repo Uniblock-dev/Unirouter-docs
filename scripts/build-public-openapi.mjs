@@ -31,6 +31,15 @@
  * --source the build also reads services/control-plane/wrangler.toml and fails
  * when a listed flag is "true" under [env.production.vars]: the header is then
  * true, and its entry comes out so it is published.
+ *
+ * Withheld source content: an overlay path entry's `withheldFromSource` lists
+ * JSON pointers into the source path item (a request content type, a schema
+ * variant) that only a dark flag serves, each naming that flag. They are
+ * deleted from the base before the overlay is merged, because the merge can
+ * replace keys but never remove one. The build fails when a pointer no longer
+ * resolves in the source, or, with --source, when its flag is "true" in
+ * production; --check fails when one survives in the artifact without the
+ * overlay itself defining it.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -45,9 +54,12 @@ import {
 import { Report, flag, option } from './lib/report.mjs';
 import { scopedArtifact, selectedPaths } from './lib/scoped-openapi.mjs';
 import {
+  deletePointer,
   findWithheldHeaders,
+  pointerResolves,
   productionFlagValue,
   withheldHeaderList,
+  withheldSourceList,
   withholdHeaders,
 } from './lib/withheld-headers.mjs';
 
@@ -82,6 +94,8 @@ const onlyPaths = selectedPaths(process.argv.slice(2), ['--source'], ['--check']
 const overlay = readJson(paths.overlay, 'overlay');
 const withheld = withheldHeaderList(overlay);
 for (const [where, message] of withheld.problems) report.fail(where, message);
+const withheldSource = withheldSourceList(overlay);
+for (const [where, message] of withheldSource.problems) report.fail(where, message);
 
 if (flag('check')) {
   if (!existsSync(paths.publicSpec)) {
@@ -104,6 +118,7 @@ if (flag('check')) {
   }
   classifyPaths(base, overlay, report);
   checkWithheldEntries(overlay, report);
+  checkWithheldSource(base, report);
   let artifact = buildArtifact(base, overlay);
   if (onlyPaths.length) {
     artifact = scopedArtifact(readJson(paths.publicSpec, 'committed artifact'), artifact, onlyPaths);
@@ -212,24 +227,42 @@ function checkWithheldEntries(overlay, report) {
     );
   }
   const source = option('source');
-  if (!source || withheld.entries.length === 0) return;
+  const flagged = [
+    ...withheld.entries.map(({ header, flag }) => ({ where: header, flag })),
+    ...withheldSource.entries.map(({ path, pointer, flag }) => ({ where: `${path} ${pointer}`, flag })),
+  ];
+  if (!source || flagged.length === 0) return;
   const wranglerPath = join(source, 'services', 'control-plane', 'wrangler.toml');
   if (!existsSync(wranglerPath)) {
     report.note(`withheld headers: no ${wranglerPath}, so their flags were not checked`);
     return;
   }
   const toml = readFileSync(wranglerPath, 'utf8');
-  for (const { header, flag } of withheld.entries) {
+  for (const { where, flag } of flagged) {
     if (productionFlagValue(toml, flag) === 'true') {
       report.fail(
-        header,
-        `${flag} is "true" under [env.production.vars] in the source, so production sends this header. Remove its withheldResponseHeaders entry and publish it.`
+        where,
+        `${flag} is "true" under [env.production.vars] in the source, so production serves this. Remove its withheld entry and publish it.`
       );
     }
   }
 }
 
+/** A withheld pointer that no longer resolves in the source is a stale entry. */
+function checkWithheldSource(base, report) {
+  for (const { path, pointer } of withheldSource.entries) {
+    if (!pointerResolves(base.paths?.[path] ?? {}, pointer)) {
+      report.fail(`${path} ${pointer}`, 'is withheld but the source spec no longer has it. Remove the withheldFromSource entry.');
+    }
+  }
+}
+
 function auditWithheld(artifact, report) {
+  for (const { path, pointer, flag } of withheldSource.entries) {
+    if (pointerResolves(artifact.paths?.[path] ?? {}, pointer) && !pointerResolves(overlay.paths?.[path] ?? {}, pointer)) {
+      report.fail(`${path} ${pointer}`, `is withheld from the source until ${flag} is on in production, and the artifact still carries it.`);
+    }
+  }
   for (const { where, header } of findWithheldHeaders(artifact, withheld.entries)) {
     const { flag } = withheld.entries.find((entry) => entry.header === header);
     report.fail(where, `documents ${header}, which is withheld until ${flag} is on in production.`);
@@ -249,10 +282,11 @@ function buildArtifact(base, overlay) {
   // Only public paths, and only the operations the overlay documents.
   for (const [path, entry] of Object.entries(overlay.paths ?? {})) {
     if (entry.classification !== 'public') continue;
-    const basePath = base.paths?.[path] ?? {};
+    const basePath = structuredClone(base.paths?.[path] ?? {});
+    for (const { pointer } of withheldSource.entries.filter((item) => item.path === path)) deletePointer(basePath, pointer);
     const merged = {};
     for (const [method, operation] of Object.entries(entry)) {
-      if (method === 'classification' || method === 'gate' || method === 'reason') continue;
+      if (['classification', 'gate', 'reason', 'withheldFromSource'].includes(method)) continue;
       merged[method] = deepMerge(basePath[method] ?? {}, operation);
     }
     artifact.paths[path] = merged;
@@ -363,8 +397,10 @@ function auditArtifact(artifact, report) {
         report.fail(where, 'does not require customerApiKey.');
       }
 
-      const body = operation.requestBody?.content?.['application/json'];
-      if (operation.requestBody && !hasExample(body)) {
+      // Any media type may carry the example, so a multipart-only upload
+      // (an image edit, a transcription) is held to the same rule as JSON.
+      const bodies = Object.values(operation.requestBody?.content ?? {});
+      if (operation.requestBody && !bodies.some(hasExample)) {
         report.fail(where, 'has a request body with no example. DOCS_PLAN.md section 8 requires one.');
       }
 

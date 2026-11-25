@@ -115,3 +115,75 @@ export function productionFlagValue(wranglerToml, flag) {
   }
   return undefined;
 }
+
+/**
+ * Parts of a source operation production does not serve, removed from the
+ * base path item before the overlay is merged over it. The deep merge can add
+ * and replace keys but never delete one, so a request shape or a schema
+ * variant that only a dark flag serves would otherwise reach the artifact.
+ *
+ * Declared on an overlay path entry as `withheldFromSource`, a list of
+ * `{ pointer, flag, reason }`, where `pointer` is a JSON pointer into that
+ * path item, such as `/post/requestBody/content/application~1json`.
+ * Returns `{ entries, problems }` like withheldHeaderList, each entry carrying
+ * its `path`.
+ */
+export function withheldSourceList(overlay) {
+  const entries = [];
+  const problems = [];
+  for (const [path, item] of Object.entries(overlay.paths ?? {})) {
+    const raw = item?.withheldFromSource;
+    if (raw === undefined) continue;
+    if (!Array.isArray(raw)) {
+      problems.push([`${path} withheldFromSource`, 'must be an array of { pointer, flag, reason }.']);
+      continue;
+    }
+    const seen = new Set();
+    raw.forEach((entry, index) => {
+      const where = `${path} withheldFromSource[${index}]`;
+      const { pointer, flag, reason } = entry ?? {};
+      if (typeof pointer !== 'string' || !/^\/(get|put|post|patch|delete)(\/|$)/.test(pointer)) {
+        problems.push([where, 'pointer must be a JSON pointer into the path item, starting with its method, such as /post/requestBody/content/application~1json.']);
+      } else if (typeof flag !== 'string' || !FLAG_NAME.test(flag)) {
+        problems.push([where, `${pointer} must name the feature flag that gates it.`]);
+      } else if (typeof reason !== 'string' || reason.trim() === '') {
+        problems.push([where, `${pointer} must say why it is withheld.`]);
+      } else if (seen.has(pointer)) {
+        problems.push([where, `${pointer} is listed twice.`]);
+      } else {
+        seen.add(pointer);
+        entries.push({ path, pointer, flag, reason });
+      }
+    });
+  }
+  return { entries, problems };
+}
+
+function pointerTokens(pointer) {
+  return pointer.split('/').slice(1).map((token) => token.replaceAll('~1', '/').replaceAll('~0', '~'));
+}
+
+/** Whether a JSON pointer resolves inside `value`. */
+export function pointerResolves(value, pointer) {
+  let node = value;
+  for (const token of pointerTokens(pointer)) {
+    if (!node || typeof node !== 'object' || !Object.hasOwn(node, token)) return false;
+    node = node[token];
+  }
+  return true;
+}
+
+/** Deletes what a JSON pointer names inside `value`, in place. Returns whether it was there. */
+export function deletePointer(value, pointer) {
+  const tokens = pointerTokens(pointer);
+  const last = tokens.pop();
+  let node = value;
+  for (const token of tokens) {
+    if (!node || typeof node !== 'object' || !Object.hasOwn(node, token)) return false;
+    node = node[token];
+  }
+  if (!node || typeof node !== 'object' || !Object.hasOwn(node, last)) return false;
+  if (Array.isArray(node)) node.splice(Number(last), 1);
+  else delete node[last];
+  return true;
+}

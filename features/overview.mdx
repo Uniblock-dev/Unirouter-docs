@@ -82,8 +82,12 @@ same key, the same model ids and the same balance.
 </CardGroup>
 
 The image and audio endpoints are served and charged in production too, on the
-same key and the same balance as chat. Their full reference documentation is
-still coming.
+same key and the same balance as chat. Image generation is described in
+[Gemini on Vertex](/features/vertex-gemini). The others each have an API reference page:
+[image edit](/api-reference/images/edit-an-image), [speech](/api-reference/audio/create-speech),
+[transcription](/api-reference/audio/create-a-transcription) and
+[translation](/api-reference/audio/create-a-translation). See
+[Images, audio and video](/features/images-audio-and-video) for how each one is billed.
 
 ## What happens when something goes wrong?
 
@@ -113,11 +117,6 @@ credit, which makes it the fastest way to check whether a model does what a page
 here says it does.
 
 ## Not open yet
-
-Image generation is documented in [Gemini on Vertex](/features/vertex-gemini) and the
-[API reference](/api-reference/introduction). The image edit, speech, transcription and
-translation endpoints are served and charged in production too, but are not documented on
-this site yet. See [Images, audio and video](/features/images-audio-and-video) for what each one is.
 
 Embeddings are not served yet: see [Completions and embeddings](/features/completions-and-embeddings).
 The realtime endpoint is not open in any environment yet, so a call to it

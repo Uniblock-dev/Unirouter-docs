@@ -5,9 +5,12 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { test } from 'node:test';
 import {
+  deletePointer,
   findWithheldHeaders,
+  pointerResolves,
   productionFlagValue,
   withheldHeaderList,
+  withheldSourceList,
   withholdHeaders,
 } from './lib/withheld-headers.mjs';
 
@@ -119,6 +122,80 @@ test('real generator withholds, audits and refuses a stale or contradictory entr
     const stale = run('--source', source);
     assert.equal(stale.status, 1);
     assert.match(stale.stderr, /DARK_FLAG_ENABLED is "true" under \[env\.production\.vars\]/);
+  } finally {
+    assert.ok(isAbsolute(temp) && dirname(resolve(temp)) === resolve(tmpdir()) && basename(temp).startsWith('hopscotch-withheld-headers-'));
+    rmSync(temp, { recursive: true, force: true });
+  }
+});
+
+const JSON_BODY = '/post/requestBody/content/application~1json';
+
+test('withheld source entries name a method pointer, a flag and a reason, once each', () => {
+  const entry = { pointer: JSON_BODY, flag: 'DARK_FLAG_ENABLED', reason: 'Dark in production.' };
+  const list = (items) => withheldSourceList({ paths: { '/v1/a': { classification: 'public', withheldFromSource: items } } });
+  assert.deepEqual(list([entry]), { entries: [{ path: '/v1/a', ...entry }], problems: [] });
+  for (const bad of ['x', [{ ...entry, pointer: '/requestBody' }], [{ ...entry, flag: 'x' }], [{ ...entry, reason: '' }], [entry, entry]]) {
+    assert.equal(list(bad).problems.length, 1, JSON.stringify(bad));
+  }
+});
+
+test('a JSON pointer resolves and deletes through escaped segments, and only what it names', () => {
+  const item = { post: { requestBody: { content: { 'application/json': { schema: {} }, 'multipart/form-data': { schema: {} } } } } };
+  assert.equal(pointerResolves(item, JSON_BODY), true);
+  assert.equal(pointerResolves(item, '/post/requestBody/content/text~1plain'), false);
+  assert.equal(deletePointer(item, JSON_BODY), true);
+  assert.equal(deletePointer(item, JSON_BODY), false);
+  assert.deepEqual(Object.keys(item.post.requestBody.content), ['multipart/form-data']);
+});
+
+test('real generator withholds a source content type, audits it and refuses a stale pointer', () => {
+  const temp = mkdtempSync(join(tmpdir(), 'hopscotch-withheld-headers-'));
+  try {
+    cpSync(new URL('./', import.meta.url), join(temp, 'scripts'), { recursive: true });
+    mkdirSync(join(temp, 'api-reference'));
+    const write = (name, value) => writeFileSync(join(temp, 'api-reference', name), JSON.stringify(value));
+    const artifactPath = join(temp, 'api-reference/openapi.public.json');
+    const ok = { 200: { description: 'OK', headers: { 'x-hopscotch-request-id': { schema: { type: 'string' } } } } };
+    const base = { openapi: '3.0.3', paths: { '/v1/a': { post: { security: [{ customerApiKey: [] }], responses: ok, requestBody: { content: {
+      'multipart/form-data': { schema: { type: 'object' } },
+      'application/json': { schema: { $ref: '#/components/schemas/DarkShape' }, example: { dark: true } },
+    } } } } } };
+    const overlay = { info: { title: 'Test', version: 'v1' }, paths: { '/v1/a': {
+      classification: 'public',
+      withheldFromSource: [{ pointer: JSON_BODY, flag: 'DARK_FLAG_ENABLED', reason: 'Dark in production.' }],
+      post: { requestBody: { content: { 'multipart/form-data': { example: { model: 'x' } } } } },
+    } }, securitySchemes: { customerApiKey: { type: 'http', scheme: 'bearer' } } };
+    write('.source-spec.json', base);
+    write('overlay.public.json', overlay);
+    const run = (...args) => spawnSync(process.execPath, [join(temp, 'scripts/build-public-openapi.mjs'), ...args], { encoding: 'utf8' });
+
+    // The dark JSON body is gone, and a multipart-only body passes on its own example.
+    const built = run();
+    assert.equal(built.status, 0, built.stderr);
+    const artifact = JSON.parse(readFileSync(artifactPath, 'utf8'));
+    assert.deepEqual(Object.keys(artifact.paths['/v1/a'].post.requestBody.content), ['multipart/form-data']);
+    assert.equal(run('--check').status, 0);
+
+    // --check fails when the artifact still carries it.
+    artifact.paths['/v1/a'].post.requestBody.content['application/json'] = { schema: { type: 'object' }, example: {} };
+    writeFileSync(artifactPath, JSON.stringify(artifact));
+    const check = run('--check');
+    assert.equal(check.status, 1);
+    assert.match(check.stderr, /is withheld from the source until DARK_FLAG_ENABLED/);
+
+    // A multipart body with no example anywhere fails the audit.
+    overlay.paths['/v1/a'].post = {};
+    write('overlay.public.json', overlay);
+    assert.match(run().stderr, /has a request body with no example/);
+
+    // A pointer the source no longer has is a stale entry.
+    delete base.paths['/v1/a'].post.requestBody.content['application/json'];
+    overlay.paths['/v1/a'].post = { requestBody: { content: { 'multipart/form-data': { example: { model: 'x' } } } } };
+    write('.source-spec.json', base);
+    write('overlay.public.json', overlay);
+    const stale = run();
+    assert.equal(stale.status, 1);
+    assert.match(stale.stderr, /source spec no longer has it/);
   } finally {
     assert.ok(isAbsolute(temp) && dirname(resolve(temp)) === resolve(tmpdir()) && basename(temp).startsWith('hopscotch-withheld-headers-'));
     rmSync(temp, { recursive: true, force: true });
