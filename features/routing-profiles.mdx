@@ -32,10 +32,23 @@ cheaper because the models on it are cheaper, and nothing about the tier limits 
 spend. Setting a default route of your own takes the id off our lists entirely, and yours answers
 instead.
 
+The cost tier cannot be changed from the dashboard for now: the Routing screen does not show it, and
+your workspace stays on the tier it has. To stop `hopscotch/auto` answering from a tier's list, create
+a route and make it the default.
+
 The automatic route refuses rather than falling back. It never quietly serves you from a dearer tier
-than the one you picked: if the tier you are on has no list, or nothing on it can be served at that
-moment, the request is refused with `404` `model_not_available`, and the message names your tier and
-both ways out. It never falls back to a tier or a route you did not choose.
+than the one you are on: if your tier has no list, or nothing on it can be served at that moment, the
+request is refused with `404` `model_not_available`. The message names your tier, and quotes the id
+as `unirouter/auto` whichever spelling you sent:
+
+```text
+"unirouter/auto" could not be served: nothing in the "balanced" cost tier chain can be served right now. Nothing was sent to a provider and nothing was charged. Pick another cost tier on the Routing screen, or create a route and make it the default, which is what this id names once you have one.
+```
+
+When your tier has no list at all, the words after the colon read `this platform has published no
+chain for the "balanced" cost tier` instead. The message's first
+suggestion, picking another cost tier on the Routing screen, does not apply today; the way out is to
+create a route and make it the default. It never falls back to a tier or a route you did not choose.
 
 ## What a profile is
 
@@ -187,7 +200,7 @@ name the profile slug you sent and no member of it; the list behind the slug is 
 |---|---|---|---|
 | `profile/<identifier>` names a profile that is archived or never existed. The two are refused identically. | 503 | `no_provider_configured` | Check the identifier on the Routing screen. Create a new profile under a new identifier if the old one is archived. |
 | None of the members of a profile can be served right now, or none of them could be routed at all. Ours to sort out where it is a routing gap. | 503 | `no_provider_configured` | Retry with backoff. Note the request id for support. |
-| `hopscotch/auto` has no list for your cost tier, or nothing on it can be served at that moment. | 404 | `model_not_available` | The message names your tier and both ways out: choose a different tier or set a default route. The route never falls back to a tier you did not pick. |
+| `hopscotch/auto` has no list for your cost tier, or nothing on it can be served at that moment. | 404 | `model_not_available` | Create a route and make it the default. The message also suggests picking another cost tier on the Routing screen, which the dashboard cannot do today. The route never falls back to a tier you are not on. |
 | A model in the request has been retired by its provider. | 404 | `model_not_available` | Retrying will not help. Move to the replacement named in the catalog, if one is given. |
 
 The full error envelope and the status map are on [Errors and refusals](/api-reference/errors).
