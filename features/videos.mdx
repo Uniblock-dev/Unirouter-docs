@@ -107,8 +107,11 @@ The five fields:
   held.
 - `size` is required, as `WIDTHxHEIGHT` in pixels, such as `"1280x720"`. A
   missing or null size is refused 400 with `param` set to `size` before
-  anything is held, except on a DeepInfra model priced per size, where it
-  becomes the cheapest listed size and is held and charged at that. A size
+  anything is held, except on a DeepInfra model other than its Pixverse
+  models: there it becomes the cheapest listed size (the landscape one when
+  two tie), held, sent to the provider and charged at that. Where every size
+  of such a model costs the same, no size is sent and the provider renders
+  its own. A size
   must have a per-second rate on the model; a size without one is refused
   before anything is held, and so is a size the model does not publish.
   A size with no per-second rate answers 400 with the code
