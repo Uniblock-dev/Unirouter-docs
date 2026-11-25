@@ -53,6 +53,10 @@ const client = new OpenAI({
 | `/v1/responses` | `POST` | Serves. Streaming and non-streaming. See [Responses API](/features/responses-api). |
 | `/v1/completions` | `POST` | Serves. Streaming and non-streaming. See [Completions and embeddings](/features/completions-and-embeddings). |
 | `/v1/messages` | `POST` | Serves the Anthropic Messages format. See [Anthropic Messages API](/features/anthropic-messages). |
+| `/v1/images/edits` | `POST` | Serves. Image edit, multipart body. |
+| `/v1/audio/speech` | `POST` | Serves. Text to speech, JSON body, binary audio reply. |
+| `/v1/audio/transcriptions` | `POST` | Serves. Transcription, multipart body. |
+| `/v1/audio/translations` | `POST` | Serves. Translation to English, multipart body. |
 | `/v1/models` | `GET` | Serves. |
 | `/v1/models/{id}` | `GET` | Serves. |
 | `/v1/usage/{id}` | `GET` | Serves. See [Usage lookup](/features/usage-lookup). |
@@ -61,7 +65,8 @@ const client = new OpenAI({
 | `/v1/videos/{id}` | `GET`, `DELETE` | Serves. Reads or cancels a job. See [Videos](/features/videos). |
 | `/v1/videos/{id}/content` | `GET` | Serves. Streams a finished video. See [Videos](/features/videos). |
 
-The table lists the paths this site publishes. Other paths, including the speech, transcription and image edit endpoints,
+The table lists the paths this site publishes. The image edit and audio rows carry no link yet: those doors
+serve today and their full reference documentation is still coming. Other paths, including
 `POST /v1/embeddings`, `POST /v1/systemone` and the realtime endpoint, are not documented on this site, so
 treat any call to them as unanswered here. A path this release does not serve answers the 404 below.
 
