@@ -669,7 +669,6 @@
           "model_id",
           "display_name",
           "author",
-          "input_rate_thousandths",
           "endpoint_families",
           "provider_display_names",
           "capabilities"
@@ -696,11 +695,11 @@
           },
           "input_rate_thousandths": {
             "type": "integer",
-            "description": "The published customer input price, in thousandths of the currency unit per million tokens. Read the model offering for the current price; this field is not a provider-cost disclosure."
+            "description": "The published customer input price, in thousandths of the currency unit per million tokens. A model priced only per unit, such as an image, audio, or video model, omits token rate fields. Read the model offering for the current price; this field is not a provider-cost disclosure."
           },
           "output_rate_thousandths": {
             "type": "integer",
-            "description": "The same unit, for completion tokens. Absent when the model publishes no separate output rate."
+            "description": "The same unit, for completion tokens. Absent when the model publishes no separate output rate or is priced only per unit."
           },
           "currency_code": {
             "type": "string",
