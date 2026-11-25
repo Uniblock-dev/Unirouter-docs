@@ -162,20 +162,6 @@
           "200": {
             "description": "A chat completion. For a direct nonstreamed request, model names the requested public ID. Gemini can return text in message.content and generated images in message.images as image_url data URLs.\n\nWith stream: true, read text/event-stream data frames through data: [DONE]. Gemini image output is carried in choices[].delta.images. Set stream_options.include_usage for a final usage chunk. A successful HTTP status alone does not guarantee visible text or an image: check content and finish_reason. Thinking usage can be recorded when no visible completion is returned.",
             "headers": {
-              "x-hopscotch-redirected-from": {
-                "description": "Present only when a sunset redirect served this request. The retiring model id requested, including a profile member redirected to its successor.",
-                "schema": {
-                  "type": "string",
-                  "example": "openai/retiring-model"
-                }
-              },
-              "x-hopscotch-served-model": {
-                "description": "The successor model that actually answered a sunset redirect, priced and admitted under that model. Present for JSON and streamed replies.",
-                "schema": {
-                  "type": "string",
-                  "example": "openai/successor-model"
-                }
-              },
               "x-hopscotch-served-by": {
                 "description": "The full id, \"{provider}/{model}\", of the model that actually answered: the pinned id when the request named one directly, or the routing-profile chain member that served when the request named a profile.",
                 "schema": {
@@ -773,20 +759,6 @@
           "200": {
             "description": "The completion, in OpenAI's text completion format as the provider produced it. A response that is not streamed carries the provider's token counts in its own `usage` object.\n\nWhen `stream` is true the body is `text/event-stream` instead, in OpenAI's own chunk format, ending with `data: [DONE]`.",
             "headers": {
-              "x-hopscotch-redirected-from": {
-                "description": "Present only when a sunset redirect served this request. The retiring model id requested, including a profile member redirected to its successor.",
-                "schema": {
-                  "type": "string",
-                  "example": "openai/retiring-model"
-                }
-              },
-              "x-hopscotch-served-model": {
-                "description": "The successor model that actually answered a sunset redirect, priced and admitted under that model. Present for JSON and streamed replies.",
-                "schema": {
-                  "type": "string",
-                  "example": "openai/successor-model"
-                }
-              },
               "x-hopscotch-served-by": {
                 "description": "The full id, \"{provider}/{model}\", of the model that actually answered: the pinned id when the request named one directly, or the routing-profile chain member that served when the request named a profile.",
                 "schema": {
@@ -1886,20 +1858,6 @@
           "200": {
             "description": "The model response, in the Responses format, forwarded as the provider sent it.\n\nWhen `stream` is true the body is `text/event-stream` instead, and the token counts arrive on a `:x-hopscotch-usage` comment line immediately before the stream ends; the server-sent events specification requires parsers to ignore comment lines, so an SDK never sees it.",
             "headers": {
-              "x-hopscotch-redirected-from": {
-                "description": "Present only when a sunset redirect served this request. The retiring model id requested, including a profile member redirected to its successor.",
-                "schema": {
-                  "type": "string",
-                  "example": "openai/retiring-model"
-                }
-              },
-              "x-hopscotch-served-model": {
-                "description": "The successor model that actually answered a sunset redirect, priced and admitted under that model. Present for JSON and streamed replies.",
-                "schema": {
-                  "type": "string",
-                  "example": "openai/successor-model"
-                }
-              },
               "x-hopscotch-served-by": {
                 "description": "The full id, \"{provider}/{model}\", of the model that actually answered: the pinned id when the request named one directly, or the routing-profile chain member that served when the request named a profile.",
                 "schema": {
@@ -3366,20 +3324,6 @@
           "200": {
             "description": "The message, in Anthropic's format as the provider produced it: a `content` array, a `stop_reason`, and a `usage` object with `input_tokens` and `output_tokens`.\n\nWhen `stream` is true the body is `text/event-stream` instead, passed through in Anthropic's own event format.",
             "headers": {
-              "x-hopscotch-redirected-from": {
-                "description": "Present only when a sunset redirect served this request. The retiring model id requested, including a profile member redirected to its successor.",
-                "schema": {
-                  "type": "string",
-                  "example": "openai/retiring-model"
-                }
-              },
-              "x-hopscotch-served-model": {
-                "description": "The successor model that actually answered a sunset redirect, priced and admitted under that model. Present for JSON and streamed replies.",
-                "schema": {
-                  "type": "string",
-                  "example": "openai/successor-model"
-                }
-              },
               "x-hopscotch-served-by": {
                 "description": "The full id, \"{provider}/{model}\", of the model that actually answered: the pinned id when the request named one directly, or the routing-profile chain member that served when the request named a profile.",
                 "schema": {
@@ -4008,20 +3952,6 @@
           "200": {
             "description": "The image list. Vertex Gemini returns base64 image data and reported token usage; image-output tokens and text tokens use their respective published customer rates. This JSON endpoint does not stream. Other offerings may publish per-image prices. A missing image or inconsistent required image-usage details is a failed response.",
             "headers": {
-              "x-hopscotch-redirected-from": {
-                "description": "Present only when a sunset redirect served this request. The retiring model id requested, including a profile member redirected to its successor.",
-                "schema": {
-                  "type": "string",
-                  "example": "openai/retiring-model"
-                }
-              },
-              "x-hopscotch-served-model": {
-                "description": "The successor model that actually answered a sunset redirect, priced and admitted under that model. Present for JSON and streamed replies.",
-                "schema": {
-                  "type": "string",
-                  "example": "openai/successor-model"
-                }
-              },
               "x-hopscotch-served-by": {
                 "description": "The full id, \"{provider}/{model}\", of the model that actually answered: the pinned id when the request named one directly, or the routing-profile chain member that served when the request named a profile.",
                 "schema": {
@@ -4650,20 +4580,6 @@
           "200": {
             "description": "The provider's video job object (id, status, progress), with external URLs omitted. A recorded job is charged when a terminal status is observed. If the provider returns no readable job id or an id already recorded for that provider, the full hold is charged immediately and usage is recorded under this create request's unique request id.",
             "headers": {
-              "x-hopscotch-redirected-from": {
-                "description": "Present only when a sunset redirect served this request. The retiring model id requested, including a profile member redirected to its successor.",
-                "schema": {
-                  "type": "string",
-                  "example": "openai/retiring-model"
-                }
-              },
-              "x-hopscotch-served-model": {
-                "description": "The successor model that actually answered a sunset redirect, priced and admitted under that model. Present for JSON and streamed replies.",
-                "schema": {
-                  "type": "string",
-                  "example": "openai/successor-model"
-                }
-              },
               "x-hopscotch-served-by": {
                 "description": "The full id, \"{provider}/{model}\", of the model that actually answered: the pinned id when the request named one directly, or the routing-profile chain member that served when the request named a profile.",
                 "schema": {
@@ -7062,6 +6978,46 @@
             "format": "date-time"
           }
         }
+      },
+      "VertexGeminiSafetySettings": {
+        "type": "array",
+        "nullable": true,
+        "description": "Per-category safety settings for Vertex Gemini. Values are forwarded without changing their thresholds; use OFF for each category to disable its configurable filter. OFF differs from BLOCK_NONE, which retains safety scores. Omission leaves provider defaults in effect. Google validates the categories and thresholds, and non-configurable safeguards remain.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "category": {
+              "type": "string",
+              "example": "HARM_CATEGORY_HARASSMENT"
+            },
+            "threshold": {
+              "type": "string",
+              "example": "OFF"
+            },
+            "method": {
+              "type": "string",
+              "example": "SEVERITY"
+            }
+          }
+        },
+        "example": [
+          {
+            "category": "HARM_CATEGORY_HATE_SPEECH",
+            "threshold": "OFF"
+          },
+          {
+            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+            "threshold": "OFF"
+          },
+          {
+            "category": "HARM_CATEGORY_HARASSMENT",
+            "threshold": "OFF"
+          },
+          {
+            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            "threshold": "OFF"
+          }
+        ]
       }
     },
     "headers": {
