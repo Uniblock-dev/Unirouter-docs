@@ -50,16 +50,16 @@ whole picture:
 
 ```json
 {
-  "deprecated_at": 1780000000,
-  "sunset_at": 1790000000,
+  "deprecated_at": 1780000000000,
+  "sunset_at": 1790000000000,
   "replacement_model_id": "openai/gpt-4o-mini-2"
 }
 ```
 
 | Field | What it is |
 |---|---|
-| `deprecated_at` | Unix seconds, or null. When the model stopped being recommended. |
-| `sunset_at` | Unix seconds, or null. When it stops answering. |
+| `deprecated_at` | Unix milliseconds, or null. When the model stopped being recommended. |
+| `sunset_at` | Unix milliseconds, or null. When it stops answering. |
 | `replacement_model_id` | The id to move to, or null. |
 
 **`replacement_model_id` is null more often than not, and that is deliberate.** A
