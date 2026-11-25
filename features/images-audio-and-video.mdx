@@ -61,6 +61,13 @@ refused with HTTP 400 and the same code, with `param` naming the field and the
 message listing the priced values. The multipart doors share the eight MiB body cap every
 endpoint has.
 
+On an OpenAI image model, `POST /v1/images/generations` takes no image input,
+so a reference image sent there would be ignored and still charged. A request
+that carries `image`, `image[]`, `images`, `image_url`, `image_urls`,
+`input_image`, `reference_images`, `mask` or `input_fidelity` with a value is
+refused with HTTP 400, `param` naming the field, and is not sent. Send
+reference images to `POST /v1/images/edits` instead.
+
 Only the account that created a video job can read it, fetch its content or
 cancel it. Any other key, and an id that never existed, get the same 404.
 
