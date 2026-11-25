@@ -66,7 +66,7 @@ either. It reaches an endpoint only when your code calls the method for it.
 reaches `POST /v1/images/generations`, which serves; see
 [Gemini on Vertex](/features/vertex-gemini). `client.audio.speech.create(...)`
 reaches `POST /v1/audio/speech`, which also serves: audio requests are served
-and charged like any other request.
+and charged like any other request. See [Create speech](/api-reference/audio/create-speech).
 `client.embeddings.create(...)` is not served yet, and the SDK turns that
 `404` into `openai.NotFoundError`. That is worth knowing because it is the one
 shape of failure that looks like a configuration mistake and is not: the base
