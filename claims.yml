@@ -267,6 +267,19 @@ claims:
       - manage/data-and-privacy
       - manage/usage-and-metering
 
+  - id: floor-evidence-retention-years
+    value: "1"
+    means: "How long the one encrypted prompt copy kept for a legal-floor refusal (minors, non-consensual intimate imagery) lives before its text is deleted."
+    source: "services/control-plane/src/contentGate/evidence.ts (ContentGateEvidence /accept sets expiresAt to receipt plus one UTC year; expire() deletes the ciphertext)"
+    status: gated
+    gate: owner-review
+    used_by:
+      - manage/data-and-privacy
+    note: >-
+      Written in words on the page ("one year"), so the checker does not see
+      it; registered so the stale-number sweep finds it. A privacy promise:
+      the owner approves the wording before it publishes.
+
   - id: fee-basis-points
     value: "0"
     means: "The platform fee in basis points, which is how the product stores it."
