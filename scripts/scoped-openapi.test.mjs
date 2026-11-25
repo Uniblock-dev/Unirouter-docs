@@ -34,6 +34,21 @@ test('scoped build refuses changes to a shared component with an unselected cons
   assert.equal(scopedArtifact(old, fresh, ['/v1/a', '/v1/b']).components.schemas.Shared.type, 'integer');
 });
 
+test('scoped build fills a component an unselected operation references but the artifact lacks', () => {
+  const op = (ref) => ({ get: { responses: { 200: { content: { 'application/json': { schema: { $ref: ref } } } } } } });
+  const old = { paths: { '/v1/a': op('#/components/schemas/Dangling'), '/v1/b': op('#/components/schemas/B') },
+    components: { schemas: { B: { type: 'string' } } } };
+  const fresh = structuredClone(old);
+  fresh.components.schemas.Dangling = { type: 'object', properties: { x: { $ref: '#/components/schemas/Nested' } } };
+  fresh.components.schemas.Nested = { type: 'integer' };
+  const result = scopedArtifact(old, fresh, ['/v1/b']);
+  assert.deepEqual(result.paths, old.paths);
+  assert.deepEqual(result.components.schemas.Dangling, fresh.components.schemas.Dangling);
+  assert.deepEqual(result.components.schemas.Nested, fresh.components.schemas.Nested);
+  delete fresh.components.schemas.Nested;
+  assert.throws(() => scopedArtifact(old, fresh, ['/v1/b']), /Missing component/);
+});
+
 test('real generator preserves unrelated operations/components while full build refreshes them', () => {
   const temp = mkdtempSync(join(tmpdir(), 'hopscotch-scoped-openapi-'));
   try {

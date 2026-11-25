@@ -119,8 +119,8 @@ API happens to satisfy today.
 `client.images.generate(...)` reaches `POST /v1/images/generations`, which
 serves; see [Gemini on Vertex](/features/vertex-gemini).
 `client.audio.speech.create(...)` reaches `POST /v1/audio/speech`, which also
-serves: audio requests are served and charged like any other request, and
-their full reference documentation is still coming.
+serves: audio requests are served and charged like any other request. See
+[Create speech](/api-reference/audio/create-speech) for the request and its refusals.
 `client.completions.create(...)` and `client.responses.create(...)` do serve.
 `client.embeddings.create(...)` does not yet; embeddings are not served and
 there is no date, so that call raises `NotFoundError`, and the base URL is not

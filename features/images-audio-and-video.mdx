@@ -9,8 +9,8 @@ type: concept
 The image, audio and video endpoints are live in production. They take the same
 key as chat completions and draw on the same balance. Video jobs have their
 own reference at [Videos](/features/videos), with request and response
-schemas. Full reference documentation for the image and audio doors is still
-coming, so this page says what each endpoint is and how it is billed. The
+schemas. The image and audio doors each have an API reference page, linked in
+the table below; this page says what each endpoint is and how it is billed. The
 realtime endpoint is not open yet, and [below](#realtime) says what a call to it
 returns.
 
@@ -19,10 +19,10 @@ returns.
 | Endpoint | Shape | How it is charged |
 |---|---|---|
 | `POST /v1/images/generations` | OpenAI image generation, JSON body | Per image, at a rate that can depend on size and quality |
-| `POST /v1/images/edits` | OpenAI image edit, multipart body | Per image |
-| `POST /v1/audio/speech` | OpenAI text to speech, JSON body, binary audio reply | Per million characters of input |
-| `POST /v1/audio/transcriptions` | OpenAI transcription, multipart body | Per second of audio, priced per minute or per hour |
-| `POST /v1/audio/translations` | OpenAI translation to English, multipart body | Per second of audio |
+| [`POST /v1/images/edits`](/api-reference/images/edit-an-image) | OpenAI image edit, multipart body | Per image |
+| [`POST /v1/audio/speech`](/api-reference/audio/create-speech) | OpenAI text to speech, JSON body, binary audio reply | Per million characters of input |
+| [`POST /v1/audio/transcriptions`](/api-reference/audio/create-a-transcription) | OpenAI transcription, multipart body | Per second of audio, priced per minute or per hour |
+| [`POST /v1/audio/translations`](/api-reference/audio/create-a-translation) | OpenAI translation to English, multipart body | Per second of audio |
 | `POST /v1/videos` | OpenAI video job: create, then poll | Per second of video, at a rate that can depend on resolution |
 | `GET /v1/videos/{id}` | Read a job you created | Settles the job when it reaches a final state |
 | `GET /v1/videos/{id}/content` | Stream the finished video's bytes | Nothing further |

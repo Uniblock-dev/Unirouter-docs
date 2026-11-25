@@ -53,22 +53,27 @@ function references(value, found = new Set()) {
   return found;
 }
 
-function component(spec, ref) {
+function component(spec, ref, fallback) {
   const match = /^#\/components\/([^/]+)\/([^/]+)$/.exec(ref);
   if (!match) throw new Error(`Unsupported component reference in scoped build: ${ref}`);
   const [, group, name] = match;
-  const value = spec.components?.[group]?.[name];
+  const value = spec.components?.[group]?.[name] ?? fallback?.components?.[group]?.[name];
   if (value === undefined) throw new Error(`Missing component in scoped build: ${ref}`);
   return { group, name, value };
 }
 
-function dependencies(spec, paths) {
+function dependencies(spec, paths, fallback) {
   const found = references(paths);
-  for (const ref of found) references(component(spec, ref).value, found);
+  for (const ref of found) references(component(spec, ref, fallback).value, found);
   return found;
 }
 
-/** A shared component may change only when every published consumer is selected. */
+/**
+ * A shared component may change only when every published consumer is selected.
+ * A component an unselected operation references but the previous artifact
+ * lacks (a dangling reference) is filled from the current build: that adds a
+ * definition where there was none and changes no published content.
+ */
 export function scopedArtifact(previous, current, paths) {
   const selected = new Set(paths);
   for (const path of selected) {
@@ -76,14 +81,20 @@ export function scopedArtifact(previous, current, paths) {
   }
   const selectedEntries = Object.fromEntries(paths.map((path) => [path, current.paths[path]]));
   const retainedEntries = Object.fromEntries(Object.entries(previous.paths).filter(([path]) => !selected.has(path)));
-  const retainedRefs = dependencies(previous, retainedEntries);
+  const retainedRefs = dependencies(previous, retainedEntries, current);
   const changedRefs = dependencies(current, selectedEntries);
   const result = structuredClone(previous);
   for (const [path, entry] of Object.entries(selectedEntries)) result.paths[path] = structuredClone(entry);
+  for (const ref of retainedRefs) {
+    const { group, name, value } = component(previous, ref, current);
+    if (previous.components?.[group]?.[name] !== undefined) continue;
+    result.components[group] ??= {};
+    result.components[group][name] = structuredClone(value);
+  }
   for (const ref of changedRefs) {
     const { group, name, value } = component(current, ref);
     const old = previous.components?.[group]?.[name];
-    if (retainedRefs.has(ref) && JSON.stringify(old) !== JSON.stringify(value)) {
+    if (retainedRefs.has(ref) && old !== undefined && JSON.stringify(old) !== JSON.stringify(value)) {
       throw new Error(`Selected changes alter a component used by an unselected operation: ${ref}`);
     }
     result.components[group] ??= {};
