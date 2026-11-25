@@ -33,6 +33,33 @@ penalties on this model. Leave those controls out, including defaults your clien
 The [Google model guide](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/guides/gemini-3-8-flash)
 describes these restrictions.
 
+On Vertex Gemini, `temperature`, `top_p` and `top_k` are forwarded to Google, and Gemini 3.8 Flash
+ignores custom sampling values. A non-null `presence_penalty` or `frequency_penalty` is forwarded
+unchanged, including zero, so Google decides whether the model accepts it; a `null` penalty is left
+out. When Google refuses a parameter, the response keeps Google's HTTP status and its readable
+reason, including on a stream refused before it starts. A successful response does not establish
+that the model used the parameter.
+
+### Adjust safety settings
+
+Send `safety_settings` with one entry per harm category. Thresholds are forwarded unchanged, and
+Google validates the categories and thresholds. `OFF` disables a category's configurable filter;
+`BLOCK_NONE` is different, because it still returns safety scores. Leaving the field out keeps
+Google's defaults, and safeguards Google does not make configurable remain in place.
+
+```json
+"safety_settings": [
+  {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "OFF"},
+  {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "OFF"},
+  {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "OFF"},
+  {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "OFF"}
+]
+```
+
+`safetySettings` is accepted as the same field. Send one spelling. If a body carries both with
+different values, it is refused with a `400` before any provider call, and the message names both
+fields. Equal values under both names are accepted.
+
 ### Send a text request
 
 ```bash curl
