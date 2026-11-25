@@ -9,7 +9,8 @@
     "`components.schemas.Error` replaces the base schema of the same name outright. The base spec's `Error` is the dashboard's `{error: string}` shape and must not survive into the public artifact.",
     "`components.securitySchemes` is reduced to the names in `keepSecuritySchemes` and the surviving entry is replaced by `securitySchemes` here.",
     "`responseHeaders` becomes `components.headers` in the artifact, and `#/responseHeaders/X` references are rewritten to `#/components/headers/X`.",
-    "`$comment`, `mergeRules`, `sourceOfTruth`, `keepSecuritySchemes`, `overlayVersion`, `exampleVerification`, and every `classification`, `gate` and `reason` key are stripped from the artifact.",
+    "Every header named in `withheldResponseHeaders` is removed from every response in the artifact, on a full or an --only-path build, and --check fails if one survives. Each entry names the flag that gates the header; the entry comes out, and the header is published, once that flag is on in production. The overlay must not document a withheld header itself.",
+    "`$comment`, `mergeRules`, `sourceOfTruth`, `keepSecuritySchemes`, `overlayVersion`, `exampleVerification`, `withheldResponseHeaders`, and every `classification`, `gate` and `reason` key are stripped from the artifact.",
     "The build fails if any path outside /v1 survives, if any server other than the production origin survives, or if a surviving operation has no example."
   ],
   "sourceOfTruth": {
@@ -1326,9 +1327,61 @@
             "format": "date-time"
           }
         }
+      },
+      "VertexGeminiSafetySettings": {
+        "type": "array",
+        "nullable": true,
+        "description": "Per-category safety settings for Vertex Gemini. Values are forwarded without changing their thresholds; use OFF for each category to disable its configurable filter. OFF differs from BLOCK_NONE, which retains safety scores. Omission leaves provider defaults in effect. Google validates the categories and thresholds, and non-configurable safeguards remain.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "category": {
+              "type": "string",
+              "example": "HARM_CATEGORY_HARASSMENT"
+            },
+            "threshold": {
+              "type": "string",
+              "example": "OFF"
+            },
+            "method": {
+              "type": "string",
+              "example": "SEVERITY"
+            }
+          }
+        },
+        "example": [
+          {
+            "category": "HARM_CATEGORY_HATE_SPEECH",
+            "threshold": "OFF"
+          },
+          {
+            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+            "threshold": "OFF"
+          },
+          {
+            "category": "HARM_CATEGORY_HARASSMENT",
+            "threshold": "OFF"
+          },
+          {
+            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            "threshold": "OFF"
+          }
+        ]
       }
     }
   },
+  "withheldResponseHeaders": [
+    {
+      "header": "x-hopscotch-redirected-from",
+      "flag": "MODEL_ALIAS_LIFECYCLE_ENABLED",
+      "reason": "Set only when a sunset redirect serves the request (services/control-plane/src/models/modelRedirects.ts), and redirects are read only while modelAliasLifecycleEnabled (services/control-plane/src/models/aliasLifecycleFlag.ts) is true. The flag is \"false\" under [env.production.vars] in services/control-plane/wrangler.toml and stage internal in feature-flags.json on main, so production never sends this header. Internal finding SF-754."
+    },
+    {
+      "header": "x-hopscotch-served-model",
+      "flag": "MODEL_ALIAS_LIFECYCLE_ENABLED",
+      "reason": "Set beside x-hopscotch-redirected-from only when a sunset redirect serves the request (services/control-plane/src/models/modelRedirects.ts), behind the same flag, which is off in production. Internal finding SF-754."
+    }
+  ],
   "responseHeaders": {
     "RequestId": {
       "description": "Our id for this request. Quote it when you contact support. Present on every response, errors included.",
@@ -6038,20 +6091,6 @@
               "x-hopscotch-served-via": {
                 "description": "Present, with the value `backup`, when a backup route served this request. Absent on every other response, and never sent with any other value, so a client that has never read it sees nothing change about an ordinary request. The provider named on x-hopscotch-provider and in the body is still the one you asked for.",
                 "$ref": "#/responseHeaders/ServedVia"
-              },
-              "x-hopscotch-redirected-from": {
-                "description": "Present only when a sunset redirect served this request. The retiring model id requested, including a profile member redirected to its successor.",
-                "schema": {
-                  "type": "string",
-                  "example": "openai/retiring-model"
-                }
-              },
-              "x-hopscotch-served-model": {
-                "description": "The successor model that actually answered a sunset redirect, priced and admitted under that model. Present for JSON and streamed replies.",
-                "schema": {
-                  "type": "string",
-                  "example": "openai/successor-model"
-                }
               }
             },
             "content": {

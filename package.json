@@ -12,7 +12,7 @@
     "sync": "node scripts/sync-source-spec.mjs",
     "build:openapi": "node scripts/build-public-openapi.mjs",
     "check:openapi": "node scripts/build-public-openapi.mjs --check",
-    "check:generator": "node --test scripts/scoped-openapi.test.mjs",
+    "check:generator": "node --test scripts/scoped-openapi.test.mjs scripts/withheld-headers.test.mjs",
     "check:docs-json": "node scripts/check-docs-json.mjs",
     "check:banned": "node scripts/lint-banned-content.mjs",
     "check:claims": "node scripts/check-claims.mjs",

@@ -19,8 +19,18 @@
  *
  * --check is what CI runs. It cannot rebuild, so it audits the committed
  * artifact against every rule the build enforces: only /v1 paths, only the
- * customer security scheme, only the production server, examples present, and
- * no internal hostname or header anywhere in the bytes.
+ * customer security scheme, only the production server, examples present, no
+ * withheld response header, and no internal hostname or header anywhere in the
+ * bytes.
+ *
+ * Withheld response headers: the overlay's `withheldResponseHeaders` lists
+ * headers the source spec documents but production does not send, each naming
+ * the flag that gates it (see scripts/lib/withheld-headers.mjs). Every build,
+ * full or --only-path, removes them from every response in the artifact,
+ * selected path or not, because --check fails while any survives. With
+ * --source the build also reads services/control-plane/wrangler.toml and fails
+ * when a listed flag is "true" under [env.production.vars]: the header is then
+ * true, and its entry comes out so it is published.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -34,6 +44,12 @@ import {
 } from './lib/paths.mjs';
 import { Report, flag, option } from './lib/report.mjs';
 import { scopedArtifact, selectedPaths } from './lib/scoped-openapi.mjs';
+import {
+  findWithheldHeaders,
+  productionFlagValue,
+  withheldHeaderList,
+  withholdHeaders,
+} from './lib/withheld-headers.mjs';
 
 const OVERLAY_HEADER_REF = '#/responseHeaders/';
 const COMPONENT_HEADER_REF = '#/components/headers/';
@@ -64,6 +80,8 @@ const report = new Report('build-public-openapi');
 const onlyPaths = selectedPaths(process.argv.slice(2), ['--source'], ['--check']);
 
 const overlay = readJson(paths.overlay, 'overlay');
+const withheld = withheldHeaderList(overlay);
+for (const [where, message] of withheld.problems) report.fail(where, message);
 
 if (flag('check')) {
   if (!existsSync(paths.publicSpec)) {
@@ -73,6 +91,7 @@ if (flag('check')) {
   }
   const artifact = readJson(paths.publicSpec, 'artifact');
   auditArtifact(artifact, report);
+  auditWithheld(artifact, report);
   auditBytes(readFileSync(paths.publicSpec, 'utf8'), report);
   report.note('checked the committed artifact; the private spec was not read');
   printExampleDebt(overlay);
@@ -84,12 +103,21 @@ if (flag('check')) {
     process.exit(process.exitCode ?? 1);
   }
   classifyPaths(base, overlay, report);
+  checkWithheldEntries(overlay, report);
   let artifact = buildArtifact(base, overlay);
   if (onlyPaths.length) {
     artifact = scopedArtifact(readJson(paths.publicSpec, 'committed artifact'), artifact, onlyPaths);
     report.note(`rebuilt only: ${onlyPaths.join(', ')}`);
   }
+  // After scoping, so a header the committed artifact still carries on an
+  // unselected path is removed too.
+  const removed = withholdHeaders(artifact, withheld.entries);
+  for (const entry of withheld.entries) {
+    const count = removed.filter((item) => item.header === entry.header).length;
+    report.note(`withheld ${entry.header} (${entry.flag} is not on in production) from ${count} response(s)`);
+  }
   auditArtifact(artifact, report);
+  auditWithheld(artifact, report);
   const bytes = `${JSON.stringify(artifact, null, 2)}\n`;
   auditBytes(bytes, report);
 
@@ -169,6 +197,42 @@ function classifyPaths(base, overlay, report) {
     if (entry.classification === 'blocked') {
       report.note(`blocked, not published: ${path} (gate ${entry.gate})`);
     }
+  }
+}
+
+/**
+ * The overlay must not both document and withhold a header, and with --source
+ * a withheld header's flag must still be off in production.
+ */
+function checkWithheldEntries(overlay, report) {
+  for (const { where, header } of findWithheldHeaders(overlay, withheld.entries)) {
+    report.fail(
+      `overlay ${where}`,
+      `documents ${header}, which withheldResponseHeaders withholds. Remove one of the two.`
+    );
+  }
+  const source = option('source');
+  if (!source || withheld.entries.length === 0) return;
+  const wranglerPath = join(source, 'services', 'control-plane', 'wrangler.toml');
+  if (!existsSync(wranglerPath)) {
+    report.note(`withheld headers: no ${wranglerPath}, so their flags were not checked`);
+    return;
+  }
+  const toml = readFileSync(wranglerPath, 'utf8');
+  for (const { header, flag } of withheld.entries) {
+    if (productionFlagValue(toml, flag) === 'true') {
+      report.fail(
+        header,
+        `${flag} is "true" under [env.production.vars] in the source, so production sends this header. Remove its withheldResponseHeaders entry and publish it.`
+      );
+    }
+  }
+}
+
+function auditWithheld(artifact, report) {
+  for (const { where, header } of findWithheldHeaders(artifact, withheld.entries)) {
+    const { flag } = withheld.entries.find((entry) => entry.header === header);
+    report.fail(where, `documents ${header}, which is withheld until ${flag} is on in production.`);
   }
 }
 
@@ -259,6 +323,16 @@ function auditArtifact(artifact, report) {
       if (path.startsWith(prefix)) {
         report.fail(path, `a ${prefix} path survived the filter. This surface is never published.`);
       }
+    }
+  }
+
+  // A $ref to a component the artifact does not define renders as a broken
+  // schema in the playground. The overlay's schemas replace the base's, so a
+  // base schema a path references has to be transcribed into the overlay.
+  for (const ref of new Set(JSON.stringify(artifact).match(/"\$ref":"#\/components\/[^"]+"/g) ?? [])) {
+    const [, , group, name] = ref.slice(8, -1).split('/');
+    if (artifact.components?.[group]?.[name] === undefined) {
+      report.fail(ref.slice(8, -1), 'is referenced but not defined in components. Add it to overlay.public.json components.');
     }
   }
 
