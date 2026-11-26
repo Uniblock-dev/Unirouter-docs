@@ -442,7 +442,7 @@
             }
           },
           "413": {
-            "description": "The request body is larger than the 8388608 byte maximum this API accepts, so it was refused at the door. A body that declares its length is refused without a byte being read; one that declares none is read only as far as the ceiling and then abandoned. Nothing was parsed, no credit was held, no model was called and nothing was charged.",
+            "description": "The request body is larger than the 33554432 byte maximum this endpoint accepts for a conversation, so it was refused at the door. A body that declares a length above the ceiling is refused without being read; otherwise the bytes are counted as they arrive, even when Content-Length is missing or understated, and reading stops at the ceiling. No credit was held, no model was called and nothing was charged. The model's own context and token limits still apply, and every other endpoint keeps its 8388608 byte maximum.",
             "content": {
               "application/json": {
                 "schema": {
@@ -453,7 +453,7 @@
                     "summary": "The request body is over the ceiling",
                     "value": {
                       "error": {
-                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "message": "This request body is larger than the 33554432 byte maximum this API accepts. No model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
                         "type": "invalid_request_error",
                         "param": null,
                         "code": "payload_too_large",
@@ -1060,7 +1060,7 @@
                     "summary": "The request body is over the ceiling",
                     "value": {
                       "error": {
-                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. No model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
                         "type": "invalid_request_error",
                         "param": null,
                         "code": "payload_too_large",
@@ -2116,7 +2116,7 @@
                     "summary": "The request body is over the ceiling",
                     "value": {
                       "error": {
-                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. No model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
                         "type": "invalid_request_error",
                         "param": null,
                         "code": "payload_too_large",
@@ -3683,7 +3683,7 @@
             }
           },
           "413": {
-            "description": "The request body is larger than the 8388608 byte maximum this API accepts, so it was refused at the door. A body that declares its length is refused without a byte being read; one that declares none is read only as far as the ceiling and then abandoned. Nothing was parsed, no credit was held, no model was called and nothing was charged.",
+            "description": "The request body is larger than the 33554432 byte maximum this endpoint accepts for a conversation, so it was refused at the door. A body that declares a length above the ceiling is refused without being read; otherwise the bytes are counted as they arrive, even when Content-Length is missing or understated, and reading stops at the ceiling. No credit was held, no model was called and nothing was charged. The model's own context and token limits still apply, and every other endpoint keeps its 8388608 byte maximum.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3694,7 +3694,7 @@
                     "summary": "The request body is over the ceiling",
                     "value": {
                       "error": {
-                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "message": "This request body is larger than the 33554432 byte maximum this API accepts. No model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
                         "type": "invalid_request_error",
                         "param": null,
                         "code": "payload_too_large",
@@ -4239,7 +4239,7 @@
                     "summary": "The request body is over the ceiling",
                     "value": {
                       "error": {
-                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. No model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
                         "type": "invalid_request_error",
                         "param": null,
                         "code": "payload_too_large",
@@ -4843,7 +4843,7 @@
                     "summary": "The request body is over the ceiling",
                     "value": {
                       "error": {
-                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. No model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
                         "type": "invalid_request_error",
                         "param": null,
                         "code": "payload_too_large",
@@ -6009,7 +6009,7 @@
                     "summary": "The request body is over the ceiling",
                     "value": {
                       "error": {
-                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. No model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
                         "type": "invalid_request_error",
                         "param": null,
                         "code": "payload_too_large",
@@ -6486,7 +6486,7 @@
                     "summary": "The request body is over the ceiling",
                     "value": {
                       "error": {
-                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. No model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
                         "type": "invalid_request_error",
                         "param": null,
                         "code": "payload_too_large",
@@ -6967,7 +6967,7 @@
                     "summary": "The request body is over the ceiling",
                     "value": {
                       "error": {
-                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. No model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
                         "type": "invalid_request_error",
                         "param": null,
                         "code": "payload_too_large",
@@ -7448,7 +7448,7 @@
                     "summary": "The request body is over the ceiling",
                     "value": {
                       "error": {
-                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. No model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
                         "type": "invalid_request_error",
                         "param": null,
                         "code": "payload_too_large",

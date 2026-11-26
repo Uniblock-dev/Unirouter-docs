@@ -41,7 +41,7 @@ rest of the workspace keeps serving.
 | 429 | `rate_limit_exceeded` | This key's request rate. | Wait the seconds in `Retry-After`. |
 | 429 | `spend_rate_exceeded` | Your spend rate cap, which counts credit held rather than spent. | Wait `Retry-After` seconds, up to 60, or send `max_tokens`. |
 | 429 | `upstream_rate_limited` | Nothing of yours. The model's provider rate-limited the call. | Wait the seconds in `Retry-After`. Nothing is wrong with the request and nothing is charged. |
-| 413 | `payload_too_large` | Nothing. The body is over the 8388608 byte maximum this API accepts. | Send fewer messages, a shorter prompt, or fewer inputs. |
+| 413 | `payload_too_large` | Nothing. The body is over the endpoint's maximum: 33554432 bytes on chat completions and Messages, 8388608 bytes elsewhere. | Send fewer messages, a shorter prompt, or fewer inputs. |
 | 402 | `insufficient_credit` | Available credit at admission. | Buy credit. |
 | 402 | `key_limit_exceeded` | This key's own credit limit, for its current window. | Wait for the window to roll, raise the limit, or send on another key. |
 | 402 | `member_limit_exceeded` | Not available yet. Your own monthly spend limit. | Ask the owner to raise or clear it on the Team screen's Spend tab. |
