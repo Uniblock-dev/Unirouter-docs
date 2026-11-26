@@ -76,6 +76,10 @@
               "resources/faq",
               "resources/glossary"
             ]
+          },
+          {
+            "group": "Use Cases",
+            "pages": []
           }
         ]
       },
