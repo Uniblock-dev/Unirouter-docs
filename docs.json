@@ -81,10 +81,14 @@
             "group": "Use cases",
             "pages": [
               {
-                "group": "Creative and media",
+                "group": "Creative And Media",
                 "pages": [
                   "comic-and-storybook-maker"
                 ]
+              },
+              {
+                "group": "Education And Learning",
+                "pages": []
               }
             ]
           }
