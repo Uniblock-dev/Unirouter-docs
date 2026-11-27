@@ -103,7 +103,8 @@ the conversation under our account:
   as `google_search`),
 - audio out (`audio`, or audio in `modalities`), and audio in (an
   `input_audio` part), except as described below for Gemini chat,
-- a `cache_control` marker with a `1h` ttl,
+- a `cache_control` marker with a `1h` ttl, on a content block or tool, or
+  at the top level of a `POST /v1/messages` body,
 - `store: true`, and on `POST /v1/responses` also `previous_response_id`,
   `conversation`, an `item_reference` input item and `background: true`.
 

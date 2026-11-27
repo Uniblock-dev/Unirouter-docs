@@ -16,6 +16,12 @@ The same way you would upstream. A provider whose caching is explicit takes a ma
 forwarded as you wrote it. A provider whose caching is automatic applies it without being asked, and nothing
 here turns it off.
 
+On `POST /v1/messages`, Anthropic's top-level `cache_control` marker, which asks for automatic caching of the
+prefix, is forwarded alongside any markers on individual blocks when the model is served by Anthropic directly,
+on Google Vertex AI or on Azure. On the platform's own provider keys a marker with a `1h` ttl is refused, at the
+top level or on a block, as [Parameters](/api-reference/parameters) lists; on your own provider key it keeps its
+ttl.
+
 There is no Hopscotch control for caching, in the body or in a header, and nothing to enable in the dashboard.
 Which providers cache, and on what terms, is the provider's own behaviour. This site publishes no per-provider
 table, because a stale table about pricing is worse than none.

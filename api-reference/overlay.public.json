@@ -1858,7 +1858,7 @@
             }
           },
           "413": {
-            "description": "The request body is larger than the 8388608 byte maximum this API accepts, so it was refused at the door. A body that declares its length is refused without a byte being read; one that declares none is read only as far as the ceiling and then abandoned. Nothing was parsed, no credit was held, no model was called and nothing was charged.",
+            "description": "The request body is larger than the 33554432 byte maximum this endpoint accepts for a conversation, so it was refused at the door. A body that declares a length above the ceiling is refused without being read; otherwise the bytes are counted as they arrive, even when Content-Length is missing or understated, and reading stops at the ceiling. No credit was held, no model was called and nothing was charged. The model's own context and token limits still apply, and every other endpoint keeps its 8388608 byte maximum.",
             "headers": {
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
@@ -1874,7 +1874,7 @@
                     "summary": "The request body is over the ceiling",
                     "value": {
                       "error": {
-                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "message": "This request body is larger than the 33554432 byte maximum this API accepts. No model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
                         "type": "invalid_request_error",
                         "param": null,
                         "code": "payload_too_large",
@@ -2465,7 +2465,7 @@
                     "summary": "The request body is over the ceiling",
                     "value": {
                       "error": {
-                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. No model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
                         "type": "invalid_request_error",
                         "param": null,
                         "code": "payload_too_large",
@@ -3495,7 +3495,7 @@
                     "summary": "The request body is over the ceiling",
                     "value": {
                       "error": {
-                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. No model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
                         "type": "invalid_request_error",
                         "param": null,
                         "code": "payload_too_large",
@@ -5458,7 +5458,7 @@
             }
           },
           "413": {
-            "description": "The request body is larger than the 8388608 byte maximum this API accepts, so it was refused at the door. A body that declares its length is refused without a byte being read; one that declares none is read only as far as the ceiling and then abandoned. Nothing was parsed, no credit was held, no model was called and nothing was charged.",
+            "description": "The request body is larger than the 33554432 byte maximum this endpoint accepts for a conversation, so it was refused at the door. A body that declares a length above the ceiling is refused without being read; otherwise the bytes are counted as they arrive, even when Content-Length is missing or understated, and reading stops at the ceiling. No credit was held, no model was called and nothing was charged. The model's own context and token limits still apply, and every other endpoint keeps its 8388608 byte maximum.",
             "headers": {
               "x-hopscotch-request-id": {
                 "$ref": "#/responseHeaders/RequestId"
@@ -5474,7 +5474,7 @@
                     "summary": "The request body is over the ceiling",
                     "value": {
                       "error": {
-                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "message": "This request body is larger than the 33554432 byte maximum this API accepts. No model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
                         "type": "invalid_request_error",
                         "param": null,
                         "code": "payload_too_large",
@@ -6180,7 +6180,7 @@
                     "summary": "The request body is over the ceiling",
                     "value": {
                       "error": {
-                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. No model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
                         "type": "invalid_request_error",
                         "param": null,
                         "code": "payload_too_large",
@@ -6651,7 +6651,7 @@
                     "summary": "The request body is over the ceiling",
                     "value": {
                       "error": {
-                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. No model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
                         "type": "invalid_request_error",
                         "param": null,
                         "code": "payload_too_large",
@@ -7122,7 +7122,7 @@
                     "summary": "The request body is over the ceiling",
                     "value": {
                       "error": {
-                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. No model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
                         "type": "invalid_request_error",
                         "param": null,
                         "code": "payload_too_large",
@@ -7317,12 +7317,12 @@
         {
           "pointer": "/post/requestBody/content/application~1json",
           "flag": "EACHLABS_IMAGE26_ENABLED",
-          "reason": "The JSON edit body is the EachLabs GPT Image 2.6 request shape. EachLabs serving sits behind EACHLABS_IMAGE26_ENABLED (services/control-plane/src/providers/eachlabsImage26Flag.ts), stage internal in feature-flags.json and unset under [env.production.vars], so production does not serve it."
+          "reason": "The JSON edit body is the EachLabs GPT Image 2.6 request shape. EachLabs serving sits behind EACHLABS_IMAGE26_ENABLED (services/control-plane/src/providers/eachlabsImage26Flag.ts). On origin/main 040608e8 the flag is stage ga in feature-flags.json and set true under [env.production.vars], with production acceptance recorded as pending; the shape stays withheld until it is transcribed from the handler and reviewed for publication (internal SF-955)."
         },
         {
           "pointer": "/post/requestBody/content/multipart~1form-data/schema/anyOf",
           "flag": "EACHLABS_IMAGE26_ENABLED",
-          "reason": "The source offers the upload shape or EachlabsImageEditMultipartRequest. The EachLabs variant is dark in production for the same reason; the overlay publishes the upload shape alone."
+          "reason": "The source offers the upload shape or EachlabsImageEditMultipartRequest. The EachLabs variant is withheld for the same reason, pending the same transcription; the overlay publishes the upload shape alone."
         }
       ],
       "post": {
@@ -7608,7 +7608,7 @@
                     "summary": "The request body is over the ceiling",
                     "value": {
                       "error": {
-                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. No model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
                         "type": "invalid_request_error",
                         "param": null,
                         "code": "payload_too_large",
@@ -8151,7 +8151,7 @@
                     "summary": "The request body is over the ceiling",
                     "value": {
                       "error": {
-                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. No model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
                         "type": "invalid_request_error",
                         "param": null,
                         "code": "payload_too_large",
@@ -8705,7 +8705,7 @@
                     "summary": "The request body is over the ceiling",
                     "value": {
                       "error": {
-                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. Nothing was read, no model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
+                        "message": "This request body is larger than the 8388608 byte maximum this API accepts. No model was called and nothing was charged. Send fewer messages, a shorter prompt, or fewer inputs.",
                         "type": "invalid_request_error",
                         "param": null,
                         "code": "payload_too_large",
@@ -9767,8 +9767,8 @@
       },
       {
         "example": "POST /v1/chat/completions 413 payload_too_large",
-        "shapeFrom": "PAYLOAD_TOO_LARGE_SENTENCE and payloadTooLargeEnvelope in services/control-plane/src/inference/requestBody.ts",
-        "note": "Message transcribed verbatim from the constant, including the byte figure it interpolates. Needs a live transcript, which for this one is cheap: any body over the ceiling produces it."
+        "shapeFrom": "payloadTooLargeSentence, inferenceBodyLimit and payloadTooLargeEnvelope in services/control-plane/src/inference/requestBody.ts",
+        "note": "Message transcribed verbatim from the sentence builder, including the byte figure it interpolates: 33554432 on POST /v1/chat/completions and POST /v1/messages, 8388608 on every other door. Needs a live transcript, which for this one is cheap: any body over the ceiling produces it."
       },
       {
         "example": "POST /v1/chat/completions 429 upstream_rate_limited",
@@ -9787,8 +9787,8 @@
       },
       {
         "example": "POST /v1/responses 413 payload_too_large",
-        "shapeFrom": "The same PAYLOAD_TOO_LARGE_SENTENCE constant in services/control-plane/src/inference/requestBody.ts that the chat-completions 413 is transcribed from, and the same byte ceiling: the source spec carries an identical 413 description on both doors.",
-        "note": "Copied from the chat-completions block rather than written fresh, because one constant answers both doors. Needs a live transcript, which for this one is cheap: any body over the ceiling produces it."
+        "shapeFrom": "The same payloadTooLargeSentence in services/control-plane/src/inference/requestBody.ts that the chat-completions 413 is transcribed from, at the 8388608 byte ceiling inferenceBodyLimit gives this door.",
+        "note": "Copied from the chat-completions block with the default ceiling, because one sentence builder answers every door. Needs a live transcript, which for this one is cheap: any body over the ceiling produces it."
       },
       {
         "example": "GET /v1/models 403, GET /v1/models/{id} 403, POST /v1/chat/completions 403 account_suspended, POST /v1/responses 403 account_suspended",
