@@ -20,7 +20,9 @@ export function collectNavPages(node, found = [], inPages = false) {
       // `openapi` names a spec file whose endpoint pages are generated;
       // `href` is an external link.
       if (key === 'openapi' || key === 'asyncapi' || key === 'href') continue;
-      collectNavPages(value, found, inPages || key === 'pages' || key === 'root');
+      // A group nested in a `pages` array is an object, and its own `group`
+      // label is chrome, not a page; only its `pages` are pages again.
+      collectNavPages(value, found, key === 'pages' || key === 'root');
     }
   }
   return found;
