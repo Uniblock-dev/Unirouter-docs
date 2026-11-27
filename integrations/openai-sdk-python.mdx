@@ -62,15 +62,18 @@ validates nothing against the server, so a wrong base URL surfaces on your first
 request rather than at startup. The SDK never asks `GET /v1/models` on its own
 either. It reaches an endpoint only when your code calls the method for it.
 
-**A resource we do not serve raises rather than hangs.** Calling
-`client.images.generate(...)` or `client.audio.speech.create(...)` against this
-base URL reaches a path this API does not serve yet, and the SDK turns the
+**A resource we do not serve raises rather than hangs.** `client.images.generate(...)`
+reaches `POST /v1/images/generations`, which serves; see
+[Gemini on Vertex](/features/vertex-gemini). `client.audio.speech.create(...)`
+reaches `POST /v1/audio/speech`, which also serves: audio requests are served
+and charged like any other request. See [Create speech](/api-reference/audio/create-speech).
+`client.embeddings.create(...)` is not served yet, and the SDK turns that
 `404` into `openai.NotFoundError`. That is worth knowing because it is the one
 shape of failure that looks like a configuration mistake and is not: the base
 URL is right and the endpoint is absent. See
 [OpenAI compatibility](/get-started/migrate-from-openai) for the list that
 serves, which includes `client.completions.create(...)` and
-`client.responses.create(...)`. `client.embeddings.create(...)` is not served yet. A `404` is
+`client.responses.create(...)`. A `404` is
 not in the SDK's retry set, so it fails on the first attempt rather than after
 a backoff.
 
@@ -132,8 +135,8 @@ repository on its main branch, in `src/openai/_client.py`,
 repository's own README.
 
 **Not checked.** That a call configured this way succeeds against our hostname.
-Nothing on this page has been executed. The base URL this site prints is not yet
-a host that answers, so there was nothing to run it against, and we would rather
+Nothing on this page has been executed. The base URL answers requests; what is
+still missing is a published proof run of this SDK against it, and we would rather
 say that than let a page's silence imply a test that did not happen.
 
 **Not checked either.** Which SDK version each of these facts first held in. They

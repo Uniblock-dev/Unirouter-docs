@@ -55,7 +55,7 @@ These features shape what you send in a request. Each works like the OpenAI para
 
 ## Which endpoint do I call?
 
-Most people start with chat completions. Four other endpoints use the same key, model ids and balance.
+Most people start with chat completions. The endpoints below use the same key, model ids and balance.
 
 <CardGroup cols={2}>
   <Card title="Responses API" icon="message-2" href="/features/responses-api">
@@ -70,7 +70,18 @@ Most people start with chat completions. Four other endpoints use the same key, 
   <Card title="Usage lookup" icon="receipt" href="/features/usage-lookup">
     Read one request's tokens and charge back with the key that made it.
   </Card>
+  <Card title="Videos" icon="video" href="/features/videos">
+    Start a video job, poll it, and download the finished bytes.
+  </Card>
 </CardGroup>
+
+The image and audio endpoints are served and charged in production too, on the
+same key and the same balance as chat. Image generation is described in
+[Gemini on Vertex](/features/vertex-gemini). The others each have an API reference page:
+[image edit](/api-reference/images/edit-an-image), [speech](/api-reference/audio/create-speech),
+[transcription](/api-reference/audio/create-a-transcription) and
+[translation](/api-reference/audio/create-a-translation). See
+[Images, audio and video](/features/images-audio-and-video) for how each one is billed.
 
 ## What happens when something goes wrong?
 
@@ -99,6 +110,6 @@ here says it does.
 
 ## Not open yet
 
-Image and audio endpoints are built and closed in production. A call to one
+Embeddings are not served yet: see [Completions and embeddings](/features/completions-and-embeddings).
+The realtime endpoint is not open in any environment yet, so a call to it
 answers 404 with the code `endpoint_not_supported`, and nothing is charged.
-Video generation is open: see [Videos](/features/videos).

@@ -89,7 +89,7 @@ On success, Python's `ChatOpenAI` takes `include_response_headers=True`, which p
 
 **Checked.** The Python arguments and their aliases, the two environment fallbacks, the Python default model of `gpt-3.5-turbo`, the JavaScript nesting and its default, the `stream_usage` change and its release, that `OpenAIEmbeddings` defaults to an OpenAI embedding model, that the wrapped exceptions keep `response` and `body`, and that neither class calls the catalog. These come from the `langchain-ai/langchain` and `langchain-ai/langchainjs` sources on their default branches.
 
-**Not checked.** That a call configured this way succeeds against our hostname. Nothing here has been executed, because the base URL this site prints is not yet a host that answers.
+**Not checked.** That a call configured this way succeeds against our hostname. Nothing here has been executed. The base URL answers requests; a published proof run against it is still missing.
 
 **Not checked either.** Which LangChain flows reach `OpenAIEmbeddings` by default. We read that the class exists, but did not trace which vector store, memory or retriever defaults pull it in. The paragraph above names the class that cannot use this base URL, not the flows that reach it.
 

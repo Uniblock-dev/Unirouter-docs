@@ -10,19 +10,19 @@ Some models generate reasoning tokens before they answer. This is text the model
 
 ## Control reasoning with `reasoning_effort`
 
-`reasoning_effort` is a regular field in the request body, and we send it to the provider exactly as you wrote it, like every other parameter. The same goes for any other field a provider uses to control how much the model thinks. Hopscotch has no reasoning setting of its own and adds nothing to your request body.
+Use `reasoning_effort` where the model supports it. On Vertex Gemini we translate it into Google's thinking-level control; other providers may accept different values or their own native controls. See [Gemini on Vertex](/features/vertex-gemini) for a model-specific request.
 
-The model decides which values it accepts. If it rejects one, you get the provider’s own error back. There’s one exception: an empty or whitespace-only `reasoning_effort`. No provider accepts that, so we reject it right away with a `400`, `code` `invalid_value`, and `param` set to `reasoning_effort`, instead of passing it along to fail a second later. Every other value goes through as written, including the booleans and integers some providers accept. See [Request parameters](/api-reference/parameters).
+The model decides which values it accepts. An unsupported value can be refused by the provider, or while we translate it for a specific provider. There's one value we always reject ourselves: an empty or whitespace-only `reasoning_effort` gets a `400`, `code` `invalid_value`, and `param` set to `reasoning_effort`. Gemini also rejects malformed levels and values the selected model doesn't support. See [Request parameters](/api-reference/parameters).
 
-## Reasoning tokens are inside the completion count
+## Reading the completion and reasoning counts
 
-This is the sentence to read twice.
+For providers that include reasoning in completion usage:
 
 ```text
 completion = output + reasoning
 ```
 
-Reasoning tokens are part of `completion_tokens`, not a figure to add to it. When
+For those providers, reasoning tokens are part of `completion_tokens`, not a figure to add to it. When
 a provider reports them, the count arrives separately as well, as a second view
 of tokens already counted:
 
@@ -33,6 +33,11 @@ of tokens already counted:
 In that line the model produced nine hundred completion tokens, of which the
 great majority were reasoning and the rest were the answer you saw. Adding
 `reasoning_tokens` to `completion_tokens` would count them twice.
+
+Gemini is different: `completion_tokens` contains candidate output and reasoning
+is reported separately. Do not subtract the reasoning count from Gemini's
+completion count. Use the recorded charge for spend accounting instead of
+applying one token formula across providers.
 
 The same figure reaches your usage record and the Activity screen as the
 reasoning count for that request. See
@@ -46,11 +51,7 @@ usage line without the field.
 ## What reasoning costs
 
 Reasoning is one of the five kinds of token a model's rate is expressed in, and
-it earns a price of its own because providers price it separately:
-
-```text
-completion = output + reasoning
-```
+it earns a price of its own because providers price it separately.
 
 See [Models](/features/models) for the whole vocabulary, and read what a request
 actually cost from your usage record rather than from a rate.

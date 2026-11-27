@@ -6,9 +6,10 @@ gates: ["13.9", "18.67", "36.17", "38.2", "38.42"]
 type: reference
 ---
 
-The body of a chat completion is OpenAI's, and it travels to the provider as you
-wrote it. This page says exactly which parts of it this platform looks at, which
-parts it changes, and what happens to everything else.
+The body of a chat completion uses OpenAI-compatible fields. Providers with a
+different native API, including Vertex Gemini, receive translated fields. This
+page describes admission checks and parameter metadata; the endpoint schema and
+provider guide describe supported request controls.
 
 ## What we read
 
@@ -51,7 +52,7 @@ Two things to plan for:
 
 - **An empty** `reasoning_effort`**.** An empty or whitespace-only value returns `400` with `code: "invalid_value"` and `param: "reasoning_effort"`. No provider accepts it, so we save you the round trip.
 - **Some Gemini** `reasoning_effort `**values.** Gemini translation rejects `0` and `false`, and rejects `"minimal"` on models that don't allow that thinking level. These errors include `param: "reasoning_effort"`. Google can still refuse other values. See [Reasoning models](https://docs.hopscotchlabs.ai/features/reasoning.md).
-- **Certain fields on platform provider keys.** These are refused on the platform's keys and forwarded on yours. See [the next section](#fields-blocked-on-platform-provider-keys).
+- **Certain fields on platform provider keys.** These are refused on the platform's keys and forwarded on yours. See [the next section](#the-fields-refused-on-the-platforms-own-provider-keys).
 
 ### Finding the source of a `400`
 
@@ -63,15 +64,17 @@ A request served on the platform's own provider keys is refused, before anything
 
 - a `service_tier` other than the provider's standard one (`auto`, `default` or `on_demand` on chat completions, `auto` or `default` on Responses),
 - `web_search_options`, or a hosted tool the provider charges for per call (web search, web fetch, code execution, and on a Gemini model a grounding tool such as `google_search`),
-- audio in (an `input_audio` part) or out (`audio`, or audio in `modalities`),
+- audio out (`audio`, or audio in `modalities`), and audio in (an `input_audio` part), except as described below for Gemini chat,
 - a `cache_control` marker with a `1h` ttl,
 - `store: true`, and on `POST /v1/responses` also `previous_response_id`, `conversation`, an `item_reference` input item and `background: true`.
 
 Each is a `400` with `code` `null` and `param` naming the field, never its value, and the message says to remove it or send the request on your own provider key. On `POST /v1/responses` an omitted `store` is sent to the provider as `false`.
 
+**Audio in on a Gemini chat completion.** `POST /v1/chat/completions` accepts `input_audio` parts on the platform's own keys when the request goes straight to a Gemini model on Google AI Studio or Vertex AI. That means no routing profile, no fallback to another provider, and a model whose published prices cover text, cached text, audio and cached audio input in every tier and which publishes a context window. Send each clip as a `messages[].content[]` part with `type` `input_audio` and `input_audio` holding base64 `data` and a `format` such as `wav`. We hold credit for the model's whole published input window at its highest input rate, plus bounded output, and the charge settles on the audio tokens the provider reports. If the provider never reports them, including on a stream that stops early, the whole hold is returned: we never estimate a charge from the audio's size or from the input window. Audio sent to Gemini as an `image_url`, and audio output, are still refused.
+
 **A request served on your own provider key keeps every one of them** and goes out as you sent it, because the provider bills and stores it against your own account. See [Bring your own key](/features/bring-your-own-key).
 
-On chat completions, the routing fields `provider`, `models` and `transforms`, which a reseller provider reads, are removed from the body rather than refused, so a client that sends them keeps working and the model you named is the one you are charged for. Every other field, including the reasoning and verbosity parameters a client may send, travels to the provider untouched and is answered by the provider.
+On chat completions, the routing fields `provider`, `models` and `transforms`, which a reseller provider reads, are removed from the body rather than refused, so a client that sends them keeps working and the model you named is the one you are charged for. Other fields remain subject to provider-specific translation and support.
 
 ## The refusals that are ours
 
@@ -150,8 +153,8 @@ request occupies while it is in flight. See
 
 ## The parameters a given model takes
 
-`GET /v1/models/{id}` returns a `parameters` array for that model: the request
-controls it accepts, with their bounds and defaults. It is served only on the
+`GET /v1/models/{id}` returns `uniblock.parameters` for that model: recorded
+request controls, with their bounds and defaults where known. It is served only on the
 single-model call, never on the list, because a list is scanned and a detail is
 read.
 
@@ -182,17 +185,20 @@ read.
 purpose: a bound that drifted in its last decimal place would be a contract about
 nothing. Divide by a thousand before you show one to a person.
 
-Two things this list is and is not. It is a description of a model, useful for
-building a form or validating input before you spend a request finding out. It is
-not a filter on the API: a parameter absent from the list is still forwarded if
-you send it, and the provider still answers for it.
+The separate `uniblock.supported_parameters` array contains parameter names from
+publishable sources, after known refusals are removed. It is not a list of fields
+proven by a successful call. Names such as `reasoning` describe a feature;
+the request body can use a different spelling, such as `reasoning_effort`.
+
+These arrays describe a model, not the complete request schema. Empty or missing
+metadata does not mean every parameter is unsupported. Use the endpoint schema
+for field names and types and the provider guide for model-specific limits.
 
 ## What is not on this page
 
-**A canonical list of every parameter the API accepts.** There is no such list,
-because there is no allowlist. The parameters are OpenAI's, plus whatever a
-provider takes, and the model detail above is the closest thing to a per-model
-answer.
+**Every native provider parameter.** The endpoint reference documents the public
+request schema. A native provider adding a new field does not establish that the
+Hopscotch API already maps it.
 
 **Headers.** Nothing about how a request is served can be set from a header. See
 [Headers](/api-reference/headers).

@@ -1,6 +1,6 @@
 ---
 title: "Usage lookup"
-description: "Look up the tokens, charge and outcome of any of your requests with GET /v1/usage/{id}. It works with the same API key that made the request, so you don’t need to sign in to the dashboard."
+description: "Look up the tokens, charge and outcome of any of your requests with GET /v1/usage/{id}, using the same API key and no dashboard sign-in."
 status: "write-now"
 gates: []
 type: "guide"
@@ -104,6 +104,71 @@ All three cases look identical, so nobody can use this endpoint to find out whet
 Pay attention to the first sentence of the message: no record for that id is visible to this key. The usual reason is timing. We write the usage record after we send you the response, so a lookup you send the moment the response arrives can get there before the record does. If you get a 404, wait a moment and retry once before you treat the request as missing.
 
 Records are deleted after the retention window described on [Data and privacy](/manage/data-and-privacy). A lookup for an older request also returns a 404, but its charge stays on your statement.
+
+## Read your balance and spend
+
+The same API key also reads what its workspace has left and what it has
+spent, with no dashboard session:
+
+| Route | What it answers |
+|---|---|
+| `GET /v1/balance` | The workspace balance: available, settled, and the credit held for requests still in flight. |
+| `GET /v1/usage` | Charged spend, tokens and requests by UTC day and model, the last 30 days unless `from` and `to` name another range. |
+| `GET /v1/key/usage` | This key's own spend today, this week and this month, and its credit limit with what is left of it. |
+
+```bash
+curl https://api.hopscotchlabs.ai/v1/balance \
+  -H "Authorization: Bearer ub_live_YOUR_KEY_HERE"
+```
+
+```json 200
+{
+  "object": "balance",
+  "currency": "USD",
+  "available_balance": "18.50",
+  "settled_balance": "20.00",
+  "outstanding_reservations": "1.50",
+  "as_of": "2026-10-21T15:30:00.000Z"
+}
+```
+
+Amounts are exact decimal strings, so parse them as decimals. These reads
+share a limit of their own, 60 a minute per key, apart from the request rate
+your inference calls spend, so polling a balance never slows real traffic. The
+[API reference](/api-reference/introduction) has every field and refusal.
+
+### Key and credit reads as numbers
+
+Two more reads return figures in another shape: under a `data` object, with
+each amount as a JSON number rather than a decimal string. They suit a tool
+that already expects to read a key's usage and limit, or its credits and
+usage, in that shape.
+
+| Route | What it answers |
+|---|---|
+| `GET /v1/key` | The figures `GET /v1/key/usage` returns: this key's spend as `usage_daily`, `usage_weekly` and `usage_monthly` (`usage` repeats the month), with `limit`, `limit_remaining` and `limit_reset`. |
+| `GET /v1/credits` | `total_usage`, everything the workspace has been charged since its lifetime total began counting, and `total_credits`, which is that plus the settled balance. |
+
+```bash
+curl https://api.hopscotchlabs.ai/v1/credits \
+  -H "Authorization: Bearer ub_live_YOUR_KEY_HERE"
+```
+
+```json 200
+{
+  "as_of": "2026-10-21T15:30:00.000Z",
+  "data": {
+    "total_credits": 27.3,
+    "total_usage": 7.3
+  }
+}
+```
+
+`total_usage` trails live spend by up to a few hours, so read `GET /v1/balance`
+for a live figure. Each number is written from the exact decimal, but a client
+that parses it into a double keeps about fifteen significant digits; read the
+string routes above where every digit matters. Both count toward the same 60
+reads a minute.
 
 ## Next steps
 

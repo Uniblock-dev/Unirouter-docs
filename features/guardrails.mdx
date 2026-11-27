@@ -1,9 +1,8 @@
 ---
 title: "Guardrails"
-description: "Named rule sets you attach to API keys. Cap spend, require zero data retention, limit providers, models and regions, set token ceilings, and block risky prompts."
+description: "Named rule sets you attach to API keys: cap spend, require zero data retention, limit providers, models and regions, set token ceilings, block risky prompts."
 status: "partial"
-gates:
-  - "47.7"
+gates: ["47.7"]
 type: "guide"
 ---
 
@@ -83,9 +82,9 @@ Pick a tier, or set your own ceilings.
 
 | Tier | Input tokens | Output tokens |
 | :-- | :-- | :-- |
-| `low` | 8,000 | 1,000 |
-| `medium` | 32,000 | 4,000 |
-| `high` | 128,000 | 16,000 |
+| `low` | `8,000` | `1,000` |
+| `medium` | `32,000` | `4,000` |
+| `high` | `128,000` | `16,000` |
 
 A custom ceiling is a whole number of tokens, up to `2,000,000`.
 

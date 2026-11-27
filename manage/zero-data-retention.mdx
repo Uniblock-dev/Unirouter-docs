@@ -1,9 +1,8 @@
 ---
 title: "Zero data retention"
-description: "Send requests made with our credentials only to providers recorded as zero-data-retention. Covers what the setting checks, what it doesn't, and the receipts that are on the way."
+description: "Send requests made with our credentials only to providers recorded as zero-data-retention: what the setting checks, what it doesn't, and receipts to come."
 status: "partial"
-gates:
-  - "68.3"
+gates: ["68.3"]
 type: "concept"
 ---
 
@@ -108,8 +107,8 @@ that says so.
 
 You'll be able to register your own bucket, plus a prefix:
 
-- **AWS S3:** we connect through an IAM role you create for us. The role must require the external ID `hopscotch:`.
-- **Cloudflare R2:** we connect with a scoped API token.
+- **An AWS S3 bucket:** we connect through an IAM role you create for us. The role must require the external ID `hopscotch:`.
+- **A Cloudflare R2 bucket:** we connect with a scoped API token.
 
 To check access, we write one empty (zero-byte) test file to the bucket and then delete it. We store your credentials encrypted. After that, we write request telemetry to your bucket. We never write request or response bodies there.
 

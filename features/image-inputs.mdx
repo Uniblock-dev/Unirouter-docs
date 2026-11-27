@@ -74,13 +74,14 @@ Two habits are worth having:
 The catalog carries an `audio` word alongside `vision`, answering the same three
 ways, for models that take audio input.
 
-Beyond that, this site documents no other modality, and the reason is the same
-one that governs every page here. The operations this site documents are
-`POST /v1/chat/completions`, `GET /v1/models` and `GET /v1/models/{id}`, so
-there is no image generation endpoint, no speech endpoint, and no video endpoint
-described anywhere on it. Nothing here says what a path this site does not
-document answers. See
-[OpenAI compatibility](/get-started/migrate-from-openai).
+Generating an image is a separate operation from sending one. Image generation
+has its own endpoint, `POST /v1/images/generations`, described in
+[Gemini on Vertex](/features/vertex-gemini) and the API reference. Videos have
+their own guide at [Videos](/features/videos). Image edit, speech, transcription
+and translation each have an API reference page, starting at
+[Edit an image](/api-reference/images/edit-an-image). See
+[OpenAI compatibility](/get-started/migrate-from-openai) for the endpoints this
+site publishes.
 
 Where a provider exposes a modality through the chat completions body itself,
 that body travels like any other, and the model's own capability words are what

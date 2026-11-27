@@ -53,12 +53,20 @@ You need two things:
   </Step>
   <Step title="Apply a code, if you have one">
     **Have a code?** opens a single **Promo code** field with an **Apply** control,
-    and one field serves both kinds of code. A Hopscotch credit code adds credit to
+    and one field serves every kind of code. A Hopscotch credit code adds credit to
     your balance on its own, with no purchase, and the screen says so: the amount
     "added to your balance". A discount code from our payment provider is checked
     against the amount you typed and reduces the charge at checkout: the screen
     reads the code "applied" with the amount off. A credit code is redeemable once
     per workspace, and credit it grants is spent before credit you paid for.
+
+    A credit-match code is for a workspace's first top-up. It matches the credit you
+    typed one to one, up to the most the code names, so the **Credits** line shows
+    the credit you chose plus the match, while you pay only what the credit you chose
+    costs on its own, fee included. Each code works once. A workspace that has bought
+    credit before is refused with "That promotion code is for a first top-up, and
+    this workspace has bought credit before.", and a code someone has already used
+    with "That promotion code has already been used."
   </Step>
   <Step title="Continue to payment">
     The control opens a checkout session with our payment provider and sends you to
@@ -103,7 +111,7 @@ Still missing after a few minutes? Contact us with the payment id from your stat
 
 ## Read the statement
 
-The **Statement** tab lists every transaction, newest first, 50 per page. You can filter by date.
+The **Statement** tab lists every transaction, newest first, a page at a time. You can filter by date.
 
 Each purchase appears as one line with three figures:
 

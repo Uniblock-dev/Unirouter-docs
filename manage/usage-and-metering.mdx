@@ -1,13 +1,8 @@
 ---
 title: "Usage and metering"
-description: "What each request records and never stores, how to read the Usage and Activity screens, how to match a statement line to a request, and how long records are kept."
+description: "What each request records and never stores, how to read the Usage and Activity screens, how to match a statement line to a request, and record retention."
 status: "partial"
-gates:
-  - "5.4"
-  - "5.11"
-  - "5.12"
-  - "5.18"
-  - "18.62"
+gates: ["5.4", "5.11", "5.12", "5.18", "18.62"]
 type: "guide"
 ---
 
@@ -114,7 +109,7 @@ Usage is the sign-in screen. It reads one window at a time (24 hours, 7 days, 30
 
 **Freshness.** The screen shows two times: when the newest request in the range started, and when the figures were last read. Requests appear in Usage within 60 seconds of completing. That's the most we commit to, and most requests show up faster.
 
-**Ranges longer than 90 days.** Usage records are kept for 90 days, so a 1-year range only shows what's still on record. Your statement goes back further, because transactions are never deleted.
+**Ranges longer than 90 days.** Usage records are kept for 90 days, so a one-year range only shows what's still on record. Your statement goes back further, because transactions are never deleted.
 
 ## Activity: one row per request
 

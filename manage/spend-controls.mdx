@@ -86,7 +86,7 @@ The request count comes from your actual traffic over the past 7 days.
 
 ## Spend rate cap
 
-The spend rate cap limits how much credit can be **held** in any rolling 60-second window. The default is 5000 minor units (50.00).
+The spend rate cap limits how much credit can be **held** in any rolling 60 seconds. A new account starts at 100000 minor units (1000.00). An account opened before that default was raised keeps the cap it already has, which is 5000 minor units (50.00) unless somebody changed it.
 
 When you go over it:
 
@@ -100,7 +100,7 @@ Only the owner can set the cap.
 
 - **You can always lower it**, to any amount of 1 minor unit or more.
 - **You can raise it** up to the self-service ceiling. To go higher, ask us to raise the ceiling.
-- **You can't set it to 0.** To stop all requests, use pause.
+- **A cap of `0` is refused.** To stop all requests, use pause.
 
 ### How the cap counts spend
 
@@ -115,7 +115,7 @@ We count this way on purpose. A leaked key firing thousands of small requests ho
 What this means for you:
 
 - A minute of normal traffic still counts against the cap for 60 seconds, even after every request has finished.
-- On an expensive model, each request without `max_tokens` holds the model's entire maximum output. The cap can then kick in while your real spend is well under 50.00 a minute, because most of what its counting is credit you were never going to spend.
+- On an expensive model, each request without `max_tokens` holds the model's entire maximum output. The cap can then kick in while your real spend is well under its own figure, because most of what it is counting is credit you were never going to spend.
 
 The error message uses the word "reserved". That means held. The cap clears 60 seconds after the oldest hold it counted and `Retry-After` is calculated from that same hold.
 

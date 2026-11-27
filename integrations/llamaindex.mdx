@@ -65,7 +65,7 @@ LlamaIndex calls the OpenAI SDK directly and does not appear to wrap its excepti
 
 **Checked.** The `api_base` argument on both classes and the `OPENAI_API_BASE` fallback, `api_key` and `OPENAI_API_KEY`, the `OpenAILike` arguments and the `is_chat_model` default of `False`, the plain class's lookup against `ALL_AVAILABLE_MODELS`, that `OpenAILike` overrides `metadata`, and that `Settings.embed_model` and `Settings.llm` resolve to OpenAI defaults when unset. These come from the `run-llama/llama_index` main branch and the published API reference for both classes.
 
-**Not checked.** That a call configured this way succeeds against our hostname. Nothing here has been executed, because the base URL this site prints is not yet a host that answers.
+**Not checked.** That a call configured this way succeeds against our hostname. Nothing here has been executed. The base URL answers requests; a published proof run against it is still missing.
 
 **Not checked either.** Which exact embedding model the default resolves to. The resolution code shows an `OpenAIEmbedding` that reaches an embeddings endpoint, but we did not confirm the model name from current source. This page does not print one, because the fact that matters is that this API does not serve embeddings yet.
 

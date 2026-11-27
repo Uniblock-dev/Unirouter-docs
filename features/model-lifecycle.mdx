@@ -1,9 +1,8 @@
 ---
 title: "Model lifecycle"
-description: "Providers deprecate models first and stop serving them later. The two dates mean different things, and the catalog includes both so a shutdown never catches you off guard."
+description: "Providers deprecate a model first and stop serving it later. The catalog carries both dates, so a shutdown never catches you off guard."
 status: "partial"
-gates:
-  - "18.24"
+gates: ["18.24"]
 type: "concept"
 ---
 
@@ -42,8 +41,8 @@ In `GET /v1/models/{id}`, three fields inside the `uniblock` block give you the 
 
 ```json
 {
-  "deprecated_at": 1780000000,
-  "sunset_at": 1790000000,
+  "deprecated_at": 1780000000000,
+  "sunset_at": 1790000000000,
   "replacement_model_id": "openai-main/gpt-4o-mini-2"
 }
 ```

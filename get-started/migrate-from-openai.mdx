@@ -2,12 +2,7 @@
 title: "Migrate from OpenAI"
 description: "What OpenAI-compatible means on Hopscotch, which endpoints exist, what changes when you move an app over, and the steps to migrate."
 status: "partial"
-gates:
-  - "2.3"
-  - "2.10"
-  - "2.11"
-  - "2.31"
-  - "13.9"
+gates: ["2.3", "2.10", "2.11", "2.31", "13.9"]
 type: "guide"
 ---
 
@@ -55,14 +50,19 @@ const client = new OpenAI({
 | `/v1/responses` | `POST` | Serves. Streaming and non-streaming. See [Responses API](/features/responses-api). |
 | `/v1/completions` | `POST` | Serves. Streaming and non-streaming. See [Completions and embeddings](/features/completions-and-embeddings). |
 | `/v1/messages` | `POST` | Serves the Anthropic Messages format. See [Anthropic Messages API](/features/anthropic-messages). |
+| `/v1/images/edits` | `POST` | Serves. Image edit, multipart body. See [Edit an image](/api-reference/images/edit-an-image). |
+| `/v1/audio/speech` | `POST` | Serves. Text to speech, JSON body, binary audio reply. See [Create speech](/api-reference/audio/create-speech). |
+| `/v1/audio/transcriptions` | `POST` | Serves. Transcription, multipart body. See [Create a transcription](/api-reference/audio/create-a-transcription). |
+| `/v1/audio/translations` | `POST` | Serves. Translation to English, multipart body. See [Create a translation](/api-reference/audio/create-a-translation). |
 | `/v1/models` | `GET` | Serves. |
 | `/v1/models/{id}` | `GET` | Serves. |
 | `/v1/usage/{id}` | `GET` | Serves. See [Usage lookup](/features/usage-lookup). |
+| `/v1/images/generations` | `POST` | Serves. Generates an image with a model that publishes `image_generations`. See [Gemini on Vertex](/features/vertex-gemini). |
 | `/v1/videos` | `POST` | Serves. Creates a video job. See [Videos](/features/videos). |
 | `/v1/videos/{id}` | `GET`, `DELETE` | Serves. Reads or cancels a job. See [Videos](/features/videos). |
 | `/v1/videos/{id}/content` | `GET` | Serves. Streams a finished video. See [Videos](/features/videos). |
 
-The table lists the paths this site publishes. Other paths, including the image and audio endpoints,
+The table lists the paths this site publishes. Other paths, including
 `POST /v1/embeddings`, `POST /v1/systemone` and the realtime endpoint, are not documented on this site, so
 treat any call to them as unanswered here. A path this release does not serve answers the 404 below.
 

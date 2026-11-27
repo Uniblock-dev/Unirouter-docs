@@ -12,15 +12,37 @@
  * Usage:
  *   node scripts/build-public-openapi.mjs --source ../Gateway-LLM
  *   node scripts/build-public-openapi.mjs            (uses the synced local copy)
+ *   node scripts/build-public-openapi.mjs --only-path /v1/chat/completions
+ *                                                     (repeat for each reviewed path)
  *   node scripts/build-public-openapi.mjs --check    (validates the committed
  *                                                     artifact, no source needed)
  *
  * --check is what CI runs. It cannot rebuild, so it audits the committed
  * artifact against every rule the build enforces: only /v1 paths, only the
- * customer security scheme, only the production server, examples present, and
- * no internal hostname or header anywhere in the bytes.
+ * customer security scheme, only the production server, examples present, no
+ * withheld response header, and no internal hostname or header anywhere in the
+ * bytes.
+ *
+ * Withheld response headers: the overlay's `withheldResponseHeaders` lists
+ * headers the source spec documents but production does not send, each naming
+ * the flag that gates it (see scripts/lib/withheld-headers.mjs). Every build,
+ * full or --only-path, removes them from every response in the artifact,
+ * selected path or not, because --check fails while any survives. With
+ * --source the build also reads services/control-plane/wrangler.toml and fails
+ * when a listed flag is "true" under [env.production.vars]: the header is then
+ * true, and its entry comes out so it is published.
+ *
+ * Withheld source content: an overlay path entry's `withheldFromSource` lists
+ * JSON pointers into the source path item (a request content type, a schema
+ * variant) that only a dark flag serves, each naming that flag. They are
+ * deleted from the base before the overlay is merged, because the merge can
+ * replace keys but never remove one. The build fails when a pointer no longer
+ * resolves in the source, or, with --source, when its flag is "true" in
+ * production; --check fails when one survives in the artifact without the
+ * overlay itself defining it.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import {
   PRIVATE_PATH_PREFIXES,
@@ -30,6 +52,16 @@ import {
   paths,
 } from './lib/paths.mjs';
 import { Report, flag, option } from './lib/report.mjs';
+import { scopedArtifact, selectedPaths } from './lib/scoped-openapi.mjs';
+import {
+  deletePointer,
+  findWithheldHeaders,
+  pointerResolves,
+  productionFlagValue,
+  withheldHeaderList,
+  withheldSourceList,
+  withholdHeaders,
+} from './lib/withheld-headers.mjs';
 
 const OVERLAY_HEADER_REF = '#/responseHeaders/';
 const COMPONENT_HEADER_REF = '#/components/headers/';
@@ -57,8 +89,13 @@ const FORBIDDEN_SUBSTRINGS = [
 ];
 
 const report = new Report('build-public-openapi');
+const onlyPaths = selectedPaths(process.argv.slice(2), ['--source'], ['--check']);
 
 const overlay = readJson(paths.overlay, 'overlay');
+const withheld = withheldHeaderList(overlay);
+for (const [where, message] of withheld.problems) report.fail(where, message);
+const withheldSource = withheldSourceList(overlay);
+for (const [where, message] of withheldSource.problems) report.fail(where, message);
 
 if (flag('check')) {
   if (!existsSync(paths.publicSpec)) {
@@ -68,6 +105,7 @@ if (flag('check')) {
   }
   const artifact = readJson(paths.publicSpec, 'artifact');
   auditArtifact(artifact, report);
+  auditWithheld(artifact, report);
   auditBytes(readFileSync(paths.publicSpec, 'utf8'), report);
   report.note('checked the committed artifact; the private spec was not read');
   printExampleDebt(overlay);
@@ -79,8 +117,22 @@ if (flag('check')) {
     process.exit(process.exitCode ?? 1);
   }
   classifyPaths(base, overlay, report);
-  const artifact = buildArtifact(base, overlay);
+  checkWithheldEntries(overlay, report);
+  checkWithheldSource(base, report);
+  let artifact = buildArtifact(base, overlay);
+  if (onlyPaths.length) {
+    artifact = scopedArtifact(readJson(paths.publicSpec, 'committed artifact'), artifact, onlyPaths);
+    report.note(`rebuilt only: ${onlyPaths.join(', ')}`);
+  }
+  // After scoping, so a header the committed artifact still carries on an
+  // unselected path is removed too.
+  const removed = withholdHeaders(artifact, withheld.entries);
+  for (const entry of withheld.entries) {
+    const count = removed.filter((item) => item.header === entry.header).length;
+    report.note(`withheld ${entry.header} (${entry.flag} is not on in production) from ${count} response(s)`);
+  }
   auditArtifact(artifact, report);
+  auditWithheld(artifact, report);
   const bytes = `${JSON.stringify(artifact, null, 2)}\n`;
   auditBytes(bytes, report);
 
@@ -163,6 +215,60 @@ function classifyPaths(base, overlay, report) {
   }
 }
 
+/**
+ * The overlay must not both document and withhold a header, and with --source
+ * a withheld header's flag must still be off in production.
+ */
+function checkWithheldEntries(overlay, report) {
+  for (const { where, header } of findWithheldHeaders(overlay, withheld.entries)) {
+    report.fail(
+      `overlay ${where}`,
+      `documents ${header}, which withheldResponseHeaders withholds. Remove one of the two.`
+    );
+  }
+  const source = option('source');
+  const flagged = [
+    ...withheld.entries.map(({ header, flag }) => ({ where: header, flag })),
+    ...withheldSource.entries.map(({ path, pointer, flag }) => ({ where: `${path} ${pointer}`, flag })),
+  ];
+  if (!source || flagged.length === 0) return;
+  const wranglerPath = join(source, 'services', 'control-plane', 'wrangler.toml');
+  if (!existsSync(wranglerPath)) {
+    report.note(`withheld headers: no ${wranglerPath}, so their flags were not checked`);
+    return;
+  }
+  const toml = readFileSync(wranglerPath, 'utf8');
+  for (const { where, flag } of flagged) {
+    if (productionFlagValue(toml, flag) === 'true') {
+      report.fail(
+        where,
+        `${flag} is "true" under [env.production.vars] in the source, so production serves this. Remove its withheld entry and publish it.`
+      );
+    }
+  }
+}
+
+/** A withheld pointer that no longer resolves in the source is a stale entry. */
+function checkWithheldSource(base, report) {
+  for (const { path, pointer } of withheldSource.entries) {
+    if (!pointerResolves(base.paths?.[path] ?? {}, pointer)) {
+      report.fail(`${path} ${pointer}`, 'is withheld but the source spec no longer has it. Remove the withheldFromSource entry.');
+    }
+  }
+}
+
+function auditWithheld(artifact, report) {
+  for (const { path, pointer, flag } of withheldSource.entries) {
+    if (pointerResolves(artifact.paths?.[path] ?? {}, pointer) && !pointerResolves(overlay.paths?.[path] ?? {}, pointer)) {
+      report.fail(`${path} ${pointer}`, `is withheld from the source until ${flag} is on in production, and the artifact still carries it.`);
+    }
+  }
+  for (const { where, header } of findWithheldHeaders(artifact, withheld.entries)) {
+    const { flag } = withheld.entries.find((entry) => entry.header === header);
+    report.fail(where, `documents ${header}, which is withheld until ${flag} is on in production.`);
+  }
+}
+
 function buildArtifact(base, overlay) {
   const artifact = {
     openapi: base.openapi ?? '3.0.3',
@@ -176,10 +282,11 @@ function buildArtifact(base, overlay) {
   // Only public paths, and only the operations the overlay documents.
   for (const [path, entry] of Object.entries(overlay.paths ?? {})) {
     if (entry.classification !== 'public') continue;
-    const basePath = base.paths?.[path] ?? {};
+    const basePath = structuredClone(base.paths?.[path] ?? {});
+    for (const { pointer } of withheldSource.entries.filter((item) => item.path === path)) deletePointer(basePath, pointer);
     const merged = {};
     for (const [method, operation] of Object.entries(entry)) {
-      if (method === 'classification' || method === 'gate' || method === 'reason') continue;
+      if (['classification', 'gate', 'reason', 'withheldFromSource'].includes(method)) continue;
       merged[method] = deepMerge(basePath[method] ?? {}, operation);
     }
     artifact.paths[path] = merged;
@@ -235,6 +342,7 @@ function deepMerge(base, patch) {
 // produced, which is why --check runs the same function on the committed file.
 
 function auditArtifact(artifact, report) {
+  auditUnitPricedModel(artifact, report);
   const pathNames = Object.keys(artifact.paths ?? {});
 
   if (pathNames.length === 0) {
@@ -249,6 +357,16 @@ function auditArtifact(artifact, report) {
       if (path.startsWith(prefix)) {
         report.fail(path, `a ${prefix} path survived the filter. This surface is never published.`);
       }
+    }
+  }
+
+  // A $ref to a component the artifact does not define renders as a broken
+  // schema in the playground. The overlay's schemas replace the base's, so a
+  // base schema a path references has to be transcribed into the overlay.
+  for (const ref of new Set(JSON.stringify(artifact).match(/"\$ref":"#\/components\/[^"]+"/g) ?? [])) {
+    const [, , group, name] = ref.slice(8, -1).split('/');
+    if (artifact.components?.[group]?.[name] === undefined) {
+      report.fail(ref.slice(8, -1), 'is referenced but not defined in components. Add it to overlay.public.json components.');
     }
   }
 
@@ -279,8 +397,10 @@ function auditArtifact(artifact, report) {
         report.fail(where, 'does not require customerApiKey.');
       }
 
-      const body = operation.requestBody?.content?.['application/json'];
-      if (operation.requestBody && !hasExample(body)) {
+      // Any media type may carry the example, so a multipart-only upload
+      // (an image edit, a transcription) is held to the same rule as JSON.
+      const bodies = Object.values(operation.requestBody?.content ?? {});
+      if (operation.requestBody && !bodies.some(hasExample)) {
         report.fail(where, 'has a request body with no example. DOCS_PLAN.md section 8 requires one.');
       }
 
@@ -304,6 +424,39 @@ function auditArtifact(artifact, report) {
         }
       }
     }
+  }
+}
+
+// A unit-priced model can appear without any token prices. Validate the actual
+// published schema, including its references, instead of checking one keyword.
+// Skipped when the artifact carries no ModelExtension (a fixture artifact), and
+// Ajv is loaded only then, so the build still runs where node_modules is absent.
+function auditUnitPricedModel(artifact, report) {
+  if (!artifact.components?.schemas?.ModelExtension) return;
+  const ajvModule = createRequire(import.meta.url)('ajv');
+  const Ajv = ajvModule.default ?? ajvModule;
+  const fixture = {
+    model_id: 'example/image',
+    display_name: 'Example image model',
+    author: 'Example',
+    endpoint_families: ['image_generations'],
+    provider_display_names: ['Example'],
+    capabilities: { audio: 'unknown', json_mode: 'unknown', streaming: 'unknown', tools: 'unknown', vision: 'unknown' },
+  };
+  try {
+    const validate = new Ajv({ strict: false, allErrors: true }).compile({
+      components: { schemas: artifact.components?.schemas ?? {} },
+      $ref: '#/components/schemas/ModelExtension',
+    });
+    if (!validate(fixture)) {
+      report.fail('ModelExtension', `unit-priced model without token rates must validate: ${JSON.stringify(validate.errors)}`);
+    }
+    const { model_id: omitted, ...missingRequired } = fixture;
+    if (validate(missingRequired)) {
+      report.fail('ModelExtension', 'the model_id requirement must still be enforced.');
+    }
+  } catch (error) {
+    report.fail('ModelExtension', `could not validate unit-priced model: ${error.message}`);
   }
 }
 
