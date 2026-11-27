@@ -7317,12 +7317,12 @@
         {
           "pointer": "/post/requestBody/content/application~1json",
           "flag": "EACHLABS_IMAGE26_ENABLED",
-          "reason": "The JSON edit body is the EachLabs GPT Image 2.6 request shape. EachLabs serving sits behind EACHLABS_IMAGE26_ENABLED (services/control-plane/src/providers/eachlabsImage26Flag.ts), stage internal in feature-flags.json and unset under [env.production.vars], so production does not serve it."
+          "reason": "The JSON edit body is the EachLabs GPT Image 2.6 request shape. EachLabs serving sits behind EACHLABS_IMAGE26_ENABLED (services/control-plane/src/providers/eachlabsImage26Flag.ts). On origin/main 040608e8 the flag is stage ga in feature-flags.json and set true under [env.production.vars], with production acceptance recorded as pending; the shape stays withheld until it is transcribed from the handler and reviewed for publication (internal SF-955)."
         },
         {
           "pointer": "/post/requestBody/content/multipart~1form-data/schema/anyOf",
           "flag": "EACHLABS_IMAGE26_ENABLED",
-          "reason": "The source offers the upload shape or EachlabsImageEditMultipartRequest. The EachLabs variant is dark in production for the same reason; the overlay publishes the upload shape alone."
+          "reason": "The source offers the upload shape or EachlabsImageEditMultipartRequest. The EachLabs variant is withheld for the same reason, pending the same transcription; the overlay publishes the upload shape alone."
         }
       ],
       "post": {
