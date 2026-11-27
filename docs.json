@@ -89,7 +89,9 @@
               },
               {
                 "group": "Education And Learning",
-                "pages": []
+                "pages": [
+                  "flashcard-and-quiz-generator"
+                ]
               },
               {
                 "group": "Productivity And Business",
