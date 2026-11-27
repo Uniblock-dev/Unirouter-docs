@@ -82,7 +82,9 @@
             "pages": [
               {
                 "group": "Creative And Media",
-                "pages": []
+                "pages": [
+                  "comic-and-storybook-maker"
+                ]
               },
               {
                 "group": "Education And Learning",
