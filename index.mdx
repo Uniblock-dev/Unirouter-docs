@@ -1,9 +1,9 @@
 ---
 title: "Hopscotch Gateway"
 description: "An OpenAI-compatible LLM router. Change one base URL and one API key, keep your OpenAI SDK, and call models across providers on one prepaid balance."
-status: write-now
+status: "write-now"
 gates: []
-type: overview
+type: "overview"
 ---
 
 Hopscotch Gateway is an OpenAI-compatible router. Change the base URL and the API key in the OpenAI SDK you already use, and that one client reaches models from many providers.
@@ -17,7 +17,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="openai/gpt-4o-mini",
+    model="openai-main/gpt-4o-mini",
     messages=[{"role": "user", "content": "Say hi in five words."}],
 )
 
@@ -51,7 +51,7 @@ Credit is prepaid. Requests are charged at the provider's rate, with no markup o
   </Card>
 </CardGroup>
 
-## Find your section
+## Next steps
 
 <CardGroup cols={2}>
   <Card title="Features" icon="stack-2" href="/features/overview">

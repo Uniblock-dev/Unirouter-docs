@@ -10,7 +10,7 @@ Models differ in what they will accept, not just in what they cost. Every entry
 in the catalog carries a `capabilities` object saying what this one can do, so
 you can decide before you spend a request finding out.
 
-## The five words
+## The five cababilities
 
 ```json
 {
@@ -35,7 +35,7 @@ It rides inside the `uniblock` block on every entry from `GET /v1/models` and on
 | `vision` | Does it take an image part in a message? See [Image inputs](/features/image-inputs). |
 | `audio` | Does it take audio input? |
 
-## Three answers, not two
+## What `yes`, `no` and `unknown` mean
 
 Each word is `yes`, `no`, or `unknown`, and the third one is the point.
 
@@ -44,9 +44,7 @@ model yet, not that the answer is negative. A model whose capabilities are all
 `unknown` is a model we have not learned anything about, not a model that can do
 nothing.
 
-The alternative would be to guess, and a guessed `no` is the worse mistake of the
-two: it hides a model that would have worked, silently, from everybody who
-filters on the field. So the catalog says it does not know.
+We could guess instead, but a wrong `no` does the most damage. Anyone who filters on that field would never see the model, and nothing would tell them it was missing. So when we don’t know, the catalog says `unknown`.
 
 What that means for your code:
 
@@ -57,46 +55,27 @@ What that means for your code:
 - **Branching on truthiness** is the bug this field exists to prevent. All three
   values are non-empty strings.
 
-## A capability is a description, not a gate
+## Capabilities don’t block requests
 
-Nothing on the request path checks your request against these words. If you send
-an image to a model whose `vision` is `no`, the request is forwarded and the
-provider refuses it in its own words, on its own status. We do not pre-empt that
-with a refusal of our own, and we do not translate the one you get.
+We don’t check your request against these values. If you send an image to a model whose `vision` is `no`, we forward the request anyway. The provider rejects it with its own error message and status code, and we pass that error back to you as-is.
 
 This is the same rule as everywhere else on the request path: your body reaches
 the provider as you wrote it, and the provider answers for it. See
 [Request parameters](/api-reference/parameters).
 
-The practical consequence is that the catalog is worth reading at the point where
-you *choose* a model, not at the point where you send. Choosing on the word is
-cheap. Discovering the answer from a failed request costs you a round trip, and
-tells you about one provider's copy of the model rather than about the model.
+So check the catalog when you pick a model, before you send anything. Reading a capability value costs nothing. A failed request costs you a round trip, and it only tells you how one provider serves the model.
 
 ## Where capabilities come from
 
-A capability word is a recorded answer rather than a claim we make. It is
-established from what a model's own sources publish and from what we observe
-when a model is exercised, and where those disagree, the stronger evidence wins.
-A word with no evidence behind it stays `unknown` rather than taking a default.
+Each capability value is an answer we’ve recorded. We base it on what the model’s own sources publish and on what we see when we run the model. When those disagree, we go with the stronger evidence. If we have no evidence, the value stays `unknown` and never falls back to a default.
 
-Two things follow from that, and both are worth knowing before you build on the
-field:
+Keep two things in mind before you build on these values:
 
-- **A word can change without the model changing.** New evidence about an
-  existing model moves the word. Read the catalog rather than caching it
-  indefinitely.
-- **The word describes the model as this catalog holds it**, which is not a
-  promise from the provider. It is the best answer available, said plainly, with
-  `unknown` used where there is no answer rather than a confident wrong one.
+- **A value can change even if the model doesn’t.** New evidence about a model can update its values, so re-read the catalog now and then. Don’t cache it forever.
+- **The value describes the model as it’s listed in this catalog.** It’s our best answer, but the provider hasn’t promised it. If we don’t have an answer, you’ll see `unknown` and never a confident guess.
 
 ## What is not here
 
-**A capability matrix in this documentation.** Which models can do what is a live
-fact that changes without a release on our side, so it belongs in the catalog and
-not on a page that would be wrong the first time it moved. Ask
-`GET /v1/models`.
+**A capability matrix.** Which models support what changes often, sometimes without any release on our side. A table here would be out of date the first time that happened, so the current answer lives in the catalog. Call `GET /v1/models`.
 
-**Per-provider capability detail.** A model served by two providers is two
-entries with two ids, and each carries its own answer. There is no finer view
-than that on the public API today.
+**Capability details per provider.** When two providers serve the same model, it appears as two entries with different ids, and each entry has its own capability values. That’s the most detailed view the public API offers today.

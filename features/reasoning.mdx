@@ -6,24 +6,13 @@ gates: ["18.62"]
 type: concept
 ---
 
-Some model lines produce reasoning tokens before they answer: text the model
-generates to work through the problem, which you are usually not shown and are
-always charged for. Nothing about that changes here, but three things about it
-are worth stating, because reasoning is where a request costs more than it looks
-like it should.
+Some models generate reasoning tokens before they answer. This is text the model writes to work through the problem. You usually don’t see it, but you always pay for it. Hopscotch doesn’t change any of that. Three things are still worth knowing, because reasoning is where a request most often costs more than you’d expect.
 
-## Asking for it
+## Control reasoning with `reasoning_effort`
 
-Use `reasoning_effort` where the model supports it. On Vertex Gemini it is
-translated into Google's thinking-level control; other providers can accept
-different values or native controls. See [Gemini on Vertex](/features/vertex-gemini)
-for a model-specific request.
+Use `reasoning_effort` where the model supports it. On Vertex Gemini we translate it into Google's thinking-level control; other providers may accept different values or their own native controls. See [Gemini on Vertex](/features/vertex-gemini) for a model-specific request.
 
-An unsupported value can be refused by the provider or during provider-specific
-translation. An empty or whitespace-only `reasoning_effort` is refused with a
-`400`, `code` `invalid_value` and `param` set to `reasoning_effort`. Gemini also
-rejects malformed levels and values unsupported by the selected model.
-See [Request parameters](/api-reference/parameters).
+The model decides which values it accepts. An unsupported value can be refused by the provider, or while we translate it for a specific provider. There's one value we always reject ourselves: an empty or whitespace-only `reasoning_effort` gets a `400`, `code` `invalid_value`, and `param` set to `reasoning_effort`. Gemini also rejects malformed levels and values the selected model doesn't support. See [Request parameters](/api-reference/parameters).
 
 ## Reading the completion and reasoning counts
 
@@ -67,33 +56,18 @@ it earns a price of its own because providers price it separately.
 See [Models](/features/models) for the whole vocabulary, and read what a request
 actually cost from your usage record rather than from a rate.
 
-## `max_tokens` matters more here than anywhere else
+## Set `max_tokens` high enough for reasoning and the answer
 
-Two reasons, and they pull in opposite directions.
+There are two reasons, and they push in opposite directions.
 
-**A reasoning model can spend your whole ceiling thinking.** Reasoning tokens
-count against `max_tokens` on most providers, so a ceiling that is comfortable
-for an ordinary model can be consumed before the answer starts. What you get then
-is a reply that is empty or cut off, with `finish_reason` reading `length`, and
-you have paid for the reasoning. Check `finish_reason` before you parse anything.
+1. **Set it too low, and the model can use it all on reasoning.** Most providers count reasoning tokens against `max_tokens`. A limit that works fine for a regular model can run out before a reasoning model starts its answer. You get an empty or cut-off reply with `finish_reason` set to `length`, and you still pay for the reasoning. Check `finish_reason` before you parse anything.
+2. **Leave it out, and we hold credit for the model’s full maximum.** While a request runs, we hold credit against its token limit. If you don’t send `max_tokens`, that limit is the model’s published maximum output, which is often large for reasoning models. The full hold comes back when the request settles, and you pay only for what the model produced. Until then, the hold takes up that much of your account’s spend rate cap. See [Rate limits and spend controls](/manage/spend-controls).
 
-**A request naming no ceiling holds the model's published maximum.** Credit is
-held against a ceiling while a request runs, and with no `max_tokens` in the body
-that ceiling is whatever the model publishes as its maximum output, which on a
-reasoning model is often large. The hold comes back in full at settlement and you
-are charged for what was produced, but while the request is in flight it occupies
-that much of your account spend rate cap. See
-[Rate limits and spend controls](/manage/spend-controls).
-
-So send `max_tokens`, and send one with room for the thinking and the answer
-both.
+So always send `max_tokens`, and make it large enough for both the reasoning and the answer.
 
 ## Streaming a reasoning model
 
-The stream is the provider's. Where a provider emits reasoning as its own kind of
-delta, that delta reaches you unchanged, and where it emits nothing until the
-thinking is done, the first thing you see is a long pause. Nothing here fills
-that pause, and nothing times it out sooner than the request deadline.
+The stream comes straight from the provider. If the provider sends reasoning as its own type of delta, you get that delta unchanged. If it sends nothing until the thinking is done, you’ll see a long pause before the first chunk. We don’t fill that pause, and we don’t time out the request before its normal deadline.
 
 The counts arrive at the end, on the usage comment line, as they do for any
 stream. A stream cut off part way carries no usage line, because there are no

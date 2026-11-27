@@ -30,7 +30,7 @@ curl https://api.hopscotchlabs.ai/v1/completions \
   -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "openai/gpt-4o-mini",
+    "model": "openai-main/gpt-4o-mini",
     "prompt": "Write one sentence about rivers.",
     "max_tokens": 60
   }'
@@ -45,7 +45,7 @@ client = OpenAI(
 )
 
 completion = client.completions.create(
-    model="openai/gpt-4o-mini",
+    model="openai-main/gpt-4o-mini",
     prompt="Write one sentence about rivers.",
     max_tokens=60,
 )
@@ -61,7 +61,7 @@ const client = new OpenAI({
 });
 
 const completion = await client.completions.create({
-  model: "openai/gpt-4o-mini",
+  model: "openai-main/gpt-4o-mini",
   prompt: "Write one sentence about rivers.",
   max_tokens: 60,
 });
@@ -103,13 +103,13 @@ charge are on the request's usage record, which you can read from the
 dashboard or from the API with the request id every response carries. See
 [Usage lookup](/features/usage-lookup).
 
-## Next
+## Next steps
 
 <CardGroup cols={2}>
-  <Card title="OpenAI compatibility" href="/get-started/migrate-from-openai">
+  <Card title="OpenAI compatibility" icon="plug-connected" href="/get-started/migrate-from-openai">
     The full list of endpoints, the fields we refuse, and the headers we add.
   </Card>
-  <Card title="Models" href="/features/models">
+  <Card title="Models" icon="cpu" href="/features/models">
     How to find which endpoint families a model is offered on.
   </Card>
 </CardGroup>

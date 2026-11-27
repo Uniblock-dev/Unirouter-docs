@@ -55,18 +55,20 @@ anything on this page.
 
 ## Requests
 
-Send `Content-Type: application/json` and a JSON body. The body is forwarded as
-you sent it: parameters are not rewritten, dropped, or validated against a
-schema of ours, so a parameter your client sends works as soon as the model
-behind it supports it.
+Send a JSON body with the header `Content-Type: application/json`.
 
-Model ids are `provider/model`, for example `openai/gpt-4o-mini`. The part before the first slash
-names the provider that serves the request, and everything after it is our name for that model on
-that provider: the provider's own id with the maker's namespace taken off, so a model a provider
-publishes as `openai/gpt-oss-120b` is called `groq/gpt-oss-120b` here. We send the provider its own
-spelling on your behalf. A bare id with no provider is refused with `400` and the code
-`model_id_not_pinned`. Call `GET /v1/models` for the exact strings you can use, and see
-[Models](/features/models) for the whole rule.
+We forward your body as you sent it. We don't rename or drop parameters, and we don't validate them against a schema of our own. If the model supports a parameter, you can use it right away. The few exceptions are listed in [Request parameters](/api-reference/parameters).
+
+## Model IDs
+
+Model IDs use the format `provider/model`, for example `openai-main/gpt-4o-mini`.
+
+- **Before the first slash:** the provider that serves your request.
+- **After the first slash:** our name for the model on that provider. This is the provider's own ID with the model maker's namespace removed. For example, Groq publishes `openai/gpt-oss-120b`, so here it's `groq/gpt-oss-120b`. When we send the request, we use the provider's original spelling for you.
+
+An ID without a provider, such as `gpt-4o-mini`, returns `400` with the code `model_id_not_pinned`.
+
+Call `GET /v1/models` to get the exact IDs you can use. For the full naming rules, see [Models](/features/models).
 
 ## Streaming
 

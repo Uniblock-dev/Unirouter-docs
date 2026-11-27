@@ -50,95 +50,92 @@ rest of the workspace keeps serving.
 | 401 | `key_expired` | Nothing. The key's own expiry date has passed. | Create a new key. Expired keys are never renewed. |
 | 503 | `paused_by_owner` | Nothing. The workspace owner has paused requests. | Lift the pause in Settings. |
 
-Every refusal uses the standard error envelope. Branch on `code`, since messages may
-be reworded. One further 429 meaning, for a provider pool we are protecting, is specified
-but not yet shipped. Until it ships, retry a 429 with none of these codes after a short
-pause, and quote the request id if it persists.
+Every refusal uses the standard error envelope. Branch on `code`. The wording of `message` may change.
+
+We've planned one more 429 case, for protecting a shared provider pool, but it hasn't shipped yet. Until it does: if you get a 429 without any of the codes above, wait a moment and retry. If it keeps happening, contact us with the request id.
 
 ## Pause every request
 
-Pause is the control for a runaway client or a weekend you would rather not be
-surprised by. It revokes nothing, so lifting it starts everything again.
+Use pause to stop a runaway client, or to avoid surprises over a weekend. Pausing doesn't revoke anything, so lifting it brings everything back.
 
-Before you press it, the screen states the effect in numbers:
+### Before you press it
+
+The screen shows you the impact in numbers:
 
 > Pausing refuses every request on all N live keys straight away, with nothing charged
 > for a refused request. Over the last 7 days this account made N requests, which is
 > the traffic that would have stopped. Nothing is deleted and no key is revoked.
 
-The request count is the trailing seven days of actual traffic, not a forecast.
+The request count comes from your actual traffic over the past 7 days.
 
-While paused, requests are refused with HTTP 503 and code `paused_by_owner`, and
-nothing is charged for them. Credit already held for requests that were running is
-still theirs. **Requests already in flight are not cut off.** Each finishes and is
-charged for what it really used.
+### While requests are paused
 
-Any member may read whether requests are paused. Only the owner may press or lift it,
-and lifting takes effect on the next request.
+- **New requests** are refused with HTTP 503 and code `paused_by_owner`. You aren't charged for them.
+- **Requests already running** finish normally and are charged for what they actually used.
+- **Credit already held** for those running requests stays with them.
+
+### Who can pause
+
+- Any member can see whether requests are paused.
+- Only the owner can pause or lift it.
+- Lifting takes effect on the very next request.
 
 <Note>
-  Pause is yours to lift. It is a different state from an account we have suspended,
-  which has its own answer and cannot be lifted from this screen.
+  You control pause, and you can lift it anytime. If we suspend an account, that's a separate state with its own error, and it can't be lifted from this screen.
 </Note>
 
 ## Spend rate cap
 
-The spend rate cap limits how much credit may be **held** per rolling 60 seconds.
-A new account starts at 100000 minor units (1000.00). An account opened before
-that default was raised keeps the cap it already holds, which is 5000 minor units
-(50.00) unless somebody changed it. Over the cap, requests are refused with HTTP 429 and code
-`spend_rate_exceeded`, carrying `Retry-After` in whole seconds, and they are admitted
-again within 60 seconds with nothing for you to do.
+The spend rate cap limits how much credit can be **held** in any rolling 60 seconds. A new account starts at 100000 minor units (1000.00). An account opened before that default was raised keeps the cap it already has, which is 5000 minor units (50.00) unless somebody changed it.
 
-Setting the cap is the owner's. Two rules apply:
+When you go over it:
 
-- **A cap of 0 is refused.** Stopping requests entirely is what the pause is for.
-- **Lowering always works**, to any figure at or above 1 minor unit. Raising stops at
-  the self-service ceiling until we raise it.
+- Requests are refused with HTTP 429 and code `spend_rate_exceeded`.
+- The response includes a `Retry-After` header, in whole seconds.
+- Requests go through again within 60 seconds. You don't need to do anything.
 
-### What it counts, which is not what you spent
+### Change the cap
 
-When a request is admitted we hold the most it could cost. That figure is the
-request's own `max_tokens` where it names one, and the model's published maximum
-output length where it does not. The request then settles for what it produced, and
-the rest of the hold comes back.
+Only the owner can set the cap.
 
-The window counts what was held, and nothing is taken back out of it. A released,
-expired or settled hold all count for their full 60 seconds. That is deliberate: a
-leaked key making thousands of small requests holds almost nothing at any instant.
+- **You can always lower it**, to any amount of 1 minor unit or more.
+- **You can raise it** up to the self-service ceiling. To go higher, ask us to raise the ceiling.
+- **A cap of `0` is refused.** To stop all requests, use pause.
 
-Two consequences follow:
+### How the cap counts spend
 
-- A minute of ordinary traffic that all completed still counts against the ceiling
-  for a minute afterwards.
-- On an expensive model, requests that omit `max_tokens` hold the model's whole
-  published maximum output. The cap can bind well below its own figure in real
-  spending a minute, because the credit it counts is credit you were never going to spend.
+The cap counts credit that's **held**, which is usually more than you end up spending. Here's how it works:
 
-The refusal's message says "reserved", which means held. The cap clears 60 seconds
-after the earliest hold counted, and `Retry-After` is computed from that same hold.
+1. **When a request starts,** we hold the most it could cost. We work that out from the request's `max_tokens`. If the request doesn't set `max_tokens`, we use the model's published maximum output length.
+2. **When the request finishes,** you're charged for what it actually produced, and the rest of the hold is released.
+3. **The cap keeps counting the full hold for 60 seconds** after it was made, whether the hold was settled, released or expired. Nothing is subtracted early.
+
+We count this way on purpose. A leaked key firing thousands of small requests holds very little at any one moment, but it adds up quickly over a minute.
+
+What this means for you:
+
+- A minute of normal traffic still counts against the cap for 60 seconds, even after every request has finished.
+- On an expensive model, each request without `max_tokens` holds the model's entire maximum output. The cap can then kick in while your real spend is well under its own figure, because most of what it is counting is credit you were never going to spend.
+
+The error message uses the word "reserved". That means held. The cap clears 60 seconds after the oldest hold it counted and `Retry-After` is calculated from that same hold.
 
 ### The lever: send `max_tokens`
 
-A client that names a realistic ceiling gets several times more requests a minute out
-of the same cap, **and is charged exactly what it was before**, because the charge has
-always been for what was produced.
+Set a realistic `max_tokens` on each request. You'll fit several times more requests per minute under the same cap, and **your charges stay exactly the same**, because you're always charged for what was produced.
 
 ```python Python
 completion = client.chat.completions.create(
-    model="openai/gpt-4o-mini",
+    model="openai-main/gpt-4o-mini",
     max_tokens=400,
     messages=[{"role": "user", "content": "Say hello."}],
 )
 ```
 
-If you are running a batch job, a load test or an evaluation sweep, change this first.
+Running a batch job, load test or eval sweep? Make this change first.
 
 ### Out of credit and over the cap at the same time
 
-You are told about the balance first. An account both out of credit and over its
-ceiling gets the 402, because the cap clears in 60 seconds and telling someone with no
-credit to slow down is advice that cannot work.
+If both happen at once, you get the out-of-credit error (HTTP 402) first. The cap clears by itself within 60 seconds, and slowing down won't help an account with no credit, so the balance is the thing to fix.
 
 ## How to
 
@@ -222,10 +219,10 @@ counter. The figure in force is shown in the Limits section of Settings.
 ## Next
 
 <CardGroup cols={2}>
-  <Card title="Credits and billing" href="/manage/credits-and-billing">
+  <Card title="Credits and billing" icon="wallet" href="/manage/credits-and-billing">
     Holds, available balance, and what happens at zero.
   </Card>
-  <Card title="Buy credit" href="/manage/buy-credit">
+  <Card title="Buy credit" icon="shopping-cart" href="/manage/buy-credit">
     Topping up, and the statement that explains it.
   </Card>
 </CardGroup>

@@ -21,10 +21,7 @@ This page answers one question: which headers this API reads from your request, 
 
 Two rules about everything else you send:
 
-- **`x-uniblock-*` and `x-hopscotch-*` request headers are reserved.** We remove
-  every inbound header in either namespace before doing anything with your
-  request. Sending one has no effect, and no header you send can change how a
-  request is routed or served.
+- `x-uniblock-* `**and** `x-hopscotch-* `**request headers are reserved.** We remove every inbound header in either namespace before doing anything with your request. Sending one has no effect, and no header you send can change how a request is routed or served.
 - **Your headers do not reach the model provider.** The upstream request is built
   from your body, and from nothing else you sent. If a parameter matters to a
   provider, send it in the body, which is forwarded as you wrote it.

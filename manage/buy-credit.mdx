@@ -15,15 +15,12 @@ page.
 
 ## Before you start
 
+You need two things:
+
+- **The owner or admin role in the workspace.** Developers and viewers can see the balance and the statement, but they can't buy credit. If they try, the request is refused with HTTP 403 and this message: `Only the workspace owner or an admin can manage its billing: its saved cards and the buying of credit.` This check happens before checkout opens, so nobody gets partway through a purchase that can't finish.
+- **At least 5.00 to buy.** That's the minimum credit you can receive in one purchase. Our fee, currently 0%, is added on top at checkout.
+
 <OwnerOnlyNote />
-
-You need to be the **owner** or an **admin** of the workspace. Developers and viewers
-can read the balance and the statement, and cannot buy. One who calls a purchase
-route gets HTTP 403 carrying
-the sentence above, so nobody starts a purchase that was never going to complete.
-
-You also need the smallest purchase we accept, which is **5.00 of credit**. That is
-the credit you receive; our fee, currently 0%, is added on top at the checkout.
 
 ## How to
 
@@ -94,34 +91,43 @@ the credit you receive; our fee, currently 0%, is added on top at the checkout.
 
 ## If something goes wrong
 
-**You left the payment page.** The screen says no card was charged and no credit was
-added, and you can start again. A saved card or Stripe Link wallet is untouched by
-this: nothing on any failure path in this product removes a saved payment method.
+**You left the payment page**
 
-**The purchase could not be started.** The amount you typed is preserved. Do not
-press Continue again straight away: each attempt opens its own checkout session, and
-a purchase that did start charges nothing unless you finish paying for it. Quote the
-request id shown with the failure if you need us.
+No card was charged and no credit was added. The screen confirms this, and you can start again whenever you're ready.
 
-**The credit has not arrived.** Reload the Balance tab. Credit lands only on the
-confirmed payment, so a purchase that has been paid arrives without any further
-action from you. If it has not arrived after a few minutes, quote the payment id from
-your statement.
+Your saved card or Stripe Link wallet stays saved. No error anywhere in Hopscotch removes a saved payment method.
+
+**The purchase couldn't start**
+
+The amount you typed is still in the box. Don't press **Continue** again straight away. Every press opens a new checkout session, and the first one may have started after all. An open session costs you nothing unless you finish paying.
+
+If you contact us, include the request id shown with the error.
+
+**Your credit hasn't arrived**
+
+Reload the **Balance** tab. Credit is added as soon as the payment is confirmed, and that happens automatically, so a paid purchase needs nothing more from you.
+
+Still missing after a few minutes? Contact us with the payment id from your statement.
 
 ## Read the statement
 
-The Statement tab lists every transaction, newest first, fifty lines to a page, with
-date filters. A purchase line carries the amount charged, the credit granted and the
-fee, as three sub-fields of the one line, which is what explains any gap between your
-card statement and your balance.
+The **Statement** tab lists every transaction, newest first, a page at a time. You can filter by date.
 
-The running balance on each page is the sum of your transactions up to that line. It is
-there so you can check our arithmetic. It is not your available balance: that is on the
-Balance tab and accounts for credit currently held for requests in flight.
+Each purchase appears as one line with three figures:
 
-The Statement tab is live today, one of the two tabs on the Billing screen alongside
-Balance. What you see there is the live record, not a preview of a screen still
-being designed.
+| Figure | What it shows |
+| :-- | :-- |
+| Amount charged | What your card paid |
+| Credit granted | What was added to your balance |
+| Fee | Our fee on that purchase |
+
+Together, these explain any difference between your card statement and your Hopscotch balance.
+
+**Running balance.** Each page shows a running balance: the total of your transactions up to that line. Use it to check our arithmetic.
+
+For the amount you can actually spend, go to the **Balance** tab. That figure subtracts credit currently held for requests that are still running, so it can be lower than the running balance.
+
+The Statement tab is live now. You'll find it next to **Balance** on the Billing screen, and it shows your real transaction record.
 
 ## Set the low credit notice
 
@@ -141,55 +147,70 @@ about it is a credential and nothing about it expires.
 
 ## Your saved card
 
-Your card, or your Stripe Link wallet, is kept by our payment provider so that the
-next purchase does not ask for it again. We store no card number and no expiry: the
-brand and the last four digits are read from the provider when they are shown, and a
-Link wallet is shown as Link with no last four digits, so there is nothing on our side
-that can go stale. A saved card or Link wallet can be removed, which means the next
-purchase asks for a card or Link again; it changes nothing about credit you have
-already bought and nothing about your balance.
+When you pay, our payment provider saves your card or Stripe Link wallet, so your next purchase doesn't ask for it again.
 
-The card controls are on the Billing screen's **Payment** tab, under **Your
-card**. Adding a card opens a setup session with our payment provider, where you can
-save a card or Stripe Link, and nothing is charged. With more than one card saved, **Make default** records which one
-pays and charges nothing. **Remove** asks you to confirm, and if the card you are
-removing is the one that pays while others remain, the screen asks which card
-takes over before it lets go of the old one.
+We don't store your card number or expiry date. Each time we show your card, we read the brand and last four digits straight from the provider, so the details you see are always current. A Link wallet shows as **Link**, with no last four digits.
+
+### Manage your cards
+
+Go to **Billing → Payment → Your card**.
+
+| Action | What happens |
+| :-- | :-- |
+| **Add a card** | Opens a setup session with our payment provider, where you can save a card or Stripe Link. Nothing is charged. |
+| **Make default** | When you have more than one card, picks which one pays. Nothing is charged. |
+| **Remove** | Asks you to confirm. If you're removing the card that pays and you have others saved, you'll choose which card takes over before the old one is removed. |
+
+Removing a card or Link wallet means your next purchase will ask for payment details again. Credit you've already bought and your balance stay exactly as they are.
 
 ## Auto reload
 
-By default nothing charges your card while you are away, and the **Auto reload**
-section on the Billing screen says so: "Off. You are only charged when you buy
-credits yourself."
+Auto reload is off by default, so your card is only charged when you buy credit yourself. The **Auto reload** section on the Billing screen shows this:
 
-Turning it on takes two figures and a card. **When credits fall below** is the
-threshold, and **Buy this many** is the credit bought each time the balance
-crosses it. Both are dollar figures; the amount is at least the smallest purchase
-we accept, and the threshold can be set to zero to turn the reload off again.
-With no card on file the screen asks for one first, because a reload with nothing
-to charge is not a reload. Once on, the summary line reads what will happen:
-"On. Buys AMOUNT when the balance falls below THRESHOLD, so requests never stop."
+> Off. You are only charged when you buy credits yourself.
 
-A reload that is declined does not retry forever. After a run of consecutive
-failed charges the reload stops, and the screen says so. When it stopped that way,
-adding a new card resumes it; a manual purchase does not. The threshold is separate from the low credit
-email's threshold below; the two do not have to agree.
+### Turn it on
 
-Removing your last saved card switches Auto reload off. The removal sets its
-threshold to zero and keeps the amount you chose to buy, and the removal's message
-says so: "Automatic top-up has been turned off because no card is left to charge.
-Add a card and switch it on again to resume." Unlike a stop after failed charges,
-adding a card does not switch it back on here: you turn it on again yourself.
+You need two amounts and a saved card.
 
-Setting either figure takes the same authority as buying credit: owner or admin.
+| Setting | What it does |
+| :-- | :-- |
+| **When credits fall below** | The threshold. A reload runs each time your balance drops below this amount. |
+| **Buy this many** | The credit bought on each reload. It must be at least the 5.00 minimum. |
 
-## Next
+Both are dollar amounts. If you have no card saved, the screen asks you to add one first, since a reload needs a card to charge.
+
+Once it's on, the summary line tells you exactly what will happen:
+
+> On. Buys AMOUNT when the balance falls below THRESHOLD, so requests never stop.
+
+**To turn it off,** set the threshold to 0.
+
+**Who can change it:** the owner or an admin, the same people who can buy credit.
+
+This threshold is separate from the threshold for the low credit email. You can set them to different amounts.
+
+### If a reload is declined
+
+Auto reload doesn't retry forever. After several failed charges in a row, it stops, and the screen tells you.
+
+To restart it, **add a new card**. A manual purchase won't restart it.
+
+### If you remove your last card
+
+Auto reload switches off. The threshold is set to 0 and your **Buy this many** amount is kept. You'll see this message:
+
+> Automatic top-up has been turned off because no card is left to charge. Add a card and switch it on again to resume.
+
+In this case, adding a card doesn't restart it automatically. Add a card, then switch auto reload back on yourself.
+
+## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Credits and billing" href="/manage/credits-and-billing">
+  <Card title="Credits and billing" icon="wallet" href="/manage/credits-and-billing">
     How billing works in full: the fee, holds, and what happens at zero.
   </Card>
-  <Card title="Spend controls" href="/manage/spend-controls">
+  <Card title="Spend controls" icon="adjustments" href="/manage/spend-controls">
     The spend rate cap and the pause, before you need them.
   </Card>
 </CardGroup>

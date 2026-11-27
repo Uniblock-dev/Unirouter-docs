@@ -35,13 +35,22 @@ redirect. Until it arrives, the purchase shows as pending.
 
 ## What a request costs
 
-A served request is charged what its model costs at the provider's rates, at face value, with
-no markup and no fee at request time. Charges are computed per usage type (input, cached input,
-cache writes, output and reasoning tokens), and the rates behind each charge are recorded with it.
+You pay what the model costs at the provider's rates. We add no markup, and nothing extra is charged when a request runs.
 
-Charges are stored in integer **micro-dollars** in USD, so a small request is not rounded away.
-Figures **you** type, such as the spend rate cap, the low balance threshold and a key's credit
-limit, stay in minor units, where 100 is 1.00.
+Each charge is broken down by usage type:
+
+- Input tokens
+- Cached input tokens
+- Cache writes
+- Output tokens
+- Reasoning tokens
+
+The rates used for each charge are saved with it, so you can always see how it was worked out.
+
+**Units**
+
+- **Charges** are stored in USD as whole micro-dollars (millionths of a dollar). Even a very small request is recorded at its real cost and doesn't get rounded down to zero.
+- **Amounts you type in**, such as the spend rate cap, the low balance threshold and a key's credit limit, use minor units, where 100 means 1.00.
 
 ## The three figures on your balance
 
@@ -51,18 +60,22 @@ limit, stay in minor units, where 100 is 1.00.
 | **Settled** | The sum of every transaction on your statement. |
 | **Held for requests in flight** | Credit set aside for requests that are still running. |
 
-Available is settled minus held. A request is admitted against a hold for the most it could cost.
-When it finishes, the hold comes back and you are charged for what it used. Omitting `max_tokens`
-holds more, which is why such a request can meet the spend rate cap sooner. See
-[Rate limits and spend controls](/manage/spend-controls).
+```text
+Available = settled − held
+```
 
-One component computes every balance, so your balance and usage figures cannot disagree.
+When a request comes in, we hold enough credit to cover the most it could cost. When it finishes, we release the hold and charge you for what it actually used.
+
+If you leave out `max_tokens`, the hold is bigger, so the request can reach your spend rate cap sooner. Setting a realistic `max_tokens` doesn't change what you pay. See [Rate limits and spend controls](/manage/spend-controls).
+
+Your balance and your usage figures are both calculated by the same component, so they always agree.
 
 ## Running out of credit
 
-**Nothing is charged for a request we refuse.** When available balance cannot cover a new
-request, it is refused with HTTP 402 and code `insufficient_credit`. The message names both
-figures:
+If your credit runs out while a request is streaming, we stop the stream. Its last `data:` line carries the standard error envelope with:
+
+- `type`: `insufficient_quota`
+- `code`: `balance_exhausted`
 
 ```json
 {
@@ -76,18 +89,22 @@ figures:
 }
 ```
 
-A request already streaming when credit runs out is **cut off**. The stream ends with a `data:`
-line carrying the same envelope, with type `insufficient_quota` and code `balance_exhausted`. The hold goes back. If no token
-counts arrived, you are charged nothing. The codes differ on purpose: a cut stream and a request
-that never started are different events. Buying credit clears both.
+We release the hold. If no token counts arrived before the stream stopped, you aren't charged.
+
+A request that's refused before it starts gets a different code, `insufficient_credit`. The two codes let you tell a stopped stream apart from a request that never ran. Buying credit fixes both.
 
 ## Every transaction is on your statement
 
-The Statement tab lists every transaction, newest first, fifty lines to a page. Each line shows when, the
-signed amount in minor units, its kind, and a quotable id: the payment id on a purchase, the
-request id on a charge. A **purchase line** carries the amount charged, the credit granted and the
-fee between them, which explains any gap between your card statement and your balance. A
-**running balance** on each page is the sum up to that line. It is not your available balance.
+The **Statement** tab lists every transaction, newest first, a page at a time. Each line shows:
+
+- When it happened
+- The amount, in minor units, with a + or − sign
+- The type of transaction
+- An id you can quote: the payment id for a purchase, or the request id for a charge
+
+**Purchase lines** show three amounts: what your card was charged, the credit you received, and the fee in between. If your card statement doesn't match your balance, the fee explains the difference.
+
+**Running balance**: each line shows the total of all transactions up to that point. This can differ from your available balance, because available also subtracts credit held for requests that are still running.
 
 Some charges carry one of three sentences, quoted exactly:
 
@@ -95,20 +112,16 @@ Some charges carry one of three sentences, quoted exactly:
 - `The provider did not report token counts, so the estimate was charged`
 - `Charged after the hold for this request had expired`
 
-## Who can do what
+## Who can view and manage billing
 
 <OwnerOnlyNote />
 
-Any member may read the balance and the statement. Buying credit and managing the card belong to
-the owner and admins, and the low credit setting to the owner alone. Card controls live on the
-Billing screen's Payment tab. A developer or viewer calling a billing route gets HTTP 403.
+Any member may read the balance and the statement. Buying credit and managing the card belong to the owner and admins, and the low credit setting to the owner alone. Card controls live on the Billing screen’s Payment tab. A developer or viewer calling a billing route gets HTTP 403.
 
 ## What this product does not do
 
-**It never charges your card unless you asked.** Auto reload is off by default. See
-[Buy credit](/manage/buy-credit#auto-reload).
+**We never charge your card unless you ask.** Auto reload is off by default. See [Buy credit](https://docs.hopscotchlabs.ai/manage/buy-credit.md#auto-reload).
 
-**We never see your card number.** Our payment provider holds it. Removing a saved card or Stripe Link
-wallet changes nothing about credit you already bought.
+**We never see your card number.** Our payment provider stores it. Removing a saved card or a Stripe Link wallet has no effect on credit you've already bought.
 
 <RequestIdNote />

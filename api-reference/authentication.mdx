@@ -16,25 +16,19 @@ no unauthenticated route on this API.
 
 ## Key format
 
-A key is a non-secret prefix followed by 43 random characters from the URL-safe
-base64 alphabet (`A-Z`, `a-z`, `0-9`, `-`, `_`).
+Every key starts with `ub_live_`, followed by 43 random characters from the URL-safe base64 alphabet (`A-Z`, `a-z`, `0-9`, `-`, `_`).
 
-| Prefix | Where the key works |
-|---|---|
-| `ub_live_` | Production |
-| `ub_stg_` | Staging |
-| `ub_dev_` | Development |
+Only the part after the prefix is secret. The prefix lets secret scanners recognise one of our keys if it ever gets pasted somewhere public.
 
-The prefix is there so a key pasted somewhere public is recognisable as ours by
-secret scanners, and so the environment a key belongs to is never a guess. The
-prefix is not secret; everything after it is.
+## Create a key
 
-Keys are created in the dashboard under Keys and shown once, at creation. We
-store a one-way hash, so we cannot show you a key again or recover one for you.
-If a key is lost, create a new one and revoke the old one.
+Create keys in the dashboard under **Keys**. Each key is shown once, when you create it, so copy it straight away.
 
-A key belongs to the workspace, not to the person who created it. It carries no
-personal identity, and the requests it makes are the workspace's requests.
+We store only a one-way hash of each key. That means we can't show you a key again or recover it. If you lose a key, create a new one and revoke the old one.
+
+## Who owns a key
+
+Keys belong to the workspace, not to the person who created them. A key carries no personal identity, and every request made with it counts as a workspace request.
 
 ## What a 401 means
 

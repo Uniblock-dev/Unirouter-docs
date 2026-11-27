@@ -1,9 +1,9 @@
 ---
 title: "Zero data retention"
-description: "Require that requests on our credentials go only to providers recorded as zero-data-retention, what that does and does not verify, and the receipts to come."
-status: partial
+description: "Send requests made with our credentials only to providers recorded as zero-data-retention: what the setting checks, what it doesn't, and receipts to come."
+status: "partial"
 gates: ["68.3"]
-type: concept
+type: "concept"
 ---
 
 import FeatureStatus from '/snippets/feature-status.mdx';
@@ -50,7 +50,7 @@ A blocked request is refused before it is sent, with HTTP 403, type `permission_
 ```json 403
 {
   "error": {
-    "message": "The workspace requires zero-data-retention providers, and \"openai/gpt-4o-mini\" is not served by one recorded as meeting that requirement. Turn the requirement off under Data handling, or route this request to a provider recorded as zero-data-retention.",
+    "message": "The workspace requires zero-data-retention providers, and \"openai-main/gpt-4o-mini\" is not served by one recorded as meeting that requirement. Turn the requirement off under Data handling, or route this request to a provider recorded as zero-data-retention.",
     "type": "permission_error",
     "param": null,
     "code": "no_zdr_eligible_provider",
@@ -90,7 +90,7 @@ So a workspace can require the requirement everywhere and exempt one key, or lea
 one key to it. A guardrail refusal names the guardrail instead of the workspace:
 
 ```text
-The guardrail "eu-only" on this key requires zero-data-retention providers, and "openai/gpt-4o-mini" is not served by one recorded as meeting that requirement. Change the guardrail, or route this request to a provider recorded as zero-data-retention.
+The guardrail "eu-only" on this key requires zero-data-retention providers, and "openai-main/gpt-4o-mini" is not served by one recorded as meeting that requirement. Change the guardrail, or route this request to a provider recorded as zero-data-retention.
 ```
 
 A guardrail can also require providers not training on inputs, with the same code and a message
@@ -103,21 +103,32 @@ that says so.
   instead="Both exist in the source tree behind the management API, which is not yet available to customers, and the receipt itself cannot yet say anything stronger than unverified. Nothing below is something you can do today."
 />
 
-**A storage destination you own.** You will register a bucket of your own: an AWS S3 bucket
-reached through a role you create for us, or a Cloudflare R2 bucket reached through a scoped token,
-plus a prefix. We prove we can write to it with one zero-byte object, which we then delete, and we
-store the credentials encrypted. Telemetry, never bodies, is then written to it. The AWS role must require an external id of `hopscotch:` plus your workspace id.
+### Coming soon: a storage destination you own
 
-**A receipt.** On request, we scan what we hold for your workspace and issue a signed receipt with a
-verdict of `certified` or `unverified`, a closed list of reasons, the counts behind them, a hash of
-the destination, and an HMAC-SHA256 signature. Receipts are append-only, and the most recent hundred
-are listable. Disconnecting your bucket issues a termination receipt and removes the credentials. It
-deletes nothing in your bucket.
+You'll be able to register your own bucket, plus a prefix:
 
-**Why every receipt is `unverified` today.** A certified verdict needs a plaintext scan of our own
-storage, and that scan is not built. Until it is, every receipt carries the reason
-`plaintext_scan_unavailable`. A receipt that can only say unverified is not a promise we will put on
-a customer page. The gate is named in this page's frontmatter.
+- **An AWS S3 bucket:** we connect through an IAM role you create for us. The role must require the external ID `hopscotch:`.
+- **A Cloudflare R2 bucket:** we connect with a scoped API token.
+
+To check access, we write one empty (zero-byte) test file to the bucket and then delete it. We store your credentials encrypted. After that, we write request telemetry to your bucket. We never write request or response bodies there.
+
+### Coming soon: signed receipts
+
+When you ask for a receipt, we scan everything we hold for your workspace and give you a signed receipt with:
+
+- a verdict: `certified` or `unverified`
+- the reasons for that verdict, taken from a fixed list
+- the counts behind those reasons
+- a hash of your storage destination
+- an HMAC-SHA256 signature
+
+Receipts can be added but never edited or removed. You can list the 100 most recent.
+
+**If you disconnect your bucket,** we issue a final termination receipt and remove your stored credentials. We don't delete anything in your bucket.
+
+#### Why every receipt says `unverified` today
+
+Before we can issue a `certified` receipt, we have to scan our own storage for plaintext data, and that scan isn't built yet. Until it is, every receipt comes back `unverified` with the reason `plaintext_scan_unavailable`. We won't show these receipts on customer pages as a guarantee until they can come back `certified`. The condition for changing this is recorded in this page's frontmatter.
 
 ## What this page does not claim
 

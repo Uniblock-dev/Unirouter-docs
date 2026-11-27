@@ -22,7 +22,7 @@ import os
 from llama_index.llms.openai_like import OpenAILike
 
 llm = OpenAILike(
-    model="openai/gpt-4o-mini",
+    model="openai-main/gpt-4o-mini",
     api_base="https://api.hopscotchlabs.ai/v1",
     api_key=os.environ["HOPSCOTCH_API_KEY"],
     is_chat_model=True,
@@ -47,7 +47,7 @@ if modelname not in ALL_AVAILABLE_MODELS:
     raise ValueError(f"Unknown model {modelname!r}. Please provide a valid OpenAI model name...")
 ```
 
-Every model id here is a `provider/model` pair, so none is in that dictionary. The class refuses `openai/gpt-4o-mini` even though it would accept `gpt-4o-mini`. The refusal is a `ValueError` raised in your own process, not a `400` from us. LlamaIndex reads `metadata` during a call, so it surfaces from an ordinary `complete` or `chat`, not at construction.
+Every model id here is a `provider/model` pair, so none is in that dictionary. The class refuses `openai-main/gpt-4o-mini` even though it would accept `gpt-4o-mini`. The refusal is a `ValueError` raised in your own process, not a `400` from us. LlamaIndex reads `metadata` during a call, so it surfaces from an ordinary `complete` or `chat`, not at construction.
 
 `OpenAILike` avoids this. It overrides `metadata` and uses the `context_window`, `is_chat_model` and `is_function_calling_model` you pass, with no lookup.
 

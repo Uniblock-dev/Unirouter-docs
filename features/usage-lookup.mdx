@@ -1,19 +1,21 @@
 ---
 title: "Usage lookup"
-description: "GET /v1/usage/{id} reads back the tokens, charge and outcome of one of your own requests with the API key that made it, no dashboard session needed."
-status: write-now
+description: "Look up the tokens, charge and outcome of any of your requests with GET /v1/usage/{id}, using the same API key and no dashboard sign-in."
+status: "write-now"
 gates: []
-type: guide
+type: "guide"
 ---
 
 import RequestIdNote from '/snippets/request-id-note.mdx';
 
-Every response carries a request id. `GET /v1/usage/{id}` takes that id and
-answers with the usage record the dashboard would show for it: the token
-counts, what it cost, whether it was served, and how long it took. It reads the
-same record the Activity screen reads, so the two never disagree, and it needs
-only the API key, so a job can account for its own spend without anyone
-signing in.
+Every response comes with a request id. Send that id to `GET /v1/usage/{id}` and you get back the usage record the dashboard shows for that request:
+
+- token counts
+- what it cost
+- whether it was served
+- how long it took
+
+The endpoint reads the same record as the Activity screen, so the numbers always match. All it needs is the API key, which means a script or job can track its own spend without anyone signing in.
 
 ## How to
 
@@ -33,7 +35,7 @@ curl https://api.hopscotchlabs.ai/v1/usage/REQUEST_ID \
   "object": "usage.request",
   "request_id": "REQUEST_ID",
   "occurred_at": "2026-10-20T14:03:11.412Z",
-  "model": "openai/gpt-4o-mini",
+  "model": "openai-main/gpt-4o-mini",
   "outcome": "served",
   "streamed": false,
   "usage": {
@@ -75,14 +77,17 @@ curl https://api.hopscotchlabs.ai/v1/usage/REQUEST_ID \
 | `latency_ms` | How long the request took, end to end, as we measured it. |
 | `note` | A sentence about what exists for this record. Today it says what the example above says: the bodies were never stored. |
 
-The fields a customer never sees stay fenced out: nothing about our cost, our
-added latency, or how many attempts it took is in this record.
+Internal details are left out of the record. It doesn’t include our cost, the latency we added, or how many attempts the request took.
 
 ## When a record is not found
 
-One answer covers every miss. A request another key made, a request in a
-different workspace, and an id that never existed all get the same 404, so the
-endpoint cannot be used to probe for other people's requests:
+Every miss returns the same 404. You get it when the request:
+
+- was made with a different key
+- belongs to another workspace
+- never existed
+
+All three cases look identical, so nobody can use this endpoint to find out whether someone else’s request exists.
 
 ```json 404
 {
@@ -96,14 +101,9 @@ endpoint cannot be used to probe for other people's requests:
 }
 ```
 
-The first sentence is the one to act on. The record is written after the
-response has been sent to you, so a lookup fired the instant a response
-arrives can run ahead of it. Retry a 404 once after a short pause before
-treating it as missing.
+Pay attention to the first sentence of the message: no record for that id is visible to this key. The usual reason is timing. We write the usage record after we send you the response, so a lookup you send the moment the response arrives can get there before the record does. If you get a 404, wait a moment and retry once before you treat the request as missing.
 
-Records age out on the retention window described on
-[Data and privacy](/manage/data-and-privacy#how-long-records-are-kept). A
-request older than that is a 404 here too; its charge stays on your statement.
+Records are deleted after the retention window described on [Data and privacy](/manage/data-and-privacy). A lookup for an older request also returns a 404, but its charge stays on your statement.
 
 ## Read your balance and spend
 
@@ -170,13 +170,13 @@ that parses it into a double keeps about fifteen significant digits; read the
 string routes above where every digit matters. Both count toward the same 60
 reads a minute.
 
-## Next
+## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Usage and metering" href="/manage/usage-and-metering">
+  <Card title="Usage and metering" icon="gauge" href="/manage/usage-and-metering">
     What one record holds and the outcome vocabulary.
   </Card>
-  <Card title="View activity" href="/manage/usage-and-metering">
+  <Card title="View activity" icon="clock" href="/manage/usage-and-metering">
     The same record on the dashboard, with filters.
   </Card>
 </CardGroup>

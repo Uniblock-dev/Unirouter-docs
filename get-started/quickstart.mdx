@@ -45,7 +45,7 @@ curl https://api.hopscotchlabs.ai/v1/chat/completions \
   -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "openai/gpt-4o-mini",
+    "model": "openai-main/gpt-4o-mini",
     "messages": [{"role": "user", "content": "Say hi in five words."}]
   }'
 ```
@@ -59,7 +59,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="openai/gpt-4o-mini",
+    model="openai-main/gpt-4o-mini",
     messages=[{"role": "user", "content": "Say hi in five words."}],
 )
 
@@ -75,7 +75,7 @@ const client = new OpenAI({
 });
 
 const response = await client.chat.completions.create({
-  model: "openai/gpt-4o-mini",
+  model: "openai-main/gpt-4o-mini",
   messages: [{ role: "user", content: "Say hi in five words." }],
 });
 
@@ -86,12 +86,21 @@ console.log(response.choices[0].message.content);
 
 The response is the OpenAI chat completion shape.
 
-## If it fails
+## Troubleshooting your first request
 
-A `401` means the key is missing or wrong. A `402` means the workspace does not have enough credit.
-Both arrive in the standard error body. See [Errors](/api-reference/errors).
+Every error uses the same JSON body. Branch on `error.code`, not `message`. Quote `error.request_id` (also the `x-hopscotch-request-id` header) if you contact support.
 
-## Next
+| Status | `code` | Cause | Fix |
+| --- | --- | --- | --- |
+| 401 | `invalid_api_key` | Key missing, not sent as a Bearer token, wrong shape, or not accepted. | Send `Authorization: Bearer <key>`. Check you copied the whole key. Lost keys can't be recovered, so create a new one on the Keys screen. |
+| 402 | `insufficient_credit` | The workspace can't cover the request's estimated maximum cost. | Have the workspace owner or an admin buy credit on the Billing screen. See [buying credit](https://docs.hopscotchlabs.ai/manage/buy-credit.md). |
+| 400 | `model_id_not_pinned` | `model` has no provider prefix. Common when migrating OpenAI code. | Use `openai-main/gpt-4o-mini`, not `gpt-4o-mini`. A `profile/` slug or `unirouter/auto` also works. |
+
+Don't retry these unchanged. Fix the key, credit, or model id first.
+
+A `404` with `model_not_found` is usually a typo. Run `GET /v1/models` to list what your key can call. All other codes are in [Errors](/api-reference/errors).
+
+## Next steps
 
 <CardGroup cols={2}>
   <Card title="Streaming" icon="bolt" href="/features/streaming">

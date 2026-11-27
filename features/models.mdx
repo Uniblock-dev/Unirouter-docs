@@ -1,9 +1,9 @@
 ---
 title: "Models"
-description: "How model ids are shaped, how to discover which models are callable right now, and the vocabulary a model's rate is expressed in."
-status: partial
+description: "How model ids are formatted, how to see which models you can call right now, and the terms used to express a model’s rate."
+status: "partial"
 gates: ["8.6", "8.7", "8.8", "8.40", "13.9", "18.58", "18.87", "22.1"]
-type: concept
+type: "concept"
 ---
 
 You name a model in the `model` field of a request, as you would with OpenAI. The name says which
@@ -14,13 +14,10 @@ provider you request, so one key and one endpoint reach models from more than on
 An id is a provider and a model name, split on the **first** slash:
 
 ```json
-{ "model": "openai/gpt-4o-mini" }
+{ "model": "openai-main/gpt-4o-mini" }
 ```
 
-The part after the slash is the provider's own id with the maker's namespace removed. A model a provider
-publishes as `openai/gpt-oss-120b` is `groq/gpt-oss-120b` here. An id with no namespace is unchanged, as in
-`anthropic/claude-opus-4-5`. Each name is fixed the first time we publish that model on that provider, so an
-id in your code stays put.
+The part after the slash is the provider’s own id, minus the maker’s namespace. If a provider publishes a model as `openai/gpt-oss-120b`, you call it `cerebras/gpt-oss-120b` here. Ids with no namespace stay as they are, like `anthropic/claude-opus-4-5`. We fix each name when we first publish that model on that provider, so ids in your code won’t change.
 
 A model carried by two providers has two ids and prices. [Response headers](/api-reference/headers)
 identify the provider that served the request.
@@ -29,47 +26,35 @@ The `model` field accepts three forms:
 
 | Form | What it does |
 |---|---|
-| `provider/model` | Requests that provider's catalog entry. Use an `id` from the model list for the pinned name. A shorter name resolves only if we hold it for that provider; otherwise the request is refused with a `404` `model_not_found` naming the provider and the id. |
+| `provider/model` | That provider's catalog entry. Use an `id` from the model list for the pinned name. A shorter name works only if we hold it for that provider; otherwise the request is refused with a `404` `model_not_found` naming the provider and the id. |
 | `profile/{identifier}` | A [routing profile](/features/routing-profiles) you built. |
 | `unirouter/auto` | Whichever route you made your default, or a list we publish for your cost tier. `hopscotch/auto` is a second spelling. |
 
 A bare id such as `gpt-4o-mini`, or a bare `opus`, is refused with `400` and the code `model_id_not_pinned`.
 Ask for ids rather than building them by hand.
 
-The single-model lookup, `GET /v1/models/{id}`, also accepts the provider's own spelling, so an old link or
-usage record still opens. The request path does not, so an id that works in a lookup may not be callable.
-This site publishes no list of models, families or providers, because a stale list is worse than none.
+`GET /v1/models/{id}` also accepts the provider’s own spelling, so old links and usage records still open. The request path doesn’t accept it, so an id that works in a lookup may not work in a request. This site doesn’t publish a list of models, families or providers, because a stale list does more harm than none.
 
-## Discovering what you can call
+## Discover models
 
-**Over the API.** `GET /v1/models` returns ids for the `model` field, prices, context windows,
-capabilities, currency and providers. `GET /v1/models/{id}` adds descriptions and lifecycle dates.
-Its `uniblock.supported_parameters` contains published declarations; `uniblock.parameters` holds
-recorded bounds and defaults. These are not exhaustive schemas or test results; an empty list
-means no publishable declaration. See [Request parameters](/api-reference/parameters#the-parameters-a-given-model-takes).
+**Over the API.** `GET /v1/models` returns the ids to use in `model`, plus prices, context windows, capabilities, currency and providers. `GET /v1/models/{id}` adds descriptions and lifecycle dates. In that response, `uniblock.supported_parameters` lists the parameters the provider has declared, and `uniblock.parameters` holds recorded bounds and defaults. Neither is a full schema or a test result, and an empty list means nothing publishable was declared. See [Request parameters](/api-reference/parameters#the-parameters-a-given-model-takes).
 
 ```bash
 curl https://api.hopscotchlabs.ai/v1/models \
   -H "Authorization: Bearer ub_live_XXXXXXXXXXXX"
 ```
 
-Percent-encode the id once or send it as it is. A double-encoded slash names no model and answers `404`.
+Encode the id once or send it as is. Double encoding the slash names no model and returns `404`.
 
-**In the dashboard.** The Models screen and the [Playground](/features/playground) offer the same catalog.
-The Models screen shows one row per model and folds its providers together, with price ranges. Opening a row
-gives one line per provider with its callable id. The row itself is not callable: take the `model` value from a provider line.
+**In the dashboard.** The Models screen and the [Playground](/features/playground) show the same catalog. The Models screen has one row per model, with providers combined and price ranges shown. Open a row to see one line per provider with its callable id. Copy the `model` value from a provider line, because the combined row can’t be called.
 
-A catalog row with no provider identity is left out rather than shown as a bare id. So is a model that names no endpoint it can be called on, such as chat or embeddings, even when it carries a price.
+Rows with no provider identity are hidden instead of shown as a bare id. So is a model that names no endpoint it can be called on, such as chat or embeddings, even when it has a price.
 
 ## A model is offered only when it is live
 
-A model appears only when we hold a working credential of our own for it, it is enabled on our side, and it
-carries a price we have decided. Publication does not guarantee successful output. A model with only a
-placeholder price is left out and answers as unknown when named.
+A model shows up only when all three of these are true: we hold a working credential of our own for it, it’s enabled on our side, and it has a price we’ve confirmed. Being listed doesn’t guarantee a successful response. A model with only a placeholder price stays hidden and comes back as unknown if you name it.
 
-Your own key for a provider changes which credential answers your calls. It cannot add a provider or a model.
-See [Bring your own key](/features/bring-your-own-key). A request for a model that is not live, or that your
-workspace may not use, is refused with an error that names the reason. See [Errors](/api-reference/errors).
+Your own provider key changes which credential serves your calls, but it can’t add a provider or a model. See [Bring your own key](/features/bring-your-own-key). If you request a model that isn’t live, or one your workspace can’t use, the error tells you why. See [Errors](/api-reference/errors).
 
 ## What a request costs
 
@@ -87,14 +72,8 @@ prompt     = input + cache_read + cache_write
 completion = output + reasoning
 ```
 
-Gemini reports reasoning separately from candidate output, so its `completion_tokens` does not include
-reasoning. Image and audio tokens can also have their own rates. See [Gemini on Vertex](/features/vertex-gemini).
+Gemini reports reasoning separately from candidate output, so its `completion_tokens` doesn’t include reasoning. Image and audio tokens can also have their own rates. See [Gemini on Vertex](/features/vertex-gemini).
 
-`input` excludes cached tokens, unlike a provider's `prompt_tokens`, which usually includes them. Cache reads
-are commonly discounted, and cache writes cost more on some providers and do not exist on others. A rate can
-carry a tier, a condition under which a different price applies, such as batch or priority. The default tier
-has no conditions.
+`input` excludes cached tokens, while a provider’s `prompt_tokens` usually includes them. Cache reads are often discounted. Cache writes cost extra with some providers, and others don’t have them at all. A rate can also carry a tier, which is a condition that switches the price, such as batch or priority. The default tier has no conditions.
 
-A charge names the rate revision in force when it was made. Changing any rate mints a new revision, so a later
-price change cannot rewrite a past charge. The catalog describes prices in this same vocabulary, but your usage record, not the catalog, is the
-authority on what a request cost.
+Each charge records the rate revision in force when it was made. Any rate change creates a new revision, so a later price change never alters a past charge. The catalog uses the same terms for prices, but your usage record is the final word on what a request cost.

@@ -22,7 +22,7 @@ import os
 from langchain_openai import ChatOpenAI
 
 llm = ChatOpenAI(
-    model="openai/gpt-4o-mini",
+    model="openai-main/gpt-4o-mini",
     base_url="https://api.hopscotchlabs.ai/v1",
     api_key=os.environ["HOPSCOTCH_API_KEY"],
 )
@@ -38,7 +38,7 @@ print(llm.invoke("Say hi in five words.").content)
 import { ChatOpenAI } from "@langchain/openai";
 
 const llm = new ChatOpenAI({
-  model: "openai/gpt-4o-mini",
+  model: "openai-main/gpt-4o-mini",
   apiKey: process.env.HOPSCOTCH_API_KEY,
   configuration: {
     baseURL: "https://api.hopscotchlabs.ai/v1",

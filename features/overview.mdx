@@ -10,14 +10,11 @@ This section covers what the API does once your first request works. Every page
 here describes behaviour you reach through the same endpoint and the same key,
 so nothing below needs a second integration.
 
-Three questions bring people here, and the groups in the sidebar answer one
-each.
+People come to Features with four questions, and each sidebar group answers one.
 
 ## Which model should I name?
 
-Model ids carry their provider, the set of callable models is a live fact rather
-than a documented list, and models arrive and retire on their providers'
-schedules rather than ours.
+Every model id starts with its provider. Which models you can call changes live, because providers add and retire models on their own schedules. Check the catalog instead of relying on a list in these docs.
 
 <CardGroup cols={3}>
   <Card title="Models" icon="box" href="/features/models">
@@ -33,9 +30,7 @@ schedules rather than ours.
 
 ## What can I put in a request?
 
-These are the request-shaping features. Each is the OpenAI parameter you already
-know, with a note on what differs when a router rather than a single provider is
-serving it.
+These features shape what you send in a request. Each works like the OpenAI parameter you already know, and each page notes what changes when a router sits in front of the providers.
 
 <CardGroup cols={3}>
   <Card title="Streaming" icon="wave-sine" href="/features/streaming">
@@ -60,8 +55,7 @@ serving it.
 
 ## Which endpoint do I call?
 
-Chat completions is the one most people start with. The ones below serve on the
-same key, the same model ids and the same balance.
+Most people start with chat completions. The endpoints below use the same key, model ids and balance.
 
 <CardGroup cols={2}>
   <Card title="Responses API" icon="message-2" href="/features/responses-api">
@@ -91,9 +85,7 @@ same key and the same balance as chat. Image generation is described in
 
 ## What happens when something goes wrong?
 
-Routing is the part of the product you did not have when you called a provider
-directly, so it is the part worth reading before an incident rather than during
-one. Guardrails are the part that stops a key before it becomes an incident.
+Routing is new compared with calling a provider directly, so read about it before an incident instead of during one. Guardrails stop a key from causing one in the first place.
 
 <CardGroup cols={2}>
   <Card title="Routing profiles" icon="route" href="/features/routing-profiles">

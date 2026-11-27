@@ -1,14 +1,16 @@
 ---
 title: "Usage and metering"
-description: "What each request records and what is never stored, how to read Usage and Activity, reconcile a statement line, and retention."
-status: partial
+description: "What each request records and never stores, how to read the Usage and Activity screens, how to match a statement line to a request, and record retention."
+status: "partial"
 gates: ["5.4", "5.11", "5.12", "5.18", "18.62"]
-type: guide
+type: "guide"
 ---
 
 import RequestIdNote from '/snippets/request-id-note.mdx';
 
-Every request that reaches Hopscotch produces one usage record. The Usage and Activity screens read those records, your totals are summed from them, and each charge on your statement is explained by one. A record holds metadata about the request. It never holds your prompt or the model's reply.
+Every request that reaches Hopscotch creates one usage record. The record holds facts about the request: when it ran, which model answered, what happened, how many tokens it used and what it cost. Your prompt and the model's reply are never in it.
+
+Everything on this page is built from those records. The Usage screen adds them up, Activity lists them one by one, and every usage charge on your statement points back to one of them.
 
 ## What one record holds
 
@@ -28,38 +30,62 @@ Every request that reaches Hopscotch produces one usage record. The Usage and Ac
 | `costMinor` | What the request charged, in integer minor units. Null means it was never priced. |
 | `latencyMs` | The total time you waited, in milliseconds. |
 
-**Null is never zero.** A count that never reached us renders as `unknown`, not `0`. A real charge beside two zeros would look like a billing bug, so an unmeasured count never renders as a measurement.
+Three things to know when you read these fields:
 
-**The list is a fence, not a sample.** Figures about our own performance and supply are not in it. Every customer-facing usage endpoint is checked against the same list.
+**A missing count shows as** `unknown`**.** If a count never reached us, the field is null and the screens show `unknown`. We never fill the gap with `0`. A real charge next to two zeros would look like a billing bug, so anything we didn't measure stays marked as unmeasured.
 
-**Your own key is metered too.** A request served on a provider key your workspace brought gets a usage record like any other, and the record says so. Those requests are counted apart from the ones we served. See [Bring your own key](/features/bring-your-own-key).
+**This list is complete.** These fields are everything a customer-facing usage endpoint can return, and every one of those endpoints is checked against this list. Internal figures about our own performance and provider supply aren't included.
 
-## The outcome vocabulary
+**Requests on your own provider key are metered too.** A request that runs on a provider key your workspace brought still gets a usage record, with `servedOnOwnKey` set to true. These requests are counted separately from the ones we served. See [Bring your own key](/features/bring-your-own-key).
 
-`outcome` answers "what became of this request". The set is closed and grows only when a feature needs a new value.
+## Outcomes
 
-| Outcome | Meaning |
-|---|---|
-| `served` | The model answered and you were charged. |
-| `refused_zero_balance` | Refused at admission: not enough available credit. Charged nothing. |
-| `refused_rate_capped` | Refused by your spend rate cap. Charged nothing. |
-| `refused_paused_by_owner` | The owner has paused requests. Charged nothing. |
-| `refused_model_not_live` | The model could not be served. Charged nothing. |
-| `refused_not_permitted` | The caller was not allowed to make this request. Charged nothing. |
-| `refused_invalid_request` | The request could not be served as sent. Charged nothing. |
-| `refused_platform_unavailable` | No provider was attempted. Charged nothing. |
-| `customer_disconnected` | You closed the connection before the provider answered. Charged nothing. |
-| `provider_failed` | A provider answered with a failure. |
-| `provider_rate_limited` | A provider refused us for rate. |
-| `terminated_zero_balance` | A stream was cut off when the credit ran out. |
-| `terminated_deadline` | The request hit our request deadline and was ended. |
-| `stream_incomplete` | The stream ended without the counts that close it. |
-| `usage_metadata_missing` | No usage figures arrived with the reply. |
-| `usage_metadata_unreadable` | Usage figures arrived and could not be read. |
+`outcome` tells you what happened to the request. The list of values is fixed, and we only add a new one when a feature needs it.
+
+**Served**
+
+| Outcome | What happened |
+| :-- | :-- |
+| `served` | The model answered. Charged. |
+
+**Refused: charged nothing**
+
+| Outcome | What happened |
+| :-- | :-- |
+| `refused_zero_balance` | Refused at admission because you didn't have enough credit available. |
+| `refused_rate_capped` | Refused by your spend rate cap. |
+| `refused_paused_by_owner` | The workspace owner has paused requests. |
+| `refused_model_not_live` | The model couldn't be served. |
+| `refused_not_permitted` | The caller wasn't allowed to make this request. |
+| `refused_invalid_request` | The request couldn't be served as sent. |
+| `refused_platform_unavailable` | No provider was tried. |
+
+**Cancelled: charged nothing**
+
+| Outcome | What happened |
+| :-- | :-- |
+| `customer_disconnected` | You closed the connection before the provider answered. |
+
+**Stopped by a provider or a limit**
+
+| Outcome | What happened |
+| :-- | :-- |
+| `provider_failed` | The provider answered with a failure. |
+| `provider_rate_limited` | The provider turned the request away for rate reasons. |
+| `terminated_zero_balance` | A stream was cut off when your credit ran out. |
+| `terminated_deadline` | The request hit its deadline and was ended. |
+
+**Charged, but final token counts never arrived**
+
+For these five outcomes the token figures show `unknown`. The charge is whatever settled against the hold taken when the request was admitted.
+
+| Outcome | What happened |
+| :-- | :-- |
+| `stream_incomplete` | The stream ended before the counts that close it arrived. |
+| `usage_metadata_missing` | The reply came with no usage figures. |
+| `usage_metadata_unreadable` | Usage figures arrived but couldn't be read. |
 | `usage_not_reported_by_provider` | The provider served the request and reported no counts. |
-| `rebuilt_from_ledger` | The record was reconstructed from the transaction it caused on your statement. |
-
-The last five are outcomes where a charge exists and final counts never did. Their token figures read `unknown`, and the charge is what settled against the hold.
+| `rebuilt_from_ledger` | We rebuilt the record from the transaction the request created. |
 
 ## What is never recorded
 
@@ -79,15 +105,17 @@ Usage is the sign-in screen. It reads one window at a time (24 hours, 7 days, 30
 - **Breakdowns** by model, provider, key and member.
 - **Your balance**, read from the one component allowed to compute it.
 
-**Pace.** Usage also shows the window's daily pace, the days of credit that leaves and the date the balance would run out. Changing the range changes the pace. Very low spend reads "under a cent a day", and a balance lasting beyond ten years says so instead of naming a distant date. The panel is hidden when there is nothing to project from: no spend, or a zero balance.
+**Pace.** Usage shows your average daily spend for the selected range, how many days your balance will last at that rate, and the date it would run out. Pace is recalculated when you change the range. If you spend very little, it says "under a cent a day". If your balance would last more than ten years, it says so rather than showing a far-off date. The panel is hidden when there's nothing to project from, meaning no spend in the range or a zero balance.
 
-**Freshness.** The screen shows when the newest request in the window started and when the figures were read. Usage figures are available within 60 seconds of a request completing. Sixty seconds is the promise, not the typical case.
+**Freshness.** The screen shows two times: when the newest request in the range started, and when the figures were last read. Requests appear in Usage within 60 seconds of completing. That's the most we commit to, and most requests show up faster.
 
-**Windows longer than retention.** Usage records are kept for 90 days, so a 1 year window shows what is still kept, not a full year. Your statement goes back further, because transactions are never purged.
+**Ranges longer than 90 days.** Usage records are kept for 90 days, so a one-year range only shows what's still on record. Your statement goes back further, because transactions are never deleted.
 
 ## Activity: one row per request
 
-Activity lists every request this workspace has made, newest first, one row per request, 25 to a page unless you choose 50 or 100. Your browser remembers that choice. Rows are ordered by time, then request id, so a row cannot cross a page boundary between two reads.
+Activity lists every request this workspace has made, newest first, one row per request. You get 25 rows a page, or 50 or 100 if you choose, and your browser remembers that choice.
+
+Rows are sorted by time and then by request id. That keeps paging stable: a row won't appear on two pages or slip between them while you click through.
 
 | Column | Shows |
 |---|---|
@@ -101,39 +129,58 @@ Activity lists every request this workspace has made, newest first, one row per 
 | Took | Milliseconds. |
 | Request id | The first eight characters, linking to the single request view. |
 
-Reading the column values:
+Reading the values:
 
-- **A `backup` mark beside the provider** means the answer came back through a backup route. The model you asked for is still the one that answered. An API caller sees the same fact in the `x-hopscotch-served-via` header, described under [Headers](/api-reference/headers).
-- **Cancelled** is a request you closed before the provider answered. It was charged nothing. The filter's provider error and refused choices leave it out. Refused and provider error rows draw in a distinct color. The exact code is on the single request view.
-- **`unknown` is not zero.** A count never reported reads `unknown`. Collapsing it into `0` would turn an outage into a page of free requests.
-- **`unpriced` is not free.** It appears only on rows recorded before 2026-09-10. Since then a served request is always charged, from the amount you accepted at admission where nothing better can be worked out. A refused request carries a real `0`, and it is an ordinary row, never hidden.
+- `backup `**next to the provider** means the answer came through a backup route. The model you asked for still answered. API callers see the same thing in the `x-hopscotch-served-via` header. See [Headers](https://docs.hopscotchlabs.ai/api-reference/headers.md).
+- **Cancelled** means you closed the request before the provider answered. Nothing was charged. The "provider error" and "refused" filters leave cancelled rows out.
+- **Refused and provider error rows** are drawn in their own color. Open the request to see the exact code.
+- `unknown` means no count was reported. Showing it as `0` would make an outage look like a page of free requests.
+- `unpriced` only appears on rows recorded before 2026-09-10. Since then every served request has a charge. When nothing more precise can be worked out, the charge is the amount you accepted at admission.
+- **A refused request** shows a real charge of `0`. It's listed like any other row.
 
 ### Filters
 
-The filters narrow the same list and compose. A filtered view is an address you can bookmark. A value the screen cannot read is dropped and named.
+| Filter | Choices | Default |
+| :-- | :-- | :-- |
+| Model | Any model, or one this workspace has called | Any model |
+| Outcome | Any outcome, served, provider error or refused | Any outcome |
+| From | Start date, included, in UTC | Empty |
+| To | End date, excluded, in UTC | Empty |
 
-| Filter | Options | Default |
-|---|---|---|
-| Model | Models this workspace has called. A renamed model still matches rows recorded under its old name. | Any model |
-| Outcome | Any outcome, served, provider error, or refused. | Any outcome |
-| From | A calendar date, inclusive, applied to when the request started, in UTC. | Empty |
-| To | A calendar date, exclusive, applied to when the request started, in UTC. | Empty |
-
-Shortcuts for the last day, week and month fill the date fields. There is no request id filter: click the truncated id in a row to reach one request.
+- Filters combine, and each filtered view has its own URL you can bookmark.
+- If the URL contains a value the screen can't read, the screen drops it and tells you which one.
+- Shortcuts for the last day, week and month fill in the dates for you.
+- There's no request id filter. To open one request, click its id in the row.
 
 ### Three ways to see no rows
 
-1. **Nothing has ever run here.** The screen invites a first request.
-2. **The filter matched nothing.** The screen offers to clear it.
-3. **The range reaches past what we keep.** The screen names the retention window.
+The screen tells you which of these applies:
+
+1. **Nothing has run in this workspace yet.** It invites you to send a first request.
+2. **Your filters matched nothing.** It offers to clear them.
+3. **Your date range goes back further than we keep records.** It tells you how long the retention window is.
 
 ## How to
 
 ### Look up one request
 
-Every response carries `x-hopscotch-request-id`, and every error envelope repeats it as `request_id`. Click the id in any row to open the single request view. It repeats the row in full, with the streamed flag and the prompt, completion and total tokens, and shows when the figures were read, separately from when the request ran.
+Every response carries the request id in two headers:
 
-A request id from another workspace and one that never existed both find nothing, so the lookup cannot reveal whether an id exists elsewhere. A request past the 90 day window is answered by naming the window, and its transaction stays on your statement.
+- `x-hopscotch-request-id`, which is ours
+- `x-request-id`, which is the one the official OpenAI SDKs show on their error objects
+
+Every error envelope repeats it as `request_id`. Include it whenever you ask us about a request, so we know exactly which one you mean.
+
+To open a request, click its id in any Activity row. The single request view shows everything in the row, plus:
+
+- whether the reply was streamed
+- prompt, completion and total tokens
+- when the figures were read, shown separately from when the request ran
+
+A few cases to know about:
+
+- **An id from another workspace and an id that never existed look the same.** Both find nothing, so a lookup can't reveal whether an id exists somewhere else.
+- **A request older than 90 days** isn't found, and the screen names the retention window. Its charge is still on your statement.
 
 ### Reconcile a statement line with a request
 
@@ -151,36 +198,41 @@ A `usage` line on your statement carries our request id as its cause. That is th
   </Step>
 </Steps>
 
-Usage figures and your balance are the same charges read two ways, matched by request id with no tolerance for a difference. If they disagree we are told, rather than you having to find it.
+We also run this check ourselves. Usage figures and your balance are the same charges read two ways, and we match them by request id. Any difference at all alerts us, so you shouldn't have to be the one who finds it.
 
-Two cases carry more than the amount:
+Two kinds of lines need a little more context:
 
-- **A charge with an explanation.** Some lines say the counts were not confirmed, the provider reported none, or the hold had expired when the charge settled.
-- **A served request with no cost figure.** When token counts never arrived, the request settles against its hold and the usage row cannot yet state the amount. The totals name how many such requests fall in the window, so they read as incomplete.
+- **A charge with a note.** Some lines say the counts weren't confirmed, the provider reported none, or the hold had expired by the time the charge settled.
+- **A served request with no cost yet.** If token counts never arrived, the request settles against its hold, and the usage row can't show the amount yet. The window totals say how many of these requests they include, so you can tell the totals are incomplete.
 
 ## Who sees what
 
-Totals and the breakdowns by model and provider are workspace facts, and every member sees them whole. Breakdowns by key and by member are scoped: owners and admins see every line, and everybody else sees the keys they are accountable for or named on, plus their own row. A per-member figure is accountability, not proof of presence, because an API key is a bearer credential.
+| Figures | Who can see them |
+| :-- | :-- |
+| Totals, breakdown by model, breakdown by provider | Every member, in full. |
+| Breakdown by key, breakdown by member | Owners and admins see every line. Other members see the keys they're responsible for or named on, plus their own row. |
+
+A per-member figure tells you whose key or account a request is tied to. It can't prove who actually sent it, because anyone holding an API key can use it.
 
 ## How long records are kept
 
 > Usage records are kept for 90 days. The guaranteed minimum is 62 days, which is two full billing months.
 
-Ninety days is the configured window in force, read by both the purge job and the screens. Sixty-two days is the floor beneath it, so support can quote a request from two full billing months back.
+Usage records are kept for 90 days. The job that deletes old records and the screens you read both use that same setting. It will never go below 62 days, so support can always look up a request from two full billing months back.
 
-When a record passes the window it is deleted. **The charge survives**, because its transaction is never purged, so a balance can still be explained line by line. A date filter that reaches past the window says so rather than returning an empty list.
+When a record passes 90 days, it's deleted. **The charge stays on your statement**, because transactions are never deleted. You can still explain your balance line by line.
 
-The Usage and Activity screens are shipped, and the fields, outcomes and window above are what customers read today.
+If a date filter reaches past the window, the screen tells you, so you know why older rows are missing.
 
-## Next
+The Usage and Activity screens are live. The fields, outcomes and retention window on this page are what you see today.
+
+## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Credits and billing" href="/manage/credits-and-billing">
+  <Card title="Credits and billing" icon="wallet" href="/manage/credits-and-billing">
     How charges reach your balance and your statement.
   </Card>
-  <Card title="Data and privacy" href="/manage/data-and-privacy">
+  <Card title="Data and privacy" icon="shield-half" href="/manage/data-and-privacy">
     What is recorded about a request, what is not, and how long it is kept.
   </Card>
 </CardGroup>
-
-<RequestIdNote />

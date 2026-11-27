@@ -11,129 +11,70 @@ different native API, including Vertex Gemini, receive translated fields. This
 page describes admission checks and parameter metadata; the endpoint schema and
 provider guide describe supported request controls.
 
-## What is read
+## What we read
 
-Admission reads two things out of your body, both to work out what the request
-could cost before it is sent:
+Before we send your request, we read two fields to work out what it could cost. Reading them doesn't change them.
 
-| Field | Why it is read |
-|---|---|
-| `model` | To find the provider, the rate, and whether we can serve it at all. |
-| `max_tokens`, or `max_completion_tokens` | To size the credit held while the request runs. When both are present, the larger is used. |
+| Field | Why we read it |
+| :-- | :-- |
+| `model` | To find the provider and the rate, and to check that we can serve the model. |
+| `max_tokens` or `max_completion_tokens` | To decide how much credit to hold while the request runs. If you send both, we use the larger value. |
 
-Neither read changes the field, and the two fields answer differently when the
-value cannot be made sense of.
+If we can't make sense of a value, the two fields are handled differently:
 
-A ceiling this cannot read falls back to being treated as absent rather than
-being corrected, so credit is held at the model's published maximum output and
-the provider answers for its own body. `model` has no such fallback: it is the
-one field admission cannot proceed without, so a missing model and a model id in
-a shape this does not accept are both refused here, before any provider is
-called. Both refusals are in [The refusals that are ours](#the-refusals-that-are-ours)
-below, and both name a `param`, which is how you tell them from the provider's.
+- **An output ceiling we can't read** is treated as missing. We hold credit at the model's published maximum output, leave the value in your body, and let the provider respond to it.
+- **A missing or malformed** `model` is refused before any provider is called, because we can't continue without it. Both refusals name a `param`, which is how you tell them apart from provider errors.
 
-## What is rewritten
+## What we change
 
-Admission rewrites apply on every key, with additional restrictions on the platform's own provider
-keys, [listed below](#the-fields-refused-on-the-platforms-own-provider-keys): an
-omitted `store` on Responses is sent as `false`, and three routing fields a
-reseller provider reads are removed from a chat body. All are named here because a body that arrives different
-from the one you sent should never be something you discover from a provider's
-error message.
+These changes apply on every key. We list them all so you never have to discover a changed body from a provider's error message.
 
-**`model`, when you asked for a route rather than a model.** A request naming
-`profile/{identifier}` or `unirouter/auto` is a request for a list of models
-tried in order, so the body that reaches a provider carries the id of the model
-being tried on that attempt. See [Routing profiles](/features/routing-profiles).
+- `model`**, when you name a route.** Sending `profile/{identifier}` or `unirouter/auto` asks us to try a list of models in order. Each attempt reaches the provider with the ID of the model being tried. See [Routing profiles](https://docs.hopscotchlabs.ai/features/routing-profiles.md).
+- `max_tokens`**, when the provider requires it.** Some providers refuse requests that don't include `max_tokens`. If your body has neither `max_tokens` nor `max_completion_tokens` and the provider is one of these, we add `max_tokens` set to the model's published `max_output_tokens`. That's the same figure we were already holding credit against. If you set a ceiling yourself, we keep it. Provider-specific translation still runs after this step.
+- `store `**on Responses.** If you leave out `store` on `POST /v1/responses`, we send `store: false`.
+- **Routing fields on chat completions.** We remove `provider`, `models` and `transforms`, which are fields reseller providers read. Clients that send them keep working, and you're charged for the model you named.
+- **Vertex Gemini fields.** We translate OpenAI-compatible fields into Google's request format. For example, `max_tokens` sets the output limit, `reasoning_effort` picks a thinking level, and `modalities` and `image_config` control image output on supported chat models. See [Gemini on Vertex](https://docs.hopscotchlabs.ai/features/vertex-gemini.md) for request and response shapes.
 
-**`max_tokens`, when the provider's own API refuses a request without one.** Some
-providers require the field. If your body carries neither `max_tokens` nor
-`max_completion_tokens` and the provider is one of those, the field is added,
-and the value used is the model's published `max_output_tokens`, which is the
-figure credit was already being held against. An existing ceiling is not replaced
-by this step. Provider-specific translation still applies afterwards.
+On the platform's own provider keys, some fields are also blocked.
 
-**Vertex Gemini fields.** OpenAI-compatible fields are translated into Google's
-request format. For example, `max_tokens` sets the output limit, `reasoning_effort`
-selects a thinking level, and `modalities` and `image_config` control image output
-on supported chat models. See [Gemini on Vertex](/features/vertex-gemini) for the
-request and response shapes.
+## Everything else is forwarded
 
-## What happens to everything else
+For providers with an OpenAI-compatible pass-through API, any other parameter you send can reach the provider unchanged.
 
-For providers with a pass-through OpenAI-compatible API, additional parameters
-can reach the provider unchanged. This is not a guarantee for native APIs such
-as Vertex Gemini: only mapped fields reach its native request, and accepted
-values depend on the model.
+Native APIs such as Vertex Gemini work differently. Only the fields we map reach the native request, and the values each model accepts vary.
 
-This cuts both ways, and the second half is the half worth planning for:
+Two things to plan for:
 
-- **Published model metadata is not a request allowlist.** Absence from that list
-  does not by itself cause an admission refusal.
-- **A provider can refuse a parameter or value.** The API can also reject a value
-  during provider-specific translation, before sending the native request.
+- **Published model metadata isn't an allowlist.** If a parameter is missing from it, we won't refuse your request for that reason.
+- **The provider can still refuse a parameter or value.** We can also reject a value while translating it for a provider's native API, before the request is sent.
 
-  There is one exception, and it is a single value rather than a field: an empty
-  or whitespace-only `reasoning_effort` is refused here with a `400`, `code`
-  `invalid_value` and `param` set to `reasoning_effort`. It is the one value no
-  provider accepts, so relaying it would spend a round trip to be told the same
-  thing. Gemini translation also rejects `0` and `false`, and rejects `"minimal"`
-  for models that disallow that thinking level, with `param: "reasoning_effort"`.
-  Other values can still be refused by Google. See [Reasoning models](/features/reasoning).
+### What we refuse ourselves
 
-  The other is a short list of fields refused on the platform's own provider
-  keys and forwarded on yours, in
-  [the next section](#the-fields-refused-on-the-platforms-own-provider-keys).
+- **An empty** `reasoning_effort`**.** An empty or whitespace-only value returns `400` with `code: "invalid_value"` and `param: "reasoning_effort"`. No provider accepts it, so we save you the round trip.
+- **Some Gemini** `reasoning_effort `**values.** Gemini translation rejects `0` and `false`, and rejects `"minimal"` on models that don't allow that thinking level. These errors include `param: "reasoning_effort"`. Google can still refuse other values. See [Reasoning models](https://docs.hopscotchlabs.ai/features/reasoning.md).
+- **Certain fields on platform provider keys.** These are refused on the platform's keys and forwarded on yours. See [the next section](#the-fields-refused-on-the-platforms-own-provider-keys).
 
-An HTTP `400` can therefore come from admission, provider-specific translation,
-or the provider itself. Inspect `error.code` and `error.param` before deciding
-whether changing the body will help.
+### Finding the source of a `400`
+
+A `400` can come from our admission checks, from provider-specific translation, or from the provider itself. Check `error.code` and `error.param` before changing the body and retrying.
 
 ## The fields refused on the platform's own provider keys
 
-A request served on the platform's own provider keys is refused, before
-anything is held and before any provider is called, when it carries a field
-that buys something this platform cannot bill yet or asks the provider to keep
-the conversation under our account:
+A request served on the platform's own provider keys is refused, before anything is held and before any provider is called, when it carries a field that buys something this platform cannot bill yet or asks the provider to keep the conversation under our account:
 
-- a `service_tier` other than the provider's standard one (`auto`, `default` or
-  `on_demand` on chat completions, `auto` or `default` on Responses),
-- `web_search_options`, or a hosted tool the provider charges for per call (web
-  search, web fetch, code execution, and on a Gemini model a grounding tool such
-  as `google_search`),
-- audio out (`audio`, or audio in `modalities`), and audio in (an
-  `input_audio` part), except as described below for Gemini chat,
-- a `cache_control` marker with a `1h` ttl, on a content block or tool, or
-  at the top level of a `POST /v1/messages` body,
-- `store: true`, and on `POST /v1/responses` also `previous_response_id`,
-  `conversation`, an `item_reference` input item and `background: true`.
+- a `service_tier` other than the provider's standard one (`auto`, `default` or `on_demand` on chat completions, `auto` or `default` on Responses),
+- `web_search_options`, or a hosted tool the provider charges for per call (web search, web fetch, code execution, and on a Gemini model a grounding tool such as `google_search`),
+- audio out (`audio`, or audio in `modalities`), and audio in (an `input_audio` part), except as described below for Gemini chat,
+- a `cache_control` marker with a `1h` ttl, on a content block or tool, or at the top level of a `POST /v1/messages` body,
+- `store: true`, and on `POST /v1/responses` also `previous_response_id`, `conversation`, an `item_reference` input item and `background: true`.
 
-Each is a `400` with `code` `null` and `param` naming the field, never its value,
-and the message says to remove it or send the request on your own provider key.
-On `POST /v1/responses` an omitted `store` is sent to the provider as `false`.
+Each is a `400` with `code` `null` and `param` naming the field, never its value, and the message says to remove it or send the request on your own provider key. On `POST /v1/responses` an omitted `store` is sent to the provider as `false`.
 
-**Audio in on a Gemini chat completion.** `POST /v1/chat/completions` accepts
-`input_audio` parts on the platform's own keys when the request goes straight to
-a Gemini model on Google AI Studio or Vertex AI: no routing profile, no
-fallback to another provider, and a model whose published prices cover text,
-cached text, audio and cached audio input in every tier and which publishes a
-context window. Send each clip as a `messages[].content[]` part with `type`
-`input_audio` and `input_audio` holding base64 `data` and a `format` such as
-`wav`. Credit is held for the model's whole published input window at its
-highest input rate, plus bounded output, and the charge settles on the audio
-tokens the provider reports. If the provider never reports them, including on a
-stream that stops early, the whole hold is returned: no charge is estimated
-from the audio's size or from the input window.
-Audio sent to Gemini as an `image_url`, and audio output, are still refused.
+**Audio in on a Gemini chat completion.** `POST /v1/chat/completions` accepts `input_audio` parts on the platform's own keys when the request goes straight to a Gemini model on Google AI Studio or Vertex AI. That means no routing profile, no fallback to another provider, and a model whose published prices cover text, cached text, audio and cached audio input in every tier and which publishes a context window. Send each clip as a `messages[].content[]` part with `type` `input_audio` and `input_audio` holding base64 `data` and a `format` such as `wav`. We hold credit for the model's whole published input window at its highest input rate, plus bounded output, and the charge settles on the audio tokens the provider reports. If the provider never reports them, including on a stream that stops early, the whole hold is returned: we never estimate a charge from the audio's size or from the input window. Audio sent to Gemini as an `image_url`, and audio output, are still refused.
 
-**A request served on your own provider key keeps every one of them** and goes
-out as you sent it, because the provider bills and stores it against your own
-account. See [Bring your own key](/features/bring-your-own-key).
+**A request served on your own provider key keeps every one of them** and goes out as you sent it, because the provider bills and stores it against your own account. See [Bring your own key](/features/bring-your-own-key).
 
-On chat completions, the routing fields `provider`, `models` and `transforms`,
-which a reseller provider reads, are removed from the body rather than refused, so a client that
-sends them keeps working and the model you named is the one you are charged for.
-Other fields remain subject to provider-specific translation and support.
+On chat completions, the routing fields `provider`, `models` and `transforms`, which a reseller provider reads, are removed from the body rather than refused, so a client that sends them keeps working and the model you named is the one you are charged for. Other fields remain subject to provider-specific translation and support.
 
 ## The refusals that are ours
 

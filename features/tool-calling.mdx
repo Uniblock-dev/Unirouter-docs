@@ -1,24 +1,16 @@
 ---
 title: "Tool calling"
-description: "Send a tools array and read tool_calls back, exactly as you would from OpenAI. What travels, what it costs, and what this platform does not do."
-status: partial
+description: "Send a tools array and read tool_calls back, as with OpenAI: what gets forwarded, what a tool loop costs, and what Hopscotch leaves to your code."
+status: "partial"
 gates: ["18.40"]
-type: concept
+type: "concept"
 ---
 
-Tool calling here is OpenAI's tool calling. You send a `tools` array in the
-request body, the model answers with `tool_calls`, your code runs the tool and
-sends the result back as a `tool` message. Nothing about that loop changes when
-the request goes through Hopscotch.
+Tool calling on Hopscotch uses OpenAI’s format. You send a `tools` array in the request body and the model replies with `tool_calls`. Your code runs the tool and sends the result back as a `tool` message. Sending the request through Hopscotch doesn’t change any step of that loop.
 
-This page is the short list of things that are worth knowing anyway.
+## Tool requests and replies pass through unchanged
 
-## What travels
-
-`tools`, `tool_choice` and `parallel_tool_calls` are ordinary body fields, and
-the body reaches the provider as you wrote it. There is no schema of ours in
-front of yours, so a tool definition your client already builds works without
-waiting for us to add anything.
+`tools`, `tool_choice` and `parallel_tool_calls` are regular body fields, and they reach the provider exactly as you wrote them. Hopscotch doesn’t put its own schema in front of yours. Tool definitions your client already builds work right away, so you don’t have to wait for us to add support.
 
 The reply comes back the same way. On a response that is not streamed,
 `choices[0].message.tool_calls` is the provider's own array, unchanged. On a
@@ -33,7 +25,7 @@ curl https://api.hopscotchlabs.ai/v1/chat/completions \
   -H "Authorization: Bearer ub_live_YOUR_KEY_HERE" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "openai/gpt-4o-mini",
+    "model": "openai-main/gpt-4o-mini",
     "messages": [{"role": "user", "content": "What is the weather in Oslo?"}],
     "tools": [{
       "type": "function",
@@ -81,31 +73,18 @@ answering `yes`, `no` or `unknown`. See
 [Model capabilities](/features/model-capabilities), and read the part about
 `unknown` before you filter on it.
 
-The word is a description and not a gate. A `tools` array sent to a model that
-does not take one is forwarded, and what you get back is the provider's own
-refusal in the provider's own words. We do not pre-empt it, so the useful place
-to check the word is where you choose the model.
+The `tools` capability in the model catalog tells you whether a model supports tools, but Hopscotch doesn’t enforce it. If you send a `tools` array to a model that doesn’t support tools, we forward it anyway. You get back the provider’s own error, in the provider’s own words. We don’t block the request ahead of time, so the place to check `tools` is when you choose a model.
 
 ## What a tool-calling loop costs
 
-A loop is several requests, and each one is a request in every sense that
-matters here: it is charged, it lands in Activity as its own row, and it counts
-against your key's request rate and your account spend rate cap.
+A tool-calling loop is a series of requests, and each turn counts as a full request. It’s billed, it shows up as its own row in Activity, and it counts toward your key’s request rate limit and your account’s spend rate cap.
 
-Two consequences that surprise people:
+Two things tend to surprise people:
 
-**Your tool definitions are prompt tokens, on every turn.** They are part of the
-body you send each time round the loop, so a large `tools` array is a cost you
-pay per turn rather than once. The token counts you get back are the provider's
-own and already include them.
+1. **Tool definitions count as prompt tokens on every turn.** Your `tools` array goes out with the request body on each pass through the loop, so you pay for a large one on every turn. The token counts in the response come straight from the provider and already include it.
+2. **A turn that only calls a tool still uses output tokens.** The model generates the `tool_calls` array as text. If a loop takes several turns to reach an answer, you pay for the output of each one.
 
-**A turn that only calls a tool still produces output tokens.** The `tool_calls`
-array is generated text. A loop that runs several turns before answering has
-paid for every one of them.
-
-Send `max_tokens` on each turn. It is what sizes the credit held while a request
-runs, and a loop holds credit several times over. See
-[Rate limits and spend controls](/manage/spend-controls).
+Set `max_tokens` on every turn. It decides how much credit we hold while a request runs, and a loop holds credit again on each turn. See [Rate limits and spend controls](/manage/spend-controls).
 
 ## Errors in the middle of a loop
 

@@ -6,34 +6,22 @@ gates: ["18.62"]
 type: concept
 ---
 
-Several providers cache part of a prompt, so resending it avoids paying full price for that part.
-The feature is the provider's. It is asked for in the request body, which travels here unchanged, so it
-works through this API as it does when you call the provider directly.
+Several providers can cache part of your prompt, so you pay less for that part when you send it again. Caching is a provider feature that you request in the request body. We forward the body unchanged, so caching works through Hopscotch the same way it does when you call the provider directly.
 
-## How you ask for it
+## Request caching the way your provider expects
 
-The same way you would upstream. A provider whose caching is explicit takes a marker in the body, which is
-forwarded as you wrote it. A provider whose caching is automatic applies it without being asked, and nothing
-here turns it off.
+Request it the same way you would with the provider directly. If the provider uses explicit caching, add its cache marker to the request body and we forward it as written. If the provider caches automatically, it does so without being asked, and we don’t turn that off.
 
-On `POST /v1/messages`, Anthropic's top-level `cache_control` marker, which asks for automatic caching of the
-prefix, is forwarded alongside any markers on individual blocks when the model is served by Anthropic directly,
-on Google Vertex AI or on Azure. On the platform's own provider keys a marker with a `1h` ttl is refused, at the
-top level or on a block, as [Parameters](/api-reference/parameters) lists; on your own provider key it keeps its
-ttl.
+On `POST /v1/messages`, Anthropic's top-level `cache_control` marker, which asks for automatic caching of the prefix, is forwarded along with any markers on individual blocks when the model is served by Anthropic directly, on Google Vertex AI or on Azure. On the platform's own provider keys, a marker with a `1h` ttl is refused, at the top level or on a block, as [Parameters](/api-reference/parameters) lists. On your own provider key it keeps its ttl.
 
-There is no Hopscotch control for caching, in the body or in a header, and nothing to enable in the dashboard.
-Which providers cache, and on what terms, is the provider's own behaviour. This site publishes no per-provider
-table, because a stale table about pricing is worse than none.
+Hopscotch has no caching setting of its own. There’s nothing in the body, nothing in a header, and nothing to turn on in the dashboard. Each provider decides whether it caches and on what terms. We don’t publish a per-provider table, because pricing changes and an outdated pricing table does more harm than having none.
 
-## Where the counts arrive
+## Where to find cached-token counts
 
 Cached tokens are reported separately from ordinary input tokens, in three places.
 
-**In the reply body**, on a response that is not streamed, inside the provider's own `usage` object, in whatever
-spelling that provider uses.
-
-**On the stream**, as fields on the `:x-hopscotch-usage` comment line written immediately before `data: [DONE]`:
+1. **In the reply body**, on a response that is not streamed, inside the provider's own `usage` object, in whatever spelling that provider uses.
+2. **On the stream**, as fields on the `:x-hopscotch-usage` comment line written immediately before `data: [DONE]`:
 
 ```text
 :x-hopscotch-usage {"v":1,"reported":true,"prompt_tokens":1200,"completion_tokens":80,"total_tokens":1280,"cache_read_input_tokens":1024,"cache_write_input_tokens":0}
@@ -45,15 +33,11 @@ spelling that provider uses.
 | `cache_write_input_tokens` | Input tokens written into it. |
 | `cache_write_1h_input_tokens` | The part of those writes made with a one-hour lifetime. Already counted inside `cache_write_input_tokens`, and present only when the provider splits its writes by lifetime, as Anthropic does. |
 
-**On your usage record**, and so on the Activity screen, as the cache read and cache write figures for that
-request. See [Usage and metering](/manage/usage-and-metering).
+3. **On your usage record**, and so on the Activity screen, as the cache read and cache write figures for that request. See [Usage and metering](/manage/usage-and-metering).
 
-### Absent is not zero
+### A missing count doesn’t mean zero
 
-A field is omitted rather than sent as `0` when the provider did not report it. A provider that does no cache
-accounting produces a usage line with neither field, which is a different fact from a request that used no
-cache. So a missing `cache_read_input_tokens` means "we were not told", and `0` means the provider said none.
-Every count is the provider's own. Nothing is re-counted or estimated.
+If the provider didn’t report a count, we leave the field out instead of sending `0`. A provider that doesn’t track caching returns a usage line with neither field, and that’s different from a request that got no cache hits. A missing `cache_read_input_tokens` means the provider didn’t tell us. A `0` means the provider reported none. Every count comes from the provider, and we don’t recount or estimate anything.
 
 ## How cached tokens are priced
 
@@ -71,24 +55,22 @@ The rate that applied is the one in force when the request was made, and a later
 it. Your usage record is the authority on what a request cost. A price in the catalog describes what a model
 charges now.
 
-## The cache status header is not this
+## Don't use `x-hopscotch-cache-status` to check cache hits
 
 A served response can carry `x-hopscotch-cache-status`. It describes how our side produced the answer, not
 provider prompt caching. To learn whether your prompt cache was hit, read the token counts above. Read the
 header in logs and build no behaviour on it. See [Headers](/api-reference/headers).
 
-## Getting a cache hit at all
+## How to get a cache hit
 
-The rules are the provider's, but the general shape holds across providers that cache:
+Each provider sets its own rules, but the basics are the same across providers that cache:
 
-- **Put the stable part of your prompt first.** Caching works on a prefix, so an unchanging system prompt and
-  document belong before the part that changes.
-- **Do not reorder it between turns.** A prefix that differs by a timestamp, a reordered tool list or a
-  regenerated id is a different prefix.
-- **Short prompts are usually not cached.** Providers set a minimum, and below it nothing is cached.
-- **Caches expire.** A cache read on one turn does not promise one on the next.
+- **Put the stable part of your prompt first.** Caching works on the start of the prompt (the prefix), so put your unchanging system prompt and documents before the parts that change.
+- **Keep that prefix identical between turns.** A changed timestamp, a reordered tool list, or a regenerated ID makes it a new prefix.
+- **Short prompts usually aren’t cached.** Providers set a minimum length, and nothing shorter gets cached.
+- **Caches expire.** A cache hit on one turn doesn’t guarantee one on the next.
 
-The way to know whether it worked is the counts. Read `cache_read_input_tokens` on a second identical request.
+To check whether caching worked, send the same request twice and look at `cache_read_input_tokens` on the second response.
 
 ## What this platform does not do
 

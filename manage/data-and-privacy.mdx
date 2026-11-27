@@ -1,14 +1,12 @@
 ---
 title: "Data and privacy"
-description: "What Hopscotch records about a request, what it does not record, how long records are kept, and what we cannot recover for you."
-status: partial
+description: "What Hopscotch stores about each request, what it never stores, how long records last, and what we can't recover for you."
+status: "partial"
 gates: ["5.7", "5.8"]
-type: concept
+type: "concept"
 ---
 
-This is a factual description of what the product stores. It is not a privacy
-policy and it is not a legal document. Where a published privacy policy and this
-page eventually differ, the policy governs.
+This page lists what the product actually stores. It isn't a privacy policy or a legal document. If the two ever disagree, the published privacy policy wins.
 
 ## We record metadata about a request, not its content
 
@@ -23,14 +21,15 @@ tell you what happened:
 - how long it took
 - the outcome, meaning whether it was served, refused, or failed
 
-We do not record the prompt and we do not record the response body. Not
-truncated, not hashed, not sampled. There is nowhere in the usage record for
-either of them to go.
+We don't record the prompt or the response body. We don't keep a shortened copy, a hash or a sample either. The usage record has no field where either one could go.
 
-That means there are things we cannot do for you. We cannot show you what you
-sent last Tuesday, we cannot replay a request, and we cannot read a request back
-to check whether a reply was reasonable. What we can do is find the record of it
-by its request id and tell you the facts above.
+**What this means for you.** Since we never have the content, we can't:
+
+- show you what you sent on a past date
+- replay a request
+- read a request back to check whether the reply made sense
+
+We _can_ find a request by its request id and tell you what we recorded about it: when it ran, the model and provider, token counts, cost, duration, and whether it was served, refused or failed.
 
 ## The playground stores nothing either
 
@@ -44,20 +43,17 @@ absence is the data stance rather than a missing feature. See
 
 ## How long records are kept
 
-Usage records are kept for a configured window. The window in force is ninety
-days, over a floor of sixty-two days.
+| Current retention window | 90 days |
+| :-- | :-- |
+| Minimum (floor) | 62 days |
 
-The floor is the part that was reasoned: support has to be able to quote a
-request from two full billing months back, and the longest such pair of calendar
-months is sixty-two days. The window in force is read from one place by the
-product, and the screen that shows it is the one to trust: if it prints a
-different figure than this page, the screen is the live value.
+**Why the minimum is 62 days.** Support needs to be able to look up a request from two full billing months ago. The longest two back-to-back calendar months add up to 62 days.
 
-**Your statement outlives the usage record.** The transaction that recorded a charge is
-a separate record from the usage record that described the request. When a usage
-record passes out of the retention window, the transaction it caused stays
-on your statement. You do not lose the accounting for spend whose request detail
-has aged out.
+**If this page and the product disagree, trust the product.** The product reads the retention window from a single setting. The number on that screen is the live value.
+
+#### Your statement keeps charges after request details expire
+
+A charge and the request behind it are stored as separate records. The charge is a transaction, and the request details live in the usage record. When a usage record ages out, its transaction stays on your statement. Your spend history stays complete even after the request details are gone.
 
 ## Your key, and what we keep of it
 

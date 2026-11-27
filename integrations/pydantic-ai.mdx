@@ -26,7 +26,7 @@ from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
 model = OpenAIChatModel(
-    "openai/gpt-4o-mini",
+    "openai-main/gpt-4o-mini",
     provider=OpenAIProvider(
         base_url="https://api.hopscotchlabs.ai/v1",
         api_key=os.environ["HOPSCOTCH_API_KEY"],
@@ -73,12 +73,7 @@ it.
 
 ## What else is specific to this framework
 
-**The model name is a plain string, so nothing is validated locally.** The type is
-a union of `str` with a literal list of OpenAI's own model names, and the bare
-`str` in that union means the literals are editor autocompletion rather than a
-gate. `OpenAIChatModel("openai/gpt-4o-mini")` is accepted as written and the id is
-checked where it should be, by us, at request time. This is the opposite of
-[LlamaIndex's](/integrations/llamaindex) behaviour and it is the friendlier one.
+**The model name is a plain string, so nothing is validated locally.** The type is a union of `str` with a literal list of OpenAI's own model names, and the bare `str` in that union means the literals are editor autocompletion rather than a gate. `OpenAIChatModel("openai-main/gpt-4o-mini")` is accepted as written and the id is checked where it should be, by us, at request time. This is the opposite of [LlamaIndex's](/integrations/llamaindex) behaviour and it is the friendlier one.
 
 **There is no default model.** An `Agent` is constructed with one, so nothing here
 can send a bare id you did not write.

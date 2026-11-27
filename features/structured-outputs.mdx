@@ -1,9 +1,9 @@
 ---
 title: "Structured outputs"
-description: "Send response_format to get JSON back. Which models take it, what this platform checks, and what it deliberately does not."
-status: partial
+description: "Send response_format to get JSON back. This page covers which models support it, what Hopscotch checks, and what it leaves to the provider."
+status: "partial"
 gates: ["18.40"]
-type: concept
+type: "concept"
 ---
 
 `response_format` is an ordinary field in the request body, so asking a model for
@@ -13,7 +13,7 @@ JSON", and `{"type": "json_schema", ...}` for "answer in this shape".
 
 ```json
 {
-  "model": "openai/gpt-4o-mini",
+  "model": "openai-main/gpt-4o-mini",
   "messages": [{"role": "user", "content": "Two facts about Oslo."}],
   "response_format": {
     "type": "json_schema",
@@ -33,7 +33,7 @@ JSON", and `{"type": "json_schema", ...}` for "answer in this shape".
 }
 ```
 
-## Which models take it
+## Which models support `response_format`
 
 Every catalog entry carries a `json_mode` word in its `capabilities` block,
 answering `yes`, `no` or `unknown`. See
@@ -44,11 +44,9 @@ takes `json_object` also takes a `json_schema` with `strict` set, and that
 distinction is real on some model lines. Where it matters, the reliable test is a
 request, not the catalog.
 
-## What this platform checks
+## What Hopscotch validates, and the Anthropic exception
 
-Nothing about your schema or the reply, and the sentence is worth stating flatly
-rather than leaving you to infer it. The one exception is the shape of the field
-itself when Anthropic serves the request, below.
+Nothing. We don’t validate your schema, and we don’t validate or repair the reply. The one exception is when Anthropic serves the request. In that case we adjust the shape of the field itself, as described below.
 
 - **Your schema is not validated here.** It is forwarded as written to every
   provider that reads `response_format`. A schema a provider will not accept
@@ -80,22 +78,15 @@ provider offers a strict mode that constrains generation, using it is worth more
 than anything an intermediary could add afterwards, and it is available to you
 because the field travels.
 
-## Parse defensively anyway
+## Check the reply before you parse it
 
 Whatever the provider guarantees, the content is a string in
 `choices[0].message.content` and your code has to parse it. Two failure modes are
 worth handling by name:
 
-**A truncated reply is not valid JSON.** A response cut short by `max_tokens`
-ends mid-object, and `finish_reason` says `length` rather than `stop`. Check it
-before you parse: a JSON parse error whose real cause is a token ceiling is a
-confusing thing to debug. It is also a real risk here specifically, because a
-request that names no ceiling is held against the model's published maximum
-output and a schema-shaped answer can be longer than you expect. See
-[Request parameters](/api-reference/parameters).
+**Check** `finish_reason `**before you parse.** If a reply hits `max_tokens`, it stops in the middle of the object, and `finish_reason` is `length` instead of `stop`. If you skip this check, you’ll get a JSON parse error and debug the wrong problem. The risk is real here: if you don’t set `max_tokens`, the request runs against the model’s published maximum output, and answers that follow a schema are often longer than you’d expect. See [Request parameters](/api-reference/parameters).
 
-**A refusal is not your schema.** A model that declines to answer answers in
-prose or in its own refusal field, not in the shape you asked for.
+**Refusals won’t match your schema.** If the model declines to answer, it replies in plain text or in its own refusal field, so the shape you asked for won’t be there.
 
 ```python
 choice = response.choices[0]
@@ -108,20 +99,14 @@ data = json.loads(choice.message.content)
 
 ## Streaming a structured output
 
-`stream: true` and `response_format` compose the way they do upstream: the
-content arrives in fragments, and a fragment is not parseable JSON on its own.
-Accumulate the deltas and parse once at the end, unless you have a streaming
-parser that is built for partial documents.
+You can use `stream: true` with `response_format`, and it works the same way as calling the provider directly. Content arrives in fragments, and a single fragment won’t parse as JSON. Collect the deltas and parse once at the end, unless you’re using a parser built for partial JSON.
 
 The stream itself is unchanged by any of this. See
 [Streaming](/features/streaming).
 
 ## What it costs
 
-A `json_schema` is part of the body, so it is prompt tokens on every request that
-carries it. A large schema sent on every turn of a long conversation is paid for
-on every turn. The counts you read back are the provider's own and already
-include it.
+A `json_schema` is part of the request body, so you pay for it as prompt tokens every time you send it. Send a large schema on every turn of a long conversation and you pay for it on every turn. The token counts you get back come from the provider and already include the schema.
 
 ## What we did not verify
 
