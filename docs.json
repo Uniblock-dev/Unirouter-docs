@@ -79,7 +79,14 @@
           },
           {
             "group": "Use Cases",
-            "pages": []
+            "pages": [
+              {
+                "group": "Creative & Media",
+                "pages": [
+                  "comic-and-story-book-maker"
+                ]
+              }
+            ]
           }
         ]
       },
