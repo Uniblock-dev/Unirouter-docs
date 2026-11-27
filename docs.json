@@ -89,6 +89,14 @@
               {
                 "group": "Education And Learning",
                 "pages": []
+              },
+              {
+                "group": "Productivity And Business",
+                "pages": []
+              },
+              {
+                "group": "Developer Tools And Agents",
+                "pages": []
               }
             ]
           }
