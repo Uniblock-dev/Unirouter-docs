@@ -13,6 +13,7 @@ A chat-based website maker. You describe the site you want, and the AI writes it
 Hopscotch sits between the app's server and the model providers. Every model call goes through one base URL with one API key, and the key never leaves the server.
 
 - **One API for many models.** Hopscotch's catalog fills the model dropdown. To switch models, you change the model id (for example `openai-main/gpt-4o-mini`). No provider-specific code is needed.
+- **Billing is predictable.** Credit is held before a request starts. A refused request costs nothing, and a cut-off stream is charged only for what it produced
 
 ## Results
 
