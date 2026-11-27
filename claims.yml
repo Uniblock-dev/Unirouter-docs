@@ -203,8 +203,8 @@ claims:
 
   - id: request-body-max-bytes
     value: "8388608"
-    means: "The maximum request body this API accepts. A larger one is refused 413 payload_too_large before it is read."
-    source: "services/control-plane/src/inference/requestBody.ts (MAX_INFERENCE_BODY_BYTES)"
+    means: "The maximum request body on every endpoint except POST /v1/chat/completions and POST /v1/messages. A larger one is refused 413 payload_too_large."
+    source: "services/control-plane/src/inference/requestBody.ts (MAX_INFERENCE_BODY_BYTES, inferenceBodyLimit)"
     status: shipped
     note: >-
       Quoted inside the shipped refusal sentence, so the byte figure is
@@ -213,6 +213,16 @@ claims:
       which services/control-plane/test/openapi-bounds.test.ts holds. Write
       the byte figure, and "eight mebibytes" beside it where prose needs a
       readable form; both spellings are registered.
+
+  - id: conversation-body-max-bytes
+    value: "33554432"
+    means: "The maximum request body on POST /v1/chat/completions and POST /v1/messages. A larger one is refused 413 payload_too_large."
+    source: "services/control-plane/src/inference/requestBody.ts (MAX_CONVERSATION_BODY_BYTES, inferenceBodyLimit)"
+    status: shipped
+    note: >-
+      Quoted inside the shipped refusal sentence on those two endpoints, so the
+      byte figure is customer-visible already. Production main since b3520237.
+      Write the byte figure; no prose spelling is registered for it.
 
   - id: request-body-max-mebibytes
     value: "eight"

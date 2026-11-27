@@ -12,6 +12,8 @@ Several providers can cache part of your prompt, so you pay less for that part w
 
 Request it the same way you would with the provider directly. If the provider uses explicit caching, add its cache marker to the request body and we forward it as written. If the provider caches automatically, it does so without being asked, and we don’t turn that off.
 
+On `POST /v1/messages`, Anthropic's top-level `cache_control` marker, which asks for automatic caching of the prefix, is forwarded along with any markers on individual blocks when the model is served by Anthropic directly, on Google Vertex AI or on Azure. On the platform's own provider keys, a marker with a `1h` ttl is refused, at the top level or on a block, as [Parameters](/api-reference/parameters) lists. On your own provider key it keeps its ttl.
+
 Hopscotch has no caching setting of its own. There’s nothing in the body, nothing in a header, and nothing to turn on in the dashboard. Each provider decides whether it caches and on what terms. We don’t publish a per-provider table, because pricing changes and an outdated pricing table does more harm than having none.
 
 ## Where to find cached-token counts
