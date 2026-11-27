@@ -79,7 +79,12 @@
           },
           {
             "group": "Use cases",
-            "pages": []
+            "pages": [
+              {
+                "group": "Creative and media",
+                "pages": []
+              }
+            ]
           }
         ]
       },
