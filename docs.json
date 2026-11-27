@@ -76,6 +76,25 @@
               "resources/faq",
               "resources/glossary"
             ]
+          },
+          {
+            "group": "Use Cases",
+            "pages": [
+              {
+                "group": "Creative And Media",
+                "pages": [
+                  "resources/use-cases/comic-and-storybook-maker",
+                  "resources/use-cases/website-maker"
+                ]
+              },
+              {
+                "group": "Education And Learning",
+                "pages": [
+                  "resources/use-cases/flashcard-and-quiz-generator",
+                  "resources/use-cases/interview-coach"
+                ]
+              }
+            ]
           }
         ]
       },

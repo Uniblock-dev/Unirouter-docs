@@ -1,0 +1,27 @@
+---
+title: "Interview Coach"
+description: "A mock interview app that uses Hopscotch for chat, transcription and speech on one key."
+status: write-now
+---
+
+AI Interview Coach is a mock interview app built on Hopscotch. You paste a job description, can add a résumé, and answer questions by typing or speaking. Each answer gets a score and specific feedback, and the session ends with a practice plan.
+
+## Overview
+
+AI Interview Coach helps job seekers practise for one specific role. The questions come from the job description and résumé the user provides, so they match the role instead of a generic list.
+
+## How Hopscotch Helped
+
+The coach needs three kinds of models: a chat model that returns valid JSON, a model that turns speech into text, and a model that reads questions aloud. Hopscotch provided all three through one API.
+
+- **Uses the OpenAI SDK.** Hopscotch accepts the same requests and returns the same responses as OpenAI. The app uses the standard OpenAI SDK pointed at the Hopscotch base URL, and streaming, JSON output and audio work the usual way.
+- **One key, one balance.** Chat, transcription and speech all run on a single API key and one prepaid balance. The key lives in one server environment variable, and the browser never sees it.
+- **Backup models.** The app uses a Hopscotch routing profile with an ordered list of backup chat models. If the main model fails or is unavailable, Hopscotch sends the request to the next model on the list, so the user's mock interview carries on.
+
+## Results
+
+![Interview Coach, first screen](/images/interview-coach-1.png "Interview Coach, first screen")
+
+![Interview Coach, second screen](/images/interview-coach-2.png "Interview Coach, second screen")
+
+## More Use Cases
